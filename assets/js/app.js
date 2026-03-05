@@ -443,20 +443,13 @@ function submitContact() {
   );
 }
 
-let _chatTab = "support"; // 'support' | 'admin'
+let _chatTab = "support"; // single channel now
 let _chatHistory = {
   support: [
     {
       from: "bot",
       time: _chatNow(),
-      text: "👋 Hi Juan! Welcome to HomeEase Support. How can we help you today?",
-    },
-  ],
-  admin: [
-    {
-      from: "bot",
-      time: _chatNow(),
-      text: "🏠 Hello! This is your HomeEase Admin channel. Ask us anything about your bookings or account.",
+      text: "Hello! How can I help you today?",
     },
   ],
 };
@@ -467,39 +460,14 @@ function _chatNow() {
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
-const _chatAutoReplies = {
-  support: [
-    "Thanks for reaching out! Our support team will assist you shortly.",
-    "Your concern has been noted. We typically respond within a few minutes.",
-    "Got it! Can you provide more details so we can help you better?",
-    "We apologize for any inconvenience. Let me check that for you.",
-    "Great question! Here's what I know: your booking is being processed.",
-    "Our team is on it! Expect an update within the next 30 minutes.",
-  ],
-  admin: [
-    "Hello! I can see your account details. What would you like to update?",
-    "Your booking status has been checked. Everything looks good!",
-    "I'll escalate this to our operations team right away.",
-    "Admin note received. Your account has been flagged for priority support.",
-    "We've dispatched a technician. They'll reach you within 2 hours.",
-    "Your refund request has been received and is under review.",
-  ],
-};
+// _chatAutoReplies removed — using Groq AI for all responses
 
 const _chatQuickReplies = {
   support: [
-    "Track my booking",
-    "Cancel service",
-    "Payment issue",
-    "Change schedule",
-    "Report a problem",
-  ],
-  admin: [
-    "Update my address",
-    "View my invoices",
-    "Change provider",
-    "Request refund",
-    "Verify my account",
+    "Show my bookings",
+    "Cancel a booking",
+    "Current promos",
+    "How do I book?",
   ],
 };
 
@@ -523,22 +491,11 @@ function closeChat() {
   if (m) m.classList.remove("on");
 }
 function switchChatTab(tab) {
-  _chatTab = tab;
-  document
-    .querySelectorAll(".chat-tab")
-    .forEach((t) => t.classList.toggle("on", t.dataset.tab === tab));
+  // Single chat channel — no tab switching needed
   _renderChatMsgs();
   _renderChatQuick();
 }
 function _renderChatTab() {
-  document
-    .querySelectorAll(".chat-tab")
-    .forEach((t) => t.classList.toggle("on", t.dataset.tab === _chatTab));
-
-  const nm = document.getElementById("chatAgentNm");
-  if (nm)
-    nm.textContent =
-      _chatTab === "support" ? "Customer Support" : "HomeEase Admin";
   _renderChatMsgs();
   _renderChatQuick();
 }
@@ -548,17 +505,19 @@ function _renderChatMsgs() {
   const msgs = _chatHistory[_chatTab] || [];
   box.innerHTML =
     `<div class="chat-date-div">Today</div>` +
-    msgs
-      .map((m) => {
-        const mine = m.from === "me";
-        return `<div class="chat-msg${mine ? " mine" : ""}">
+    msgs.map((m) => {
+      const mine = m.from === "me";
+      // Allow HTML in bot messages (for booking cards etc)
+      const bubbleContent = (!mine && m.html)
+        ? m.html
+        : m.text.replace(/\n/g, "<br>");
+      return `<div class="chat-msg${mine ? " mine" : ""}">
         ${!mine ? `<div class="chat-msg-av"><i class="bi bi-headset"></i></div>` : ""}
-        <div>
-          <div class="chat-bubble">${m.text}<span class="chat-bubble-time">${m.time}</span></div>
+        <div style="max-width:85%;">
+          <div class="chat-bubble" style="${!mine ? "background:#f0fdfa;color:#1a1a2e;border:1.5px solid #ccfbf1;" : ""}">${bubbleContent}<span class="chat-bubble-time">${m.time}</span></div>
         </div>
       </div>`;
-      })
-      .join("");
+    }).join("");
   box.scrollTop = box.scrollHeight;
 }
 function _renderChatQuick() {
@@ -589,14 +548,71 @@ function sendChat() {
   _renderChatMsgs();
   _showChatTyping();
 
-  const delay = 1200 + Math.random() * 1000;
-  setTimeout(() => {
-    _hideChatTyping();
-    const replies = _chatAutoReplies[_chatTab];
-    const reply = replies[Math.floor(Math.random() * replies.length)];
-    _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: reply });
-    _renderChatMsgs();
-  }, delay);
+  // Pass last 12 messages as context
+  const history = _chatHistory[_chatTab]
+    .slice(-13, -1)
+    .filter(m => m.from === "me" || m.from === "bot")
+    .map(m => ({ role: m.from === "me" ? "user" : "model", text: m.text }));
+
+  fetch("api/groq_chat.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, history: history })
+  })
+    .then(r => r.json())
+    .then(data => {
+      _hideChatTyping();
+      if (!data.success && !data.reply) {
+        _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: data.message || "Sorry, I could not get a response. Please try again." });
+        _renderChatMsgs();
+        return;
+      }
+
+      const reply = data.reply || "Sorry, I could not get a response.";
+
+      // Handle successful cancel action
+      if (data.action_result === "cancelled" && data.booking_id) {
+        const successHtml = `
+          <div style="background:#d1fae5;border-radius:12px;padding:12px;margin-bottom:6px;border:1.5px solid #6ee7b7;">
+            <div style="font-size:13px;font-weight:700;color:#059669;margin-bottom:4px;">✅ Booking Cancelled</div>
+            <div style="font-size:12px;color:#065f46;">Booking #${data.booking_id} has been successfully cancelled.</div>
+          </div>
+          <div style="font-size:13px;color:#1a1a2e;">${reply}</div>`;
+        _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: reply, html: successHtml });
+      } else {
+        _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: reply });
+      }
+
+      // Update quick replies based on context
+      _updateSmartQuickReplies(reply);
+      _renderChatMsgs();
+    })
+    .catch(() => {
+      _hideChatTyping();
+      _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: "Sorry, I am having trouble connecting right now. Please try again in a moment." });
+      _renderChatMsgs();
+    });
+}
+
+function _updateSmartQuickReplies(lastReply) {
+  const qr = document.getElementById("chatQuick");
+  if (!qr) return;
+  const lower = lastReply.toLowerCase();
+  let suggestions = [];
+
+  if (lower.includes("cancel") && (lower.includes("yes") || lower.includes("confirm"))) {
+    suggestions = ["YES, cancel it", "No, keep it"];
+  } else if (lower.includes("booking") && lower.includes("status")) {
+    suggestions = ["Show all bookings", "Cancel a booking", "Book a service"];
+  } else if (lower.includes("book") || lower.includes("service")) {
+    suggestions = ["Show my bookings", "What services do you offer?", "Current promos"];
+  } else {
+    suggestions = ["Show my bookings", "Cancel a booking", "Current promos", "Contact support"];
+  }
+
+  qr.innerHTML = suggestions.map(s =>
+    `<span class="chat-qr" onclick="sendQuickReply('${s}')">${s}</span>`
+  ).join("");
 }
 function _showChatTyping() {
   if (_chatTyping) return;
@@ -823,10 +839,11 @@ const ALL_OFFERS = [
 let _offerFilter = "all";
 function openAllOffers(filter) {
   _offerFilter = filter || "all";
+  _cachedOffers = null; // always refresh from DB
   const m = document.getElementById("allOffersModal");
   if (m) {
     m.classList.add("on");
-    renderOffers();
+    loadAndRenderOffers();
   }
 }
 function closeAllOffers() {
@@ -835,47 +852,70 @@ function closeAllOffers() {
 }
 function setOfferFilter(cat) {
   _offerFilter = cat;
-  document
-    .querySelectorAll(".ao-tab")
-    .forEach((t) => t.classList.toggle("on", t.dataset.cat === cat));
-  renderOffers();
+  document.querySelectorAll(".ao-tab").forEach((t) => t.classList.toggle("on", t.dataset.cat === cat));
+  loadAndRenderOffers();
 }
-function renderOffers() {
+
+let _cachedOffers = null;
+function loadAndRenderOffers() {
   const cnt = document.getElementById("offersListCnt");
   if (!cnt) return;
-  const filtered =
-    _offerFilter === "all"
-      ? ALL_OFFERS
-      : ALL_OFFERS.filter((o) => o.cat === _offerFilter);
-  cnt.innerHTML = filtered
-    .map(
-      (o) => `
-    <div class="offer-card" onclick="closeAllOffers();goPage('bookings.php?svc=${encodeURIComponent(o.svc)}&newbooking=1')">
-      <div class="offer-card-img" style="position:relative;">
-        <img src="${o.img}" alt="${o.name}">
-        <span class="offer-badge ${o.badgeType}">${o.badge}</span>
-      </div>
-      <div class="offer-card-body">
-        <div class="offer-card-top">
-          <div>
-            <div class="offer-card-nm">${o.name}</div>
-            <div class="offer-card-desc">${o.desc}</div>
+  cnt.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px;"><i class="bi bi-arrow-clockwise"></i> Loading offers...</div>';
+
+  const doRender = (offers) => {
+    _cachedOffers = offers;
+    const SVC_IMGS_MAP = {
+      'Cleaning':'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80',
+      'Plumbing':'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80',
+      'Electrical':'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80',
+      'Painting':'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=300&q=80',
+      'Gardening':'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&q=80',
+    };
+    if (!offers.length) {
+      cnt.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6b7280;"><i class="bi bi-tag" style="font-size:36px;display:block;margin-bottom:10px;opacity:.3;"></i><p style="font-size:13px;">No active offers right now.<br>Check back soon!</p></div>';
+      return;
+    }
+    cnt.innerHTML = offers.map(o => {
+      const discLbl = o.discount_type === 'percent' ? `${o.discount_value}% OFF` : `₱${parseFloat(o.discount_value).toLocaleString()} OFF`;
+      const expLbl  = o.expires_at ? '🕐 Expires ' + o.expires_at.split(' ')[0] : '✅ No expiry';
+      const minLbl  = parseFloat(o.min_booking_price) > 0 ? `Min. ₱${parseFloat(o.min_booking_price).toLocaleString()} booking` : 'No minimum';
+      const img = SVC_IMGS_MAP['Cleaning'];
+      return `
+        <div class="offer-card" style="background:var(--bg-card,#fff);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
+          <div style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;">
+            <div>
+              <div style="color:rgba(255,255,255,.8);font-size:11px;font-weight:700;margin-bottom:4px;">SPECIAL OFFER</div>
+              <div style="color:#fff;font-size:18px;font-weight:800;font-family:'Poppins',sans-serif;">${discLbl}</div>
+              <div style="color:rgba(255,255,255,.85);font-size:12px;margin-top:2px;">${o.title}</div>
+            </div>
+            <div style="background:rgba(255,255,255,.2);border-radius:12px;padding:10px 14px;text-align:center;">
+              <div style="color:#fff;font-size:11px;font-weight:700;">CODE</div>
+              <div style="color:#fff;font-size:16px;font-weight:900;letter-spacing:1px;">${o.code}</div>
+            </div>
           </div>
-          <div class="offer-card-price-wrap">
-            <div class="offer-card-old">₱${o.oldPrice.toLocaleString()}</div>
-            <div class="offer-card-new">₱${o.price.toLocaleString()}</div>
+          <div style="padding:12px 16px;">
+            ${o.description ? `<div style="font-size:12px;color:#6b7280;margin-bottom:8px;">${o.description}</div>` : ''}
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;font-weight:600;">
+              <span>📋 ${minLbl}</span>
+              <span>${expLbl}</span>
+            </div>
           </div>
-        </div>
-        <div class="offer-card-footer">
-          <span class="offer-card-tag">${o.tag}</span>
-          <span class="offer-card-exp">🕐 ${o.exp}</span>
-        </div>
-      </div>
-    </div>
-  `,
-    )
-    .join("");
+        </div>`;
+    }).join('');
+  };
+
+  // Use cache if available, otherwise fetch
+  if (_cachedOffers !== null) { doRender(_cachedOffers); return; }
+  fetch('api/bookings_api.php?action=offers')
+    .then(r => r.json())
+    .then(data => doRender(data.success ? data.offers : []))
+    .catch(() => {
+      cnt.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;font-size:13px;">Could not load offers.</div>';
+    });
 }
+
+function renderOffers() { loadAndRenderOffers(); } // backward compat
+
 
 function injectGlobalModals() {
   const shell = document.querySelector(".shell");
@@ -1140,13 +1180,6 @@ function injectGlobalModals() {
         <div class="ao-ttl">🏷️ Special Offers</div>
       </div>
       <div class="ao-sub">Exclusive deals for HomeEase customers</div>
-      <div class="ao-tabs">
-        <span class="ao-tab on" data-cat="all"    onclick="setOfferFilter('all')">All Deals</span>
-        <span class="ao-tab"    data-cat="flash"   onclick="setOfferFilter('flash')">⚡ Flash Sale</span>
-        <span class="ao-tab"    data-cat="new"     onclick="setOfferFilter('new')">🆕 New</span>
-        <span class="ao-tab"    data-cat="promo"   onclick="setOfferFilter('promo')">🎉 Promo</span>
-        <span class="ao-tab"    data-cat="limited" onclick="setOfferFilter('limited')">🔥 Limited</span>
-      </div>
       <div id="offersListCnt"></div>
     </div>`;
   shell.appendChild(offers);
@@ -1167,16 +1200,12 @@ function injectGlobalModals() {
           <div class="chat-av-dot"></div>
         </div>
         <div class="chat-hdr-info">
-          <div class="chat-hdr-nm" id="chatAgentNm">Customer Support</div>
+          <div class="chat-hdr-nm" id="chatAgentNm">HomeEase Customer Service</div>
           <div class="chat-hdr-st">● Online</div>
         </div>
         <button style="background:none;border:none;color:var(--txt-muted);font-size:22px;cursor:pointer;" onclick="closeChat()">
           <i class="bi bi-x-lg"></i>
         </button>
-      </div>
-      <div class="chat-tab-row">
-        <div class="chat-tab on" data-tab="support" onclick="switchChatTab('support')">🎧 Support</div>
-        <div class="chat-tab"    data-tab="admin"   onclick="switchChatTab('admin')">🏠 Admin</div>
       </div>
       <div class="chat-msgs" id="chatMsgs"></div>
       <div class="chat-quick" id="chatQuick"></div>

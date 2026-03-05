@@ -18,6 +18,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/bookings.css">
 </head>
 
@@ -31,14 +32,19 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="hdr-sub">Hi, <?= $userName ?> 👋</div>
           <div class="hdr-title">Book a Service</div>
         </div>
-        <a href="index.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="home.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 
     <div class="scroll">
 
       <div class="sec">
-        <div class="sec-title">Choose a Service</div>
+        <div class="sec-title-row">
+          <a class="back-svc-btn" id="backSvcBtn" onclick="goBack()" style="display:none; color:#0d9488;">
+            <i class="bi bi-arrow-left" style="color:#0d9488;"></i> Back
+          </a>
+          <div class="sec-title">Choose a Service</div>
+        </div>
         <div class="svc-grid" id="svcGrid">
           <div class="svc-loading"><i class="bi bi-arrow-clockwise"></i> Loading services...</div>
         </div>
@@ -133,6 +139,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
   </div>
 
+  <script src="assets/js/app.js"></script>
+  <script>
+    initTheme();
+  </script>
   <script>
     let services = [];   
     let selectedSvc = null;  
@@ -203,7 +213,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       loadTechnicians(selectedSvc.name);
 
       document.getElementById('bookForm').classList.add('show');
+      document.getElementById('backSvcBtn').style.cssText = 'display:inline-flex; color:#0d9488;';
       document.getElementById('bookForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function goBack() {
+      window.location.href = 'home.php';
     }
 
     function setPricing(type, updatePreview = true) {
@@ -329,6 +344,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         if (data.success) {
           toast('Booking confirmed! 🎉', 's');
           document.getElementById('bookForm').classList.remove('show');
+          document.getElementById('backSvcBtn').style.display = 'none';
           document.querySelectorAll('.svc-card').forEach(c => c.classList.remove('selected'));
           document.getElementById('bDate').value = '';
           document.getElementById('bAddr').value = '';

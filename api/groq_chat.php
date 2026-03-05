@@ -9,7 +9,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-define('GROQ_API_KEY', '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');
+define('GROQ_API_KEY', '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');
 define('GROQ_MODEL', 'llama-3.3-70b-versatile');
 
 require_once __DIR__ . '/db.php';

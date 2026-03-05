@@ -16,6 +16,56 @@
   --shadow: rgba(13, 148, 136, .15);
 }
 
+/* ── Dark mode ── */
+body.dark {
+  --td: #f1f5f9;
+  --tm: #94a3b8;
+  --bg-body: #0a1628;
+  --bg-shell: #0f172a;
+  --bg-card: #1e293b;
+  --bg-input: #0f172a;
+  --border-col: #334155;
+  --teal-bg: #0f2027;
+  --teal-mid: #134e4a;
+  --shadow: rgba(0, 0, 0, .4);
+}
+
+body.dark .hdr {
+  background: linear-gradient(135deg, #0f766e, #065f46);
+}
+
+body.dark .price-toggle {
+  background: #1e293b;
+}
+
+body.dark .pt-opt.on {
+  background: #0f172a;
+}
+
+body.dark .fi {
+  color: var(--td);
+  background: var(--bg-input);
+  border-color: var(--border-col);
+}
+
+body.dark .fi:focus {
+  border-color: var(--teal);
+}
+
+body.dark select.fi option {
+  background: #1e293b;
+  color: #f1f5f9;
+}
+
+body.dark .stepper button {
+  background: #1e293b;
+}
+
+body.dark .stepper input {
+  background: #0f172a;
+  color: var(--td);
+}
+
 *,
 *::before,
 *::after {
@@ -123,6 +173,53 @@ body {
   font-weight: 700;
   color: var(--td);
   margin-bottom: 12px;
+}
+
+/* ── Section title row (with optional back button) ── */
+.sec-title-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.sec-title-row .sec-title {
+  margin-bottom: 0;
+}
+
+.back-svc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--teal) !important;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  transition: opacity .2s;
+}
+
+.back-svc-btn:hover {
+  opacity: 0.7;
+  text-decoration: none;
+}
+
+.back-svc-btn:focus,
+.back-svc-btn:active {
+  outline: none;
+  text-decoration: none;
+}
+
+.back-svc-btn i {
+  color: var(--teal) !important;
+  font-size: 13px;
 }
 
 /* ── Service cards ── */

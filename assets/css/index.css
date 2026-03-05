@@ -273,3 +273,123 @@ body {
     transform: rotate(360deg)
   }
 }
+
+/* ── Additions for social buttons, two-col, row helpers ── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+
+.row-sp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  gap: 8px;
+}
+
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--txt-muted);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.check-label input[type=checkbox] {
+  accent-color: var(--teal);
+  width: 14px;
+  height: 14px;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  font-family: 'Nunito', sans-serif;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
+
+.switch-row {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 12px;
+  color: var(--txt-muted);
+  font-weight: 600;
+}
+
+.switch-row a {
+  color: var(--teal);
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.switch-row a:hover {
+  text-decoration: underline;
+}
+
+.social-row {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-social {
+  flex: 1;
+  padding: 11px 8px;
+  border-radius: 12px;
+  border: 2px solid var(--border-col);
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--txt-primary);
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  transition: border-color .2s, background .2s;
+}
+
+.btn-social:hover {
+  border-color: var(--teal);
+  background: rgba(13, 148, 136, .06);
+}
+
+.btn-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-main .btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255, 255, 255, .35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+
+.btn-main.loading .btn-spinner {
+  display: block;
+}
+
+.btn-main.loading .btn-label {
+  display: none;
+}
