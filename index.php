@@ -2,6 +2,12 @@
 
 if (session_status() === PHP_SESSION_NONE)
   session_start();
+// show onboarding once per session if the user is not already authenticated
+if (empty($_SESSION['user_id']) && empty($_SESSION['seen_onboarding'])) {
+  $_SESSION['seen_onboarding'] = true;
+  header('Location: onboarding.php');
+  exit;
+}
 if (!empty($_SESSION['user_id'])) {
   $dest = $_SESSION['user_role'] === 'admin' ? 'admindashboard.php' : 'home.php';
   header("Location: $dest");
