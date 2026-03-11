@@ -1,5 +1,16 @@
 <?php
 session_start();
+
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Content-Type: application/json; charset=utf-8');
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 require __DIR__ . '/db.php';
 
 if (empty($_SESSION['user_id'])) {
@@ -7,7 +18,7 @@ if (empty($_SESSION['user_id'])) {
 }
 
 $user_id = $_SESSION['user_id'];
-$method = $_SERVER['REQUEST_METHOD'];
+$method  = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $stmt = $conn->prepare(
@@ -17,12 +28,10 @@ if ($method === 'GET') {
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
-
     respond(true, '', ['notifications' => $rows]);
 }
 
 if ($method === 'POST') {
-    // Mark ALL as read
     if (!empty($_POST['mark_all'])) {
         $stmt = $conn->prepare(
             "UPDATE notifications SET is_read = 1 WHERE user_id = ?"
@@ -46,3 +55,4 @@ if ($method === 'POST') {
 
     respond(false, 'Invalid request.');
 }
+?>
