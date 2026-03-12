@@ -56,6 +56,12 @@ body, .onboarding-container, .user-type-container {
 
 .hidden { display: none !important; }
 
+/* simple fade-out animation for page transitions */
+body.fade-out, .onboarding-container.fade-out, .user-type-container.fade-out {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

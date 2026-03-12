@@ -2,14 +2,18 @@
 if (session_status() === PHP_SESSION_NONE)
   session_start();
 // show onboarding once per session if the user is not already authenticated
-if (empty($_SESSION['user_id']) && empty($_SESSION['seen_onboarding'])) {
+if (empty($_SESSION['provider_id']) && empty($_SESSION['user_id']) && empty($_SESSION['seen_onboarding'])) {
   $_SESSION['seen_onboarding'] = true;
-  header('Location: onboarding.php');
+  header('Location: ../onboarding.php');
+  exit;
+}
+if (!empty($_SESSION['provider_id'])) {
+  header('Location: provider_home.php');
   exit;
 }
 if (!empty($_SESSION['user_id'])) {
-  $dest = $_SESSION['user_role'] === 'admin' ? '/admin/' : 'home.php';
-  header("Location: $dest");
+  // already logged in as homeowner/client
+  header('Location: ../home.php');
   exit;
 }
 ?>
@@ -19,14 +23,14 @@ if (!empty($_SESSION['user_id'])) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>HomeEase – Login</title>
+  <title>HomeEase – Provider Login</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/index.css">
+  <link rel="stylesheet" href="../assets/css/index.css">
   <style>
     .shell {
       animation: fadeUp .45s cubic-bezier(.34, 1.4, .64, 1) both;
@@ -673,11 +677,11 @@ if (!empty($_SESSION['user_id'])) {
     }
 
     /* FORGOT / SOCIAL */
-    function goForgot() { window.location.href = 'forgot_password.php'; }
+    function goForgot() { window.location.href = '../forgot_password.php'; }
     // socialLogin removed - third-party logins disabled
     function socialLogin(p) { /* no-op */ }
 
-    /* LOGIN - TWO STEP PROCESS */
+    /* LOGIN - EMAIL/PASSWORD */
     function doLogin() {
       clearAlert('loginErr'); clearAlert('loginOk');
       const email = document.getElementById('loginEmail').value.trim();
@@ -688,8 +692,8 @@ if (!empty($_SESSION['user_id'])) {
       }
       setLoading('btnLogin', true);
 
-      // Step 1: Verify email and password
-      fetch('api/login.php', {
+      // Verify provider credentials
+      fetch('../api/provider_login.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -699,42 +703,18 @@ if (!empty($_SESSION['user_id'])) {
       })
         .then(r => r.json())
         .then(d => {
-          if (d.success && d.step === 'pin_required') {
-            // Password verified, now ask for PIN
+          if (d.success) {
             setLoading('btnLogin', false);
-            openPinPad('login', d.user.name);
+            showAlert('loginOk', 'loginOkTxt', 'Login successful! Redirecting…', 'success');
+            const target = (d.redirect || 'provider_home.php').replace(/^provider\//, '');
+            setTimeout(() => { window.location.href = target; }, 700);
           } else {
             setLoading('btnLogin', false);
-            showAlert('loginErr', 'loginErrTxt', d.message || 'Invalid email or password.', 'error');
+            showAlert('loginErr', 'loginErrTxt', d.message || 'Invalid email or password. Please try again.', 'error');
           }
         })
         .catch(() => {
           setLoading('btnLogin', false);
-          showAlert('loginErr', 'loginErrTxt', 'Network error. Please try again.', 'error');
-        });
-    }
-
-    /* VERIFY PIN AFTER LOGIN */
-    function submitLoginPin(pin) {
-      fetch('api/login.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: pin })
-      })
-        .then(r => r.json())
-        .then(d => {
-          if (d.success) {
-            closePinPad();
-            showAlert('loginOk', 'loginOkTxt', 'Login successful! Redirecting…', 'success');
-            setTimeout(() => { window.location.href = d.redirect || 'home.php'; }, 900);
-          } else {
-            shakeError();
-            showAlert('loginErr', 'loginErrTxt', d.message || 'Invalid PIN.', 'error');
-          }
-        })
-        .catch((err) => {
-          console.error('PIN verification error:', err);
-          shakeError();
           showAlert('loginErr', 'loginErrTxt', 'Network error. Please try again.', 'error');
         });
     }
@@ -767,7 +747,7 @@ if (!empty($_SESSION['user_id'])) {
 
     /* SUBMIT REGISTER AFTER PIN */
     function submitReg(pin) {
-      fetch('api/register.php', {
+      fetch('../api/provider_register.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ..._regData, pin })
@@ -778,7 +758,8 @@ if (!empty($_SESSION['user_id'])) {
           setLoading('btnReg', false);
           if (d.success) {
             showAlert('regOk', 'regOkTxt', 'Account created! Redirecting…', 'success');
-            setTimeout(() => { window.location.href = d.redirect || 'home.php'; }, 900);
+            const target = (d.redirect || 'provider_home.php').replace(/^provider\//, '');
+            setTimeout(() => { window.location.href = target; }, 900);
           } else {
             showAlert('regErr', 'regErrTxt', d.message || 'Registration failed.', 'error');
           }
@@ -862,8 +843,10 @@ if (!empty($_SESSION['user_id'])) {
 
     function onPinFull() {
       if (_pinMode === 'login') {
-        // For login, just verify the PIN
-        submitLoginPin(_pinBuf);
+        // Login no longer uses PIN verification.
+        closePinPad();
+        _pinBuf = '';
+        syncDots();
       } else if (_pinMode === 'register') {
         // For registration, follow the two-step PIN process
         if (_pinStep === 'set') {

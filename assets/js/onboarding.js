@@ -39,6 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const homeBtn = document.getElementById('btnHomeowner');
   const serviceBtn = document.getElementById('btnProvider');
-  homeBtn.addEventListener('click', () => window.location.href = 'index.php');
-  serviceBtn.addEventListener('click', () => window.location.href = 'index.php');
+  function navigateWithFade(url) {
+    document.body.classList.add('fade-out');
+    onboard.classList.add('fade-out');
+    document.getElementById('userType').classList.add('fade-out');
+    setTimeout(() => { window.location.href = url; }, 400);
+  }
+  homeBtn.addEventListener('click', () => navigateWithFade('index.php'));
+  serviceBtn.addEventListener('click', () => navigateWithFade('provider/provider_index.php'));
 });
