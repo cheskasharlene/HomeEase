@@ -21,7 +21,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="assets/css/admindashboard.css" rel="stylesheet">
   <style>
- 
+    /* ── Extra styles not in admindashboard.css ── */
     .screen {
       display: none;
       flex-direction: column;
@@ -241,6 +241,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       background: var(--teal-bg);
     }
 
+    /* Status filter tabs */
     .status-tabs {
       display: flex;
       gap: 6px;
@@ -273,6 +274,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       color: #fff;
     }
 
+    /* User avatar */
     .user-av {
       width: 42px;
       height: 42px;
@@ -287,6 +289,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       flex-shrink: 0;
     }
 
+    /* Revenue mini bars */
     .rev-bar-wrap {
       height: 64px;
       display: flex;
@@ -354,7 +357,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 <body>
 
   <div class="shell" id="app">
- 
+    <!-- Loading splash -->
     <div id="ml" class="on">
       <div class="ml-wrap">
         <div class="ml-box"><svg viewBox="0 0 54 54" fill="none">
