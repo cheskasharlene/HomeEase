@@ -80,7 +80,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         <div class="n-hdr">
           <div>
             <div class="n-ttl">Notifications</div>
-            <div style="color:rgba(255,255,255,.7);font-size:12px;" id="nCount">
+            <div style="color:#6B7280;font-size:12px;" id="nCount">
               <?= $unreadCount > 0 ? "$unreadCount unread" : 'All caught up' ?>
             </div>
           </div>
@@ -103,7 +103,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         <div class="ni" onclick="goPage('home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('bookings.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('bookings.php?newbooking=1')" style="cursor:pointer;"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Alerts</span></div>
+        <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
         <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
 
@@ -125,7 +125,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
       }
       if (!notifs.length) {
         html = `<div class="empty">
-          <svg viewBox="0 0 64 64" fill="none" style="width:70px;height:70px"><circle cx="32" cy="32" r="30" fill="#f0fdfa"/><path d="M20 28a12 12 0 0124 0v8l3 4H17l3-4v-8z" stroke="#a78bfa" stroke-width="2" fill="none"/><path d="M29 44a3 3 0 006 0" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 64 64" fill="none" style="width:70px;height:70px"><circle cx="32" cy="32" r="30" fill="#FFF3E0"/><path d="M20 28a12 12 0 0124 0v8l3 4H17l3-4v-8z" stroke="#a78bfa" stroke-width="2" fill="none"/><path d="M29 44a3 3 0 006 0" stroke="#7c3aed" stroke-width="2" stroke-linecap="round"/></svg>
           <div class="empty-ttl">No Notifications</div>
           <p style="font-size:13px;">You're all caught up!</p>
         </div>`;

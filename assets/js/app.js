@@ -23,12 +23,12 @@ function toggleDark() {
 }
 
 const ICONS = {
-  cleaning: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#CCFBF1"/><path d="M12 28h16M20 8v4M14 12l-2 8h16l-2-8H14z" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 20v6M20 20v6M24 20v6" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/><circle cx="20" cy="10" r="2" fill="#0D9488"/></svg>`,
-  plumbing: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#CCFBF1"/><path d="M14 10v8a6 6 0 006 6h0a6 6 0 006-6V10" stroke="#0D9488" stroke-width="2" stroke-linecap="round"/><rect x="12" y="8" width="4" height="4" rx="1" fill="#0D9488"/><rect x="24" y="8" width="4" height="4" rx="1" fill="#0D9488"/><path d="M20 24v6M17 30h6" stroke="#0D9488" stroke-width="2" stroke-linecap="round"/></svg>`,
-  electrical: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#CCFBF1"/><path d="M22 9l-6 11h7l-5 11 10-13h-7L22 9z" fill="#0D9488" stroke="#0D9488" stroke-width="1" stroke-linejoin="round"/></svg>`,
-  painting: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#CCFBF1"/><path d="M13 27l4-4 10-10a2 2 0 00-3-3L14 20l-4 4 3 3z" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="29" r="3" fill="#0D9488" opacity=".5"/><path d="M27 29c0-3 3-4 3-6" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-  appliance: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#CCFBF1"/><rect x="11" y="10" width="18" height="20" rx="3" stroke="#0D9488" stroke-width="2"/><path d="M11 16h18" stroke="#0D9488" stroke-width="2"/><circle cx="15" cy="13" r="1.5" fill="#0D9488"/><circle cx="20" cy="23" r="4" stroke="#0D9488" stroke-width="1.5"/><path d="M20 21v2l1.5 1.5" stroke="#0D9488" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-  gardening: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#CCFBF1"/><path d="M20 30V18M20 18c0-6 8-8 8-8s0 8-8 8zM20 18c0-5-6-8-6-8s0 7 6 8z" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 30h12" stroke="#0D9488" stroke-width="2" stroke-linecap="round"/></svg>`,
+  cleaning: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M12 28h16M20 8v4M14 12l-2 8h16l-2-8H14z" stroke="#E8960F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 20v6M20 20v6M24 20v6" stroke="#E8960F" stroke-width="1.5" stroke-linecap="round"/><circle cx="20" cy="10" r="2" fill="#E8960F"/></svg>`,
+  plumbing: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M14 10v8a6 6 0 006 6h0a6 6 0 006-6V10" stroke="#E8960F" stroke-width="2" stroke-linecap="round"/><rect x="12" y="8" width="4" height="4" rx="1" fill="#E8960F"/><rect x="24" y="8" width="4" height="4" rx="1" fill="#E8960F"/><path d="M20 24v6M17 30h6" stroke="#E8960F" stroke-width="2" stroke-linecap="round"/></svg>`,
+  electrical: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M22 9l-6 11h7l-5 11 10-13h-7L22 9z" fill="#E8960F" stroke="#E8960F" stroke-width="1" stroke-linejoin="round"/></svg>`,
+  painting: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M13 27l4-4 10-10a2 2 0 00-3-3L14 20l-4 4 3 3z" stroke="#E8960F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="29" r="3" fill="#E8960F" opacity=".5"/><path d="M27 29c0-3 3-4 3-6" stroke="#E8960F" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  appliance: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><rect x="11" y="10" width="18" height="20" rx="3" stroke="#E8960F" stroke-width="2"/><path d="M11 16h18" stroke="#E8960F" stroke-width="2"/><circle cx="15" cy="13" r="1.5" fill="#E8960F"/><circle cx="20" cy="23" r="4" stroke="#E8960F" stroke-width="1.5"/><path d="M20 21v2l1.5 1.5" stroke="#E8960F" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+  gardening: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M20 30V18M20 18c0-6 8-8 8-8s0 8-8 8zM20 18c0-5-6-8-6-8s0 7 6 8z" stroke="#E8960F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 30h12" stroke="#E8960F" stroke-width="2" stroke-linecap="round"/></svg>`,
 };
 
 const SVCS = {
@@ -217,7 +217,7 @@ function renderSaved() {
       </div>
       <div>
         <div class="saved-item-price">₱${b.price.toLocaleString()}</div>
-        <div style="font-size:10px;text-align:right;margin-top:3px;color:${b.status === "done" ? "#10B981" : b.status === "progress" ? "#F59E0B" : "#6B7280"};font-weight:700;text-transform:capitalize;">${b.status}</div>
+        <div style="font-size:10px;text-align:right;margin-top:3px;color:${b.status === "done" ? "#10B981" : b.status === "progress" ? "#F5A623" : "#6B7280"};font-weight:700;text-transform:capitalize;">${b.status}</div>
       </div>
     </div>
   `,
@@ -407,7 +407,7 @@ function showToast(msg) {
     t = document.createElement("div");
     t.id = "heToast";
     t.style.cssText =
-      "position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:#0D9488;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:opacity .3s;";
+      "position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:#F5A623;color:#fff;padding:10px 20px;border-radius:30px;font-size:13px;font-weight:700;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:opacity .3s;";
     document.querySelector(".shell").appendChild(t);
   }
   t.textContent = msg;
@@ -505,19 +505,24 @@ function _renderChatMsgs() {
   const msgs = _chatHistory[_chatTab] || [];
   box.innerHTML =
     `<div class="chat-date-div">Today</div>` +
-    msgs.map((m) => {
-      const mine = m.from === "me";
-      // Allow HTML in bot messages (for booking cards etc)
-      const bubbleContent = (!mine && m.html)
-        ? m.html
-        : m.text.replace(/\n/g, "<br>");
-      return `<div class="chat-msg${mine ? " mine" : ""}">
+    msgs
+      .map((m) => {
+        const mine = m.from === "me";
+        // Allow HTML in bot messages (for booking cards etc)
+        const bubbleContent =
+          !mine && m.html ? m.html : m.text.replace(/\n/g, "<br>");
+        return `<div class="chat-msg${mine ? " mine" : ""}">
         ${!mine ? `<div class="chat-msg-av"><i class="bi bi-headset"></i></div>` : ""}
         <div style="max-width:85%;">
-          <div class="chat-bubble" style="${!mine ? "background:#f0fdfa;color:#1a1a2e;border:1.5px solid #ccfbf1;" : ""}">${bubbleContent}<span class="chat-bubble-time">${m.time}</span></div>
+          <div class="chat-bubble" style="${
+            mine
+              ? "background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;border-radius:18px;border-bottom-right-radius:6px;box-shadow:0 4px 14px rgba(232,130,12,.3);padding:10px 14px;"
+              : "background:#FFF3E0;color:#1a1a2e;border:1.5px solid #FDECC8;border-radius:18px;border-bottom-left-radius:6px;padding:10px 14px;"
+          }">${bubbleContent}<span class="chat-bubble-time" style="display:block;font-size:10px;margin-top:3px;text-align:right;color:${mine ? "rgba(255,255,255,.65)" : "#FDBA74"};">${m.time}</span></div>
         </div>
       </div>`;
-    }).join("");
+      })
+      .join("");
   box.scrollTop = box.scrollHeight;
 }
 function _renderChatQuick() {
@@ -551,19 +556,25 @@ function sendChat() {
   // Pass last 12 messages as context
   const history = _chatHistory[_chatTab]
     .slice(-13, -1)
-    .filter(m => m.from === "me" || m.from === "bot")
-    .map(m => ({ role: m.from === "me" ? "user" : "model", text: m.text }));
+    .filter((m) => m.from === "me" || m.from === "bot")
+    .map((m) => ({ role: m.from === "me" ? "user" : "model", text: m.text }));
 
   fetch("api/groq_chat.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, history: history })
+    body: JSON.stringify({ message: text, history: history }),
   })
-    .then(r => r.json())
-    .then(data => {
+    .then((r) => r.json())
+    .then((data) => {
       _hideChatTyping();
       if (!data.success && !data.reply) {
-        _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: data.message || "Sorry, I could not get a response. Please try again." });
+        _chatHistory[_chatTab].push({
+          from: "bot",
+          time: _chatNow(),
+          text:
+            data.message ||
+            "Sorry, I could not get a response. Please try again.",
+        });
         _renderChatMsgs();
         return;
       }
@@ -575,12 +586,21 @@ function sendChat() {
         const successHtml = `
           <div style="background:#d1fae5;border-radius:12px;padding:12px;margin-bottom:6px;border:1.5px solid #6ee7b7;">
             <div style="font-size:13px;font-weight:700;color:#059669;margin-bottom:4px;">✅ Booking Cancelled</div>
-            <div style="font-size:12px;color:#065f46;">Booking #${data.booking_id} has been successfully cancelled.</div>
+            <div style="font-size:12px;color:#E8960F;">Booking #${data.booking_id} has been successfully cancelled.</div>
           </div>
           <div style="font-size:13px;color:#1a1a2e;">${reply}</div>`;
-        _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: reply, html: successHtml });
+        _chatHistory[_chatTab].push({
+          from: "bot",
+          time: _chatNow(),
+          text: reply,
+          html: successHtml,
+        });
       } else {
-        _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: reply });
+        _chatHistory[_chatTab].push({
+          from: "bot",
+          time: _chatNow(),
+          text: reply,
+        });
       }
 
       // Update quick replies based on context
@@ -589,7 +609,11 @@ function sendChat() {
     })
     .catch(() => {
       _hideChatTyping();
-      _chatHistory[_chatTab].push({ from: "bot", time: _chatNow(), text: "Sorry, I am having trouble connecting right now. Please try again in a moment." });
+      _chatHistory[_chatTab].push({
+        from: "bot",
+        time: _chatNow(),
+        text: "Sorry, I am having trouble connecting right now. Please try again in a moment.",
+      });
       _renderChatMsgs();
     });
 }
@@ -600,19 +624,34 @@ function _updateSmartQuickReplies(lastReply) {
   const lower = lastReply.toLowerCase();
   let suggestions = [];
 
-  if (lower.includes("cancel") && (lower.includes("yes") || lower.includes("confirm"))) {
+  if (
+    lower.includes("cancel") &&
+    (lower.includes("yes") || lower.includes("confirm"))
+  ) {
     suggestions = ["YES, cancel it", "No, keep it"];
   } else if (lower.includes("booking") && lower.includes("status")) {
     suggestions = ["Show all bookings", "Cancel a booking", "Book a service"];
   } else if (lower.includes("book") || lower.includes("service")) {
-    suggestions = ["Show my bookings", "What services do you offer?", "Current promos"];
+    suggestions = [
+      "Show my bookings",
+      "What services do you offer?",
+      "Current promos",
+    ];
   } else {
-    suggestions = ["Show my bookings", "Cancel a booking", "Current promos", "Contact support"];
+    suggestions = [
+      "Show my bookings",
+      "Cancel a booking",
+      "Current promos",
+      "Contact support",
+    ];
   }
 
-  qr.innerHTML = suggestions.map(s =>
-    `<span class="chat-qr" onclick="sendQuickReply('${s}')">${s}</span>`
-  ).join("");
+  qr.innerHTML = suggestions
+    .map(
+      (s) =>
+        `<span class="chat-qr" onclick="sendQuickReply('${s}')">${s}</span>`,
+    )
+    .join("");
 }
 function _showChatTyping() {
   if (_chatTyping) return;
@@ -852,7 +891,9 @@ function closeAllOffers() {
 }
 function setOfferFilter(cat) {
   _offerFilter = cat;
-  document.querySelectorAll(".ao-tab").forEach((t) => t.classList.toggle("on", t.dataset.cat === cat));
+  document
+    .querySelectorAll(".ao-tab")
+    .forEach((t) => t.classList.toggle("on", t.dataset.cat === cat));
   loadAndRenderOffers();
 }
 
@@ -860,31 +901,47 @@ let _cachedOffers = null;
 function loadAndRenderOffers() {
   const cnt = document.getElementById("offersListCnt");
   if (!cnt) return;
-  cnt.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px;"><i class="bi bi-arrow-clockwise"></i> Loading offers...</div>';
+  cnt.innerHTML =
+    '<div style="text-align:center;padding:30px;color:#6b7280;font-size:13px;"><i class="bi bi-arrow-clockwise"></i> Loading offers...</div>';
 
   const doRender = (offers) => {
     _cachedOffers = offers;
     const SVC_IMGS_MAP = {
-      'Cleaning':'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80',
-      'Plumbing':'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80',
-      'Electrical':'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80',
-      'Painting':'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=300&q=80',
-      'Gardening':'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&q=80',
+      Cleaning:
+        "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80",
+      Plumbing:
+        "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80",
+      Electrical:
+        "https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80",
+      Painting:
+        "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=300&q=80",
+      Gardening:
+        "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&q=80",
     };
     if (!offers.length) {
-      cnt.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#6b7280;"><i class="bi bi-tag" style="font-size:36px;display:block;margin-bottom:10px;opacity:.3;"></i><p style="font-size:13px;">No active offers right now.<br>Check back soon!</p></div>';
+      cnt.innerHTML =
+        '<div style="text-align:center;padding:40px 20px;color:#6b7280;"><i class="bi bi-tag" style="font-size:36px;display:block;margin-bottom:10px;opacity:.3;"></i><p style="font-size:13px;">No active offers right now.<br>Check back soon!</p></div>';
       return;
     }
-    cnt.innerHTML = offers.map(o => {
-      const discLbl = o.discount_type === 'percent' ? `${o.discount_value}% OFF` : `₱${parseFloat(o.discount_value).toLocaleString()} OFF`;
-      const expLbl  = o.expires_at ? '🕐 Expires ' + o.expires_at.split(' ')[0] : '✅ No expiry';
-      const minLbl  = parseFloat(o.min_booking_price) > 0 ? `Min. ₱${parseFloat(o.min_booking_price).toLocaleString()} booking` : 'No minimum';
-      const img = SVC_IMGS_MAP['Cleaning'];
-      return `
+    cnt.innerHTML = offers
+      .map((o) => {
+        const discLbl =
+          o.discount_type === "percent"
+            ? `${o.discount_value}% OFF`
+            : `₱${parseFloat(o.discount_value).toLocaleString()} OFF`;
+        const expLbl = o.expires_at
+          ? "🕐 Expires " + o.expires_at.split(" ")[0]
+          : "✅ No expiry";
+        const minLbl =
+          parseFloat(o.min_booking_price) > 0
+            ? `Min. ₱${parseFloat(o.min_booking_price).toLocaleString()} booking`
+            : "No minimum";
+        const img = SVC_IMGS_MAP["Cleaning"];
+        return `
         <div class="offer-card" style="background:var(--bg-card,#fff);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
-          <div style="background:linear-gradient(135deg,#0d9488,#0f766e);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="background:linear-gradient(135deg,#F5A623,#FDECC8);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;">
             <div>
-              <div style="color:rgba(255,255,255,.8);font-size:11px;font-weight:700;margin-bottom:4px;">SPECIAL OFFER</div>
+              <div style="color:rgba(255,255,255,.85);font-size:10px;font-weight:800;letter-spacing:.8px;margin-bottom:4px;">SPECIAL OFFER</div>
               <div style="color:#fff;font-size:18px;font-weight:800;font-family:'Poppins',sans-serif;">${discLbl}</div>
               <div style="color:rgba(255,255,255,.85);font-size:12px;margin-top:2px;">${o.title}</div>
             </div>
@@ -894,28 +951,34 @@ function loadAndRenderOffers() {
             </div>
           </div>
           <div style="padding:12px 16px;">
-            ${o.description ? `<div style="font-size:12px;color:#6b7280;margin-bottom:8px;">${o.description}</div>` : ''}
+            ${o.description ? `<div style="font-size:12px;color:#6b7280;margin-bottom:8px;">${o.description}</div>` : ""}
             <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;font-weight:600;">
               <span>📋 ${minLbl}</span>
               <span>${expLbl}</span>
             </div>
           </div>
         </div>`;
-    }).join('');
+      })
+      .join("");
   };
 
   // Use cache if available, otherwise fetch
-  if (_cachedOffers !== null) { doRender(_cachedOffers); return; }
-  fetch('api/bookings_api.php?action=offers')
-    .then(r => r.json())
-    .then(data => doRender(data.success ? data.offers : []))
+  if (_cachedOffers !== null) {
+    doRender(_cachedOffers);
+    return;
+  }
+  fetch("api/bookings_api.php?action=offers")
+    .then((r) => r.json())
+    .then((data) => doRender(data.success ? data.offers : []))
     .catch(() => {
-      cnt.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;font-size:13px;">Could not load offers.</div>';
+      cnt.innerHTML =
+        '<div style="text-align:center;padding:30px;color:#ef4444;font-size:13px;">Could not load offers.</div>';
     });
 }
 
-function renderOffers() { loadAndRenderOffers(); } // backward compat
-
+function renderOffers() {
+  loadAndRenderOffers();
+} // backward compat
 
 function injectGlobalModals() {
   const shell = document.querySelector(".shell");
@@ -1218,7 +1281,6 @@ function injectGlobalModals() {
     </div>`;
   shell.appendChild(chat);
 }
-
 
 let pinStep = "set",
   firstPin = "",

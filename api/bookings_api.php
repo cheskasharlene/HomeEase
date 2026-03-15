@@ -60,7 +60,7 @@ if ($method === 'GET' && $action === 'offers') {
 }
 
 if ($method === 'GET' && $action === '') {
-    // Get actual columns in bookings table
+
     $cols = [];
     $cr = $conn->query("SHOW COLUMNS FROM bookings");
     if ($cr) {

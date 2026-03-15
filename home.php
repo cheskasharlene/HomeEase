@@ -32,30 +32,137 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
   <link href="assets/css/home.css" rel="stylesheet">
   <style>
     :root {
-      --teal: #0D9488;
-      --teal2: #0f766e;
-      --teal-lt: #ccfbf1;
-      --teal-xlt: #f0fdf9;
+      --teal: #F5A623;
+      --teal2: #E8960F;
+      --teal-lt: #FDECC8;
+      --teal-xlt: #FFF3E0;
       --gold: #f59e0b;
       --red: #ef4444;
-      --td: #111827;
-      --tm: #6b7280;
-      --tbg: #f3f4f6;
+      --td: #1A1A2E;
+      --tm: #8E8E93;
+      --tbg: #F8F8F8;
       --card: #ffffff;
       --border: #e5e7eb;
       --radius: 18px;
-      --shadow: 0 2px 16px rgba(13, 148, 136, .10);
+      --shadow: 0 2px 16px rgba(245, 166, 35, .09);
     }
 
     body.dark {
-      --td: #f1f5f9;
-      --tm: #94a3b8;
-      --tbg: #1e293b;
-      --card: #0f172a;
-      --border: #334155;
-      --teal-xlt: #0f2027;
-      --teal-lt: #134e4a;
-      background: #0a1628;
+      --td: #FFF3DC;
+      --tm: #B8A882;
+      --tbg: #2A2216;
+      --card: #2A2216;
+      --border: #4A3E28;
+      --teal-xlt: #2A2216;
+      --teal-lt: #4A3E28;
+      background: #18140C;
+    }
+
+    body.dark .shell {
+      background: #201A10;
+    }
+
+    body.dark #home {
+      background: #18140C;
+    }
+
+    body.dark .q-stat-chip {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+    }
+
+    body.dark .q-stat-chip .lbl {
+      color: #B8A882 !important;
+    }
+
+    body.dark .svc-card {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+    }
+
+    body.dark .svc-nm {
+      color: #FFF3DC !important;
+    }
+
+    body.dark .svc-ic {
+      background: #332A1C !important;
+      border-color: #4A3E28 !important;
+    }
+
+    body.dark .pop-card {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+    }
+
+    body.dark .pop-nm {
+      color: #FFF3DC !important;
+    }
+
+    body.dark .pop-d {
+      color: #B8A882 !important;
+    }
+
+    body.dark .cat-pill {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+      color: #B8A882 !important;
+    }
+
+    body.dark .sec-ttl,
+    body.dark .sec-row .sec-ttl {
+      color: #FFF3DC !important;
+    }
+
+    body.dark .s-bar {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+      color: #B8A882 !important;
+    }
+
+    body.dark .h-greet {
+      color: rgba(255, 255, 255, .75) !important;
+    }
+
+    body.dark .h-name {
+      color: #fff !important;
+    }
+
+    body.dark .dm-btn {
+      background: rgba(255, 255, 255, .15) !important;
+      color: #fff !important;
+    }
+
+    body.dark .h-bell {
+      background: rgba(255, 255, 255, .15) !important;
+      color: #fff !important;
+    }
+
+    body.dark .booking-card {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+    }
+
+    body.dark .worker-card {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+    }
+
+    body.dark .worker-name {
+      color: #FFF3DC !important;
+    }
+
+    body.dark .worker-role {
+      color: #B8A882 !important;
+    }
+
+    body.dark .nearby-card {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
+    }
+
+    body.dark .tip-card {
+      background: #2A2216 !important;
+      border-color: #4A3E28 !important;
     }
 
     * {
@@ -79,32 +186,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     /* HEADER */
     .h-hdr {
-      background: linear-gradient(160deg, #0D9488 0%, #0f766e 60%, #065f46 100%);
-      padding: 52px 20px 28px;
-      position: relative;
-      overflow: hidden;
+      background: linear-gradient(135deg, #E8820C 0%, #F5A623 35%, #FFB347 65%, #FDECC8 100%) !important;
+      border-radius: 0 0 28px 28px !important;
+      box-shadow: none !important;
+      padding: 52px 20px 28px !important;
+      position: relative !important;
+      overflow: hidden !important;
+      border-bottom: none !important;
     }
 
     .h-hdr::before {
-      content: '';
-      position: absolute;
-      top: -40px;
-      right: -40px;
-      width: 180px;
-      height: 180px;
-      background: rgba(255, 255, 255, .07);
-      border-radius: 50%;
+      display: none;
     }
 
     .h-hdr::after {
-      content: '';
-      position: absolute;
-      bottom: -60px;
-      left: -30px;
-      width: 220px;
-      height: 220px;
-      background: rgba(255, 255, 255, .05);
-      border-radius: 50%;
+      display: none;
     }
 
     .h-top {
@@ -116,14 +212,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     .h-greet {
       font-size: 13px;
-      color: rgba(255, 255, 255, .75);
+      color: #6B7280 !important;
       font-family: 'Nunito', sans-serif;
       font-weight: 600;
     }
 
     .h-name {
       font-size: 22px;
-      color: #fff;
+      color: #1A1A2E !important;
       font-family: 'Poppins', sans-serif;
       font-weight: 800;
       letter-spacing: -.3px;
@@ -136,7 +232,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .dm-btn {
-      background: rgba(255, 255, 255, .15);
+      background: rgba(255, 255, 255, .55) !important;
       border: none;
       cursor: pointer;
       width: 38px;
@@ -145,24 +241,22 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: #1A1A2E !important;
       font-size: 16px;
-      backdrop-filter: blur(8px);
     }
 
     .h-bell {
-      background: rgba(255, 255, 255, .15);
+      background: rgba(255, 255, 255, .55) !important;
       width: 38px;
       height: 38px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: #1A1A2E !important;
       font-size: 18px;
       cursor: pointer;
       position: relative;
-      backdrop-filter: blur(8px);
     }
 
     .h-bell-dot {
@@ -176,8 +270,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .s-bar {
-      background: #fff;
-      border-radius: 14px;
+      background: #F5F5F4;
+      border-radius: 50px;
+      border: 1.5px solid #E7E5E4;
       padding: 13px 16px;
       display: flex;
       align-items: center;
@@ -192,7 +287,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .s-bar i {
-      color: var(--teal);
+      color: #F5A623;
       font-size: 16px;
     }
 
@@ -210,13 +305,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       flex: 1;
       box-shadow: var(--shadow);
       text-align: center;
-      border: 1px solid var(--border);
+      border: 1.5px solid #F5E6CC;
     }
 
     .q-stat-chip .val {
       font-size: 22px;
       font-weight: 800;
-      color: var(--teal);
+      color: #F5A623;
       font-family: 'Poppins', sans-serif;
     }
 
@@ -281,8 +376,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .cat-pill.active {
-      background: var(--teal);
-      border-color: var(--teal);
+      background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
+      border-color: #F5A623;
       color: #fff;
     }
 
@@ -315,8 +410,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     .svc-ic {
       width: 52px;
       height: 52px;
-      background: var(--teal-xlt);
+      background: #FFF8F0;
       border-radius: 14px;
+      border: 1px solid #FFE5B4;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -350,7 +446,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     .promo-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(90deg, rgba(13, 148, 136, .9) 0%, rgba(6, 95, 70, .6) 100%);
+      background: linear-gradient(#fff 0%, rgba(234, 88, 12, 0.5) 100%);
     }
 
     .promo-content {
@@ -442,7 +538,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       font-family: 'Nunito', sans-serif;
     }
 
-    /* POPULAR CARDS */
     .pop-row {
       display: flex;
       gap: 14px;
@@ -503,7 +598,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       margin-top: 8px;
     }
 
-    /* WORKERS */
     .worker-row {
       display: flex;
       gap: 12px;
@@ -555,7 +649,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     .worker-jobs {
       font-size: 11px;
-      color: var(--teal);
+      color: #F5A623;
       font-weight: 700;
       font-family: 'Nunito', sans-serif;
       margin-top: 6px;
@@ -565,7 +659,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       position: absolute;
       top: 8px;
       right: 8px;
-      background: var(--teal);
+      background: #F5A623;
       color: #fff;
       font-size: 9px;
       font-weight: 800;
@@ -574,7 +668,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       border-radius: 20px;
     }
 
-    /* BOOKINGS */
     .booking-list {
       padding: 0 20px;
       display: flex;
@@ -598,7 +691,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       width: 46px;
       height: 46px;
       border-radius: 14px;
-      background: var(--teal-xlt);
+      background: #FFF8F0;
+      border: 1px solid #FFE5B4;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -634,7 +728,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     .status-done {
       background: #d1fae5;
-      color: #065f46;
+      color: #C17A10;
     }
 
     .status-pending {
@@ -647,7 +741,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       color: #1e40af;
     }
 
-    /* NEARBY */
     .nearby-list {
       padding: 0 20px;
       display: flex;
@@ -703,7 +796,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       flex-shrink: 0;
     }
 
-    /* ── EXPANDED TIPS ── */
+
     .tip-list {
       padding: 0 20px;
       display: flex;
@@ -711,7 +804,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       gap: 16px;
     }
 
-    /* Featured tip – tall hero card */
+
     .tip-featured {
       background: var(--card);
       border-radius: var(--radius);
@@ -842,9 +935,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     .tip-item-tag {
       font-size: 10px;
       font-weight: 800;
-      color: var(--teal);
+      color: #F5A623;
       font-family: 'Poppins', sans-serif;
-      background: var(--teal-xlt);
+      background: #FFF8F0;
+      border: 1px solid #FFE5B4;
       padding: 3px 8px;
       border-radius: 10px;
     }
@@ -855,7 +949,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       font-family: 'Nunito', sans-serif;
     }
 
-    /* BOTTOM NAV */
+
     .bnav {
       position: fixed;
       bottom: 0;
@@ -889,7 +983,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .ni.on i {
-      color: var(--teal);
+      color: #F5A623;
     }
 
     .nl {
@@ -900,7 +994,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .ni.on .nl {
-      color: var(--teal);
+      color: #F5A623;
     }
 
     .nb-c {
@@ -911,7 +1005,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 16px rgba(13, 148, 136, .4);
+      box-shadow: 0 4px 16px rgba(245, 166, 35, .35);
       margin-top: -22px;
     }
 
@@ -932,6 +1026,28 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     .h-pb {
       height: 20px;
+    }
+
+    body.dark .h-hdr {
+      background: linear-gradient(135deg, #7A3800 0%, #A85A00 30%, #C8780A 60%, #8B6200 100%) !important;
+    }
+
+    body.dark .h-greet {
+      color: rgba(255, 255, 255, .70) !important;
+    }
+
+    body.dark .h-name {
+      color: #fff !important;
+    }
+
+    body.dark .dm-btn {
+      background: rgba(255, 255, 255, .12) !important;
+      color: #fff !important;
+    }
+
+    body.dark .h-bell {
+      background: rgba(255, 255, 255, .12) !important;
+      color: #fff !important;
     }
   </style>
 </head>
@@ -956,16 +1072,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     <div class="screen" id="home">
       <div class="h-scroll">
 
-        <!-- HEADER -->
+
         <div class="h-hdr">
           <div class="h-top">
             <div>
-              <div class="h-greet"><?= $greeting ?> 👋</div>
+              <div class="h-greet"><?= $greeting ?></div>
               <div class="h-name" id="hUserName"><?= $userName ?></div>
             </div>
             <div class="h-top-right">
-              <button class="dm-btn" onclick="toggleDark()" title="Toggle dark mode"><i class="bi bi-moon-fill"
-                  id="dmIcon"></i></button>
               <div class="h-bell" onclick="openChat('support')" title="Chat with us" style="position:relative;">
                 <i class="bi bi-chat-dots-fill"></i>
                 <div
@@ -976,13 +1090,16 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                 <i class="bi bi-bell-fill"></i>
                 <div class="h-bell-dot" id="bellDot" style="display:none;"></div>
               </div>
+              <div class="h-bell" onclick="if(confirm('Log out?'))window.location.href='logout.php'" title="Log out">
+                <i class="bi bi-box-arrow-right"></i>
+              </div>
             </div>
           </div>
           <div class="s-bar" onclick="openSearch()"><i class="bi bi-search"></i><span>Search for a service...</span>
           </div>
         </div>
 
-        <!-- QUICK STATS: bookings + saved only -->
+   
         <div class="q-stats">
           <div class="q-stat-chip">
             <div class="val" id="statBook">3</div>
@@ -994,7 +1111,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <!-- BROWSE CATEGORIES -->
+  
         <div class="sec-row">
           <div class="sec-ttl">Browse by Category</div>
         </div>
@@ -1008,13 +1125,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="cat-pill">Appliances</div>
         </div>
 
-        <!-- SERVICES GRID -->
+
         <div class="sec-row" style="padding-top:12px;">
           <div class="sec-ttl">Our Services</div><span class="see-more" onclick="openAllServices()">See all →</span>
         </div>
         <div class="svc-grid" id="svcGrid"></div>
 
-        <!-- MAIN PROMO -->
+ 
         <div style="margin-top:20px;">
           <div class="promo" onclick="openAllOffers()">
             <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" alt="Promo">
@@ -1027,12 +1144,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <!-- MINI PROMOS -->
+
         <div class="promo-sm-row">
           <div class="promo-sm">
             <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80" alt="">
             <div class="promo-sm-overlay"
-              style="background:linear-gradient(180deg,transparent 0%,rgba(13,148,136,.85) 100%);"></div>
+              style="background:linear-gradient(180deg,transparent 0%,rgba(245,166,35,.85) 100%);"></div>
             <div class="promo-sm-content">
               <div class="promo-sm-ttl">Free Deep Clean</div>
               <div class="promo-sm-s">New users only</div>
@@ -1041,7 +1158,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="promo-sm">
             <img src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80" alt="">
             <div class="promo-sm-overlay"
-              style="background:linear-gradient(180deg,transparent 0%,rgba(6,95,70,.85) 100%);"></div>
+              style="background:linear-gradient(180deg,transparent 0%,rgba(234,88,12,.85) 100%);"></div>
             <div class="promo-sm-content">
               <div class="promo-sm-ttl">₱200 Off Electric</div>
               <div class="promo-sm-s">This weekend only</div>
@@ -1049,20 +1166,20 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <!-- MOST POPULAR -->
+   
         <div class="sec-row">
           <div class="sec-ttl">Most Popular Services</div><span class="see-more" onclick="openAllServices()">See more
             →</span>
         </div>
         <div class="pop-row" id="popRow"></div>
 
-        <!-- OUR PROS -->
+  
         <div class="sec-row">
           <div class="sec-ttl">Our Pros</div><span class="see-more" onclick="goPage('workers.php')">See all →</span>
         </div>
         <div class="worker-row" id="workerRow"></div>
 
-        <!-- RECENT BOOKINGS -->
+   
         <div class="sec-row">
           <div class="sec-ttl">Recent Bookings</div><span class="see-more" onclick="goPage('bookings.php')">See all
             →</span>
@@ -1094,7 +1211,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <!-- NEARBY -->
+ 
         <div class="sec-row">
           <div class="sec-ttl">Near You in Mauban</div><span class="see-more">View map →</span>
         </div>
@@ -1127,12 +1244,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             <div class="nearby-price">₱699</div>
           </div>
         </div>
-
-        <!-- HOME CARE TIPS – expanded -->
-        <div class="sec-row">
-          <div class="sec-ttl">Home Care Tips</div><span class="see-more">Read more →</span>
-        </div>
-        <div class="tip-list" id="tipList"></div>
 
         <div class="h-pb"></div>
       </div>
@@ -1174,7 +1285,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>`;
     });
 
-    // Popular services (no stars)
+  
     const popData = [
       { svc: 'Cleaning', title: 'Deep Home Cleaning', desc: 'Complete house cleaning', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80', price: '₱599' },
       { svc: 'Plumbing', title: 'Pipe Leak Repair', desc: 'Fix leaks & clogs fast', img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80', price: '₱450' },
@@ -1195,7 +1306,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>`;
     });
 
-    // Our Pros — loaded live from database
+
     async function loadPros() {
       const workerRow = document.getElementById('workerRow');
       workerRow.innerHTML = '<div style="padding:20px;color:var(--tm);font-size:13px;font-family:Nunito,sans-serif;">Loading...</div>';
@@ -1210,7 +1321,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="worker-card" onclick="goPage('workers.php')">
             ${w.top ? '<div class="worker-badge">TOP</div>' : ''}
             <img class="worker-avatar" src="${w.img}" alt="${w.name}"
-              onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent('${w.name}')+'&background=ccfbf1&color=0d9488&size=128'">
+              onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent('${w.name}')+'&background=FDECC8&color=F5A623&size=128'">
             <div class="worker-name">${w.name}</div>
             <div class="worker-role">${w.specialty}</div>
             <div class="worker-jobs">${w.jobs_done} jobs done</div>
@@ -1221,91 +1332,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
     loadPros();
 
-    // Expanded Tips — first card is featured hero, rest are horizontal items
-    const tips = [
-      {
-        tag: 'CLEANING',
-        ttl: '5 Tips for a Spotless Kitchen Every Week',
-        desc: 'Keeping your kitchen clean doesn\'t have to be a weekend project. These simple daily habits will have your kitchen sparkling with minimal effort.',
-        img: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-        min: '3 min read',
-        featured: true
-      },
-      {
-        tag: 'PLUMBING',
-        ttl: 'How to Prevent Pipe Leaks Before They Start',
-        desc: 'Regular checks and small fixes can save you thousands in water damage.',
-        img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80',
-        min: '4 min read',
-        featured: false
-      },
-      {
-        tag: 'GARDENING',
-        ttl: 'Best Low-Maintenance Plants for Philippine Homes',
-        desc: 'Tropical beauties that thrive in heat and humidity with almost no care.',
-        img: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80',
-        min: '5 min read',
-        featured: false
-      },
-      {
-        tag: 'ELECTRICAL',
-        ttl: 'Warning Signs Your Home Needs Rewiring ASAP',
-        desc: 'Flickering lights, tripped breakers, burning smells — don\'t ignore these.',
-        img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=400&q=80',
-        min: '3 min read',
-        featured: false
-      },
-      {
-        tag: 'PAINTING',
-        ttl: 'Choosing the Right Paint Finish for Every Room',
-        desc: 'Matte, eggshell, satin or gloss — each has its place in your home.',
-        img: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=400&q=80',
-        min: '4 min read',
-        featured: false
-      },
-      {
-        tag: 'APPLIANCES',
-        ttl: 'How to Extend the Life of Your Home Appliances',
-        desc: 'Simple maintenance routines that keep your AC, fridge and washer running longer.',
-        img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80',
-        min: '5 min read',
-        featured: false
-      },
-    ];
 
-    const tipList = document.getElementById('tipList');
-    tips.forEach(t => {
-      if (t.featured) {
-        tipList.innerHTML += `
-          <div class="tip-featured">
-            <img class="tip-featured-img" src="${t.img}" alt="${t.ttl}">
-            <div class="tip-featured-body">
-              <div class="tip-tag">${t.tag}</div>
-              <div class="tip-featured-ttl">${t.ttl}</div>
-              <div class="tip-featured-desc">${t.desc}</div>
-              <div class="tip-featured-foot">
-                <div class="tip-min"><i class="bi bi-clock"></i> ${t.min}</div>
-                <button class="tip-read-btn">Read Now</button>
-              </div>
-            </div>
-          </div>`;
-      } else {
-        tipList.innerHTML += `
-          <div class="tip-item">
-            <img class="tip-item-img" src="${t.img}" alt="${t.ttl}">
-            <div class="tip-item-body">
-              <div class="tip-item-ttl">${t.ttl}</div>
-              <div class="tip-item-desc">${t.desc}</div>
-              <div class="tip-item-foot">
-                <span class="tip-item-tag">${t.tag}</span>
-                <span class="tip-item-min">🕐 ${t.min}</span>
-              </div>
-            </div>
-          </div>`;
-      }
-    });
-
-    // Category pill toggle
     document.querySelectorAll('.cat-pill').forEach(pill => {
       pill.addEventListener('click', function () {
         document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
@@ -1313,7 +1340,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       });
     });
 
-    // Nav
+
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>

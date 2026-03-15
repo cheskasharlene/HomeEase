@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') { respond(false, 'Invalid request.');
 $uid     = $_SESSION['user_id'];
 $section = $_POST['section'] ?? 'profile';
 
+
 if ($section === 'profile') {
     $name    = trim($_POST['name']    ?? '');
     $email   = trim($_POST['email']   ?? '');
@@ -67,6 +68,7 @@ if ($section === 'security') {
     respond(false, 'Could not update password.');
 }
 
+
 if ($section === 'address') {
     $address = trim($_POST['address'] ?? '');
     $stmt = $conn->prepare("UPDATE users SET address=? WHERE id=?");
@@ -78,11 +80,13 @@ if ($section === 'address') {
     respond(false, 'Could not save address.');
 }
 
+
 if ($section === 'pin') {
     $pin = trim($_POST['pin'] ?? '');
     if (!$pin || !preg_match('/^\d{4}$/', $pin)) {
         respond(false, 'A valid 4-digit PIN is required.');
     }
+
     $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_code VARCHAR(255) DEFAULT NULL");
 
     $hashed = password_hash($pin, PASSWORD_BCRYPT);

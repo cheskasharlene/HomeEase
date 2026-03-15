@@ -40,8 +40,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       <div class="sec">
         <div class="sec-title-row">
-          <a class="back-svc-btn" id="backSvcBtn" onclick="goBack()" style="display:none; color:#0d9488;">
-            <i class="bi bi-arrow-left" style="color:#0d9488;"></i> Back
+          <a class="back-svc-btn" id="backSvcBtn" onclick="goBack()" style="display:none; color:#F5A623;">
+            <i class="bi bi-arrow-left" style="color:#F5A623;"></i> Back
           </a>
           <div class="sec-title">Choose a Service</div>
         </div>
@@ -144,9 +144,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     initTheme();
   </script>
   <script>
-    let services = [];   
-    let selectedSvc = null;  
-    let selectedTechId = null;  
+    let services = [];
+    let selectedSvc = null;
+    let selectedTechId = null;
     let pricingType = 'flat';
     let hours = 1;
 
@@ -213,7 +213,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       loadTechnicians(selectedSvc.name);
 
       document.getElementById('bookForm').classList.add('show');
-      document.getElementById('backSvcBtn').style.cssText = 'display:inline-flex; color:#0d9488;';
+      document.getElementById('backSvcBtn').style.cssText = 'display:inline-flex; color:#F5A623;';
       document.getElementById('bookForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 

@@ -44,6 +44,7 @@ if ($action === 'pros') {
     exit;
 }
 
+// ── LIST (for workers.php full listing) ───────────────────────────
 if ($action === 'list') {
 
     $search  = trim($_GET['search'] ?? '');

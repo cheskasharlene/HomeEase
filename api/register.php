@@ -22,7 +22,6 @@ $email   = trim($input['email']    ?? '');
 $phone   = trim($input['phone']    ?? '');
 $address = trim($input['address']  ?? '');
 $pass    = trim($input['password'] ?? '');
-$pin     = trim($input['pin']      ?? '');
 
 if (!$first || !$last || !$email || !$pass) {
     respond(false, 'Please fill in all required fields.');
@@ -32,9 +31,6 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 if (strlen($pass) < 8) {
     respond(false, 'Password must be at least 8 characters.');
-}
-if (!$pin || !preg_match('/^\d{4}$/', $pin)) {
-    respond(false, 'A valid 4-digit PIN is required.');
 }
 
 $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
@@ -47,15 +43,12 @@ if ($stmt->num_rows > 0) {
 $stmt->close();
 
 $hashed_pass = password_hash($pass, PASSWORD_BCRYPT);
-$hashed_pin  = password_hash($pin,  PASSWORD_BCRYPT);
 
-$conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_code VARCHAR(255) DEFAULT NULL");
-
-$stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password, pin_code) VALUES (?, ?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password) VALUES (?, ?, ?, ?, ?)");
 if (!$stmt) {
     respond(false, 'DB error: ' . $conn->error);
 }
-$stmt->bind_param("ssssss", $name, $email, $phone, $address, $hashed_pass, $hashed_pin);
+$stmt->bind_param("sssss", $name, $email, $phone, $address, $hashed_pass);
 
 if ($stmt->execute()) {
     $user_id = $conn->insert_id;

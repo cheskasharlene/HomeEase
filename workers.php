@@ -157,7 +157,7 @@ if (empty($_SESSION['user_id'])) {
       }
       el.innerHTML = workers.map(w => {
         const safeRole = (w.role || '').replace(/'/g, "\\'");
-        const imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=ccfbf1&color=0d9488&size=128`;
+        const imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=FDECC8&color=F5A623&size=128`;
         const isOffline = w.status === 'offline';
         return `
           <div class="w-card" onclick="bookWorker(${w.id},'${safeRole}')">
@@ -232,7 +232,7 @@ if (empty($_SESSION['user_id'])) {
         <div class="ni" onclick="goPage('home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('bookings.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('bookings.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Alerts</span><div class="ndot"></div></div>
+        <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
         <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
   </script>
