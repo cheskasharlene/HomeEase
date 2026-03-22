@@ -60,9 +60,8 @@ $unread = count(array_filter($notifs, fn($n) => !$n['read']));
             class="nl">Home</span></div>
         <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span
             class="nl">Requests</span></div>
-        <div class="ni" onclick="goPage('provider_services.php')">
-          <div class="nb-c"><i class="bi bi-plus-lg"></i></div>
-        </div>
+        <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span
+            class="nl">Calendar</span></div>
         <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
         <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span
             class="nl">Profile</span></div>

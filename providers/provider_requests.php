@@ -350,7 +350,7 @@ if (empty($_SESSION['provider_id'])) {
               <div class="req-info">
                 <div class="req-type">Plumbing · <span class="status-pill new">New</span></div>
                 <div class="req-name">John Doe</div>
-                <div class="req-meta">📍 123 Main St, Lucena City<br>🕐 Apr 1, 10:00 AM<br>📝 Fix kitchen sink leak
+                <div class="req-meta">📍 123 Main St, Lucena City<br>� Apr 1, 10:00 AM<br>📝 Fix kitchen sink leak
                 </div>
               </div>
               <div class="req-price-tag">₱2,500</div>
@@ -367,7 +367,7 @@ if (empty($_SESSION['provider_id'])) {
               <div class="req-info">
                 <div class="req-type">Electrical · <span class="status-pill new">New</span></div>
                 <div class="req-name">Maria Santos</div>
-                <div class="req-meta">📍 Rizal Avenue, Quezon<br>🕐 Apr 2, 2:00 PM<br>📝 Replace circuit breaker</div>
+                <div class="req-meta">📍 Rizal Avenue, Quezon<br>� Apr 2, 2:00 PM<br>📝 Replace circuit breaker</div>
               </div>
               <div class="req-price-tag">₱3,750</div>
             </div>
@@ -384,9 +384,8 @@ if (empty($_SESSION['provider_id'])) {
             class="nl">Home</span></div>
         <div class="ni on" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span
             class="nl">Requests</span></div>
-        <div class="ni" onclick="goPage('provider_services.php')">
-          <div class="nb-c"><i class="bi bi-plus-lg"></i></div>
-        </div>
+        <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span
+          class="nl">Calendar</span></div>
         <div class="ni" onclick="goPage('provider_notifications.php')"><i class="bi bi-bell-fill"></i><span
             class="nl">Notifications</span></div>
         <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span

@@ -18,12 +18,6 @@ if ($row) {
   $_SESSION['user_address'] = $row['address'] ?? '';
 }
 
-$bstmt = $conn->prepare("SELECT COUNT(*) FROM bookings WHERE user_id = ?");
-$bstmt->bind_param("i", $_SESSION['user_id']);
-$bstmt->execute();
-$bstmt->bind_result($bookingCount);
-$bstmt->fetch();
-$bstmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -463,24 +457,6 @@ $bstmt->close();
             </div>
           </div>
         </div>
-
-
-        <div class="p-stats">
-          <div class="p-stat">
-            <div class="p-stat-val" id="statBookings">0</div>
-            <div class="p-stat-lbl">Bookings</div>
-          </div>
-          <div class="p-stat">
-            <div class="p-stat-val">4.9</div>
-            <div class="p-stat-lbl">Rating</div>
-          </div>
-          <div class="p-stat">
-            <div class="p-stat-val">2</div>
-            <div class="p-stat-lbl">Saved</div>
-          </div>
-        </div>
-
- 
         <div class="p-body">
 
        
@@ -528,43 +504,6 @@ $bstmt->close();
             </div>
           </div>
 
-  
-          <div class="p-sec">
-            <div class="p-sec-ttl">Preferences</div>
-            <div class="p-row">
-              <div class="p-row-ic">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="#F5A623" stroke-width="2"
-                    stroke-linejoin="round" />
-                </svg>
-              </div>
-              <div class="p-row-info">
-                <div class="p-row-lbl">Dark Mode</div>
-                <div class="p-row-sub">Switch to dark theme</div>
-              </div>
-              <div class="toggle-wrap">
-                <div class="toggle" id="darkModeToggle" onclick="toggleDarkMode()"></div>
-              </div>
-            </div>
-            <div class="p-row">
-              <div class="p-row-ic">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M18 8a6 6 0 00-12 0v4l-2 4h16l-2-4V8z" stroke="#F5A623" stroke-width="2"
-                    stroke-linejoin="round" />
-                  <path d="M10 18a2 2 0 004 0" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
-                </svg>
-              </div>
-              <div class="p-row-info">
-                <div class="p-row-lbl">Push Notifications</div>
-                <div class="p-row-sub">Booking alerts & updates</div>
-              </div>
-              <div class="toggle-wrap">
-                <div class="toggle on" onclick="this.classList.toggle('on')"></div>
-              </div>
-            </div>
-          </div>
-
-    
           <div class="p-sec">
             <div class="p-sec-ttl">Support</div>
             <div class="p-row" onclick="openSettingsScreen('help')">
@@ -595,7 +534,6 @@ $bstmt->close();
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
           </div>
-
 
         </div>
       </div>
@@ -914,7 +852,6 @@ $bstmt->close();
       const u = window.HE.user;
       document.getElementById('profileName').textContent = u.name || 'User';
       document.getElementById('profileEmail').textContent = u.email || '';
-      document.getElementById('statBookings').textContent = <?= (int) $bookingCount ?>;
 
       const shortAddr = u.address
         ? (u.address.length > 22 ? u.address.slice(0, 22) + '…' : u.address)
@@ -1046,8 +983,10 @@ $bstmt->close();
 
     function syncDarkToggles() {
       const isDark = document.body.classList.contains('dark');
-      document.getElementById('darkModeToggle').classList.toggle('on', isDark);
-      document.getElementById('stDarkToggle').classList.toggle('on', isDark);
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      const stDarkToggle = document.getElementById('stDarkToggle');
+      if (darkModeToggle) darkModeToggle.classList.toggle('on', isDark);
+      if (stDarkToggle) stDarkToggle.classList.toggle('on', isDark);
     }
     function toggleDarkMode() {
       toggleDark();

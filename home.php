@@ -137,11 +137,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       color: #fff !important;
     }
 
-    body.dark .booking-card {
-      background: #2A2216 !important;
-      border-color: #4A3E28 !important;
-    }
-
     body.dark .worker-card {
       background: #2A2216 !important;
       border-color: #4A3E28 !important;
@@ -668,79 +663,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       border-radius: 20px;
     }
 
-    .booking-list {
-      padding: 0 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .booking-card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-      cursor: pointer;
-    }
-
-    .booking-ic {
-      width: 46px;
-      height: 46px;
-      border-radius: 14px;
-      background: #FFF8F0;
-      border: 1px solid #FFE5B4;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
-    }
-
-    .booking-info {
-      flex: 1;
-    }
-
-    .booking-nm {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--td);
-      font-family: 'Poppins', sans-serif;
-    }
-
-    .booking-sub {
-      font-size: 12px;
-      color: var(--tm);
-      font-family: 'Nunito', sans-serif;
-      margin-top: 2px;
-    }
-
-    .booking-status {
-      font-size: 11px;
-      font-weight: 700;
-      font-family: 'Nunito', sans-serif;
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
-
-    .status-done {
-      background: #d1fae5;
-      color: #C17A10;
-    }
-
-    .status-pending {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .status-active {
-      background: #dbeafe;
-      color: #1e40af;
-    }
-
     .nearby-list {
       padding: 0 20px;
       display: flex;
@@ -1049,6 +971,124 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       background: rgba(255, 255, 255, .12) !important;
       color: #fff !important;
     }
+
+    .logout-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .42);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      padding: 20px;
+    }
+
+    .logout-modal.on {
+      display: flex;
+    }
+
+    .logout-card {
+      width: 100%;
+      max-width: 360px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, .2);
+      border: 1px solid #F6E6CC;
+      padding: 22px 20px 18px;
+      text-align: center;
+    }
+
+    .logout-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      background: linear-gradient(135deg, #E8820C 0%, #F5A623 100%);
+      box-shadow: 0 8px 20px rgba(232, 130, 12, .28);
+    }
+
+    .logout-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #1A1A2E;
+      line-height: 1.35;
+    }
+
+    .logout-desc {
+      margin-top: 8px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #6B7280;
+    }
+
+    .logout-actions {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .logout-btn {
+      border: none;
+      border-radius: 999px;
+      min-width: 118px;
+      padding: 10px 16px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .2s, background .2s, color .2s;
+    }
+
+    .logout-btn:active {
+      transform: scale(.97);
+    }
+
+    .logout-btn-cancel {
+      background: #FFF7EA;
+      border: 1.5px solid #F4DEC0;
+      color: #8A5A12;
+    }
+
+    .logout-btn-cancel:hover {
+      background: #FFF1DA;
+    }
+
+    .logout-btn-confirm {
+      color: #fff;
+      background: linear-gradient(135deg, #E8820C 0%, #F5A623 100%);
+      box-shadow: 0 8px 18px rgba(232, 130, 12, .28);
+    }
+
+    .logout-btn-confirm:hover {
+      box-shadow: 0 10px 22px rgba(232, 130, 12, .34);
+    }
+
+    body.dark .logout-card {
+      background: #2A2216;
+      border-color: #4A3E28;
+    }
+
+    body.dark .logout-title {
+      color: #FFF3DC;
+    }
+
+    body.dark .logout-desc {
+      color: #C8B38B;
+    }
+
+    body.dark .logout-btn-cancel {
+      background: #332A1C;
+      border-color: #4A3E28;
+      color: #EBCB93;
+    }
   </style>
 </head>
 
@@ -1090,7 +1130,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                 <i class="bi bi-bell-fill"></i>
                 <div class="h-bell-dot" id="bellDot" style="display:none;"></div>
               </div>
-              <div class="h-bell" onclick="if(confirm('Log out?'))window.location.href='logout.php'" title="Log out">
+              <div class="h-bell" onclick="openLogoutModal()" title="Log out">
                 <i class="bi bi-box-arrow-right"></i>
               </div>
             </div>
@@ -1178,40 +1218,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="sec-ttl">Our Pros</div><span class="see-more" onclick="goPage('workers.php')">See all →</span>
         </div>
         <div class="worker-row" id="workerRow"></div>
-
-   
-        <div class="sec-row">
-          <div class="sec-ttl">Recent Bookings</div><span class="see-more" onclick="goPage('bookings.php')">See all
-            →</span>
-        </div>
-        <div class="booking-list">
-          <div class="booking-card" onclick="goPage('bookings.php')">
-            <div class="booking-ic">🧹</div>
-            <div class="booking-info">
-              <div class="booking-nm">Deep Home Cleaning</div>
-              <div class="booking-sub">Mar 1, 2025 · Maria S.</div>
-            </div>
-            <span class="booking-status status-done">Done</span>
-          </div>
-          <div class="booking-card" onclick="goPage('bookings.php')">
-            <div class="booking-ic">🔧</div>
-            <div class="booking-info">
-              <div class="booking-nm">Pipe Leak Repair</div>
-              <div class="booking-sub">Mar 5, 2025 · Juan R.</div>
-            </div>
-            <span class="booking-status status-active">Active</span>
-          </div>
-          <div class="booking-card" onclick="goPage('bookings.php')">
-            <div class="booking-ic">⚡</div>
-            <div class="booking-info">
-              <div class="booking-nm">Electrical Wiring</div>
-              <div class="booking-sub">Mar 10, 2025 · Ben L.</div>
-            </div>
-            <span class="booking-status status-pending">Pending</span>
-          </div>
-        </div>
-
- 
         <div class="sec-row">
           <div class="sec-ttl">Near You in Mauban</div><span class="see-more">View map →</span>
         </div>
@@ -1251,6 +1257,18 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
   </div>
 
+  <div class="logout-modal" id="logoutModal" aria-hidden="true">
+    <div class="logout-card" role="dialog" aria-modal="true" aria-labelledby="logoutTitle" aria-describedby="logoutDesc">
+      <div class="logout-icon"><i class="bi bi-box-arrow-right"></i></div>
+      <div class="logout-title" id="logoutTitle">Are you sure you want to log out?</div>
+      <div class="logout-desc" id="logoutDesc">You will need to log in again to access your account.</div>
+      <div class="logout-actions">
+        <button type="button" class="logout-btn logout-btn-cancel" onclick="closeLogoutModal()">Cancel</button>
+        <button type="button" class="logout-btn logout-btn-confirm" onclick="confirmLogout()">Log out</button>
+      </div>
+    </div>
+  </div>
+
   <script src="assets/js/app.js"></script>
   <script>
     window.HE = window.HE || {};
@@ -1265,6 +1283,30 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const ic = document.getElementById('dmIcon');
       if (ic && document.body.classList.contains('dark')) ic.className = 'bi bi-sun-fill';
     })();
+
+    function openLogoutModal() {
+      const modal = document.getElementById('logoutModal');
+      modal.classList.add('on');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeLogoutModal() {
+      const modal = document.getElementById('logoutModal');
+      modal.classList.remove('on');
+      modal.setAttribute('aria-hidden', 'true');
+    }
+
+    function confirmLogout() {
+      window.location.href = 'logout.php';
+    }
+
+    document.getElementById('logoutModal').addEventListener('click', function (e) {
+      if (e.target === this) closeLogoutModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeLogoutModal();
+    });
 
     fetch('api/notifications_api.php')
       .then(r => r.json())
@@ -1346,7 +1388,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('bookings.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('bookings.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Alerts</span><div class="ndot"></div></div>
+        <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
         <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
   </script>

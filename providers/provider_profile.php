@@ -323,7 +323,7 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
           <div class="p-hdr-back" onclick="goPage('provider_home.php')"><i class="bi bi-arrow-left"></i></div>
           <div class="p-hdr-settings" onclick="openSettingsScreen()"><i class="bi bi-gear-fill"></i></div>
           <div
-            style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.1));border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;color:#fff;margin-bottom:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);">
+            style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.1));border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;color:#fff;margin:0 auto 12px;box-shadow:0 8px 24px rgba(0,0,0,.12);">
             <?= strtoupper(substr($name, 0, 1)) ?>
           </div>
           <div class="p-name"><?= $name ?></div>
@@ -416,24 +416,6 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
           </div>
-
-       
-          <div class="p-sec">
-            <div class="p-sec-ttl">Preferences</div>
-            <div class="p-row">
-              <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
-                  <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="#F5A623" stroke-width="2"
-                    stroke-linejoin="round" />
-                </svg></div>
-              <div class="p-row-info">
-                <div class="p-row-lbl">Dark Mode</div>
-                <div class="p-row-sub">Switch to dark theme</div>
-              </div>
-              <div class="toggle-wrap">
-                <div class="toggle" id="darkModeToggle" onclick="toggleDarkMode()"></div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -442,9 +424,8 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
             class="nl">Home</span></div>
         <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span
             class="nl">Requests</span></div>
-        <div class="ni" onclick="goPage('provider_services.php')">
-          <div class="nb-c"><i class="bi bi-plus-lg"></i></div>
-        </div>
+        <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span
+            class="nl">Calendar</span></div>
         <div class="ni" onclick="goPage('provider_notifications.php')"><i class="bi bi-bell-fill"></i><span
             class="nl">Notifications</span></div>
         <div class="ni on"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
@@ -554,8 +535,8 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
     function closeSettingsScreen() { document.getElementById('settingsScreen').classList.remove('on'); }
     function syncDark() {
       const d = document.body.classList.contains('dark');
-      document.getElementById('darkModeToggle').classList.toggle('on', d);
-      document.getElementById('stDarkToggle').classList.toggle('on', d);
+      const stDarkToggle = document.getElementById('stDarkToggle');
+      if (stDarkToggle) stDarkToggle.classList.toggle('on', d);
     }
     function toggleDarkMode() { toggleDark(); syncDark(); }
     syncDark();

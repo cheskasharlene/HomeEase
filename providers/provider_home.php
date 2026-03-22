@@ -29,6 +29,12 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
     .screen {
       background: #F9F5EF;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+
+    #phScroll {
+      width: 100%;
     }
 
     .bnav {
@@ -250,7 +256,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
-      padding: 18px 18px 0;
+      padding: 18px 12px 0;
     }
 
     .p-stat-chip {
@@ -280,7 +286,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 22px 18px 10px;
+      padding: 22px 12px 10px;
     }
 
     .sec-ttl {
@@ -302,7 +308,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       display: flex;
       flex-direction: column;
       gap: 12px;
-      padding: 0 18px;
+      padding: 0 12px;
     }
 
     .req-card {
@@ -406,7 +412,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       display: flex;
       flex-direction: column;
       gap: 10px;
-      padding: 0 18px;
+      padding: 0 12px;
     }
 
     .sched-card {
@@ -444,11 +450,52 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       font-family: 'Poppins', sans-serif;
     }
 
+    .sched-sub {
+      font-size: 12px;
+      color: #8E8E93;
+      margin-top: 2px;
+    }
+
+    .sched-card-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sched-top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .sched-status {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .sched-status.pending {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .sched-status.confirmed {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+
+    .sched-status.completed {
+      background: #d1fae5;
+      color: #047857;
+    }
+
     .rev-list {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      padding: 0 18px;
+      padding: 0 12px;
     }
 
     .rev-card {
@@ -500,7 +547,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
     /* Earnings */
     .earn-card {
-      margin: 0 18px;
+      margin: 0 12px;
       background: #fff;
       border-radius: 18px;
       padding: 18px;
@@ -564,7 +611,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     </div>
 
     <div class="screen" id="home">
-      <div style="flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:90px;" id="phScroll">
+      <div style="flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:90px;width:100%;" id="phScroll">
 
         <!-- Header -->
         <div class="ph-hdr">
@@ -663,21 +710,12 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           <div class="sec-ttl">Today's Schedule</div>
           <span class="sec-lnk" onclick="goPage('provider_schedule.php')">Full calendar →</span>
         </div>
-        <div class="sched-list">
+        <div class="sched-list" id="schedList">
           <div class="sched-card">
             <div class="sched-dot"></div>
             <div>
-              <div class="sched-time">Apr 1 · 10:00 AM</div>
-              <div class="sched-title">Plumbing with Jane Smith</div>
-            </div>
-          </div>
-          <div class="sched-card">
-            <div class="sched-dot"
-              style="background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 2px 6px rgba(16,185,129,.4);">
-            </div>
-            <div>
-              <div class="sched-time" style="color:#10b981;">Apr 2 · 2:00 PM</div>
-              <div class="sched-title">Home Cleaning with Bob Lee</div>
+              <div class="sched-time">Loading...</div>
+              <div class="sched-title">Fetching today's schedule</div>
             </div>
           </div>
         </div>
@@ -720,9 +758,8 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
             class="nl">Home</span></div>
         <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span
             class="nl">Requests</span></div>
-        <div class="ni" onclick="goPage('provider_services.php')">
-          <div class="nb-c"><i class="bi bi-plus-lg"></i></div>
-        </div>
+        <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span
+            class="nl">Calendar</span></div>
         <div class="ni" onclick="goPage('provider_notifications.php')"><i class="bi bi-bell-fill"></i><span
             class="nl">Notifications</span></div>
         <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span
@@ -739,6 +776,75 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     const toggle = document.getElementById('availToggle');
     const lbl = document.getElementById('availLabel');
     toggle.addEventListener('change', function () { lbl.textContent = this.checked ? 'Online' : 'Offline'; });
+
+    function statusClass(statusRaw) {
+      const s = String(statusRaw || '').toLowerCase();
+      if (s === 'done' || s === 'completed') return 'completed';
+      if (s === 'progress' || s === 'confirmed' || s === 'active') return 'confirmed';
+      return 'pending';
+    }
+
+    function statusLabel(statusRaw) {
+      const s = String(statusRaw || '').toLowerCase();
+      if (s === 'done' || s === 'completed') return 'Completed';
+      if (s === 'progress' || s === 'confirmed' || s === 'active') return 'Confirmed';
+      return 'Pending';
+    }
+
+    function renderTodaySchedule(bookings) {
+      const list = document.getElementById('schedList');
+      const today = new Date().toISOString().slice(0, 10);
+      const todayItems = bookings
+        .filter(b => b.date === today)
+        .sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
+
+      if (!todayItems.length) {
+        list.innerHTML = `
+          <div class="sched-card">
+            <div class="sched-dot" style="background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 2px 6px rgba(100,116,139,.3);"></div>
+            <div class="sched-card-main">
+              <div class="sched-time" style="color:#64748b;">No bookings today</div>
+              <div class="sched-title">You're all caught up for now</div>
+              <div class="sched-sub">Tap Full calendar to plan upcoming jobs</div>
+            </div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = todayItems.slice(0, 3).map(item => {
+        const cls = statusClass(item.status_raw || item.status);
+        const lbl = statusLabel(item.status_raw || item.status);
+        return `
+          <div class="sched-card" onclick="goPage('provider_schedule.php?date=${encodeURIComponent(item.date)}')">
+            <div class="sched-dot"></div>
+            <div class="sched-card-main">
+              <div class="sched-time">${item.time || 'All day'}</div>
+              <div class="sched-top-row">
+                <div class="sched-title">${item.service} with ${item.client_name || 'Client'}</div>
+                <span class="sched-status ${cls}">${lbl}</span>
+              </div>
+              <div class="sched-sub">${item.address || 'Address not specified'}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function loadTodaySchedule() {
+      fetch('../api/provider_schedule_api.php')
+        .then(r => r.json())
+        .then(data => {
+          if (!data.success) {
+            renderTodaySchedule([]);
+            return;
+          }
+          renderTodaySchedule(Array.isArray(data.bookings) ? data.bookings : []);
+        })
+        .catch(() => renderTodaySchedule([]));
+    }
+
+    loadTodaySchedule();
+    window.addEventListener('focus', loadTodaySchedule);
+    setInterval(loadTodaySchedule, 30000);
   </script>
 </body>
 
