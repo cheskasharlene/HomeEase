@@ -36,6 +36,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       --teal2: #E8960F;
       --teal-lt: #FDECC8;
       --teal-xlt: #FFF3E0;
+      --page-gutter: clamp(14px, 4vw, 20px);
       --gold: #f59e0b;
       --red: #ef4444;
       --td: #1A1A2E;
@@ -64,15 +65,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     body.dark #home {
       background: #18140C;
-    }
-
-    body.dark .q-stat-chip {
-      background: #2A2216 !important;
-      border-color: #4A3E28 !important;
-    }
-
-    body.dark .q-stat-chip .lbl {
-      color: #B8A882 !important;
     }
 
     body.dark .svc-card {
@@ -286,44 +278,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       font-size: 16px;
     }
 
-    /* QUICK STATS (bookings + saved only) */
-    .q-stats {
-      display: flex;
-      gap: 10px;
-      padding: 16px 20px 0;
-    }
-
-    .q-stat-chip {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 14px 20px;
-      flex: 1;
-      box-shadow: var(--shadow);
-      text-align: center;
-      border: 1.5px solid #F5E6CC;
-    }
-
-    .q-stat-chip .val {
-      font-size: 22px;
-      font-weight: 800;
-      color: #F5A623;
-      font-family: 'Poppins', sans-serif;
-    }
-
-    .q-stat-chip .lbl {
-      font-size: 12px;
-      color: var(--tm);
-      font-family: 'Nunito', sans-serif;
-      font-weight: 600;
-      margin-top: 2px;
-    }
-
     /* SECTION HEADERS */
     .sec-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 22px 20px 10px;
+      padding: 18px var(--page-gutter) 10px;
     }
 
     .sec-ttl {
@@ -346,7 +306,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     .cat-pills {
       display: flex;
       gap: 8px;
-      padding: 0 20px 4px;
+      padding: 0 var(--page-gutter) 4px;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -381,7 +341,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
-      padding: 0 20px;
+      padding: 0 var(--page-gutter);
     }
 
     .svc-card {
@@ -422,121 +382,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       text-align: center;
     }
 
-    /* PROMO */
-    .promo {
-      margin: 8px 20px 0;
-      border-radius: var(--radius);
-      overflow: hidden;
-      position: relative;
-      cursor: pointer;
-      height: 150px;
-    }
-
-    .promo img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .promo-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(#fff 0%, rgba(234, 88, 12, 0.5) 100%);
-    }
-
-    .promo-content {
-      position: absolute;
-      inset: 0;
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .promo-tag {
-      background: rgba(255, 255, 255, .25);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 800;
-      font-family: 'Poppins', sans-serif;
-      letter-spacing: 1px;
-      padding: 3px 10px;
-      border-radius: 20px;
-      display: inline-block;
-      margin-bottom: 8px;
-      width: fit-content;
-      backdrop-filter: blur(4px);
-    }
-
-    .promo-ttl {
-      font-size: 22px;
-      font-weight: 800;
-      color: #fff;
-      font-family: 'Poppins', sans-serif;
-      line-height: 1.2;
-    }
-
-    .promo-s {
-      font-size: 12px;
-      color: rgba(255, 255, 255, .8);
-      font-family: 'Nunito', sans-serif;
-      margin-top: 6px;
-    }
-
-    /* SMALL PROMOS */
-    .promo-sm-row {
-      display: flex;
-      gap: 12px;
-      padding: 12px 20px 0;
-    }
-
-    .promo-sm {
-      flex: 1;
-      border-radius: 14px;
-      overflow: hidden;
-      position: relative;
-      cursor: pointer;
-      height: 100px;
-    }
-
-    .promo-sm img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .promo-sm-overlay {
-      position: absolute;
-      inset: 0;
-    }
-
-    .promo-sm-content {
-      position: absolute;
-      inset: 0;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-    }
-
-    .promo-sm-ttl {
-      font-size: 13px;
-      font-weight: 800;
-      color: #fff;
-      font-family: 'Poppins', sans-serif;
-      line-height: 1.2;
-    }
-
-    .promo-sm-s {
-      font-size: 10px;
-      color: rgba(255, 255, 255, .8);
-      font-family: 'Nunito', sans-serif;
-    }
-
     .pop-row {
       display: flex;
       gap: 14px;
-      padding: 0 20px;
+      padding: 0 var(--page-gutter);
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -596,7 +445,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     .worker-row {
       display: flex;
       gap: 12px;
-      padding: 0 20px;
+      padding: 0 var(--page-gutter);
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -664,7 +513,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .nearby-list {
-      padding: 0 20px;
+      padding: 0 var(--page-gutter);
       display: flex;
       flex-direction: column;
       gap: 10px;
@@ -720,7 +569,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
 
     .tip-list {
-      padding: 0 20px;
+      padding: 0 var(--page-gutter);
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -1139,19 +988,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-   
-        <div class="q-stats">
-          <div class="q-stat-chip">
-            <div class="val" id="statBook">3</div>
-            <div class="lbl">My Bookings</div>
-          </div>
-          <div class="q-stat-chip">
-            <div class="val">2</div>
-            <div class="lbl">Saved Services</div>
-          </div>
-        </div>
-
-  
         <div class="sec-row">
           <div class="sec-ttl">Browse by Category</div>
         </div>
@@ -1166,45 +1002,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>
 
 
-        <div class="sec-row" style="padding-top:12px;">
+        <div class="sec-row">
           <div class="sec-ttl">Our Services</div><span class="see-more" onclick="openAllServices()">See all →</span>
         </div>
         <div class="svc-grid" id="svcGrid"></div>
-
- 
-        <div style="margin-top:20px;">
-          <div class="promo" onclick="openAllOffers()">
-            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80" alt="Promo">
-            <div class="promo-overlay"></div>
-            <div class="promo-content">
-              <div class="promo-tag">LIMITED OFFER</div>
-              <div class="promo-ttl">20% Off Your<br>First Booking!</div>
-              <div class="promo-s">Use code EASE20 · Tap to see more offers</div>
-            </div>
-          </div>
-        </div>
-
-
-        <div class="promo-sm-row">
-          <div class="promo-sm">
-            <img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80" alt="">
-            <div class="promo-sm-overlay"
-              style="background:linear-gradient(180deg,transparent 0%,rgba(245,166,35,.85) 100%);"></div>
-            <div class="promo-sm-content">
-              <div class="promo-sm-ttl">Free Deep Clean</div>
-              <div class="promo-sm-s">New users only</div>
-            </div>
-          </div>
-          <div class="promo-sm">
-            <img src="https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80" alt="">
-            <div class="promo-sm-overlay"
-              style="background:linear-gradient(180deg,transparent 0%,rgba(234,88,12,.85) 100%);"></div>
-            <div class="promo-sm-content">
-              <div class="promo-sm-ttl">₱200 Off Electric</div>
-              <div class="promo-sm-s">This weekend only</div>
-            </div>
-          </div>
-        </div>
 
    
         <div class="sec-row">
@@ -1321,7 +1122,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     const svcGrid = document.getElementById('svcGrid');
     Object.entries(SVCS).forEach(([name, data]) => {
       svcGrid.innerHTML += `
-        <div class="svc-card" onclick="goPage('bookings.php?svc=${encodeURIComponent(name)}&newbooking=1')">
+        <div class="svc-card" onclick="goPage('booking_form.php?svc=${encodeURIComponent(name)}&newbooking=1')">
           <div class="svc-ic">${data.ic}</div>
           <div class="svc-nm">${name}</div>
         </div>`;
@@ -1338,7 +1139,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     const popRow = document.getElementById('popRow');
     popData.forEach(p => {
       popRow.innerHTML += `
-        <div class="pop-card" onclick="goPage('bookings.php?svc=${encodeURIComponent(p.svc)}&newbooking=1')">
+        <div class="pop-card" onclick="goPage('booking_form.php?svc=${encodeURIComponent(p.svc)}&newbooking=1')">
           <img class="pop-img" src="${p.img}" alt="${p.title}">
           <div class="pop-info">
             <div class="pop-nm">${p.title}</div>
@@ -1386,8 +1187,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
-        <div class="ni" onclick="goPage('bookings.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-        <div class="ni" onclick="goPage('bookings.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+        <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
+        <div class="ni" onclick="goPage('booking_form.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
         <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
         <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;

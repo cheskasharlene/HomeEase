@@ -402,7 +402,7 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
-            <div class="p-row" onclick="goPage('provider_requests.php')">
+            <div class="p-row" onclick="goPage('provider_job_history.php')">
               <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
                   <path d="M9 11l3 3L22 4" stroke="#F5A623" stroke-width="2" stroke-linecap="round"
                     stroke-linejoin="round" />
@@ -412,6 +412,28 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
               <div class="p-row-info">
                 <div class="p-row-lbl">Job History</div>
                 <div class="p-row-sub">View completed jobs</div>
+              </div>
+              <i class="bi bi-chevron-right p-row-arrow"></i>
+            </div>
+            <div class="p-row" onclick="goPage('provider_earnings.php')">
+              <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="7" width="20" height="14" rx="2" stroke="#F5A623" stroke-width="2" />
+                  <path d="M16 7v-2a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M7 11h10M7 15h10" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
+                </svg></div>
+              <div class="p-row-info">
+                <div class="p-row-lbl">Earnings</div>
+                <div class="p-row-sub">Track your income</div>
+              </div>
+              <i class="bi bi-chevron-right p-row-arrow"></i>
+            </div>
+            <div class="p-row" onclick="goPage('provider_reviews.php')">
+              <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" 
+                    stroke="#F5A623" stroke-width="2" stroke-linejoin="round"/>
+                </svg></div>
+              <div class="p-row-info">
+                <div class="p-row-lbl">Reviews</div>
+                <div class="p-row-sub">View customer feedback</div>
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
@@ -484,14 +506,6 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
             <div class="st-row-info">
               <div class="st-row-lbl">New Job Requests</div>
               <div class="st-row-sub">Get notified of new requests</div>
-            </div>
-            <div class="st-toggle on" onclick="this.classList.toggle('on')"></div>
-          </div>
-          <div class="st-row">
-            <div class="st-ic blue"><i class="bi bi-envelope-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Email Alerts</div>
-              <div class="st-row-sub">Booking confirmations</div>
             </div>
             <div class="st-toggle on" onclick="this.classList.toggle('on')"></div>
           </div>

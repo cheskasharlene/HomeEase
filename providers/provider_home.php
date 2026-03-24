@@ -7,6 +7,10 @@ if (empty($_SESSION['provider_id'])) {
 $hour = (int) date('H');
 $greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
+require_once __DIR__ . '/provider_dashboard_data.php';
+$dashboardSummary = providerDashboardSummary();
+$dashboardReviews = providerDashboardReviews();
+$reviewPreview = $dashboardReviews[0] ?? null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -506,6 +510,19 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       border: 1.5px solid #EDE8E0;
     }
 
+    .rev-card.clickable,
+    .earn-card.clickable {
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s, border-color .15s;
+    }
+
+    .rev-card.clickable:hover,
+    .earn-card.clickable:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(232, 130, 12, .12);
+      border-color: #F5D7A0;
+    }
+
     .rev-top {
       display: flex;
       align-items: center;
@@ -724,30 +741,49 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         <div class="sec-row">
           <div class="sec-ttl">Earnings This Month</div>
         </div>
-        <div class="earn-card">
-          <div class="earn-total">₱12,400</div>
-          <div class="earn-lbl">24 jobs completed · Goal: ₱16,500</div>
+        <div class="earn-card clickable" onclick="goPage('provider_earnings.php')" role="button" tabindex="0"
+          onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goPage('provider_earnings.php');}">
+          <div class="earn-total">₱<?= number_format((int) ($dashboardSummary['this_month'] ?? 0)) ?></div>
+          <div class="earn-lbl"><?= (int) ($dashboardSummary['jobs_completed'] ?? 0) ?> jobs completed · Goal:
+            ₱<?= number_format((int) ($dashboardSummary['monthly_goal'] ?? 0)) ?></div>
           <div class="earn-bar-track">
-            <div class="earn-bar-fill"></div>
+            <?php
+            $goal = max(1, (int) ($dashboardSummary['monthly_goal'] ?? 1));
+            $progress = min(100, (int) round(((int) ($dashboardSummary['this_month'] ?? 0) / $goal) * 100));
+            ?>
+            <div class="earn-bar-fill" style="width:<?= $progress ?>%;"></div>
           </div>
         </div>
 
       
         <div class="sec-row">
           <div class="sec-ttl">Recent Reviews</div>
-          <span class="sec-lnk">See all →</span>
+          <span class="sec-lnk" onclick="goPage('provider_reviews.php')">See all →</span>
         </div>
         <div class="rev-list">
-          <div class="rev-card">
-            <div class="rev-top">
-              <div class="rev-avatar">A</div>
-              <div>
-                <div class="rev-name">Anna K.</div>
-                <div class="rev-stars">★★★★★</div>
+          <?php if ($reviewPreview): ?>
+            <?php
+            $previewName = htmlspecialchars($reviewPreview['customer_name']);
+            $previewComment = htmlspecialchars($reviewPreview['comment']);
+            $previewRating = (float) ($reviewPreview['rating'] ?? 0);
+            $previewStars = str_repeat('★', (int) round($previewRating));
+            ?>
+            <div class="rev-card clickable" onclick="goPage('provider_reviews.php')" role="button" tabindex="0"
+              onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goPage('provider_reviews.php');}">
+              <div class="rev-top">
+                <div class="rev-avatar"><?= strtoupper(substr($previewName, 0, 1)) ?></div>
+                <div>
+                  <div class="rev-name"><?= $previewName ?></div>
+                  <div class="rev-stars"><?= $previewStars ?></div>
+                </div>
               </div>
+              <div class="rev-text"><?= $previewComment ?></div>
             </div>
-            <div class="rev-text">Great work, very professional and on time!</div>
-          </div>
+          <?php else: ?>
+            <div class="rev-card">
+              <div class="rev-text">No reviews yet.</div>
+            </div>
+          <?php endif; ?>
         </div>
 
         <div class="h-pb"></div>

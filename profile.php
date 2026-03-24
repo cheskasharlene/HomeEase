@@ -520,19 +520,6 @@ if ($row) {
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
-            <div class="p-row" onclick="openSettingsScreen('about')">
-              <div class="p-row-ic">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="9" stroke="#F5A623" stroke-width="2" />
-                  <path d="M12 8v4M12 16h.01" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
-                </svg>
-              </div>
-              <div class="p-row-info">
-                <div class="p-row-lbl">About HomeEase</div>
-                <div class="p-row-sub">Version 3.2</div>
-              </div>
-              <i class="bi bi-chevron-right p-row-arrow"></i>
-            </div>
           </div>
 
         </div>
@@ -555,35 +542,6 @@ if ($row) {
       <div class="st-scroll">
 
 
-        <div class="st-sec">
-          <div class="st-sec-ttl">Account</div>
-          <div class="st-row" onclick="openSubSheet('profile')">
-            <div class="st-ic orange"><i class="bi bi-person-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Edit Profile</div>
-              <div class="st-row-sub">Name, email, phone & address</div>
-            </div>
-            <i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
-          <div class="st-row" onclick="openSubSheet('security')">
-            <div class="st-ic blue"><i class="bi bi-shield-lock-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Password & Security</div>
-              <div class="st-row-sub">Change your password</div>
-            </div>
-            <i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
-          <div class="st-row" onclick="openSubSheet('address')">
-            <div class="st-ic green"><i class="bi bi-geo-alt-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Saved Addresses</div>
-              <div class="st-row-sub" id="stAddressSub">Manage delivery addresses</div>
-            </div>
-            <i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
-        </div>
-
-   
         <div class="st-sec">
           <div class="st-sec-ttl">Appearance</div>
           <div class="st-row">
@@ -615,44 +573,6 @@ if ($row) {
               <div class="st-row-sub">Booking alerts & updates</div>
             </div>
             <div class="st-toggle on" onclick="this.classList.toggle('on')"></div>
-          </div>
-          <div class="st-row">
-            <div class="st-ic blue"><i class="bi bi-envelope-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Email Updates</div>
-              <div class="st-row-sub">Booking confirmations</div>
-            </div>
-            <div class="st-toggle on" onclick="this.classList.toggle('on')"></div>
-          </div>
-          <div class="st-row">
-            <div class="st-ic green"><i class="bi bi-chat-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">SMS Notifications</div>
-              <div class="st-row-sub">Service reminders via text</div>
-            </div>
-            <div class="st-toggle" onclick="this.classList.toggle('on')"></div>
-          </div>
-        </div>
-
-
-        <div class="st-sec">
-          <div class="st-sec-ttl">Privacy & Data</div>
-          <div class="st-row">
-            <div class="st-ic purple"><i class="bi bi-eye-slash-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Profile Visibility</div>
-              <div class="st-row-sub">Who can see your profile</div>
-            </div>
-            <span class="st-row-val">Public</span>
-            <i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
-          <div class="st-row">
-            <div class="st-ic red"><i class="bi bi-trash3-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Clear App Cache</div>
-              <div class="st-row-sub">Free up local storage</div>
-            </div>
-            <i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
         </div>
 
@@ -727,7 +647,6 @@ if ($row) {
           </div>
         </div>
 
-        <div class="st-version">HomeEase v3.2.0 · Made with ❤️ in PH</div>
       </div>
     </div>
 
@@ -841,8 +760,8 @@ if ($row) {
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
         <div class="ni" onclick="goPage('home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
-        <div class="ni" onclick="goPage('bookings.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-        <div class="ni" onclick="goPage('bookings.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+        <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
+        <div class="ni" onclick="goPage('booking_form.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
         <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
         <div class="ni on"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;

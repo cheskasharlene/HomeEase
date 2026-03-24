@@ -101,8 +101,8 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
         <div class="ni" onclick="goPage('home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
-        <div class="ni" onclick="goPage('bookings.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-        <div class="ni" onclick="goPage('bookings.php?newbooking=1')" style="cursor:pointer;"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+        <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
+        <div class="ni" onclick="goPage('booking_form.php?newbooking=1')" style="cursor:pointer;"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
         <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
         <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
