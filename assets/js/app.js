@@ -23,41 +23,41 @@ function toggleDark() {
 }
 
 const ICONS = {
-  cleaning: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M12 28h16M20 8v4M14 12l-2 8h16l-2-8H14z" stroke="#E8960F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16 20v6M20 20v6M24 20v6" stroke="#E8960F" stroke-width="1.5" stroke-linecap="round"/><circle cx="20" cy="10" r="2" fill="#E8960F"/></svg>`,
-  plumbing: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M14 10v8a6 6 0 006 6h0a6 6 0 006-6V10" stroke="#E8960F" stroke-width="2" stroke-linecap="round"/><rect x="12" y="8" width="4" height="4" rx="1" fill="#E8960F"/><rect x="24" y="8" width="4" height="4" rx="1" fill="#E8960F"/><path d="M20 24v6M17 30h6" stroke="#E8960F" stroke-width="2" stroke-linecap="round"/></svg>`,
-  electrical: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M22 9l-6 11h7l-5 11 10-13h-7L22 9z" fill="#E8960F" stroke="#E8960F" stroke-width="1" stroke-linejoin="round"/></svg>`,
-  painting: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M13 27l4-4 10-10a2 2 0 00-3-3L14 20l-4 4 3 3z" stroke="#E8960F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="28" cy="29" r="3" fill="#E8960F" opacity=".5"/><path d="M27 29c0-3 3-4 3-6" stroke="#E8960F" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-  appliance: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><rect x="11" y="10" width="18" height="20" rx="3" stroke="#E8960F" stroke-width="2"/><path d="M11 16h18" stroke="#E8960F" stroke-width="2"/><circle cx="15" cy="13" r="1.5" fill="#E8960F"/><circle cx="20" cy="23" r="4" stroke="#E8960F" stroke-width="1.5"/><path d="M20 21v2l1.5 1.5" stroke="#E8960F" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-  gardening: `<svg viewBox="0 0 40 40" fill="none"><rect width="40" height="40" rx="12" fill="#FDECC8"/><path d="M20 30V18M20 18c0-6 8-8 8-8s0 8-8 8zM20 18c0-5-6-8-6-8s0 7 6 8z" stroke="#E8960F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 30h12" stroke="#E8960F" stroke-width="2" stroke-linecap="round"/></svg>`,
+  cleaner: "🧹",
+  plumber: "🔧",
+  laundry: "👕",
+  helper: "🏠",
+  carpenter: "🪚",
+  appliance: "⚡",
 };
 
 const SVCS = {
-  Cleaning: { ic: ICONS.cleaning, hr: 200, flat: 599, key: "cleaning" },
-  Plumbing: { ic: ICONS.plumbing, hr: 250, flat: 450, key: "plumbing" },
-  Electrical: { ic: ICONS.electrical, hr: 300, flat: 750, key: "electrical" },
-  Painting: { ic: ICONS.painting, hr: 220, flat: 800, key: "painting" },
-  "Appliance Repair": {
+  Cleaner: { ic: ICONS.cleaner, hr: 400, flat: 800, key: "cleaner" },
+  Plumber: { ic: ICONS.plumber, hr: 400, flat: 800, key: "plumber" },
+  "Laundry Worker": { ic: ICONS.laundry, hr: 200, flat: 400, key: "laundry" },
+  Helper: { ic: ICONS.helper, hr: 300, flat: 600, key: "helper" },
+  Carpenter: { ic: ICONS.carpenter, hr: 500, flat: 1000, key: "carpenter" },
+  "Appliance Technician": {
     ic: ICONS.appliance,
-    hr: 280,
-    flat: 650,
+    hr: 400,
+    flat: 800,
     key: "appliance",
   },
-  Gardening: { ic: ICONS.gardening, hr: 180, flat: 850, key: "gardening" },
 };
 
 const SVC_IMGS = {
-  cleaning:
+  cleaner:
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80",
-  plumbing:
+  plumber:
     "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80",
-  electrical:
-    "https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=400&q=80",
-  painting:
-    "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=400&q=80",
+  laundry:
+    "https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=400&q=80",
+  helper:
+    "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=400&q=80",
+  carpenter:
+    "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80",
   appliance:
     "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
-  gardening:
-    "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80",
 };
 
 const OB_IMGS = [
@@ -265,46 +265,46 @@ function renderSearch(q) {
   const qLow = q.toLowerCase().trim();
   const allSvcs = [
     {
-      name: "Cleaning",
+      name: "Cleaner",
       desc: "Deep home & office cleaning",
-      key: "cleaning",
-      flat: 599,
+      key: "cleaner",
+      flat: 800,
+      hr: 400,
+    },
+    {
+      name: "Plumber",
+      desc: "Pipe repair, clogs & more",
+      key: "plumber",
+      flat: 800,
+      hr: 400,
+    },
+    {
+      name: "Laundry Worker",
+      desc: "Wash, fold & ironing services",
+      key: "laundry",
+      flat: 400,
       hr: 200,
     },
     {
-      name: "Plumbing",
-      desc: "Pipe repair, clogs & more",
-      key: "plumbing",
-      flat: 450,
-      hr: 250,
-    },
-    {
-      name: "Electrical",
-      desc: "Wiring, outlets & installations",
-      key: "electrical",
-      flat: 750,
+      name: "Helper",
+      desc: "General household help",
+      key: "helper",
+      flat: 600,
       hr: 300,
     },
     {
-      name: "Painting",
-      desc: "Interior & exterior painting",
-      key: "painting",
-      flat: 800,
-      hr: 220,
+      name: "Carpenter",
+      desc: "Repairs, installations & builds",
+      key: "carpenter",
+      flat: 1000,
+      hr: 500,
     },
     {
-      name: "Appliance Repair",
-      desc: "Fix any home appliance",
+      name: "Appliance Technician",
+      desc: "Fix and diagnose home appliances",
       key: "appliance",
-      flat: 650,
-      hr: 280,
-    },
-    {
-      name: "Gardening",
-      desc: "Landscaping & garden care",
-      key: "gardening",
-      flat: 850,
-      hr: 180,
+      flat: 800,
+      hr: 400,
     },
   ];
   const filtered = qLow

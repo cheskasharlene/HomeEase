@@ -336,46 +336,15 @@ if (empty($_SESSION['provider_id'])) {
           </div>
         </div>
 
-        <div class="filter-row">
-          <div class="fpill active">All</div>
-          <div class="fpill">New</div>
-          <div class="fpill">Accepted</div>
-          <div class="fpill">Completed</div>
+        <div class="filter-row" id="filterRow">
+          <div class="fpill active" data-filter="all">All</div>
+          <div class="fpill" data-filter="new">New</div>
+          <div class="fpill" data-filter="accepted">Accepted</div>
+          <div class="fpill" data-filter="completed">Completed</div>
         </div>
 
-        <div class="req-list">
-          <div class="req-card">
-            <div class="req-top">
-              <div class="req-ic">🔧</div>
-              <div class="req-info">
-                <div class="req-type">Plumbing · <span class="status-pill new">New</span></div>
-                <div class="req-name">John Doe</div>
-                <div class="req-meta">📍 123 Main St, Lucena City<br>� Apr 1, 10:00 AM<br>📝 Fix kitchen sink leak
-                </div>
-              </div>
-              <div class="req-price-tag">₱2,500</div>
-            </div>
-            <div class="req-footer">
-              <button class="btn-accept"><i class="bi bi-check2" style="margin-right:5px;"></i>Accept</button>
-              <button class="btn-decline"><i class="bi bi-x-lg" style="margin-right:5px;"></i>Decline</button>
-            </div>
-          </div>
-
-          <div class="req-card">
-            <div class="req-top">
-              <div class="req-ic">⚡</div>
-              <div class="req-info">
-                <div class="req-type">Electrical · <span class="status-pill new">New</span></div>
-                <div class="req-name">Maria Santos</div>
-                <div class="req-meta">📍 Rizal Avenue, Quezon<br>� Apr 2, 2:00 PM<br>📝 Replace circuit breaker</div>
-              </div>
-              <div class="req-price-tag">₱3,750</div>
-            </div>
-            <div class="req-footer">
-              <button class="btn-accept"><i class="bi bi-check2" style="margin-right:5px;"></i>Accept</button>
-              <button class="btn-decline"><i class="bi bi-x-lg" style="margin-right:5px;"></i>Decline</button>
-            </div>
-          </div>
+        <div class="req-list" id="reqList">
+          <div class="req-card" style="text-align:center;color:#8E8E93;">Loading requests...</div>
         </div>
       </div>
 
@@ -394,7 +363,113 @@ if (empty($_SESSION['provider_id'])) {
     </div>
   </div>
   <script src="../assets/js/app.js"></script>
-  <script>initTheme();</script>
+  <script>
+    initTheme();
+
+    const reqList = document.getElementById('reqList');
+    let currentFilter = 'all';
+
+    const svcIcon = {
+      'cleaning': '🧹',
+      'plumbing': '🔧',
+      'electrical': '⚡',
+      'painting': '🖌️',
+      'appliance repair': '🔩',
+      'gardening': '🌿'
+    };
+
+    function iconFor(service) {
+      const key = String(service || '').toLowerCase();
+      return svcIcon[key] || '🏠';
+    }
+
+    function statusClass(status) {
+      const s = String(status || '').toLowerCase();
+      if (s === 'accepted') return 'accepted';
+      if (s === 'declined' || s === 'closed') return 'declined';
+      return 'new';
+    }
+
+    function statusLabel(status) {
+      const s = String(status || '').toLowerCase();
+      if (s === 'accepted') return 'Accepted';
+      if (s === 'declined') return 'Declined';
+      if (s === 'closed') return 'Request Closed';
+      return 'New';
+    }
+
+    async function loadRequests() {
+      try {
+        const res = await fetch(`../api/provider_requests_api.php?filter=${encodeURIComponent(currentFilter)}`, { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.success) {
+          reqList.innerHTML = `<div class="req-card" style="text-align:center;color:#ef4444;">${data.message || 'Failed to load requests.'}</div>`;
+          return;
+        }
+
+        const items = Array.isArray(data.requests) ? data.requests : [];
+        const pendingCount = items.filter(i => String(i.status).toLowerCase() === 'pending').length;
+        document.querySelector('.p-hdr-sub').textContent = pendingCount > 0
+          ? `${pendingCount} new request${pendingCount > 1 ? 's' : ''} waiting`
+          : 'No new requests';
+
+        if (!items.length) {
+          reqList.innerHTML = '<div class="req-card" style="text-align:center;color:#8E8E93;">No requests in this tab.</div>';
+          return;
+        }
+
+        reqList.innerHTML = items.map(item => {
+          const sClass = statusClass(item.status);
+          const sLabel = statusLabel(item.status);
+          const canAction = String(item.status).toLowerCase() === 'pending';
+          const dateText = `${item.date || '—'}${item.time_slot ? ' · ' + item.time_slot : ''}`;
+          const details = item.details ? String(item.details) : 'No additional details';
+
+          return `
+            <div class="req-card">
+              <div class="req-top">
+                <div class="req-ic">${iconFor(item.service)}</div>
+                <div class="req-info">
+                  <div class="req-type">${item.service} · <span class="status-pill ${sClass}">${sLabel}</span></div>
+                  <div class="req-name">${item.customer_name || 'Homeowner'}</div>
+                  <div class="req-meta">📍 ${item.address || 'No address'}<br>🕐 ${dateText}<br>📝 ${details}<br>📞 ${item.customer_phone || 'No phone'}</div>
+                </div>
+                <div class="req-price-tag">₱${Number(item.fixed_price || 0).toLocaleString('en-PH')}</div>
+              </div>
+              ${canAction ? `<div class="req-footer">
+                <button class="btn-accept" onclick="respondRequest(${item.id},'accept')"><i class="bi bi-check2" style="margin-right:5px;"></i>Accept</button>
+                <button class="btn-decline" onclick="respondRequest(${item.id},'decline')"><i class="bi bi-x-lg" style="margin-right:5px;"></i>Decline</button>
+              </div>` : ''}
+            </div>`;
+        }).join('');
+      } catch (e) {
+        reqList.innerHTML = '<div class="req-card" style="text-align:center;color:#ef4444;">Could not load requests.</div>';
+      }
+    }
+
+    async function respondRequest(id, action) {
+      const fd = new FormData();
+      fd.append('action', action);
+      fd.append('request_id', id);
+      const res = await fetch('../api/provider_requests_api.php', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.message || 'Action failed.');
+      }
+      loadRequests();
+    }
+
+    document.getElementById('filterRow').addEventListener('click', function (e) {
+      const pill = e.target.closest('.fpill');
+      if (!pill) return;
+      document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentFilter = pill.dataset.filter || 'all';
+      loadRequests();
+    });
+
+    loadRequests();
+  </script>
 </body>
 
 </html>

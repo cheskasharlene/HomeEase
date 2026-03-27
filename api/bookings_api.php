@@ -15,6 +15,9 @@ $uid = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
+// Ensure services table is seeded with correct data
+_seedServices($conn);
+
 if ($method === 'GET' && $action === 'services') {
     $result = $conn->query("SELECT * FROM services WHERE active = 1 ORDER BY name ASC");
     if (!$result) {
@@ -103,14 +106,67 @@ if ($method === 'POST' && $action === '') {
     $time_slot = trim($_POST['time_slot'] ?? '');
     $address = trim($_POST['address'] ?? '');
     $notes = trim($_POST['notes'] ?? '');
-    $pricing_type = trim($_POST['pricing_type'] ?? 'flat');
-    $hours = max(1, (int) ($_POST['hours'] ?? 1));
-    $price = floatval($_POST['price'] ?? 0);
-    $tech_id = intval($_POST['technician_id'] ?? 0) ?: null;
+    $customer_name = trim($_POST['customer_name'] ?? '');
+    $customer_phone = trim($_POST['customer_phone'] ?? '');
+    $customer_address = trim($_POST['customer_address'] ?? $address);
+    $pricing_type = 'flat';
+    $hours = 1;
+    $tech_id = null;
 
     if (!$service || !$date || !$address) {
         echo json_encode(['success' => false, 'message' => 'Service, date, and address are required.']);
         exit;
+    }
+
+    $svcStmt = $conn->prepare("SELECT name, flat_rate, description, min_hours FROM services WHERE active = 1 AND name = ? LIMIT 1");
+    if (!$svcStmt) {
+        echo json_encode(['success' => false, 'message' => 'Could not validate service.']);
+        exit;
+    }
+    $svcStmt->bind_param("s", $service);
+    $svcStmt->execute();
+    $serviceRow = $svcStmt->get_result()->fetch_assoc();
+    $svcStmt->close();
+
+    if (!$serviceRow) {
+        echo json_encode(['success' => false, 'message' => 'Selected service is unavailable.']);
+        exit;
+    }
+
+    $computed = _computeFixedPrice($service, $_POST);
+    $price = (float) ($computed['total'] ?? 0);
+    if ($price <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Could not compute fixed price for selected options.']);
+        exit;
+    }
+
+    $optionSummary = _summarizeSelectedOptions($service, $_POST);
+    if ($optionSummary !== '') {
+        $notes = trim($notes) === ''
+            ? $optionSummary
+            : ($notes . "\n\n" . $optionSummary);
+    }
+
+    $serviceInclusions = trim((string) ($serviceRow['description'] ?? ''));
+    $estimatedDuration = max(1, (int) ($serviceRow['min_hours'] ?? 1));
+
+    if ($customer_name === '' || $customer_phone === '') {
+        $uStmt = $conn->prepare("SELECT name, phone, address FROM users WHERE id = ? LIMIT 1");
+        if ($uStmt) {
+            $uStmt->bind_param('i', $uid);
+            $uStmt->execute();
+            $u = $uStmt->get_result()->fetch_assoc();
+            $uStmt->close();
+            if ($customer_name === '') {
+                $customer_name = (string) ($u['name'] ?? '');
+            }
+            if ($customer_phone === '') {
+                $customer_phone = (string) ($u['phone'] ?? '');
+            }
+            if ($customer_address === '') {
+                $customer_address = (string) ($u['address'] ?? $address);
+            }
+        }
     }
 
     $bcols = [];
@@ -172,6 +228,72 @@ if ($method === 'POST' && $action === '') {
     if ($stmt->execute()) {
         $bid = $conn->insert_id;
         $stmt->close();
+
+        ensureBookingRequestsTable($conn);
+
+        $providerStmt = $conn->prepare(
+            "SELECT id, name FROM technicians
+             WHERE status = 'active'
+               AND LOWER(availability) <> 'unavailable'
+               AND LOWER(specialty) LIKE ?
+             ORDER BY rating DESC, jobs_done DESC, id ASC
+             LIMIT 5"
+        );
+        $specialtyLike = '%' . strtolower($service) . '%';
+        $providers = [];
+        if ($providerStmt) {
+            $providerStmt->bind_param('s', $specialtyLike);
+            $providerStmt->execute();
+            $providers = $providerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+            $providerStmt->close();
+        }
+
+        if (empty($providers)) {
+            $fallbackStmt = $conn->prepare(
+                "SELECT id, name FROM technicians
+                 WHERE status = 'active' AND LOWER(availability) <> 'unavailable'
+                 ORDER BY rating DESC, jobs_done DESC, id ASC
+                 LIMIT 5"
+            );
+            if ($fallbackStmt) {
+                $fallbackStmt->execute();
+                $providers = $fallbackStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                $fallbackStmt->close();
+            }
+        }
+
+        if (!empty($providers)) {
+            $reqStmt = $conn->prepare(
+                "INSERT INTO booking_requests
+                (booking_id, provider_id, service, fixed_price, date, time_slot, address, details, customer_name, customer_phone, customer_address, status, created_at, expires_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 5 MINUTE))"
+            );
+            if ($reqStmt) {
+                foreach ($providers as $p) {
+                    $pid = (int) ($p['id'] ?? 0);
+                    if ($pid <= 0) {
+                        continue;
+                    }
+                    $reqStmt->bind_param(
+                        'iisdsssssss',
+                        $bid,
+                        $pid,
+                        $service,
+                        $price,
+                        $date,
+                        $time_slot,
+                        $address,
+                        $notes,
+                        $customer_name,
+                        $customer_phone,
+                        $customer_address
+                    );
+                    $reqStmt->execute();
+                }
+                $reqStmt->close();
+            }
+        }
+
         $msg = "Your $service booking on $date has been received.";
         $icon = _svcIcon($service);
         $ns = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Booking Received', ?, ?, 0, NOW())");
@@ -180,7 +302,17 @@ if ($method === 'POST' && $action === '') {
             $ns->execute();
             $ns->close();
         }
-        echo json_encode(['success' => true, 'booking_id' => $bid]);
+        echo json_encode([
+            'success' => true,
+            'booking_id' => $bid,
+            'fixed_price' => $price,
+            'status' => 'pending',
+            'matched_providers' => count($providers),
+            'waiting_message' => 'Waiting for a provider to accept your booking…',
+            'service_inclusions' => $serviceInclusions,
+            'estimated_duration' => $estimatedDuration,
+            'price_breakdown' => $computed['breakdown']
+        ]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Insert failed: ' . $conn->error]);
     }
@@ -199,26 +331,265 @@ if ($method === 'POST' && $action === 'cancel') {
 
 echo json_encode(['success' => false, 'message' => 'Unknown request.']);
 
+function _seedServices(mysqli $conn)
+{
+    // Create services table if it doesn't exist
+    $conn->query("CREATE TABLE IF NOT EXISTS services (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(120) NOT NULL UNIQUE,
+        icon VARCHAR(10),
+        description TEXT,
+        hourly_rate DECIMAL(10,2),
+        flat_rate DECIMAL(10,2),
+        min_hours INT,
+        pricing_type VARCHAR(20),
+        active TINYINT(1) DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    
+    // Check if we already have the new services
+    $checkStmt = $conn->query("SELECT COUNT(*) as cnt FROM services WHERE name = 'Cleaner' AND active = 1");
+    if ($checkStmt) {
+        $row = $checkStmt->fetch_assoc();
+        if ($row && $row['cnt'] > 0) {
+            return; // Already seeded with new services
+        }
+    }
+    
+    // Delete old services and insert new ones
+    $conn->query("DELETE FROM services");
+    $conn->query("ALTER TABLE services AUTO_INCREMENT = 1");
+    
+    $services = [
+        ['Cleaner', '🧹', 'Home & office cleaning', 400, 800, 1, 'flat'],
+        ['Plumber', '🔧', 'Pipe repair, clogs & installs', 400, 800, 1, 'flat'],
+        ['Laundry Worker', '👕', 'Wash, fold & ironing services', 200, 400, 1, 'flat'],
+        ['Helper', '🏠', 'General household help', 300, 600, 1, 'flat'],
+        ['Carpenter', '🪚', 'Repairs, installations & builds', 500, 1000, 1, 'flat'],
+        ['Appliance Technician', '⚡', 'Appliance repairs & diagnostics', 400, 800, 1, 'flat'],
+    ];
+    
+    $stmt = $conn->prepare("INSERT INTO services (name, icon, description, hourly_rate, flat_rate, min_hours, pricing_type, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
+    if ($stmt) {
+        foreach ($services as $svc) {
+            $name = $svc[0];
+            $icon = $svc[1];
+            $desc = $svc[2];
+            $hrate = $svc[3];
+            $frate = $svc[4];
+            $mhours = $svc[5];
+            $ptype = $svc[6];
+            $stmt->bind_param("sssddis", $name, $icon, $desc, $hrate, $frate, $mhours, $ptype);
+            if (!$stmt->execute()) {
+                error_log("Failed to insert service $name: " . $stmt->error);
+            }
+        }
+        $stmt->close();
+    }
+}
+
 function _svcIcon($s)
 {
     $m = [
-        'Cleaning' => 'cleaning',
-        'Plumbing' => 'plumbing',
-        'Electrical' => 'electrical',
-        'Painting' => 'painting',
-        'Appliance Repair' => 'appliance',
-        'Gardening' => 'gardening'
+        'Cleaner' => 'cleaner',
+        'Plumber' => 'plumber',
+        'Laundry Worker' => 'laundry',
+        'Helper' => 'helper',
+        'Carpenter' => 'carpenter',
+        'Appliance Technician' => 'appliance'
     ];
-    return $m[$s] ?? 'cleaning';
+    return $m[$s] ?? 'cleaner';
 }
+
 function _defaultServices()
 {
     return [
-        ['id' => 1, 'name' => 'Cleaning', 'icon' => '🧹', 'description' => 'Deep home & office cleaning', 'hourly_rate' => 200, 'flat_rate' => 599, 'min_hours' => 2, 'pricing_type' => 'both', 'active' => 1],
-        ['id' => 2, 'name' => 'Plumbing', 'icon' => '🔧', 'description' => 'Pipe repair, clogs & more', 'hourly_rate' => 250, 'flat_rate' => 450, 'min_hours' => 1, 'pricing_type' => 'both', 'active' => 1],
-        ['id' => 3, 'name' => 'Electrical', 'icon' => '⚡', 'description' => 'Wiring, outlets & installs', 'hourly_rate' => 300, 'flat_rate' => 750, 'min_hours' => 1, 'pricing_type' => 'both', 'active' => 1],
-        ['id' => 4, 'name' => 'Painting', 'icon' => '🖌️', 'description' => 'Interior & exterior painting', 'hourly_rate' => 220, 'flat_rate' => 800, 'min_hours' => 3, 'pricing_type' => 'both', 'active' => 1],
-        ['id' => 5, 'name' => 'Appliance Repair', 'icon' => '🔩', 'description' => 'Fix any home appliance', 'hourly_rate' => 280, 'flat_rate' => 650, 'min_hours' => 1, 'pricing_type' => 'both', 'active' => 1],
-        ['id' => 6, 'name' => 'Gardening', 'icon' => '🌿', 'description' => 'Landscaping & garden care', 'hourly_rate' => 180, 'flat_rate' => 850, 'min_hours' => 2, 'pricing_type' => 'both', 'active' => 1],
+        ['id' => 1, 'name' => 'Cleaner', 'icon' => '🧹', 'description' => 'Home & office cleaning', 'hourly_rate' => 400, 'flat_rate' => 800, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 2, 'name' => 'Plumber', 'icon' => '🔧', 'description' => 'Pipe repair, clogs & installs', 'hourly_rate' => 400, 'flat_rate' => 800, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 3, 'name' => 'Laundry Worker', 'icon' => '👕', 'description' => 'Wash, fold & ironing services', 'hourly_rate' => 200, 'flat_rate' => 400, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 4, 'name' => 'Helper', 'icon' => '🏠', 'description' => 'General household help', 'hourly_rate' => 300, 'flat_rate' => 600, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 5, 'name' => 'Carpenter', 'icon' => '🪚', 'description' => 'Repairs, installations & builds', 'hourly_rate' => 500, 'flat_rate' => 1000, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 6, 'name' => 'Appliance Technician', 'icon' => '⚡', 'description' => 'Appliance repairs & diagnostics', 'hourly_rate' => 400, 'flat_rate' => 800, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
     ];
+}
+
+function ensureBookingRequestsTable(mysqli $conn)
+{
+    $sql = "CREATE TABLE IF NOT EXISTS booking_requests (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        booking_id INT NOT NULL,
+        provider_id INT NOT NULL,
+        service VARCHAR(120) NOT NULL,
+        fixed_price DECIMAL(10,2) NOT NULL DEFAULT 0,
+        date DATE NULL,
+        time_slot VARCHAR(32) NULL,
+        address VARCHAR(255) NULL,
+        details TEXT NULL,
+        customer_name VARCHAR(120) NULL,
+        customer_phone VARCHAR(40) NULL,
+        customer_address VARCHAR(255) NULL,
+        status ENUM('pending','accepted','declined','closed') NOT NULL DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        expires_at DATETIME NULL,
+        responded_at DATETIME NULL,
+        INDEX idx_provider_status (provider_id, status),
+        INDEX idx_booking (booking_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
+}
+
+function _asInt($value, $fallback = 0)
+{
+    if (!is_numeric($value)) {
+        return (int) $fallback;
+    }
+    return (int) $value;
+}
+
+function _parseCsvValues($value)
+{
+    if (is_array($value)) {
+        return array_values(array_filter(array_map('trim', $value), static function ($v) {
+            return $v !== '';
+        }));
+    }
+
+    $raw = trim((string) $value);
+    if ($raw === '') {
+        return [];
+    }
+
+    $parts = explode(',', $raw);
+    return array_values(array_filter(array_map('trim', $parts), static function ($v) {
+        return $v !== '';
+    }));
+}
+
+function _computeFixedPrice($service, $data)
+{
+    $total = 0;
+    $breakdown = [];
+
+    if ($service === 'Cleaner') {
+        $total = 500;
+        $breakdown[] = 'Base: 500';
+
+        $typeAdd = ['General' => 0, 'Deep Cleaning' => 500, 'Move-in/out' => 700];
+        $propertyAdd = ['Condo/Apartment' => 0, 'House' => 200];
+
+        $cleanType = (string) ($data['cleaning_type'] ?? 'General');
+        $propertyType = (string) ($data['property_type'] ?? 'Condo/Apartment');
+        $rooms = max(0, _asInt($data['num_rooms'] ?? 1, 1));
+        $bathrooms = max(0, _asInt($data['num_bathrooms'] ?? 1, 1));
+
+        $total += ($typeAdd[$cleanType] ?? 0);
+        $total += ($propertyAdd[$propertyType] ?? 0);
+        $total += $rooms * 100;
+        $total += $bathrooms * 150;
+    } elseif ($service === 'Laundry Worker') {
+        $total = 300;
+        $breakdown[] = 'Base: 300';
+
+        $options = _parseCsvValues($data['laundry_options'] ?? []);
+        $loadSize = (string) ($data['load_size'] ?? 'Small');
+        $pickup = (string) ($data['pickup_delivery'] ?? 'No');
+
+        $optAddMap = ['Wash' => 0, 'Fold' => 100, 'Iron' => 200];
+        foreach ($options as $opt) {
+            $total += ($optAddMap[$opt] ?? 0);
+        }
+
+        $total += (['Small' => 0, 'Medium' => 100, 'Large' => 200][$loadSize] ?? 0);
+        $total += ($pickup === 'Yes') ? 100 : 0;
+    } elseif ($service === 'Helper') {
+        $total = 500;
+        $breakdown[] = 'Base: 500';
+
+        $duration = (string) ($data['duration'] ?? 'Half Day');
+        $tasks = _parseCsvValues($data['helper_tasks'] ?? []);
+
+        $total += ($duration === 'Full Day') ? 400 : 0;
+
+        $taskMap = ['Cleaning' => 100, 'Cooking' => 150, 'Childcare' => 200, 'Errands' => 100];
+        foreach ($tasks as $task) {
+            $total += ($taskMap[$task] ?? 0);
+        }
+    } elseif ($service === 'Plumber') {
+        $total = 500;
+        $breakdown[] = 'Base: 500';
+
+        $issue = (string) ($data['issue_type'] ?? 'Leak');
+        $location = (string) ($data['issue_location'] ?? 'Kitchen');
+        $urgency = (string) ($data['urgency'] ?? 'Normal');
+
+        $total += (['Leak' => 300, 'Clog' => 300, 'Installation' => 800][$issue] ?? 0);
+        $total += (['Kitchen' => 0, 'Bathroom' => 100, 'Outdoor' => 150][$location] ?? 0);
+        $total += ($urgency === 'Urgent') ? 300 : 0;
+    } elseif ($service === 'Carpenter') {
+        $total = 700;
+        $breakdown[] = 'Base: 700';
+
+        $work = (string) ($data['work_type'] ?? 'Repair');
+        $material = (string) ($data['material_type'] ?? 'Standard');
+        $size = (string) ($data['size'] ?? 'Small');
+
+        $total += (['Repair' => 300, 'Custom' => 800, 'Installation' => 500][$work] ?? 0);
+        $total += (['Standard' => 0, 'Premium' => 300][$material] ?? 0);
+        $total += (['Small' => 0, 'Medium' => 300, 'Large' => 700][$size] ?? 0);
+    } elseif ($service === 'Appliance Technician') {
+        $total = 500;
+        $breakdown[] = 'Base: 500';
+
+        $appliance = (string) ($data['appliance_type'] ?? 'TV');
+        $severity = (string) ($data['problem_severity'] ?? 'Minor');
+        $urgency = (string) ($data['urgency_level'] ?? 'Normal');
+
+        $total += (['Aircon' => 500, 'Ref' => 400, 'Washing Machine' => 400, 'TV' => 300][$appliance] ?? 0);
+        $total += (['Minor' => 300, 'Major' => 800][$severity] ?? 0);
+        $total += ($urgency === 'Urgent') ? 300 : 0;
+    }
+
+    return [
+        'total' => max(0, (float) $total),
+        'breakdown' => $breakdown
+    ];
+}
+
+function _summarizeSelectedOptions($service, $data)
+{
+    $pairs = [];
+
+    if ($service === 'Cleaner') {
+        $pairs[] = 'Cleaning Type: ' . ((string) ($data['cleaning_type'] ?? 'General'));
+        $pairs[] = 'Property Type: ' . ((string) ($data['property_type'] ?? 'Condo/Apartment'));
+        $pairs[] = 'Rooms: ' . max(0, _asInt($data['num_rooms'] ?? 1, 1));
+        $pairs[] = 'Bathrooms: ' . max(0, _asInt($data['num_bathrooms'] ?? 1, 1));
+    } elseif ($service === 'Laundry Worker') {
+        $opts = _parseCsvValues($data['laundry_options'] ?? []);
+        $pairs[] = 'Laundry Options: ' . (empty($opts) ? 'None' : implode(', ', $opts));
+        $pairs[] = 'Load Size: ' . ((string) ($data['load_size'] ?? 'Small'));
+        $pairs[] = 'Pickup/Delivery: ' . ((string) ($data['pickup_delivery'] ?? 'No'));
+    } elseif ($service === 'Helper') {
+        $tasks = _parseCsvValues($data['helper_tasks'] ?? []);
+        $pairs[] = 'Duration: ' . ((string) ($data['duration'] ?? 'Half Day'));
+        $pairs[] = 'Tasks: ' . (empty($tasks) ? 'None' : implode(', ', $tasks));
+    } elseif ($service === 'Plumber') {
+        $pairs[] = 'Issue Type: ' . ((string) ($data['issue_type'] ?? 'Leak'));
+        $pairs[] = 'Location: ' . ((string) ($data['issue_location'] ?? 'Kitchen'));
+        $pairs[] = 'Urgency: ' . ((string) ($data['urgency'] ?? 'Normal'));
+    } elseif ($service === 'Carpenter') {
+        $pairs[] = 'Work Type: ' . ((string) ($data['work_type'] ?? 'Repair'));
+        $pairs[] = 'Material: ' . ((string) ($data['material_type'] ?? 'Standard'));
+        $pairs[] = 'Size: ' . ((string) ($data['size'] ?? 'Small'));
+    } elseif ($service === 'Appliance Technician') {
+        $pairs[] = 'Appliance: ' . ((string) ($data['appliance_type'] ?? 'TV'));
+        $pairs[] = 'Severity: ' . ((string) ($data['problem_severity'] ?? 'Minor'));
+        $pairs[] = 'Urgency: ' . ((string) ($data['urgency_level'] ?? 'Normal'));
+    }
+
+    if (empty($pairs)) {
+        return '';
+    }
+
+    return "Selected Options:\n- " . implode("\n- ", $pairs);
 }

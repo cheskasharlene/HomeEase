@@ -165,7 +165,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     <div class="bnav">
       <div class="ni" onclick="goPage('home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
       <div class="ni on" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-      <div class="ni" onclick="goPage('booking_form.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+      <div class="ni" onclick="goPage('service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
       <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
       <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
     </div>
@@ -186,6 +186,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const s = String(raw || '').toLowerCase();
       if (s === 'done' || s === 'completed') return 'completed';
       if (s === 'cancelled' || s === 'canceled') return 'canceled';
+      if (s === 'confirmed' || s === 'progress' || s === 'active') return 'pending';
       return 'pending';
     }
 
@@ -226,9 +227,20 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const icon = svcIcon[b.service] || '🏠';
         const rawStatus = normalizeStatus(b.status);
         const pillClass = rawStatus === 'canceled' ? 'cancelled' : rawStatus === 'completed' ? 'done' : 'pending';
-        const statusText = rawStatus === 'canceled' ? 'Canceled' : rawStatus === 'completed' ? 'Completed' : 'Pending';
+        const srcStatus = String(b.status || '').toLowerCase();
+        const statusText = rawStatus === 'canceled'
+          ? 'Canceled'
+          : rawStatus === 'completed'
+            ? 'Completed'
+            : (srcStatus === 'confirmed' || srcStatus === 'progress' ? 'Confirmed' : 'Pending');
         const providerName = b.technician_name ? b.technician_name : 'Provider not assigned';
         const dateTime = `${b.date || '—'}${b.time_slot ? ' · ' + b.time_slot : ''}`;
+        const createdAt = b.created_at ? new Date(String(b.created_at).replace(' ', 'T')) : null;
+        const minsWaiting = createdAt ? ((Date.now() - createdAt.getTime()) / 60000) : 0;
+        const isUnserved = rawStatus === 'pending' && !b.technician_name && minsWaiting >= 5;
+        const waitingHint = rawStatus === 'pending' && !b.technician_name
+          ? `<div style="margin-top:7px;font-size:11px;color:var(--tm);">${isUnserved ? 'No providers available at the moment. Try again or change schedule.' : 'Waiting for a provider to accept your booking…'}</div>`
+          : '';
 
         return `
         <div class="bk-card">
@@ -245,6 +257,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
               <span class="pill ${pillClass}">${statusText}</span>
             </div>
           </div>
+          ${waitingHint}
         </div>`;
       }).join('');
     }

@@ -374,6 +374,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       font-size: 24px;
     }
 
+    .svc-ic i,
+    .svc-ic span {
+      color: #E8960F;
+      font-size: 24px;
+      line-height: 1;
+    }
+
     .svc-nm {
       font-size: 12px;
       font-weight: 700;
@@ -993,12 +1000,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>
         <div class="cat-pills">
           <div class="cat-pill active">All</div>
-          <div class="cat-pill">Cleaning</div>
-          <div class="cat-pill">Plumbing</div>
-          <div class="cat-pill">Electrical</div>
-          <div class="cat-pill">Painting</div>
-          <div class="cat-pill">Gardening</div>
-          <div class="cat-pill">Appliances</div>
+          <div class="cat-pill">Cleaner</div>
+          <div class="cat-pill">Plumber</div>
+          <div class="cat-pill">Laundry Worker</div>
+          <div class="cat-pill">Helper</div>
+          <div class="cat-pill">Carpenter</div>
+          <div class="cat-pill">Appliance Technician</div>
         </div>
 
 
@@ -1119,22 +1126,39 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }).catch(() => { });
 
     // Services grid
+    const homeServiceIconClass = {
+      'Cleaner': 'bi-brush',
+      'Plumber': 'bi-wrench-adjustable-circle',
+      'Laundry Worker': 'bi-basket3',
+      'Helper': 'bi-house-heart',
+      'Carpenter': 'bi-hammer',
+      'Appliance Technician': 'bi-lightning-charge'
+    };
+
+    function homeBrandIcon(serviceName) {
+      const iconClass = homeServiceIconClass[serviceName] || '';
+      if (iconClass) {
+        return `<i class="bi ${iconClass}"></i>`;
+      }
+      return '<span>🛠️</span>';
+    }
+
     const svcGrid = document.getElementById('svcGrid');
     Object.entries(SVCS).forEach(([name, data]) => {
       svcGrid.innerHTML += `
         <div class="svc-card" onclick="goPage('booking_form.php?svc=${encodeURIComponent(name)}&newbooking=1')">
-          <div class="svc-ic">${data.ic}</div>
+          <div class="svc-ic">${homeBrandIcon(name)}</div>
           <div class="svc-nm">${name}</div>
         </div>`;
     });
 
   
     const popData = [
-      { svc: 'Cleaning', title: 'Deep Home Cleaning', desc: 'Complete house cleaning', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80', price: '₱599' },
-      { svc: 'Plumbing', title: 'Pipe Leak Repair', desc: 'Fix leaks & clogs fast', img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80', price: '₱450' },
-      { svc: 'Electrical', title: 'Electrical Wiring', desc: 'Safe & certified work', img: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80', price: '₱750' },
-      { svc: 'Gardening', title: 'Garden Makeover', desc: 'Landscaping & trimming', img: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&q=80', price: '₱850' },
-      { svc: 'Painting', title: 'Interior Painting', desc: 'Walls & ceilings refreshed', img: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=300&q=80', price: '₱800' },
+      { svc: 'Cleaner', title: 'Deep Home Cleaning', desc: 'Complete home and office cleaning', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80', price: '₱800' },
+      { svc: 'Plumber', title: 'Pipe Leak Repair', desc: 'Fix leaks, clogs, and pipe issues', img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80', price: '₱800' },
+      { svc: 'Laundry Worker', title: 'Wash & Fold Service', desc: 'Laundry washing, folding, and ironing', img: 'https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=300&q=80', price: '₱400' },
+      { svc: 'Carpenter', title: 'Furniture & Wood Repair', desc: 'Installations, repairs, and builds', img: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=300&q=80', price: '₱1,000' },
+      { svc: 'Appliance Technician', title: 'Appliance Diagnosis', desc: 'Repair and diagnostics for appliances', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80', price: '₱800' },
     ];
     const popRow = document.getElementById('popRow');
     popData.forEach(p => {
@@ -1188,7 +1212,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       <div class="bnav">
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-        <div class="ni" onclick="goPage('booking_form.php?newbooking=1')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+        <div class="ni" onclick="goPage('service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
         <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
         <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
