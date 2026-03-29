@@ -61,8 +61,8 @@ try {
     if (in_array('hours', $bCols))
         $select[] = 'b.hours';
     if (in_array('technician_id', $bCols)) {
-        $select[] = 't.name AS technician_name';
-        $join = "LEFT JOIN technicians t ON b.technician_id = t.id";
+        $select[] = 't.full_name AS technician_name';
+        $join = "LEFT JOIN service_providers t ON b.technician_id = t.provider_id";
     } else {
         $join = "";
         $select[] = "NULL AS technician_name";
@@ -134,8 +134,7 @@ $systemPrompt = "You are HomeEase Customer Service — a friendly AI assistant f
     . "- Plumbing: ₱250/hr or ₱450 flat (min. 1hr)\n"
     . "- Electrical: ₱300/hr or ₱750 flat (min. 1hr)\n"
     . "- Painting: ₱220/hr or ₱800 flat (min. 3hrs)\n"
-    . "- Appliance Repair: ₱280/hr or ₱650 flat (min. 1hr)\n"
-    . "- Gardening: ₱180/hr or ₱850 flat (min. 2hrs)\n\n"
+    . "- Appliance Repair: ₱280/hr or ₱650 flat (min. 1hr)\n\n"
     . "CAPABILITIES:\n"
     . "1. Answer questions using the real user data above.\n"
     . "2. Cancel a PENDING booking — ask for confirmation first, then execute after user says YES.\n"

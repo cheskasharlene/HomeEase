@@ -23,280 +23,7 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="../assets/css/main.css" rel="stylesheet">
   <link href="../assets/css/profile.css" rel="stylesheet">
-  <style>
-  
-    #settingsScreen {
-      position: absolute;
-      inset: 0;
-      background: var(--bg-screen);
-      z-index: 100;
-      display: flex;
-      flex-direction: column;
-      transform: translateX(100%);
-      transition: transform .32s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    #settingsScreen.on {
-      transform: translateX(0);
-    }
-
-    .st-hdr {
-      padding: 48px 20px 16px;
-      background: linear-gradient(145deg, #C86500 0%, #E8820C 30%, #F5A623 60%, #FFB347 100%);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-shrink: 0;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .st-hdr::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .07) 1px, transparent 0);
-      background-size: 22px 22px;
-      pointer-events: none;
-    }
-
-    .st-back {
-      width: 40px;
-      height: 40px;
-      background: rgba(255, 255, 255, .2);
-      backdrop-filter: blur(8px);
-      border: 1.5px solid rgba(255, 255, 255, .3);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      color: #fff;
-      font-size: 18px;
-      flex-shrink: 0;
-      transition: background .2s;
-      position: relative;
-      z-index: 1;
-    }
-
-    .st-hdr-title {
-      font-family: 'Poppins', sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
-      position: relative;
-      z-index: 1;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, .1);
-    }
-
-    .st-hdr-sub {
-      font-size: 12px;
-      color: rgba(255, 255, 255, .75);
-      position: relative;
-      z-index: 1;
-    }
-
-    .st-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 18px 100px;
-      scrollbar-width: none;
-    }
-
-    .st-scroll::-webkit-scrollbar {
-      display: none;
-    }
-
-    .st-sec {
-      background: var(--bg-card);
-      border-radius: 18px;
-      overflow: hidden;
-      margin-bottom: 16px;
-      box-shadow: 0 3px 14px rgba(232, 130, 12, .07);
-      border: 1.5px solid var(--border-col);
-    }
-
-    .st-sec-ttl {
-      padding: 12px 18px 8px;
-      font-size: 10px;
-      font-weight: 800;
-      color: var(--tm);
-      text-transform: uppercase;
-      letter-spacing: .9px;
-      background: var(--teal-bg);
-      border-bottom: 1px solid var(--border-col);
-    }
-
-    .st-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 18px;
-      cursor: pointer;
-      transition: background .15s;
-      border-bottom: 1px solid var(--border-col);
-    }
-
-    .st-row:last-child {
-      border-bottom: none;
-    }
-
-    .st-row:hover {
-      background: var(--teal-bg);
-    }
-
-    .st-ic {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
-
-    .st-ic.orange {
-      background: linear-gradient(135deg, #FFE5B4, #FFF8F0);
-      color: #E8820C;
-    }
-
-    .st-ic.blue {
-      background: linear-gradient(135deg, #dbeafe, #eff6ff);
-      color: #2563eb;
-    }
-
-    .st-ic.green {
-      background: linear-gradient(135deg, #d1fae5, #ecfdf5);
-      color: #059669;
-    }
-
-    .st-ic.red {
-      background: linear-gradient(135deg, #fee2e2, #fff5f5);
-      color: #ef4444;
-    }
-
-    .st-ic.gray {
-      background: linear-gradient(135deg, #f3f4f6, #f9fafb);
-      color: #6b7280;
-    }
-
-    .st-row-info {
-      flex: 1;
-    }
-
-    .st-row-lbl {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--td);
-    }
-
-    .st-row-sub {
-      font-size: 12px;
-      color: var(--tm);
-      margin-top: 1px;
-    }
-
-    .st-row-arrow {
-      color: #d1d5db;
-      font-size: 15px;
-    }
-
-    .st-toggle {
-      width: 48px;
-      height: 26px;
-      background: #e5e7eb;
-      border-radius: 13px;
-      position: relative;
-      cursor: pointer;
-      transition: background .25s;
-      flex-shrink: 0;
-    }
-
-    .st-toggle.on {
-      background: linear-gradient(135deg, #E8820C, #F5A623);
-      box-shadow: 0 3px 10px rgba(232, 130, 12, .3);
-    }
-
-    .st-toggle::after {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform .22s cubic-bezier(.34, 1.4, .64, 1);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, .18);
-    }
-
-    .st-toggle.on::after {
-      transform: translateX(22px);
-    }
-
-    .st-version {
-      text-align: center;
-      padding: 8px 0 4px;
-      font-size: 12px;
-      color: var(--tm);
-      font-weight: 600;
-    }
-
-    .bnav {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #fff !important;
-      border-top: 1px solid #EDE8E0 !important;
-      display: flex;
-      padding: 9px 0 calc(12px + env(safe-area-inset-bottom));
-      box-shadow: 0 -4px 20px rgba(232, 130, 12, .07);
-      z-index: 50;
-    }
-
-    .ni {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      color: #C5BEB3;
-      font-family: "Nunito", sans-serif;
-      padding: 2px 0;
-    }
-
-    .ni i {
-      font-size: 22px;
-    }
-
-    .ni.on,
-    .ni.on i,
-    .ni.on .nl {
-      color: #F5A623;
-    }
-
-    .nl {
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .nb-c {
-      width: 50px;
-      height: 50px;
-      background: linear-gradient(135deg, #E8820C, #F5A623);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 22px;
-      margin-top: -22px;
-      box-shadow: 0 6px 20px rgba(232, 130, 12, .45);
-    }
-  </style>
+  <link rel="stylesheet" href="../assets/css/provider_profile.css">
 </head>
 
 <body>
@@ -488,6 +215,92 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
         </div>
+        
+        <div class="st-sec">
+          <div class="st-sec-ttl">General Verification Requirements</div>
+          
+          <div class="st-row" onclick="document.getElementById('id_picture').click()">
+            <div class="st-ic blue"><i class="bi bi-person-vcard-fill"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl">Valid Government ID</div>
+              <div class="st-row-sub" id="id_status">Not Uploaded</div>
+            </div><i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
+
+          <div class="st-row" onclick="document.getElementById('selfie_verification').click()">
+            <div class="st-ic purple"><i class="bi bi-person-bounding-box"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl">Selfie Verification</div>
+              <div class="st-row-sub" id="selfie_status">Not Uploaded (Clear face photo)</div>
+            </div><i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
+
+          <div class="st-row" onclick="document.getElementById('proof_of_address').click()">
+            <div class="st-ic red"><i class="bi bi-house-check-fill"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl">Proof of Address</div>
+              <div class="st-row-sub" id="address_status">Not Uploaded (e.g., Utility Bill)</div>
+            </div><i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
+        </div>
+
+        <div class="st-sec">
+          <div class="st-sec-ttl"><?= $specialty ?> Specific Requirements</div>
+          
+          <?php
+            $certLbl = "Certification";
+            $expLbl = "Proof of Experience";
+            if ($specialty === 'Cleaner') {
+                $certLbl = "Barangay Clearance";
+                $expLbl = "Photos of past cleaning work";
+            } elseif ($specialty === 'Helper') {
+                $certLbl = "NBI / Police Clearance";
+                $expLbl = "2 Character References (Document)";
+            } elseif ($specialty === 'Laundry Worker') {
+                $certLbl = "Plantsa / Dryer Tools Declaration";
+                $expLbl = "Photos of laundry work";
+            } elseif ($specialty === 'Plumber') {
+                $certLbl = "TESDA / Plumbing Certification";
+                $expLbl = "Tools Declaration";
+            } elseif ($specialty === 'Carpenter') {
+                $certLbl = "Tools Declaration";
+                $expLbl = "Photos of previous woodwork";
+            } elseif ($specialty === 'Appliance Technician') {
+                $certLbl = "Technical Certification";
+                $expLbl = "Tools Declaration";
+            }
+          ?>
+
+          <div class="st-row" onclick="document.getElementById('certificates').click()">
+            <div class="st-ic green"><i class="bi bi-award-fill"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl"><?= $certLbl ?></div>
+              <div class="st-row-sub" id="cert_status">Not Uploaded</div>
+            </div><i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
+          
+          <div class="st-row" onclick="document.getElementById('proof_of_experience').click()">
+            <div class="st-ic orange"><i class="bi bi-briefcase-fill"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl"><?= $expLbl ?></div>
+              <div class="st-row-sub" id="proof_status">Not Uploaded</div>
+            </div><i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
+          
+          <div style="padding: 10px 18px 20px;">
+              <button onclick="uploadVerificationDocs()" style="width:100%;background:linear-gradient(135deg, #E8820C, #F5A623);color:#fff;border:none;padding:12px;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(232,130,12,0.3);">Submit Documents</button>
+          </div>
+          
+          <form id="verifyForm" style="display:none;">
+              <input type="file" id="id_picture" name="id_picture" accept="image/*,application/pdf" onchange="document.getElementById('id_status').innerText='File Selected.';" />
+              <input type="file" id="selfie_verification" name="selfie_verification" accept="image/*" onchange="document.getElementById('selfie_status').innerText='File Selected.';" />
+              <input type="file" id="proof_of_address" name="proof_of_address" accept="image/*,application/pdf" onchange="document.getElementById('address_status').innerText='File Selected.';" />
+              <input type="file" id="certificates" name="certificates" accept="image/*,application/pdf" onchange="document.getElementById('cert_status').innerText='File Selected.';" />
+              <input type="file" id="proof_of_experience" name="proof_of_experience" accept="image/*,application/pdf" onchange="document.getElementById('proof_status').innerText='File Selected.';" />
+          </form>
+        </div>
+        
+
         <div class="st-sec">
           <div class="st-sec-ttl">Appearance</div>
           <div class="st-row">
@@ -554,6 +367,45 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
     }
     function toggleDarkMode() { toggleDark(); syncDark(); }
     syncDark();
+
+    async function uploadVerificationDocs() {
+      const form = document.getElementById('verifyForm');
+      const formData = new FormData(form);
+      formData.append('action', 'upload_documents');
+      
+      try {
+          const res = await fetch('../api/provider_verification.php', {
+              method: 'POST',
+              body: formData
+          });
+          const data = await res.json();
+          if (data.success) {
+              alert('Documents uploaded successfully! Waiting for admin approval.');
+              loadVerificationStatus();
+          } else {
+              alert('Upload failed: ' + data.message);
+          }
+      } catch (err) {
+          alert('Error uploading documents.');
+      }
+    }
+
+    async function loadVerificationStatus() {
+        try {
+            const res = await fetch('../api/provider_verification.php?action=status');
+            const data = await res.json();
+            if(data.success && data.verification) {
+                const v = data.verification;
+                if(v.id_picture) document.getElementById('id_status').innerText = 'Uploaded';
+                if(v.selfie_verification) document.getElementById('selfie_status').innerText = 'Uploaded';
+                if(v.proof_of_address) document.getElementById('address_status').innerText = 'Uploaded';
+                if(v.certificates) document.getElementById('cert_status').innerText = 'Uploaded';
+                if(v.proof_of_experience) document.getElementById('proof_status').innerText = 'Uploaded';
+            }
+        } catch(e) {}
+    }
+
+    loadVerificationStatus();
   </script>
 </body>
 

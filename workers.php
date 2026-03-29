@@ -69,7 +69,6 @@ if (empty($_SESSION['user_id'])) {
           <div class="w-pill" data-filter="Plumbing">Plumbing</div>
           <div class="w-pill" data-filter="Electrical">Electrical</div>
           <div class="w-pill" data-filter="Painting">Painting</div>
-          <div class="w-pill" data-filter="Gardening">Gardening</div>
           <div class="w-pill" data-filter="Appliance Repair">Appliance Repair</div>
         </div>
 
@@ -160,13 +159,13 @@ if (empty($_SESSION['user_id'])) {
         const imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=FDECC8&color=F5A623&size=128`;
         const isOffline = w.status === 'offline';
         return `
-          <div class="w-card" onclick="bookWorker(${w.id},'${safeRole}')">
+          <div class="w-card" onclick="goPage('worker_profile.php?id=${w.id}')">
             <div class="w-avatar-wrap">
               <img class="w-avatar" src="${imgSrc}" alt="${w.name}">
               <div class="w-status-dot dot-${w.status}"></div>
             </div>
             <div class="w-info">
-              <div class="w-name">${w.name}</div>
+              <div class="w-name">${w.name} ${w.is_verified ? '<i class="bi bi-patch-check-fill" style="color:#10b981;font-size:13px;margin-left:2px;"></i>' : ''}</div>
               <div class="w-role">${w.role}</div>
               ${starRating(w.rating)}
               <div class="w-meta">

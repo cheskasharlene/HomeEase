@@ -32,48 +32,70 @@ if ($row) {
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="assets/css/main.css" rel="stylesheet">
-  <link href="assets/css/profile.css" rel="stylesheet">
+  <link href="assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
+  <link href="assets/css/profile.css?v=<?= time() ?>" rel="stylesheet">
   <style>
+    /* ── Profile Page Critical CSS ── */
 
-    #settingsScreen {
+    /* Screen fix - hide all screens but show the profile screen (only one on this page) */
+    .screen {
+      display: none !important;
       position: absolute;
       inset: 0;
+      overflow: hidden;
       background: var(--bg-screen);
-      z-index: 100;
+      flex-direction: column;
+      align-items: stretch !important;
+      justify-content: flex-start !important;
+    }
+
+    #profile {
+      display: flex !important;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+
+    /* Profile main scroll */
+    .p-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 90px;
+      scrollbar-width: none;
+    }
+
+    .p-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Profile header */
+    .p-hdr {
+      background: linear-gradient(145deg, #C86500 0%, #E8820C 25%, #F5A623 60%, #FFB347 100%);
+      padding: 52px 22px 24px;
       display: flex;
       flex-direction: column;
-      transform: translateX(100%);
-      transition: transform 0.32s cubic-bezier(.4, 0, .2, 1);
-    }
-
-    #settingsScreen.on {
-      transform: translateX(0);
-    }
-
-    .st-hdr {
-      padding: 48px 20px 16px;
-      background: linear-gradient(145deg, #C86500 0%, #E8820C 30%, #F5A623 60%, #FFB347 100%);
-      display: flex;
       align-items: center;
-      gap: 14px;
-      flex-shrink: 0;
       position: relative;
       overflow: hidden;
+      flex-shrink: 0;
     }
 
-    .st-hdr::before {
+    .p-hdr::before {
       content: '';
       position: absolute;
       inset: 0;
-      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.07) 1px, transparent 0);
-      background-size: 22px 22px;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.08) 1px, transparent 0);
+      background-size: 20px 20px;
       pointer-events: none;
     }
 
-    .st-back {
-      width: 40px;
-      height: 40px;
+    .p-hdr-back {
+      position: absolute;
+      top: 52px;
+      left: 18px;
+      width: 38px;
+      height: 38px;
       background: rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(8px);
       border: 1.5px solid rgba(255, 255, 255, 0.3);
@@ -83,329 +105,336 @@ if ($row) {
       justify-content: center;
       cursor: pointer;
       color: #fff;
-      font-size: 18px;
-      flex-shrink: 0;
-      transition: background 0.2s;
-      position: relative;
+      font-size: 17px;
       z-index: 1;
+      transition: background 0.2s;
     }
 
-    .st-back:hover {
+    .p-hdr-back:hover {
       background: rgba(255, 255, 255, 0.3);
     }
 
-    .st-hdr-title {
+    .p-hdr-settings {
+      position: absolute;
+      top: 52px;
+      right: 18px;
+      width: 38px;
+      height: 38px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #fff;
+      font-size: 17px;
+      z-index: 1;
+      transition: background 0.2s;
+    }
+
+    .p-hdr-settings:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .p-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 3.5px solid rgba(255, 255, 255, 0.8);
+      object-fit: cover;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.22);
+      margin-bottom: 12px;
+    }
+
+    .p-name {
       font-family: 'Poppins', sans-serif;
       font-size: 20px;
       font-weight: 800;
       color: #fff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
       position: relative;
       z-index: 1;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 3px;
     }
 
-    .st-hdr-sub {
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.75);
+    .p-email {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.8);
+      position: relative;
+      z-index: 1;
+      margin-bottom: 12px;
+    }
+
+    .p-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
       position: relative;
       z-index: 1;
     }
 
-    .st-scroll {
-      flex: 1;
-      overflow-y: auto;
-      padding: 20px 18px 100px;
-      scrollbar-width: none;
-    }
-
-    .st-scroll::-webkit-scrollbar {
-      display: none;
-    }
-
-   
-    .st-sec {
-      background: var(--bg-card);
-      border-radius: 18px;
-      overflow: hidden;
-      margin-bottom: 16px;
-      box-shadow: 0 3px 14px rgba(232, 130, 12, 0.07);
-      border: 1.5px solid var(--border-col);
-    }
-
-    .st-sec-ttl {
-      padding: 12px 18px 8px;
-      font-size: 10px;
-      font-weight: 800;
-      color: var(--tm);
-      text-transform: uppercase;
-      letter-spacing: 0.9px;
-      background: var(--teal-bg);
-      border-bottom: 1px solid var(--border-col);
-    }
-
-    .st-row {
+    .p-badge {
       display: flex;
       align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Profile body */
+    .p-body {
+      padding: 18px 18px 0;
+    }
+
+    .p-sec {
+      margin-bottom: 16px;
+    }
+
+    .p-sec-ttl {
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--txt-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.9px;
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+
+    /* Profile rows */
+    .p-row {
+      display: flex !important;
+      align-items: center !important;
       gap: 14px;
-      padding: 14px 18px;
+      padding: 14px 16px;
+      background: var(--bg-card);
+      border-radius: 16px;
+      margin-bottom: 8px;
       cursor: pointer;
-      transition: background 0.15s;
-      border-bottom: 1px solid var(--border-col);
+      border: 1.5px solid var(--border-col);
+      transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
-    .st-row:last-child {
-      border-bottom: none;
-    }
-
-    .st-row:hover {
+    .p-row:hover {
       background: var(--teal-bg);
+      transform: translateX(2px);
+      box-shadow: 0 4px 14px rgba(232, 130, 12, 0.1);
     }
 
-    .st-row:active {
-      background: var(--teal-mid);
+    .p-row:active {
+      transform: scale(0.98);
     }
 
-    .st-ic {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
+    /* Row icon container - CRITICAL: constrains SVG size */
+    .p-row-ic {
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px !important;
+      min-height: 44px !important;
+      max-width: 44px !important;
+      max-height: 44px !important;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #FFE5B4, #FFF8F0);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .p-row-ic svg {
+      width: 22px !important;
+      height: 22px !important;
       flex-shrink: 0;
     }
 
-    .st-ic.orange {
-      background: linear-gradient(135deg, #FFE5B4, #FFF8F0);
-      color: #E8820C;
-    }
-
-    .st-ic.blue {
-      background: linear-gradient(135deg, #dbeafe, #eff6ff);
-      color: #2563eb;
-    }
-
-    .st-ic.green {
-      background: linear-gradient(135deg, #d1fae5, #ecfdf5);
-      color: #059669;
-    }
-
-    .st-ic.red {
-      background: linear-gradient(135deg, #fee2e2, #fff5f5);
-      color: #ef4444;
-    }
-
-    .st-ic.purple {
-      background: linear-gradient(135deg, #ede9fe, #f5f3ff);
-      color: #7c3aed;
-    }
-
-    .st-ic.gray {
-      background: linear-gradient(135deg, #f3f4f6, #f9fafb);
-      color: #6b7280;
-    }
-
-    .st-row-info {
+    .p-row-info {
       flex: 1;
+      min-width: 0;
     }
 
-    .st-row-lbl {
+    .p-row-lbl {
       font-size: 14px;
       font-weight: 700;
-      color: var(--td);
+      color: var(--txt-primary);
     }
 
-    .st-row-sub {
+    .p-row-sub {
       font-size: 12px;
-      color: var(--tm);
-      margin-top: 1px;
+      color: var(--txt-muted);
+      margin-top: 2px;
     }
 
-    .st-row-arrow {
+    .p-row-arrow {
       color: #d1d5db;
       font-size: 15px;
-    }
-
-    .st-row-val {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--tm);
-      margin-right: 6px;
-    }
-
-    .st-badge {
-      background: linear-gradient(135deg, #F5A623, #FFB347);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 10px;
-      margin-right: 6px;
-    }
-
- 
-    .st-toggle {
-      width: 48px;
-      height: 26px;
-      background: #e5e7eb;
-      border-radius: 13px;
-      position: relative;
-      cursor: pointer;
-      transition: background 0.25s;
       flex-shrink: 0;
     }
 
-    .st-toggle.on {
-      background: linear-gradient(135deg, #E8820C, #F5A623);
-      box-shadow: 0 3px 10px rgba(232, 130, 12, 0.3);
+    /* Form styles (inside subSheet) */
+    .s-fg {
+      margin-bottom: 14px;
     }
 
-    .st-toggle::after {
-      content: '';
+    .s-lbl {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--txt-primary);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .s-iw {
+      position: relative;
+    }
+
+    .s-ico {
       position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 20px;
-      height: 20px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform 0.22s cubic-bezier(.34, 1.4, .64, 1);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--teal);
+      font-size: 16px;
     }
 
-    .st-toggle.on::after {
-      transform: translateX(22px);
+    .s-fi {
+      width: 100%;
+      padding: 13px 15px 13px 40px;
+      border: 2px solid var(--border-col);
+      border-radius: 13px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      outline: none;
+      background: var(--bg-input, #F7F3EE);
+      color: var(--txt-primary);
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
+    .s-fi:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.12);
+    }
 
-    #subSheet {
+    .s-eye {
+      position: absolute;
+      right: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .save-btn {
+      margin-top: 8px;
+    }
+
+    /* Loading splash */
+    #ml {
       position: absolute;
       inset: 0;
-      background: var(--modal-ol, rgba(26, 20, 8, 0.55));
+      background: linear-gradient(145deg, #E8820C 0%, #F5A623 42%, #FFB347 72%, #FFC96B 100%);
+      z-index: 999;
       display: flex;
       flex-direction: column;
-      justify-content: flex-end;
-      z-index: 200;
+      align-items: center;
+      justify-content: center;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.3s;
+      transition: opacity .2s;
     }
 
-    #subSheet.on {
+    #ml.on {
       opacity: 1;
       pointer-events: all;
     }
 
-    .sub-sheet-inner {
-      background: var(--bg-card);
-      border-radius: 28px 28px 0 0;
-      max-height: 90%;
-      overflow-y: auto;
-      transform: translateY(100%);
-      transition: transform 0.38s cubic-bezier(.4, 0, .2, 1);
-      padding: 0 22px 44px;
-      box-shadow: 0 -4px 40px rgba(232, 130, 12, 0.1);
-    }
-
-    #subSheet.on .sub-sheet-inner {
-      transform: translateY(0);
-    }
-
-    .sub-hand {
-      width: 40px;
-      height: 4px;
-      background: var(--border-col);
-      border-radius: 2px;
-      margin: 14px auto 18px;
-    }
-
-    .sub-hdr {
+    .ml-wrap {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
+      gap: 10px;
     }
 
-    .sub-ttl {
-      font-family: 'Poppins', sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--td);
-    }
-
-    .sub-close {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      background: var(--teal-bg);
-      border: none;
-      cursor: pointer;
+    .ml-box {
+      width: 64px;
+      height: 64px;
+      background: rgba(255, 255, 255, .2);
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--tm);
-      font-size: 15px;
-      transition: background 0.2s;
+      border: 1.5px solid rgba(255, 255, 255, .3);
     }
 
-    .sub-close:hover {
-      background: var(--teal-mid);
+    .ml-box svg {
+      width: 38px;
+      height: 38px;
     }
 
-
-    #subAlert {
-      display: none;
-      padding: 11px 15px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 14px;
+    .ml-name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
     }
 
-    #subAlert.show {
-      display: block;
+    .ml-name span {
+      color: rgba(255, 255, 255, .62);
+      font-weight: 400;
     }
 
-    #subAlert.ok {
-      background: #d1fae5;
-      color: #065f46;
+    .ml-dots {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
     }
 
-    #subAlert.err {
-      background: #fee2e2;
-      color: #991b1b;
+    .ml-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .5);
+      animation: pulse 1.1s infinite ease-in-out;
     }
 
-    .st-version {
-      text-align: center;
-      padding: 8px 0 4px;
-      font-size: 12px;
-      color: var(--tm);
-      font-weight: 600;
+    .ml-dot:nth-child(2) {
+      animation-delay: .22s;
     }
 
-    body.dark .st-sec {
-      background: var(--bg-card);
-      border-color: var(--border-col);
+    .ml-dot:nth-child(3) {
+      animation-delay: .44s;
     }
 
-    body.dark .st-row:hover {
-      background: var(--tbg);
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: .4;
+        transform: scale(.85)
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.1)
+      }
     }
 
-    body.dark .st-sec-ttl {
-      background: var(--tbg);
-      border-color: var(--border-col);
-    }
-
-    body.dark .st-ic.gray {
-      background: #2a2a2a;
-      color: #9ca3af;
-    }
-
-    body.dark .sub-sheet-inner {
-      background: var(--bg-card);
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
@@ -431,12 +460,12 @@ if ($row) {
     <div class="screen" id="profile">
       <div class="p-scroll">
 
-  
+
         <div class="p-hdr">
           <div class="p-hdr-back" onclick="goPage('home.php')">
             <i class="bi bi-arrow-left"></i>
           </div>
-     
+
           <div class="p-hdr-settings" onclick="openSettingsScreen()">
             <i class="bi bi-gear-fill"></i>
           </div>
@@ -459,7 +488,7 @@ if ($row) {
         </div>
         <div class="p-body">
 
-       
+
           <div class="p-sec">
             <div class="p-sec-ttl">Account</div>
             <div class="p-row" onclick="openSubSheet('profile')">
@@ -661,7 +690,7 @@ if ($row) {
 
         <div id="subAlert"></div>
 
-       
+
         <div id="subProfileSection">
           <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:20px;gap:8px;">
             <div style="position:relative;cursor:pointer;">
@@ -777,7 +806,7 @@ if ($row) {
         : 'No address';
       document.getElementById('profileAddressShort').textContent = shortAddr;
       document.getElementById('addressRowSub').textContent = u.address || 'Manage delivery addresses';
-      document.getElementById('stAddressSub').textContent = u.address || 'Manage delivery addresses';
+      if (document.getElementById('stAddressSub')) document.getElementById('stAddressSub').textContent = u.address || 'Manage delivery addresses';
       document.getElementById('savedAddrDisplay').textContent = u.address || 'No address saved yet';
 
 
@@ -786,7 +815,7 @@ if ($row) {
       document.getElementById('profileAvatar').src = avatarUrl;
       document.getElementById('settingsAvatar').src = avatarUrl;
 
-   
+
       document.getElementById('s_name').value = u.name || '';
       document.getElementById('s_email').value = u.email || '';
       document.getElementById('s_phone').value = u.phone || '';
@@ -794,7 +823,7 @@ if ($row) {
       document.getElementById('s_newaddr').value = u.address || '';
     }
 
-    
+
     function openSettingsScreen() {
       document.getElementById('settingsScreen').classList.add('on');
       syncDarkToggles();
@@ -803,7 +832,7 @@ if ($row) {
       document.getElementById('settingsScreen').classList.remove('on');
     }
 
-  
+
     let activeSection = 'profile';
 
     function openSubSheet(section) {
@@ -816,7 +845,7 @@ if ($row) {
       const titles = { profile: 'Edit Profile', security: 'Password & Security', address: 'Saved Addresses' };
       document.getElementById('subSheetTitle').textContent = titles[section] || 'Settings';
 
-   
+
       document.querySelector('#subSheet .sub-sheet-inner > div:nth-child(3)').style.display =
         section === 'profile' ? 'flex' : 'none';
 
@@ -831,7 +860,7 @@ if ($row) {
       if (e.target === document.getElementById('subSheet')) closeSubSheet();
     }
 
- 
+
     function showSubAlert(msg, type) {
       const el = document.getElementById('subAlert');
       el.textContent = msg;
@@ -841,7 +870,7 @@ if ($row) {
       document.getElementById('subAlert').className = '';
     }
 
- 
+
     function tPwd(id, btn) {
       const inp = document.getElementById(id);
       const show = inp.type === 'password';
@@ -849,7 +878,7 @@ if ($row) {
       btn.className = show ? 'bi bi-eye-slash-fill s-eye' : 'bi bi-eye-fill s-eye';
     }
 
-  
+
     async function saveSettings() {
       const btn = document.getElementById('saveBtn');
       btn.disabled = true;

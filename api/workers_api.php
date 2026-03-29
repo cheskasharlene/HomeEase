@@ -14,8 +14,8 @@ header('Content-Type: application/json; charset=utf-8');
 $action = $_GET['action'] ?? 'list';
 
 if ($action === 'pros') {
-    $sql = "SELECT id, name, specialty, availability, jobs_done, rating
-            FROM technicians
+    $sql = "SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, jobs_done, rating, is_verified
+            FROM service_providers
             WHERE status = 'active'
             ORDER BY jobs_done DESC
             LIMIT 6";
@@ -36,6 +36,7 @@ if ($action === 'pros') {
             'jobs_done'    => (int) $r['jobs_done'],
             'rating'       => (float) $r['rating'],
             'top'          => (int) $r['jobs_done'] >= 100,
+            'is_verified'  => (bool) $r['is_verified'],
             'img'          => 'https://ui-avatars.com/api/?name=' . urlencode($r['name']) . '&background=ccfbf1&color=0d9488&size=128'
         ];
     }
@@ -56,9 +57,9 @@ if ($action === 'list') {
     $types      = '';
 
     if ($filter === 'available') {
-        $conditions[] = "t.availability = 'available'";
+        $conditions[] = "t.availability_status = 'available'";
     } elseif ($filter !== 'all') {
-        $conditions[] = "(t.specialty = ? OR t.specialty LIKE ?)";
+        $conditions[] = "(t.service_category = ? OR t.service_category LIKE ?)";
         $params[]     = $filter;
         $params[]     = '%' . $filter . '%';
         $types       .= 'ss';
@@ -66,7 +67,7 @@ if ($action === 'list') {
 
     if ($search !== '') {
         $like = '%' . $search . '%';
-        $conditions[] = "(t.name LIKE ? OR t.specialty LIKE ?)";
+        $conditions[] = "(t.full_name LIKE ? OR t.service_category LIKE ?)";
         $params[]     = $like;
         $params[]     = $like;
         $types       .= 'ss';
@@ -74,9 +75,9 @@ if ($action === 'list') {
 
     $where = 'WHERE ' . implode(' AND ', $conditions);
 
-    $sql = "SELECT t.id, t.name, t.specialty AS role, t.availability AS status,
-                   t.jobs_done AS jobs, t.phone, t.rating
-            FROM technicians t $where ORDER BY $orderBy";
+    $sql = "SELECT t.provider_id AS id, t.full_name AS name, t.service_category AS role, t.availability_status AS status,
+                   t.jobs_done AS jobs, t.contact_number AS phone, t.rating, t.is_verified
+            FROM service_providers t $where ORDER BY $orderBy";
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -109,10 +110,40 @@ if ($action === 'list') {
             'top'      => false,
             'rating'   => (float) ($r['rating'] ?? 0),
             'phone'    => $r['phone']  ?? '',
+            'is_verified' => (bool)$r['is_verified'],
         ];
     }, $rows);
 
     echo json_encode(['success' => true, 'workers' => $workers, 'total' => count($workers)]);
+    exit;
+}
+
+if ($action === 'profile') {
+    $id = (int)($_GET['id'] ?? 0);
+    if (!$id) {
+        echo json_encode(['success' => false, 'message' => 'Provider ID is required']);
+        exit;
+    }
+    
+    $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, contact_number AS phone, address, profile_image, created_at, rating, jobs_done, status, is_verified FROM service_providers WHERE provider_id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $provider = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    
+    if (!$provider) {
+        echo json_encode(['success' => false, 'message' => 'Provider not found']);
+        exit;
+    }
+    
+    // Get recent reviews
+    $stmt = $conn->prepare("SELECT r.rating, r.comment, r.created_at, u.name AS user_name FROM provider_reviews r LEFT JOIN users u ON r.user_id = u.id WHERE r.provider_id = ? ORDER BY r.created_at DESC LIMIT 10");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $reviews = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    
+    echo json_encode(['success' => true, 'provider' => $provider, 'reviews' => $reviews]);
     exit;
 }
 

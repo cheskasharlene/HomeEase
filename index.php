@@ -24,203 +24,170 @@ if (!empty($_SESSION['provider_id'])) {
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/index.css">
+  <link rel="stylesheet" href="assets/css/main.css?v=<?php echo filemtime('assets/css/main.css'); ?>">
+  <link rel="stylesheet" href="assets/css/index.css?v=<?php echo filemtime('assets/css/index.css'); ?>">
   <style>
-    .shell {
-      animation: fadeUp .45s cubic-bezier(.34, 1.4, .64, 1) both;
-    }
-
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(24px) scale(.97)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-
-    .panel {
-      animation: panelIn .25s ease both;
-    }
-
-    @keyframes panelIn {
-      from {
-        opacity: 0;
-        transform: translateY(8px)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-
-    .two-col {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0 12px;
-    }
-
-    .row-sp {
+    /* ── Login page critical styles (inline to prevent cache issues) ── */
+    .logo-hdr {
+      padding: 48px 28px 22px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-      gap: 8px;
-    }
-
-    .check-label {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--txt-muted);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .check-label input[type=checkbox] {
-      accent-color: var(--teal);
-      width: 14px;
-      height: 14px;
-    }
-
-    .link-btn {
-      background: none;
-      border: none;
-      color: var(--teal);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      padding: 0;
-      font-family: 'Nunito', sans-serif;
-    }
-
-    .link-btn:hover {
-      text-decoration: underline;
-    }
-
-    .switch-row {
-      text-align: center;
-      margin-top: 18px;
-      font-size: 12px;
-      color: var(--txt-muted);
-      font-weight: 600;
-    }
-
-    .switch-row a {
-      color: var(--teal);
-      font-weight: 800;
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .social-row {
-      display: flex;
       gap: 10px;
+      flex-shrink: 0;
     }
-
-    .btn-social {
-      flex: 1;
-      padding: 11px 8px;
-      border-radius: 12px;
-      border: 2px solid var(--border-col);
-      background: #fafafa;
+    .logo-box {
+      width: 62px;
+      height: 62px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #E8820C 0%, #F5A623 55%, #FFB347 100%);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 7px;
+      box-shadow: 0 10px 28px rgba(232,130,12,0.35), 0 4px 10px rgba(245,166,35,0.2);
+      flex-shrink: 0;
+    }
+    .logo-box svg { width: 36px; height: 36px; }
+    .logo-nm {
+      font-family: 'Poppins', sans-serif;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--txt-primary, #1A1A2E);
+      letter-spacing: -0.4px;
+      line-height: 1;
+    }
+    .logo-nm span { color: var(--teal, #F5A623); font-weight: 400; }
+    .logo-tag {
       font-size: 12px;
-      font-weight: 700;
-      color: var(--txt-primary);
-      cursor: pointer;
+      color: var(--txt-muted, #8E8E93);
+      font-weight: 600;
+      text-align: center;
+    }
+    .tab-row {
+      display: flex;
+      gap: 4px;
+      margin: 0 22px 16px;
+      background: var(--teal-bg, #FFF8F0);
+      border-radius: 50px;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      border-radius: 50px;
       font-family: 'Nunito', sans-serif;
-      transition: border-color .2s, background .2s;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--txt-muted, #8E8E93);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      user-select: none;
     }
-
-    .btn-social:hover {
-      border-color: var(--teal);
-      background: rgba(245, 166, 35, .06);
+    .tab.on {
+      background: var(--teal, #F5A623);
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(245,166,35,0.35);
     }
-
+    .form-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 22px 28px;
+    }
+    .panel { display: none; }
+    .panel.on { display: block; }
     .btn-main {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #E8820C 0%, #F5A623 55%, #FFB347 100%);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.22s;
+      box-shadow: 0 8px 24px rgba(232,130,12,0.3);
+      margin-top: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
     }
-
+    .btn-main:hover { transform: translateY(-2px); box-shadow: 0 14px 32px rgba(232,130,12,0.4); }
+    .btn-main:active { transform: translateY(0); }
     .btn-main .btn-spinner {
-      width: 16px;
-      height: 16px;
-      border: 2.5px solid rgba(255, 255, 255, .35);
+      width: 16px; height: 16px;
+      border: 2.5px solid rgba(255,255,255,.35);
       border-top-color: #fff;
       border-radius: 50%;
       animation: spin .7s linear infinite;
       display: none;
     }
-
-    .btn-main.loading .btn-spinner {
-      display: block;
-    }
-
-    .btn-main.loading .btn-label {
+    .btn-main.loading .btn-spinner { display: block; }
+    .btn-main.loading .btn-label { display: none; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .alert {
       display: none;
-    }
-
-    /* ── Account type selector ── */
-    .acct-type-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 18px;
-    }
-
-    .acct-type-btn {
-      flex: 1;
-      padding: 12px 8px;
-      border-radius: 13px;
-      border: 2px solid var(--border-col);
-      background: #FAFAF8;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--txt-muted);
-      transition: all 0.22s;
+      gap: 8px;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      border: 1.5px solid transparent;
     }
-
-    .acct-type-btn i {
-      font-size: 22px;
+    .alert.show { display: flex; }
+    .alert.error { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
+    .alert.success { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+    .fi-wrap { position: relative; }
+    .fi-wrap .fi { padding-right: 42px; }
+    .fi-icon {
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--txt-muted, #8E8E93);
+      font-size: 15px;
+      pointer-events: none;
     }
-
+    .eye-btn {
+      position: absolute;
+      right: 14px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      color: var(--txt-muted, #8E8E93);
+      font-size: 15px; cursor: pointer; padding: 4px;
+      display: flex; align-items: center;
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .row-sp { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 8px; }
+    .check-label { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--txt-muted, #8E8E93); cursor: pointer; user-select: none; }
+    .check-label input[type=checkbox] { accent-color: var(--teal, #F5A623); width: 14px; height: 14px; }
+    .link-btn { background: none; border: none; color: var(--teal, #F5A623); font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; font-family: 'Nunito', sans-serif; }
+    .link-btn:hover { text-decoration: underline; }
+    .switch-row { text-align: center; margin-top: 18px; font-size: 12px; color: var(--txt-muted, #8E8E93); font-weight: 600; }
+    .switch-row a { color: var(--teal, #F5A623); font-weight: 800; cursor: pointer; text-decoration: none; }
+    .acct-type-row { display: flex; gap: 10px; margin-bottom: 18px; }
+    .acct-type-btn {
+      flex: 1; padding: 12px 8px; border-radius: 13px;
+      border: 2px solid var(--border-col, #EDE8E0);
+      background: #FAFAF8; cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+      color: var(--txt-muted, #8E8E93); transition: all 0.22s;
+    }
+    .acct-type-btn i { font-size: 22px; }
     .acct-type-btn.active {
-      border-color: var(--teal);
-      background: var(--teal-bg);
-      color: var(--teal);
-      box-shadow: 0 0 0 4px rgba(245, 166, 35, 0.1);
+      border-color: var(--teal, #F5A623);
+      background: var(--teal-bg, #FFF8F0);
+      color: var(--teal, #F5A623);
+      box-shadow: 0 0 0 4px rgba(245,166,35,0.1);
     }
-
-    .acct-type-lbl {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--txt-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-bottom: 10px;
-      display: block;
-    }
-
-    #regSpecialtyWrap {
-      display: none;
-    }
+    .acct-type-lbl { font-size: 11px; font-weight: 800; color: var(--txt-muted, #8E8E93); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; display: block; }
+    #regSpecialtyWrap { display: none; }
   </style>
 </head>
 
@@ -351,12 +318,12 @@ if (!empty($_SESSION['provider_id'])) {
           <div class="fi-wrap">
             <select class="fi" id="regSpecialty">
               <option value="">Select your specialty…</option>
-              <option>Cleaning</option>
-              <option>Plumbing</option>
-              <option>Electrical</option>
-              <option>Painting</option>
-              <option>Appliance Repair</option>
-              <option>Gardening</option>
+              <option>Cleaner</option>
+              <option>Helper</option>
+              <option>Laundry Worker</option>
+              <option>Plumber</option>
+              <option>Carpenter</option>
+              <option>Appliance Technician</option>
               <option>Other</option>
             </select>
           </div>

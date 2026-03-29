@@ -61,7 +61,7 @@ if ($section === 'stats') {
     $r = $conn->query("SELECT COALESCE(SUM(price),0) FROM bookings WHERE status='done'");
     $stats['total_revenue'] = (float)($r ? $r->fetch_row()[0] : 0);
 
-    $r = $conn->query("SELECT COUNT(*) FROM technicians WHERE status='active'");
+    $r = $conn->query("SELECT COUNT(*) FROM service_providers WHERE status='active'");
     $stats['active_workers'] = (int)($r ? $r->fetch_row()[0] : 0);
 
     $r = $conn->query("SELECT COUNT(*) FROM bookings WHERE status='pending'");
@@ -180,90 +180,25 @@ if ($section === 'users') {
     }
 }
 
-if ($section === 'bookings') {
-    if ($method === 'GET' && $action === 'list') {
-        $status = trim($_GET['status'] ?? '');
-        $search = trim($_GET['search'] ?? '');
-        $where = ''; $params = []; $types = '';
-
-        $conditions = [];
-        if ($status && $status !== 'all') { $conditions[] = "b.status = ?"; $params[] = $status; $types .= 's'; }
-        if ($search) {
-            $like = "%$search%";
-            $conditions[] = "(u.name LIKE ? OR b.service LIKE ? OR b.address LIKE ?)";
-            $params = array_merge($params, [$like, $like, $like]); $types .= 'sss';
-        }
-        if ($conditions) $where = 'WHERE ' . implode(' AND ', $conditions);
-
-        $colRes = $conn->query("SHOW COLUMNS FROM bookings");
-        $bcols = [];
-        if ($colRes) while ($c = $colRes->fetch_assoc()) $bcols[] = $c['Field'];
-
-        $extraSel = '';
-        if (in_array('time_slot', $bcols))    $extraSel .= ', b.time_slot';
-        if (in_array('notes', $bcols))        $extraSel .= ', b.notes';
-        if (in_array('pricing_type', $bcols)) $extraSel .= ', b.pricing_type';
-        if (in_array('hours', $bcols))        $extraSel .= ', b.hours';
-        $techJoin = in_array('technician_id', $bcols)
-            ? "LEFT JOIN technicians t ON b.technician_id = t.id" : "";
-        $techSel  = in_array('technician_id', $bcols)
-            ? ", t.name AS technician_name, b.technician_id" : ", NULL AS technician_name, NULL AS technician_id";
-
-        $sql = "SELECT b.id, b.user_id, b.service, b.date, b.address, b.price, b.status, b.created_at,
-                u.name AS user_name, u.phone AS user_phone$extraSel$techSel
-                FROM bookings b
-                LEFT JOIN users u ON b.user_id = u.id
-                $techJoin $where
-                ORDER BY b.created_at DESC LIMIT 200";
-
-        $stmt = $conn->prepare($sql);
-        if (!$stmt) respond(false, 'DB: '.$conn->error);
-        if ($params) $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
-        respond(true, '', ['bookings' => $rows]);
-    }
-
-    if ($method === 'POST' && $action === 'update_status') {
-        $id     = (int)($_POST['id'] ?? 0);
-        $status = trim($_POST['status'] ?? '');
-        $valid  = ['pending','progress','done','cancelled'];
-        if (!$id || !in_array($status, $valid)) respond(false, 'Invalid parameters.');
-        $stmt = $conn->prepare("UPDATE bookings SET status=? WHERE id=?");
-        $stmt->bind_param("si", $status, $id); $stmt->execute(); $ok = $stmt->affected_rows > 0; $stmt->close();
- 
-        if ($ok) {
-            $r = $conn->query("SELECT user_id, service FROM bookings WHERE id=$id");
-            if ($row = ($r ? $r->fetch_assoc() : null)) {
-                $labels = ['pending'=>'received','progress'=>'started','done'=>'completed','cancelled'=>'cancelled'];
-                $notifMsg = "Your {$row['service']} booking has been {$labels[$status]}.";
-                $ns = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Booking Update', ?, 'cleaning', 0, NOW())");
-                $ns->bind_param("is", $row['user_id'], $notifMsg); $ns->execute(); $ns->close();
-            }
-        }
-        respond($ok, $ok ? 'Status updated.' : 'Update failed.');
-    }
-
-    if ($method === 'POST' && $action === 'delete') {
-        $id = (int)($_POST['id'] ?? 0);
-        if (!$id) respond(false, 'Invalid ID.');
-        $stmt = $conn->prepare("DELETE FROM bookings WHERE id=?");
-        $stmt->bind_param("i", $id); $stmt->execute(); $ok = $stmt->affected_rows > 0; $stmt->close();
-        respond($ok, $ok ? 'Booking deleted.' : 'Not found.');
-    }
-}
 
 if ($section === 'workers') {
     if ($method === 'GET' && $action === 'list') {
         $search = trim($_GET['search'] ?? '');
-        $where  = ''; $params = []; $types = '';
+        $filter = trim($_GET['filter'] ?? '');
+        $where  = []; $params = []; $types = '';
+        
         if ($search) {
             $like = "%$search%";
-            $where = "WHERE name LIKE ? OR specialty LIKE ?";
+            $where[] = "(full_name LIKE ? OR service_category LIKE ?)";
             $params = [$like, $like]; $types = 'ss';
         }
-        $stmt = $conn->prepare("SELECT * FROM technicians $where ORDER BY id DESC");
+        if ($filter === 'low_rated') {
+            $where[] = "(rating > 0 AND rating < 3.0)";
+        }
+        
+        $whereClause = count($where) ? "WHERE " . implode(" AND ", $where) : "";
+        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, availability_status AS availability, status, rating, jobs_done, is_verified, id_picture, selfie_verification, proof_of_address, certificates, proof_of_experience FROM service_providers $whereClause ORDER BY provider_id DESC");
+        
         if (!$stmt) respond(false, $conn->error);
         if ($params) $stmt->bind_param($types, ...$params);
         $stmt->execute();
@@ -272,7 +207,7 @@ if ($section === 'workers') {
         respond(true, '', ['workers' => $rows]);
     }
 
-    if ($method === 'POST' && ($action === 'add' || $action === 'edit')) {
+    if ($method === 'POST' && ($action === 'edit')) {
         $id           = (int)($_POST['id'] ?? 0);
         $name         = trim($_POST['name'] ?? '');
         $specialty    = trim($_POST['specialty'] ?? '');
@@ -288,28 +223,20 @@ if ($section === 'workers') {
         if (!in_array($availability, $validAvail)) $availability = 'available';
         if (!in_array($status, $validStat)) $status = 'active';
 
-        if ($action === 'add') {
-            $stmt = $conn->prepare("INSERT INTO technicians (name, specialty, phone, availability, status, rating, jobs_done) VALUES (?,?,?,?,?,?,?)");
-            $stmt->bind_param("sssssdi", $name, $specialty, $phone, $availability, $status, $rating, $jobs_done);
-            $stmt->execute(); $newId = $conn->insert_id; $ok = $stmt->affected_rows > 0; $stmt->close();
-            respond($ok, $ok ? 'Worker added.' : 'Insert failed.', ['id' => $newId]);
-        } else {
-            if (!$id) respond(false, 'Worker ID required.');
-            $stmt = $conn->prepare("UPDATE technicians SET name=?, specialty=?, phone=?, availability=?, status=?, rating=?, jobs_done=? WHERE id=?");
-            $stmt->bind_param("sssssdi i", $name, $specialty, $phone, $availability, $status, $rating, $jobs_done, $id);
- 
-            $stmt->close();
-            $stmt = $conn->prepare("UPDATE technicians SET name=?, specialty=?, phone=?, availability=?, status=?, rating=?, jobs_done=? WHERE id=?");
-            $stmt->bind_param("sssssdii", $name, $specialty, $phone, $availability, $status, $rating, $jobs_done, $id);
-            $stmt->execute(); $ok = $stmt->affected_rows >= 0; $stmt->close();
-            respond($ok, 'Worker updated.');
-        }
+        if (!$id) respond(false, 'Worker ID required.');
+        
+        $stmt = $conn->prepare("UPDATE service_providers SET full_name=?, service_category=?, contact_number=?, availability_status=?, status=?, rating=?, jobs_done=? WHERE provider_id=?");
+        $stmt->bind_param("sssssdii", $name, $specialty, $phone, $availability, $status, $rating, $jobs_done, $id);
+        $stmt->execute(); 
+        $ok = $stmt->affected_rows >= 0; 
+        $stmt->close();
+        respond($ok, 'Worker updated.');
     }
 
     if ($method === 'POST' && $action === 'delete') {
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) respond(false, 'Invalid ID.');
-        $stmt = $conn->prepare("DELETE FROM technicians WHERE id=?");
+        $stmt = $conn->prepare("DELETE FROM service_providers WHERE provider_id=?");
         $stmt->bind_param("i", $id); $stmt->execute(); $ok = $stmt->affected_rows > 0; $stmt->close();
         respond($ok, $ok ? 'Worker deleted.' : 'Not found.');
     }
@@ -317,11 +244,21 @@ if ($section === 'workers') {
     if ($method === 'POST' && $action === 'toggle_status') {
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) respond(false, 'Invalid ID.');
-        $r = $conn->query("SELECT status FROM technicians WHERE id=$id");
+        $r = $conn->query("SELECT status FROM service_providers WHERE provider_id=$id");
         $cur = $r ? $r->fetch_row()[0] : '';
         $new = $cur === 'active' ? 'inactive' : 'active';
-        $conn->query("UPDATE technicians SET status='$new' WHERE id=$id");
+        $conn->query("UPDATE service_providers SET status='$new' WHERE provider_id=$id");
         respond(true, $new === 'active' ? 'Worker activated.' : 'Worker deactivated.', ['status' => $new]);
+    }
+
+    if ($method === 'POST' && $action === 'toggle_verification') {
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) respond(false, 'Invalid ID.');
+        $r = $conn->query("SELECT is_verified FROM service_providers WHERE provider_id=$id");
+        $cur = $r ? (int)$r->fetch_row()[0] : 0;
+        $new = $cur ? 0 : 1;
+        $conn->query("UPDATE service_providers SET is_verified=$new WHERE provider_id=$id");
+        respond(true, $new ? 'Worker verified.' : 'Worker unverified.', ['is_verified' => $new]);
     }
 }
 
@@ -460,6 +397,332 @@ if ($section === 'offers') {
         $id = (int)($_POST['id'] ?? 0);
         $conn->query("DELETE FROM special_offers WHERE id=$id");
         respond(true, 'Offer deleted.');
+    }
+}
+
+// ── BOOKINGS (admin) ─────────────────────────────────────────────────────────
+if ($section === 'bookings') {
+
+    // Ensure technician_id column exists on bookings
+    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS technician_id INT NULL DEFAULT NULL");
+
+    if ($method === 'GET' && $action === 'list') {
+        $search    = trim($_GET['search']    ?? '');
+        $status    = trim($_GET['status']    ?? 'all');
+        $dateFrom  = trim($_GET['date_from'] ?? '');
+        $dateTo    = trim($_GET['date_to']   ?? '');
+        $service   = trim($_GET['service']   ?? '');
+        $workerId  = intval($_GET['worker_id'] ?? 0);
+
+        $where = []; $params = []; $types = '';
+
+        if ($status && $status !== 'all') {
+            $where[] = 'b.status = ?'; $params[] = $status; $types .= 's';
+        }
+        if ($search) {
+            $like = "%$search%";
+            $where[] = '(u.name LIKE ? OR u.email LIKE ? OR b.service LIKE ? OR b.address LIKE ?)';
+            $params = array_merge($params, [$like,$like,$like,$like]); $types .= 'ssss';
+        }
+        if ($dateFrom) { $where[] = 'b.date >= ?'; $params[] = $dateFrom; $types .= 's'; }
+        if ($dateTo)   { $where[] = 'b.date <= ?'; $params[] = $dateTo;   $types .= 's'; }
+        if ($service)  { $where[] = 'b.service = ?'; $params[] = $service; $types .= 's'; }
+        if ($workerId) { $where[] = 'b.technician_id = ?'; $params[] = $workerId; $types .= 'i'; }
+
+        $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
+        $sql = "SELECT b.id, b.service, b.date, b.time_slot, b.address, b.price, b.status,
+                       b.notes, b.technician_id, b.created_at,
+                       u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
+                       t.provider_id AS tech_id, t.full_name AS technician_name, t.contact_number AS tech_phone,
+                       t.service_category AS tech_specialty, t.rating AS tech_rating
+                FROM bookings b
+                LEFT JOIN users u ON b.user_id = u.id
+                LEFT JOIN service_providers t ON b.technician_id = t.provider_id
+                $whereClause
+                ORDER BY b.created_at DESC LIMIT 200";
+
+        $stmt = $conn->prepare($sql);
+        if (!$stmt) respond(false, 'DB error: ' . $conn->error);
+        if ($params) $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        respond(true, '', ['bookings' => $rows]);
+    }
+
+    if ($method === 'POST' && $action === 'update_status') {
+        $id     = (int)($_POST['id'] ?? 0);
+        $status = trim($_POST['status'] ?? '');
+        $valid  = ['pending','progress','done','cancelled'];
+        if (!$id || !in_array($status, $valid)) respond(false, 'Invalid data.');
+        $conn->query("UPDATE bookings SET status='$status' WHERE id=$id");
+        respond(true, 'Status updated.');
+    }
+
+    if ($method === 'POST' && $action === 'assign_worker') {
+        $bookingId = (int)($_POST['booking_id'] ?? 0);
+        $workerId  = (int)($_POST['worker_id']  ?? 0);
+        if (!$bookingId || !$workerId) respond(false, 'Booking and worker IDs required.');
+
+        // Ensure column exists
+        $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS technician_id INT NULL DEFAULT NULL");
+
+        $stmt = $conn->prepare("UPDATE bookings SET technician_id = ? WHERE id = ?");
+        $stmt->bind_param("ii", $workerId, $bookingId);
+        $stmt->execute(); $ok = $stmt->affected_rows >= 0; $stmt->close();
+
+        // Also update booking_requests if exists
+        $conn->query("UPDATE booking_requests SET status='accepted' WHERE booking_id=$bookingId AND provider_id=$workerId AND status='pending'");
+        $conn->query("UPDATE booking_requests SET status='closed' WHERE booking_id=$bookingId AND provider_id<>$workerId AND status='pending'");
+
+        // Fetch worker name for response
+        $r = $conn->query("SELECT full_name AS name, contact_number AS phone, service_category AS specialty, rating FROM service_providers WHERE provider_id=$workerId");
+        $worker = $r ? $r->fetch_assoc() : null;
+        respond($ok, $ok ? 'Worker assigned.' : 'Failed.', ['worker' => $worker]);
+    }
+
+    if ($method === 'POST' && $action === 'cancel') {
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) respond(false, 'Invalid booking ID.');
+        $conn->query("UPDATE bookings SET status='cancelled' WHERE id=$id");
+        respond(true, 'Booking cancelled.');
+    }
+
+    if ($method === 'POST' && $action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) respond(false, 'Invalid booking ID.');
+        $conn->query("DELETE FROM bookings WHERE id=$id");
+        respond(true, 'Booking deleted.');
+    }
+}
+
+if ($section === 'reviews') {
+    if ($method === 'GET' && $action === 'list') {
+        $stmt = $conn->prepare("
+            SELECT r.id, r.rating, r.comment, r.created_at, 
+                   u.name AS user_name, u.email AS user_email, 
+                   sp.full_name AS provider_name
+            FROM provider_reviews r
+            LEFT JOIN users u ON r.user_id = u.id
+            LEFT JOIN service_providers sp ON r.provider_id = sp.provider_id
+            ORDER BY r.created_at DESC
+        ");
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        respond(true, '', ['reviews' => $rows]);
+    }
+
+    if ($method === 'POST' && $action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        if (!$id) respond(false, 'Invalid review ID.');
+        
+        // Find provider_id before deleting
+        $stmt = $conn->prepare("SELECT provider_id FROM provider_reviews WHERE id=?");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $r = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$r) respond(false, 'Review not found.');
+        $provider_id = $r['provider_id'];
+
+        // Delete review
+        $stmt2 = $conn->prepare("DELETE FROM provider_reviews WHERE id=?");
+        $stmt2->bind_param("i", $id);
+        $stmt2->execute();
+        $ok = $stmt2->affected_rows > 0;
+        $stmt2->close();
+
+        if ($ok) {
+            // Recalculate rating
+            $upStmt = $conn->prepare("
+                UPDATE service_providers sp 
+                LEFT JOIN (
+                    SELECT provider_id, ROUND(AVG(rating), 1) as avg_rating 
+                    FROM provider_reviews 
+                    WHERE provider_id = ?
+                ) AS r ON r.provider_id = sp.provider_id 
+                SET sp.rating = COALESCE(r.avg_rating, 0)
+                WHERE sp.provider_id = ?
+            ");
+            if ($upStmt) {
+                $upStmt->bind_param("ii", $provider_id, $provider_id);
+                $upStmt->execute();
+                $upStmt->close();
+            }
+        }
+        
+        respond($ok, $ok ? 'Review deleted.' : 'Failed to delete review.');
+    }
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────────
+if ($section === 'analytics') {
+    $data = [];
+
+    // 1. Daily bookings trend (last 30 days)
+    $dailyBookings = [];
+    $res = $conn->query("
+        SELECT DATE(created_at) AS day, COUNT(*) AS cnt
+        FROM bookings
+        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY day ORDER BY day ASC
+    ");
+    // Fill in missing days with 0
+    $dayMap = [];
+    if ($res) while ($r = $res->fetch_assoc()) $dayMap[$r['day']] = (int)$r['cnt'];
+    for ($i = 29; $i >= 0; $i--) {
+        $d = date('Y-m-d', strtotime("-$i days"));
+        $dailyBookings[] = ['day' => date('M d', strtotime($d)), 'count' => $dayMap[$d] ?? 0];
+    }
+    $data['daily_bookings'] = $dailyBookings;
+
+    // 2. Service distribution (pie/doughnut)
+    $svcDist = [];
+    $res = $conn->query("SELECT service, COUNT(*) AS cnt FROM bookings GROUP BY service ORDER BY cnt DESC");
+    if ($res) while ($r = $res->fetch_assoc()) $svcDist[] = ['name' => $r['service'], 'count' => (int)$r['cnt']];
+    $data['service_distribution'] = $svcDist;
+
+    // 3. Weekly revenue (last 8 weeks)
+    $weeklyRev = [];
+    $res = $conn->query("
+        SELECT YEARWEEK(created_at, 1) AS yw,
+               MIN(DATE(created_at)) AS week_start,
+               COALESCE(SUM(price), 0) AS rev,
+               COUNT(*) AS cnt
+        FROM bookings
+        WHERE status = 'done' AND created_at >= DATE_SUB(CURDATE(), INTERVAL 8 WEEK)
+        GROUP BY yw ORDER BY yw ASC
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) {
+        $weeklyRev[] = [
+            'week' => date('M d', strtotime($r['week_start'])),
+            'revenue' => (float)$r['rev'],
+            'bookings' => (int)$r['cnt']
+        ];
+    }
+    $data['weekly_revenue'] = $weeklyRev;
+
+    // 4. Top workers by jobs done
+    $topWorkers = [];
+    $res = $conn->query("
+        SELECT full_name AS name, jobs_done, rating, service_category AS specialty
+        FROM service_providers
+        WHERE status = 'active'
+        ORDER BY jobs_done DESC LIMIT 8
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) {
+        $topWorkers[] = [
+            'name' => $r['name'],
+            'jobs' => (int)$r['jobs_done'],
+            'rating' => round((float)$r['rating'], 1),
+            'specialty' => $r['specialty']
+        ];
+    }
+    $data['top_workers'] = $topWorkers;
+
+    // 5. Status breakdown for current month vs last month
+    $thisMonth = [];
+    $res = $conn->query("
+        SELECT status, COUNT(*) AS cnt
+        FROM bookings
+        WHERE MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())
+        GROUP BY status
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) $thisMonth[$r['status']] = (int)$r['cnt'];
+
+    $lastMonth = [];
+    $res = $conn->query("
+        SELECT status, COUNT(*) AS cnt
+        FROM bookings
+        WHERE MONTH(created_at) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+          AND YEAR(created_at)  = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+        GROUP BY status
+    ");
+    if ($res) while ($r = $res->fetch_assoc()) $lastMonth[$r['status']] = (int)$r['cnt'];
+
+    $thisTotal = array_sum($thisMonth);
+    $lastTotal = array_sum($lastMonth);
+    $data['monthly_comparison'] = [
+        'this_month' => $thisMonth,
+        'last_month' => $lastMonth,
+        'this_total' => $thisTotal,
+        'last_total' => $lastTotal,
+        'growth_pct' => $lastTotal > 0 ? round(($thisTotal - $lastTotal) / $lastTotal * 100, 1) : ($thisTotal > 0 ? 100 : 0)
+    ];
+
+    // 6. Hourly booking heatmap (which hours are busiest)
+    $hourly = [];
+    $res = $conn->query("
+        SELECT HOUR(created_at) AS hr, COUNT(*) AS cnt
+        FROM bookings
+        WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+        GROUP BY hr ORDER BY hr ASC
+    ");
+    $hrMap = array_fill(0, 24, 0);
+    if ($res) while ($r = $res->fetch_assoc()) $hrMap[(int)$r['hr']] = (int)$r['cnt'];
+    for ($h = 6; $h <= 21; $h++) {
+        $hourly[] = ['hour' => sprintf('%02d:00', $h), 'count' => $hrMap[$h]];
+    }
+    $data['hourly_heatmap'] = $hourly;
+
+    respond(true, '', ['analytics' => $data]);
+}
+
+// ── ADMIN NOTIFICATIONS ───────────────────────────────────────────────────────
+if ($section === 'admin_notifications') {
+    // Ensure table exists
+    $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        type VARCHAR(50) NOT NULL DEFAULT 'general',
+        title VARCHAR(200) NOT NULL,
+        message TEXT,
+        reference_id INT NULL,
+        is_read TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    if ($method === 'GET' && $action === 'list') {
+        $rows = $conn->query("
+            SELECT an.*, sp.full_name AS provider_name, sp.service_category, sp.is_verified
+            FROM admin_notifications an
+            LEFT JOIN service_providers sp ON an.reference_id = sp.provider_id AND an.type = 'verification'
+            ORDER BY an.created_at DESC
+            LIMIT 50
+        ");
+        $notifications = $rows ? $rows->fetch_all(MYSQLI_ASSOC) : [];
+
+        $unreadRes = $conn->query("SELECT COUNT(*) FROM admin_notifications WHERE is_read = 0");
+        $unread = $unreadRes ? (int)$unreadRes->fetch_row()[0] : 0;
+
+        respond(true, '', ['notifications' => $notifications, 'unread_count' => $unread]);
+    }
+
+    if ($method === 'GET' && $action === 'count') {
+        $unreadRes = $conn->query("SELECT COUNT(*) FROM admin_notifications WHERE is_read = 0");
+        $unread = $unreadRes ? (int)$unreadRes->fetch_row()[0] : 0;
+        respond(true, '', ['unread_count' => $unread]);
+    }
+
+    if ($method === 'POST' && $action === 'mark_read') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            $conn->query("UPDATE admin_notifications SET is_read = 1 WHERE id = $id");
+        } else {
+            $conn->query("UPDATE admin_notifications SET is_read = 1 WHERE is_read = 0");
+        }
+        respond(true, 'Marked as read.');
+    }
+
+    if ($method === 'POST' && $action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            $conn->query("DELETE FROM admin_notifications WHERE id = $id");
+            respond(true, 'Notification deleted.');
+        }
+        respond(false, 'Invalid ID.');
     }
 }
 

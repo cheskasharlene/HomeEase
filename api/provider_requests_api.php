@@ -201,7 +201,7 @@ function notifyHomeownerAccepted(mysqli $conn, int $bookingId, int $providerId):
     }
 
     $providerName = 'A provider';
-    $provStmt = $conn->prepare('SELECT name FROM technicians WHERE id = ? LIMIT 1');
+    $provStmt = $conn->prepare('SELECT full_name AS name FROM service_providers WHERE provider_id = ? LIMIT 1');
     if ($provStmt) {
         $provStmt->bind_param('i', $providerId);
         $provStmt->execute();

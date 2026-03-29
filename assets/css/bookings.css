@@ -170,6 +170,7 @@ body {
   width: 40px;
   height: 40px;
   background: rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-radius: 50%;
   display: flex;
@@ -194,7 +195,6 @@ body {
   overflow-y: auto;
   padding-bottom: 30px;
   -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 .scroll::-webkit-scrollbar {
@@ -615,18 +615,54 @@ select.fi {
 /* ── Booking cards (my bookings list) ── */
 .bk-card {
   background: var(--bg-card);
-  border-radius: 18px;
-  padding: 14px;
-  margin-bottom: 10px;
-  box-shadow: 0 3px 14px rgba(232, 130, 12, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
+  border-radius: 20px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 12px rgba(232, 130, 12, 0.06);
   border: 1.5px solid var(--border-col);
-  transition: transform 0.18s, box-shadow 0.18s;
+  transition: transform 0.22s cubic-bezier(.22,1,.36,1), box-shadow 0.22s ease;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: bkCardIn .45s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+.bk-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  border-radius: 20px 0 0 20px;
+  background: var(--bk-accent, var(--teal));
 }
 
 .bk-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(232, 130, 12, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(232, 130, 12, 0.12);
 }
+
+@keyframes bkCardIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.bk-card:nth-child(1)  { animation-delay: .03s; }
+.bk-card:nth-child(2)  { animation-delay: .08s; }
+.bk-card:nth-child(3)  { animation-delay: .13s; }
+.bk-card:nth-child(4)  { animation-delay: .18s; }
+.bk-card:nth-child(5)  { animation-delay: .23s; }
+.bk-card:nth-child(6)  { animation-delay: .28s; }
+.bk-card:nth-child(7)  { animation-delay: .33s; }
+.bk-card:nth-child(8)  { animation-delay: .38s; }
+.bk-card:nth-child(9)  { animation-delay: .43s; }
+.bk-card:nth-child(10) { animation-delay: .48s; }
+
+/* Service-specific accent colors */
+.bk-card[data-svc="Cleaning"]         { --bk-accent: #0EA5E9; }
+.bk-card[data-svc="Plumbing"]         { --bk-accent: #6366F1; }
+.bk-card[data-svc="Electrical"]       { --bk-accent: #F59E0B; }
+.bk-card[data-svc="Painting"]         { --bk-accent: #EC4899; }
+.bk-card[data-svc="Appliance Repair"] { --bk-accent: #F97316; }
 
 .bk-top {
   display: flex;
@@ -637,73 +673,107 @@ select.fi {
 .bk-ic {
   width: 48px;
   height: 48px;
-  border-radius: 13px;
-  background: linear-gradient(135deg, var(--teal-mid), var(--teal-bg));
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 22px;
   flex-shrink: 0;
+  transition: transform .2s;
 }
+
+.bk-card:hover .bk-ic {
+  transform: scale(1.08);
+}
+
+/* Service-specific icon backgrounds */
+.bk-ic.ic-cleaning    { background: linear-gradient(135deg, #E0F2FE, #BAE6FD); }
+.bk-ic.ic-plumbing    { background: linear-gradient(135deg, #EEF2FF, #C7D2FE); }
+.bk-ic.ic-electrical  { background: linear-gradient(135deg, #FEF9C3, #FDE68A); }
+.bk-ic.ic-painting    { background: linear-gradient(135deg, #FCE7F3, #FBCFE8); }
+.bk-ic.ic-appliance   { background: linear-gradient(135deg, #FFF7ED, #FED7AA); }
 
 .bk-svc {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--td);
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: -.2px;
 }
 
 .bk-meta {
   font-size: 11px;
   color: var(--tm);
-  margin-top: 2px;
-  line-height: 1.5;
+  margin-top: 3px;
+  line-height: 1.6;
 }
 
 .bk-right {
   margin-left: auto;
   text-align: right;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
 }
 
 .bk-price {
   font-size: 16px;
   font-weight: 800;
   color: var(--teal);
+  font-family: 'Poppins', sans-serif;
 }
 
 /* Status pills */
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  gap: 4px;
+  padding: 4px 10px;
   border-radius: 20px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  letter-spacing: .2px;
+}
+
+.pill::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .pill.pending {
   background: linear-gradient(135deg, #fef9e7, #fef3c7);
-  color: #d97706;
+  color: #b45309;
   border: 1px solid #fde68a;
 }
+.pill.pending::before { background: #f59e0b; }
 
 .pill.progress {
   background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  color: #2563eb;
+  color: #1d4ed8;
   border: 1px solid #bfdbfe;
 }
+.pill.progress::before { background: #3b82f6; }
 
 .pill.done {
-  background: linear-gradient(135deg, var(--teal-bg), var(--teal-mid));
-  color: var(--teal);
-  border: 1px solid var(--teal-mid);
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  color: #047857;
+  border: 1px solid #a7f3d0;
 }
+.pill.done::before { background: #10b981; }
 
 .pill.cancelled {
   background: #f3f4f6;
   color: #6b7280;
   border: 1px solid #e5e7eb;
 }
+.pill.cancelled::before { background: #9ca3af; }
 
 .bk-footer {
   margin-top: 10px;

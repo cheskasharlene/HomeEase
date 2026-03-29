@@ -23,41 +23,41 @@ function toggleDark() {
 }
 
 const ICONS = {
-  cleaner: "🧹",
-  plumber: "🔧",
+  cleaning: "🧹",
+  plumbing: "🔧",
+  helper: "🤝",
+  technician: "🔩",
   laundry: "👕",
-  helper: "🏠",
-  carpenter: "🪚",
-  appliance: "⚡",
+  carpentry: "🪚",
 };
 
 const SVCS = {
-  Cleaner: { ic: ICONS.cleaner, hr: 400, flat: 800, key: "cleaner" },
-  Plumber: { ic: ICONS.plumber, hr: 400, flat: 800, key: "plumber" },
-  "Laundry Worker": { ic: ICONS.laundry, hr: 200, flat: 400, key: "laundry" },
-  Helper: { ic: ICONS.helper, hr: 300, flat: 600, key: "helper" },
-  Carpenter: { ic: ICONS.carpenter, hr: 500, flat: 1000, key: "carpenter" },
+  Cleaning: { ic: ICONS.cleaning, hr: 400, flat: 800, key: "cleaning" },
+  Plumbing: { ic: ICONS.plumbing, hr: 400, flat: 800, key: "plumbing" },
+  Helper: { ic: ICONS.helper, hr: 350, flat: 700, key: "helper" },
   "Appliance Technician": {
-    ic: ICONS.appliance,
+    ic: ICONS.technician,
     hr: 400,
     flat: 800,
-    key: "appliance",
+    key: "technician",
   },
+  Laundry: { ic: ICONS.laundry, hr: 300, flat: 600, key: "laundry" },
+  Carpentry: { ic: ICONS.carpentry, hr: 500, flat: 1000, key: "carpentry" },
 };
 
 const SVC_IMGS = {
-  cleaner:
+  cleaning:
     "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80",
-  plumber:
+  plumbing:
     "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80",
+  helper:
+    "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&q=80",
+  technician:
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
   laundry:
     "https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=400&q=80",
-  helper:
-    "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?w=400&q=80",
-  carpenter:
-    "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80",
-  appliance:
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
+  carpentry:
+    "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80"
 };
 
 const OB_IMGS = [
@@ -265,46 +265,46 @@ function renderSearch(q) {
   const qLow = q.toLowerCase().trim();
   const allSvcs = [
     {
-      name: "Cleaner",
-      desc: "Deep home & office cleaning",
-      key: "cleaner",
+      name: "Cleaning",
+      desc: "Home & office cleaning",
+      key: "cleaning",
       flat: 800,
       hr: 400,
     },
     {
-      name: "Plumber",
-      desc: "Pipe repair, clogs & more",
-      key: "plumber",
+      name: "Plumbing",
+      desc: "Pipe repair, clogs & installs",
+      key: "plumbing",
       flat: 800,
       hr: 400,
-    },
-    {
-      name: "Laundry Worker",
-      desc: "Wash, fold & ironing services",
-      key: "laundry",
-      flat: 400,
-      hr: 200,
     },
     {
       name: "Helper",
-      desc: "General household help",
+      desc: "Household help & errands",
       key: "helper",
+      flat: 700,
+      hr: 350,
+    },
+    {
+      name: "Appliance Technician",
+      desc: "Appliance repairs & diagnostics",
+      key: "technician",
+      flat: 800,
+      hr: 400,
+    },
+    {
+      name: "Laundry",
+      desc: "Washing, folding & ironing",
+      key: "laundry",
       flat: 600,
       hr: 300,
     },
     {
-      name: "Carpenter",
-      desc: "Repairs, installations & builds",
-      key: "carpenter",
+      name: "Carpentry",
+      desc: "Furniture repair & woodwork",
+      key: "carpentry",
       flat: 1000,
       hr: 500,
-    },
-    {
-      name: "Appliance Technician",
-      desc: "Fix and diagnose home appliances",
-      key: "appliance",
-      flat: 800,
-      hr: 400,
     },
   ];
   const filtered = qLow
@@ -748,20 +748,6 @@ const ALL_OFFERS = [
     svc: "Electrical",
   },
   {
-    id: 6,
-    cat: "limited",
-    badge: "Limited",
-    badgeType: "limited",
-    name: "Garden Makeover Package",
-    desc: "Transform your outdoor space. Trimming, weeding, soil treatment & décor included.",
-    img: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&q=80",
-    oldPrice: 1500,
-    price: 850,
-    tag: "🌱 Gardening",
-    exp: "5 slots left",
-    svc: "Gardening",
-  },
-  {
     id: 7,
     cat: "flash",
     badge: "Flash Sale",
@@ -816,20 +802,6 @@ const ALL_OFFERS = [
     tag: "🏠 Cleaning",
     exp: "New offer!",
     svc: "Cleaning",
-  },
-  {
-    id: 11,
-    cat: "promo",
-    badge: "25% Off",
-    badgeType: "",
-    name: "Spring Garden Cleanup",
-    desc: "Seasonal special! Clear debris, trim hedges, and prepare your garden for spring.",
-    img: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400&q=80",
-    oldPrice: 1200,
-    price: 900,
-    tag: "🌸 Gardening",
-    exp: "Spring special",
-    svc: "Gardening",
   },
   {
     id: 12,
@@ -915,8 +887,6 @@ function loadAndRenderOffers() {
         "https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80",
       Painting:
         "https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=300&q=80",
-      Gardening:
-        "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&q=80",
     };
     if (!offers.length) {
       cnt.innerHTML =
@@ -1177,12 +1147,6 @@ function injectGlobalModals() {
       title: "Electrical Wiring",
       img: "https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=300&q=80",
       price: "₱750",
-    },
-    {
-      svc: "Gardening",
-      title: "Garden Makeover",
-      img: "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=300&q=80",
-      price: "₱850",
     },
     {
       svc: "Painting",

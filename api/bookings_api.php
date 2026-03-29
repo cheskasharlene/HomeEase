@@ -33,10 +33,10 @@ if ($method === 'GET' && $action === 'technicians') {
     $specialty = trim($_GET['specialty'] ?? '');
     if ($specialty) {
         $like = "%$specialty%";
-        $stmt = $conn->prepare("SELECT id, name, specialty, phone, availability, rating, jobs_done, status FROM technicians WHERE status='active' AND specialty LIKE ? ORDER BY name ASC");
+        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, address, availability_status AS availability, rating, jobs_done, status FROM service_providers WHERE status='active' AND service_category LIKE ? ORDER BY full_name ASC");
         $stmt->bind_param("s", $like);
     } else {
-        $stmt = $conn->prepare("SELECT id, name, specialty, phone, availability, rating, jobs_done, status FROM technicians WHERE status='active' ORDER BY name ASC");
+        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, address, availability_status AS availability, rating, jobs_done, status FROM service_providers WHERE status='active' ORDER BY full_name ASC");
     }
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -71,17 +71,27 @@ if ($method === 'GET' && $action === '') {
             $cols[] = $c['Field'];
     }
 
+    $conn->query("CREATE TABLE IF NOT EXISTS provider_reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY, booking_id INT NOT NULL,
+        provider_id INT NOT NULL, user_id INT NOT NULL,
+        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY idx_unique_booking_review (booking_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
     if (in_array('technician_id', $cols)) {
         $stmt = $conn->prepare(
-            "SELECT b.*, t.name AS technician_name, t.phone AS tech_phone
+            "SELECT b.*, t.full_name AS technician_name, t.contact_number AS tech_phone,
+             (CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END) AS has_reviewed
              FROM bookings b
-             LEFT JOIN technicians t ON b.technician_id = t.id
+             LEFT JOIN service_providers t ON b.technician_id = t.provider_id
+             LEFT JOIN provider_reviews r ON b.id = r.booking_id
              WHERE b.user_id = ?
              ORDER BY b.created_at DESC"
         );
     } else {
         $stmt = $conn->prepare(
-            "SELECT *, NULL AS technician_name, NULL AS tech_phone
+            "SELECT *, NULL AS technician_name, NULL AS tech_phone, 0 AS has_reviewed
              FROM bookings
              WHERE user_id = ?
              ORDER BY created_at DESC"
@@ -111,7 +121,8 @@ if ($method === 'POST' && $action === '') {
     $customer_address = trim($_POST['customer_address'] ?? $address);
     $pricing_type = 'flat';
     $hours = 1;
-    $tech_id = null;
+    $tech_id = isset($_POST['technician_id']) ? (int)$_POST['technician_id'] : null;
+    if ($tech_id <= 0) $tech_id = null;
 
     if (!$service || !$date || !$address) {
         echo json_encode(['success' => false, 'message' => 'Service, date, and address are required.']);
@@ -231,34 +242,38 @@ if ($method === 'POST' && $action === '') {
 
         ensureBookingRequestsTable($conn);
 
-        $providerStmt = $conn->prepare(
-            "SELECT id, name FROM technicians
-             WHERE status = 'active'
-               AND LOWER(availability) <> 'unavailable'
-               AND LOWER(specialty) LIKE ?
-             ORDER BY rating DESC, jobs_done DESC, id ASC
-             LIMIT 5"
-        );
-        $specialtyLike = '%' . strtolower($service) . '%';
         $providers = [];
-        if ($providerStmt) {
-            $providerStmt->bind_param('s', $specialtyLike);
-            $providerStmt->execute();
-            $providers = $providerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-            $providerStmt->close();
-        }
-
-        if (empty($providers)) {
-            $fallbackStmt = $conn->prepare(
-                "SELECT id, name FROM technicians
-                 WHERE status = 'active' AND LOWER(availability) <> 'unavailable'
-                 ORDER BY rating DESC, jobs_done DESC, id ASC
+        if ($tech_id) {
+            $providers = [['id' => $tech_id, 'name' => 'Selected Technician']];
+        } else {
+            $providerStmt = $conn->prepare(
+                "SELECT provider_id AS id, full_name AS name FROM service_providers
+                 WHERE status = 'active'
+                   AND LOWER(availability_status) <> 'unavailable'
+                   AND LOWER(service_category) LIKE ?
+                 ORDER BY rating DESC, jobs_done DESC, provider_id ASC
                  LIMIT 5"
             );
-            if ($fallbackStmt) {
-                $fallbackStmt->execute();
-                $providers = $fallbackStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-                $fallbackStmt->close();
+            $specialtyLike = '%' . strtolower($service) . '%';
+            if ($providerStmt) {
+                $providerStmt->bind_param('s', $specialtyLike);
+                $providerStmt->execute();
+                $providers = $providerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                $providerStmt->close();
+            }
+
+            if (empty($providers)) {
+                $fallbackStmt = $conn->prepare(
+                    "SELECT provider_id AS id, full_name AS name FROM service_providers
+                     WHERE status = 'active' AND LOWER(availability_status) <> 'unavailable'
+                     ORDER BY rating DESC, jobs_done DESC, provider_id ASC
+                     LIMIT 5"
+                );
+                if ($fallbackStmt) {
+                    $fallbackStmt->execute();
+                    $providers = $fallbackStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                    $fallbackStmt->close();
+                }
             }
         }
 
@@ -361,12 +376,12 @@ function _seedServices(mysqli $conn)
     $conn->query("ALTER TABLE services AUTO_INCREMENT = 1");
     
     $services = [
-        ['Cleaner', '🧹', 'Home & office cleaning', 400, 800, 1, 'flat'],
-        ['Plumber', '🔧', 'Pipe repair, clogs & installs', 400, 800, 1, 'flat'],
-        ['Laundry Worker', '👕', 'Wash, fold & ironing services', 200, 400, 1, 'flat'],
-        ['Helper', '🏠', 'General household help', 300, 600, 1, 'flat'],
-        ['Carpenter', '🪚', 'Repairs, installations & builds', 500, 1000, 1, 'flat'],
-        ['Appliance Technician', '⚡', 'Appliance repairs & diagnostics', 400, 800, 1, 'flat'],
+        ['Cleaner', '🧹', 'Complete home & office cleaning', 400, 500, 1, 'flat'],
+        ['Helper', '🧑‍🤝‍🧑', 'All-around household helping', 400, 400, 1, 'flat'],
+        ['Laundry Worker', '🧺', 'Washing, drying & folding', 300, 300, 1, 'flat'],
+        ['Plumber', '🔧', 'Pipe repair, clogs & installs', 400, 500, 1, 'flat'],
+        ['Carpenter', '🔨', 'Furniture making & wood repairs', 600, 600, 1, 'flat'],
+        ['Appliance Technician', '🔩', 'Appliance repairs & diagnostics', 400, 500, 1, 'flat'],
     ];
     
     $stmt = $conn->prepare("INSERT INTO services (name, icon, description, hourly_rate, flat_rate, min_hours, pricing_type, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
@@ -392,9 +407,9 @@ function _svcIcon($s)
 {
     $m = [
         'Cleaner' => 'cleaner',
-        'Plumber' => 'plumber',
-        'Laundry Worker' => 'laundry',
         'Helper' => 'helper',
+        'Laundry Worker' => 'laundry',
+        'Plumber' => 'plumber',
         'Carpenter' => 'carpenter',
         'Appliance Technician' => 'appliance'
     ];
@@ -404,12 +419,12 @@ function _svcIcon($s)
 function _defaultServices()
 {
     return [
-        ['id' => 1, 'name' => 'Cleaner', 'icon' => '🧹', 'description' => 'Home & office cleaning', 'hourly_rate' => 400, 'flat_rate' => 800, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 2, 'name' => 'Plumber', 'icon' => '🔧', 'description' => 'Pipe repair, clogs & installs', 'hourly_rate' => 400, 'flat_rate' => 800, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 3, 'name' => 'Laundry Worker', 'icon' => '👕', 'description' => 'Wash, fold & ironing services', 'hourly_rate' => 200, 'flat_rate' => 400, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 4, 'name' => 'Helper', 'icon' => '🏠', 'description' => 'General household help', 'hourly_rate' => 300, 'flat_rate' => 600, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 5, 'name' => 'Carpenter', 'icon' => '🪚', 'description' => 'Repairs, installations & builds', 'hourly_rate' => 500, 'flat_rate' => 1000, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 6, 'name' => 'Appliance Technician', 'icon' => '⚡', 'description' => 'Appliance repairs & diagnostics', 'hourly_rate' => 400, 'flat_rate' => 800, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 1, 'name' => 'Cleaner', 'icon' => '🧹', 'description' => 'Complete home & office cleaning', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 2, 'name' => 'Helper', 'icon' => '🧑‍🤝‍🧑', 'description' => 'All-around household helping', 'hourly_rate' => 400, 'flat_rate' => 400, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 3, 'name' => 'Laundry Worker', 'icon' => '🧺', 'description' => 'Washing, drying & folding', 'hourly_rate' => 300, 'flat_rate' => 300, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 4, 'name' => 'Plumber', 'icon' => '🔧', 'description' => 'Pipe repair, clogs & installs', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 5, 'name' => 'Carpenter', 'icon' => '🔨', 'description' => 'Furniture making & wood repairs', 'hourly_rate' => 600, 'flat_rate' => 600, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 6, 'name' => 'Appliance Technician', 'icon' => '🔩', 'description' => 'Appliance repairs & diagnostics', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
     ];
 }
 
@@ -486,34 +501,33 @@ function _computeFixedPrice($service, $data)
         $total += ($propertyAdd[$propertyType] ?? 0);
         $total += $rooms * 100;
         $total += $bathrooms * 150;
+    } elseif ($service === 'Helper') {
+        $total = 400;
+        $breakdown[] = 'Base: 400';
+
+        $tasks = _parseCsvValues($data['helper_tasks'] ?? []);
+        $hours = max(1, _asInt($data['helper_hours'] ?? 4, 4));
+
+        $taskAdd = 0;
+        foreach($tasks as $t) {
+            $taskAdd += (['Cleaning' => 100, 'Cooking' => 150, 'Childcare' => 200, 'General Errands' => 100][$t] ?? 0);
+        }
+        $total += $taskAdd;
+        $total += ($hours > 4) ? (($hours-4)*100) : 0; // extra hours over 4
     } elseif ($service === 'Laundry Worker') {
         $total = 300;
         $breakdown[] = 'Base: 300';
-
-        $options = _parseCsvValues($data['laundry_options'] ?? []);
-        $loadSize = (string) ($data['load_size'] ?? 'Small');
-        $pickup = (string) ($data['pickup_delivery'] ?? 'No');
-
-        $optAddMap = ['Wash' => 0, 'Fold' => 100, 'Iron' => 200];
-        foreach ($options as $opt) {
-            $total += ($optAddMap[$opt] ?? 0);
+        
+        $tasks = _parseCsvValues($data['laundry_services'] ?? []);
+        $taskAdd = 0;
+        foreach($tasks as $t) {
+            $taskAdd += (['Wash & Dry' => 100, 'Fold' => 100, 'Iron' => 150][$t] ?? 0);
         }
-
-        $total += (['Small' => 0, 'Medium' => 100, 'Large' => 200][$loadSize] ?? 0);
-        $total += ($pickup === 'Yes') ? 100 : 0;
-    } elseif ($service === 'Helper') {
-        $total = 500;
-        $breakdown[] = 'Base: 500';
-
-        $duration = (string) ($data['duration'] ?? 'Half Day');
-        $tasks = _parseCsvValues($data['helper_tasks'] ?? []);
-
-        $total += ($duration === 'Full Day') ? 400 : 0;
-
-        $taskMap = ['Cleaning' => 100, 'Cooking' => 150, 'Childcare' => 200, 'Errands' => 100];
-        foreach ($tasks as $task) {
-            $total += ($taskMap[$task] ?? 0);
-        }
+        
+        $kilos = (string)($data['laundry_kilos'] ?? 'Under 5kg');
+        $kiloAdd = (['Under 5kg' => 0, '5-10kg' => 200, 'Over 10kg' => 400][$kilos] ?? 0);
+        
+        $total += $taskAdd + $kiloAdd;
     } elseif ($service === 'Plumber') {
         $total = 500;
         $breakdown[] = 'Base: 500';
@@ -526,16 +540,14 @@ function _computeFixedPrice($service, $data)
         $total += (['Kitchen' => 0, 'Bathroom' => 100, 'Outdoor' => 150][$location] ?? 0);
         $total += ($urgency === 'Urgent') ? 300 : 0;
     } elseif ($service === 'Carpenter') {
-        $total = 700;
-        $breakdown[] = 'Base: 700';
+        $total = 600;
+        $breakdown[] = 'Base: 600';
 
-        $work = (string) ($data['work_type'] ?? 'Repair');
-        $material = (string) ($data['material_type'] ?? 'Standard');
-        $size = (string) ($data['size'] ?? 'Small');
+        $task = (string) ($data['carpentry_task'] ?? 'Repairs');
+        $complexity = (string)($data['complexity'] ?? 'Simple');
 
-        $total += (['Repair' => 300, 'Custom' => 800, 'Installation' => 500][$work] ?? 0);
-        $total += (['Standard' => 0, 'Premium' => 300][$material] ?? 0);
-        $total += (['Small' => 0, 'Medium' => 300, 'Large' => 700][$size] ?? 0);
+        $total += (['Repairs' => 0, 'Furniture Making' => 500, 'Installation' => 300][$task] ?? 0);
+        $total += (['Simple' => 0, 'Complex' => 500][$complexity] ?? 0);
     } elseif ($service === 'Appliance Technician') {
         $total = 500;
         $breakdown[] = 'Base: 500';
@@ -544,7 +556,7 @@ function _computeFixedPrice($service, $data)
         $severity = (string) ($data['problem_severity'] ?? 'Minor');
         $urgency = (string) ($data['urgency_level'] ?? 'Normal');
 
-        $total += (['Aircon' => 500, 'Ref' => 400, 'Washing Machine' => 400, 'TV' => 300][$appliance] ?? 0);
+        $total += (['Aircon' => 500, 'Ref' => 400, 'Washing Machine' => 400, 'TV' => 300, 'Other' => 200][$appliance] ?? 0);
         $total += (['Minor' => 300, 'Major' => 800][$severity] ?? 0);
         $total += ($urgency === 'Urgent') ? 300 : 0;
     }
@@ -564,23 +576,21 @@ function _summarizeSelectedOptions($service, $data)
         $pairs[] = 'Property Type: ' . ((string) ($data['property_type'] ?? 'Condo/Apartment'));
         $pairs[] = 'Rooms: ' . max(0, _asInt($data['num_rooms'] ?? 1, 1));
         $pairs[] = 'Bathrooms: ' . max(0, _asInt($data['num_bathrooms'] ?? 1, 1));
-    } elseif ($service === 'Laundry Worker') {
-        $opts = _parseCsvValues($data['laundry_options'] ?? []);
-        $pairs[] = 'Laundry Options: ' . (empty($opts) ? 'None' : implode(', ', $opts));
-        $pairs[] = 'Load Size: ' . ((string) ($data['load_size'] ?? 'Small'));
-        $pairs[] = 'Pickup/Delivery: ' . ((string) ($data['pickup_delivery'] ?? 'No'));
     } elseif ($service === 'Helper') {
         $tasks = _parseCsvValues($data['helper_tasks'] ?? []);
-        $pairs[] = 'Duration: ' . ((string) ($data['duration'] ?? 'Half Day'));
         $pairs[] = 'Tasks: ' . (empty($tasks) ? 'None' : implode(', ', $tasks));
+        $pairs[] = 'Hours: ' . max(1, _asInt($data['helper_hours'] ?? 4, 4));
+    } elseif ($service === 'Laundry Worker') {
+        $tasks = _parseCsvValues($data['laundry_services'] ?? []);
+        $pairs[] = 'Tasks: ' . (empty($tasks) ? 'None' : implode(', ', $tasks));
+        $pairs[] = 'Load size: ' . ((string) ($data['laundry_kilos'] ?? 'Under 5kg'));
     } elseif ($service === 'Plumber') {
         $pairs[] = 'Issue Type: ' . ((string) ($data['issue_type'] ?? 'Leak'));
         $pairs[] = 'Location: ' . ((string) ($data['issue_location'] ?? 'Kitchen'));
         $pairs[] = 'Urgency: ' . ((string) ($data['urgency'] ?? 'Normal'));
     } elseif ($service === 'Carpenter') {
-        $pairs[] = 'Work Type: ' . ((string) ($data['work_type'] ?? 'Repair'));
-        $pairs[] = 'Material: ' . ((string) ($data['material_type'] ?? 'Standard'));
-        $pairs[] = 'Size: ' . ((string) ($data['size'] ?? 'Small'));
+        $pairs[] = 'Task: ' . ((string) ($data['carpentry_task'] ?? 'Repairs'));
+        $pairs[] = 'Complexity: ' . ((string) ($data['complexity'] ?? 'Simple'));
     } elseif ($service === 'Appliance Technician') {
         $pairs[] = 'Appliance: ' . ((string) ($data['appliance_type'] ?? 'TV'));
         $pairs[] = 'Severity: ' . ((string) ($data['problem_severity'] ?? 'Minor'));

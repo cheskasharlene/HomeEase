@@ -29,128 +29,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/bookings.css">
-  <style>
-    .scroll {
-      padding-bottom: 96px;
-    }
-
-    .fixed-total-wrap {
-      position: static;
-      background: #FFF8EE;
-      border: 1px solid #F3DFC2;
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 3px 10px rgba(232, 130, 12, 0.08);
-      margin-top: 20px;
-      margin-bottom: 14px;
-    }
-
-    .fixed-total-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-family: "Poppins", sans-serif;
-      color: #1A1A2E;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .fixed-total-value {
-      color: #E8820C;
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: -0.2px;
-    }
-
-    .fixed-total-note {
-      font-size: 11px;
-      line-height: 1.35;
-      color: #7A7064;
-      font-weight: 600;
-    }
-
-    .opt-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-top: 6px;
-    }
-
-    .opt-chip {
-      border: 1px solid #EEDBC0;
-      background: #FFF8F0;
-      border-radius: 10px;
-      padding: 8px 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #5E564D;
-      font-weight: 700;
-    }
-
-    .opt-chip input {
-      accent-color: #E8820C;
-      width: 15px;
-      height: 15px;
-      margin: 0;
-    }
-
-    .bnav {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #fff !important;
-      border-top: 1px solid #EDE8E0 !important;
-      display: flex;
-      padding: 9px 0 calc(12px + env(safe-area-inset-bottom));
-      box-shadow: 0 -4px 20px rgba(232, 130, 12, .07);
-      z-index: 50;
-    }
-
-    .ni {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      color: #C5BEB3;
-      font-family: "Nunito", sans-serif;
-      padding: 2px 0;
-    }
-
-    .ni i {
-      font-size: 22px;
-    }
-
-    .ni.on,
-    .ni.on i,
-    .ni.on .nl {
-      color: #F5A623;
-    }
-
-    .nl {
-      font-size: 10px;
-      font-weight: 700;
-    }
-
-    .nb-c {
-      width: 50px;
-      height: 50px;
-      background: linear-gradient(135deg, #E8820C, #F5A623);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 22px;
-      margin-top: -22px;
-      box-shadow: 0 6px 20px rgba(232, 130, 12, .45);
-    }
-  </style>
+  <link rel="stylesheet" href="assets/css/booking_form.css">
 </head>
 
 <body>
@@ -255,9 +134,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>
 
         <div class="tech-section" style="display:none;">
-          <label class="fl">Choose Technician <span style="font-weight:400;color:var(--tm);">(optional)</span></label>
+          <label class="fl">Choose Professional <span style="font-weight:400;color:var(--tm);">(optional)</span></label>
           <div class="tech-list" id="techList">
-            <div class="tech-none"><i class="bi bi-arrow-clockwise"></i> Loading technicians...</div>
+            <div class="tech-none"><i class="bi bi-arrow-clockwise"></i> Loading providers...</div>
           </div>
           <div class="skip-tech" onclick="skipTech()">
             <i class="bi bi-person-x"></i> Skip — assign later
@@ -266,13 +145,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         <div class="fixed-total-wrap">
           <div class="fixed-total-row">
-            <span>Total Price</span>
+            <span><i class="bi bi-receipt" style="margin-right:4px;opacity:.6;"></i>Total Price</span>
             <span class="fixed-total-value" id="fixedTotalVal">₱0</span>
           </div>
-          <div class="fixed-total-note">This is a fixed system-generated price (no hidden charges).</div>
+          <div class="fixed-total-note"><i class="bi bi-shield-check" style="color:#10b981;"></i> Fixed system-generated price — no hidden charges.</div>
         </div>
 
-        <button class="btn-book" id="btnSubmit" onclick="submitBooking()">
+        <button class="btn-book" id="btnSubmit" onclick="submitBooking()" style="height:52px;font-size:15px;border-radius:16px;">
           <i class="bi bi-calendar-check"></i> Confirm Booking
         </button>
       </div>
@@ -285,6 +164,47 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       <div class="ni on" onclick="goPage('service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
       <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
       <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
+    </div>
+  </div>
+
+  <div class="tech-modal-overlay" id="techModalOverlay" onclick="closeTechInfo()">
+    <div class="tech-modal-card" onclick="event.stopPropagation()">
+      <div class="tech-modal-close" onclick="closeTechInfo()"><i class="bi bi-x"></i></div>
+      <div style="display:flex; align-items:center; gap:16px; margin-bottom: 20px;">
+        <div class="tech-av" id="tmAv" style="width:60px; height:60px; font-size:24px;"></div>
+        <div>
+          <div style="font-size:18px; font-weight:700; color:#1A1A2E;" id="tmName"></div>
+          <div style="font-size:13px; color:#E8820C; font-weight:600;" id="tmSpec"></div>
+        </div>
+      </div>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <div style="background:linear-gradient(135deg,#FEF9C3,#FEF3C7); padding:14px; border-radius:14px; text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:#92400E; font-family:'Poppins',sans-serif;" id="tmRating"></div>
+          <div style="font-size:10px; color:#A16207; text-transform:uppercase; font-weight:800; letter-spacing:.3px;">Rating</div>
+        </div>
+        <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5); padding:14px; border-radius:14px; text-align:center;">
+          <div style="font-size:20px; font-weight:800; color:#047857; font-family:'Poppins',sans-serif;" id="tmJobs"></div>
+          <div style="font-size:10px; color:#059669; text-transform:uppercase; font-weight:800; letter-spacing:.3px;">Jobs Done</div>
+        </div>
+      </div>
+      
+      <div style="font-size:14px; color:#5E564D; line-height:1.6; margin-bottom:16px;">
+        <div style="margin-bottom:8px;"><i class="bi bi-geo-alt-fill" style="color:#C5BEB3; margin-right:6px;"></i> <span id="tmLocation"></span></div>
+        <div style="margin-bottom:8px;"><i class="bi bi-telephone-fill" style="color:#C5BEB3; margin-right:6px;"></i> <span id="tmPhone"></span></div>
+        <div style="margin-bottom:8px;"><i class="bi bi-clock-fill" style="color:#C5BEB3; margin-right:6px;"></i> <span id="tmAvail"></span></div>
+      </div>
+      
+      <div style="margin-top:20px; border-top: 1px dashed #EDE8E0; padding-top: 16px;">
+        <div style="font-size:14px; font-weight:800; color:#1A1A2E; margin-bottom: 12px;">Recent Reviews</div>
+        <div id="tmReviewsContainer" style="max-height: 180px; overflow-y: auto;">
+            <div style="font-size:12px; color:#7A7064; text-align:center; padding:10px;">Loading reviews...</div>
+        </div>
+      </div>
+      
+      <button class="btn-book" style="margin-top:20px; width:100%; border-radius:12px; height:48px;" id="tmSelectBtn">
+        Select Professional
+      </button>
     </div>
   </div>
 
@@ -309,41 +229,36 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         { name: 'num_bathrooms', label: 'Number of Bathrooms', type: 'number', min: 1, max: 5 },
         { name: 'inclusions_note', label: 'Additional Notes', type: 'text', placeholder: 'e.g., windows, carpets, etc.' }
       ],
+      'Helper': [
+        { name: 'helper_tasks', label: 'Tasks Needed', type: 'checkbox-group', options: ['Cleaning', 'Cooking', 'Childcare', 'General Errands'], defaultChecked: ['Cleaning'] },
+        { name: 'helper_hours', label: 'Number of Hours', type: 'number', min: 4, max: 12 }
+      ],
+      'Laundry Worker': [
+        { name: 'laundry_services', label: 'Services', type: 'checkbox-group', options: ['Wash & Dry', 'Fold', 'Iron'], defaultChecked: ['Wash & Dry'] },
+        { name: 'laundry_kilos', label: 'Laundry Load', type: 'select', options: ['Under 5kg', '5-10kg', 'Over 10kg'] }
+      ],
       'Plumber': [
         { name: 'issue_type', label: 'Issue Type', type: 'select', options: ['Leak', 'Clog', 'Installation'] },
         { name: 'issue_location', label: 'Location', type: 'select', options: ['Kitchen', 'Bathroom', 'Outdoor'] },
         { name: 'urgency', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'] }
       ],
-      'Laundry Worker': [
-        { name: 'laundry_options', label: 'Laundry Options', type: 'checkbox-group', options: ['Wash', 'Fold', 'Iron'], defaultChecked: ['Wash'] },
-        { name: 'load_size', label: 'Load Size', type: 'select', options: ['Small', 'Medium', 'Large'] },
-        { name: 'pickup_delivery', label: 'Pickup & Delivery?', type: 'select', options: ['No', 'Yes'] },
-        { name: 'pickup_address', label: 'Pickup Address (if needed)', type: 'text', placeholder: 'Leave blank if not needed' }
-      ],
-      'Helper': [
-        { name: 'duration', label: 'Duration', type: 'select', options: ['Half Day', 'Full Day'] },
-        { name: 'helper_tasks', label: 'Tasks', type: 'checkbox-group', options: ['Cleaning', 'Cooking', 'Childcare', 'Errands'] },
-        { name: 'tasks_needed', label: 'Extra Notes', type: 'textarea', placeholder: 'Optional details for the helper' }
-      ],
       'Carpenter': [
-        { name: 'work_type', label: 'Work Type', type: 'select', options: ['Repair', 'Custom', 'Installation'] },
-        { name: 'material_type', label: 'Material Type', type: 'select', options: ['Standard', 'Premium'] },
-        { name: 'size', label: 'Size', type: 'select', options: ['Small', 'Medium', 'Large'] },
-        { name: 'dimensions', label: 'Dimensions / Notes', type: 'text', placeholder: 'e.g., 5ft x 3ft' }
+        { name: 'carpentry_task', label: 'Task', type: 'select', options: ['Repairs', 'Furniture Making', 'Installation'] },
+        { name: 'complexity', label: 'Complexity', type: 'select', options: ['Simple', 'Complex'] },
+        { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Describe the woodwork needed...' }
       ],
       'Appliance Technician': [
-        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Ref', 'Washing Machine', 'TV'] },
+        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Ref', 'Washing Machine', 'TV', 'Other'] },
         { name: 'problem_severity', label: 'Problem Severity', type: 'select', options: ['Minor', 'Major'] },
         { name: 'urgency_level', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'] },
-        { name: 'problem_desc', label: 'Problem Description', type: 'textarea', placeholder: 'Describe the issue in detail' },
-        { name: 'brand_model', label: 'Brand/Model (optional)', type: 'text', placeholder: 'e.g., Samsung WM5000' },
-        { name: 'media_upload', label: 'Upload Photo/Video', type: 'file', accept: 'image/*,video/*' }
+        { name: 'problem_desc', label: 'Problem Description', type: 'textarea', placeholder: 'Describe the issue in detail' }
       ]
     };
 
     let services = [];
     let selectedSvc = null;
     let selectedTechId = null;
+    let loadedTechs = [];
     let pricingType = 'flat';
     let hours = 1;
     const preselectedSvc = <?= json_encode($serviceName) ?>;
@@ -394,6 +309,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       renderDynamicFields(selectedSvc.name);
 
       updatePricePreview();
+      document.querySelector('.tech-section').style.display = 'block';
+      loadTechnicians(selectedSvc.name);
     }
 
     function renderDynamicFields(serviceName) {
@@ -533,30 +450,29 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         lines.push(`Property: +₱${pAdd}`);
         lines.push(`Rooms (${rooms}): +₱${rAdd}`);
         lines.push(`Bathrooms (${baths}): +₱${bAdd}`);
+      } else if (selectedSvc.name === 'Helper') {
+        total = 400;
+        lines.push('Base helper: ₱400 (4 hours)');
+
+        const tasks = Array.isArray(v.helper_tasks) ? v.helper_tasks : [];
+        const taskAdd = tasks.reduce((sum, t) => sum + ({ 'Cleaning': 100, 'Cooking': 150, 'Childcare': 200, 'General Errands': 100 }[t] ?? 0), 0);
+        const hours = Math.max(1, normalizeNumber(v.helper_hours, 4));
+        const excess = (hours > 4) ? ((hours - 4) * 100) : 0;
+        
+        total += taskAdd + excess;
+        lines.push(`Tasks (${tasks.join(', ') || 'None'}): +₱${taskAdd}`);
+        if(excess > 0) lines.push(`Excess Hours (+${hours-4}): +₱${excess}`);
       } else if (selectedSvc.name === 'Laundry Worker') {
         total = 300;
         lines.push('Base laundry: ₱300');
-
-        const selectedOpts = Array.isArray(v.laundry_options) ? v.laundry_options : [];
-        const optAdd = selectedOpts.reduce((sum, opt) => sum + ({ 'Wash': 0, 'Fold': 100, 'Iron': 200 }[opt] ?? 0), 0);
-        const sizeAdd = ({ 'Small': 0, 'Medium': 100, 'Large': 200 }[v.load_size] ?? 0);
-        const pickupAdd = v.pickup_delivery === 'Yes' ? 100 : 0;
-
-        total += optAdd + sizeAdd + pickupAdd;
-        lines.push(`Options (${selectedOpts.join(', ') || 'None'}): +₱${optAdd}`);
-        lines.push(`Load size: +₱${sizeAdd}`);
-        lines.push(`Pickup/Delivery: +₱${pickupAdd}`);
-      } else if (selectedSvc.name === 'Helper') {
-        total = 500;
-        lines.push('Base helper (Half Day): ₱500');
-
-        const durAdd = v.duration === 'Full Day' ? 400 : 0;
-        const tasks = Array.isArray(v.helper_tasks) ? v.helper_tasks : [];
-        const taskAdd = tasks.reduce((sum, t) => sum + ({ 'Cleaning': 100, 'Cooking': 150, 'Childcare': 200, 'Errands': 100 }[t] ?? 0), 0);
-
-        total += durAdd + taskAdd;
-        lines.push(`Duration: +₱${durAdd}`);
-        lines.push(`Tasks (${tasks.join(', ') || 'None'}): +₱${taskAdd}`);
+        
+        const tasks = Array.isArray(v.laundry_services) ? v.laundry_services : [];
+        const taskAdd = tasks.reduce((sum, t) => sum + ({ 'Wash & Dry': 100, 'Fold': 100, 'Iron': 150 }[t] ?? 0), 0);
+        const kiloAdd = ({ 'Under 5kg': 0, '5-10kg': 200, 'Over 10kg': 400 }[v.laundry_kilos] ?? 0);
+        
+        total += taskAdd + kiloAdd;
+        lines.push(`Services (${tasks.join(', ') || 'None'}): +₱${taskAdd}`);
+        lines.push(`Load size: +₱${kiloAdd}`);
       } else if (selectedSvc.name === 'Plumber') {
         total = 500;
         lines.push('Base plumbing: ₱500');
@@ -570,22 +486,20 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         lines.push(`Location: +₱${locAdd}`);
         lines.push(`Urgency: +₱${urgAdd}`);
       } else if (selectedSvc.name === 'Carpenter') {
-        total = 700;
-        lines.push('Base carpenter: ₱700');
-
-        const workAdd = ({ 'Repair': 300, 'Custom': 800, 'Installation': 500 }[v.work_type] ?? 0);
-        const matAdd = ({ 'Standard': 0, 'Premium': 300 }[v.material_type] ?? 0);
-        const sizeAdd = ({ 'Small': 0, 'Medium': 300, 'Large': 700 }[v.size] ?? 0);
-
-        total += workAdd + matAdd + sizeAdd;
-        lines.push(`Work type: +₱${workAdd}`);
-        lines.push(`Material: +₱${matAdd}`);
-        lines.push(`Size: +₱${sizeAdd}`);
+        total = 600;
+        lines.push('Base carpentry: ₱600');
+        
+        const typeAdd = ({ 'Repairs': 0, 'Furniture Making': 500, 'Installation': 300 }[v.carpentry_task] ?? 0);
+        const prepAdd = ({ 'Simple': 0, 'Complex': 500 }[v.complexity] ?? 0);
+        
+        total += typeAdd + prepAdd;
+        lines.push(`Task: +₱${typeAdd}`);
+        lines.push(`Complexity: +₱${prepAdd}`);
       } else if (selectedSvc.name === 'Appliance Technician') {
         total = 500;
-        lines.push('Base technician: ₱500');
+        lines.push('Base repair: ₱500');
 
-        const appAdd = ({ 'Aircon': 500, 'Ref': 400, 'Washing Machine': 400, 'TV': 300 }[v.appliance_type] ?? 0);
+        const appAdd = ({ 'Aircon': 500, 'Ref': 400, 'Washing Machine': 400, 'TV': 300, 'Other': 200 }[v.appliance_type] ?? 0);
         const sevAdd = ({ 'Minor': 300, 'Major': 800 }[v.problem_severity] ?? 0);
         const urgAdd = ({ 'Normal': 0, 'Urgent': 300 }[v.urgency_level] ?? 0);
 
@@ -624,18 +538,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const data = await res.json();
         if (!data.success || !data.technicians.length) {
           document.getElementById('techList').innerHTML =
-            '<div class="tech-none">No technicians available for this service right now.</div>';
+            '<div class="tech-none">No providers available for this service right now.</div>';
           return;
         }
-        renderTechnicians(data.technicians);
+        loadedTechs = data.technicians;
+        renderTechnicians(loadedTechs);
       } catch (e) {
         document.getElementById('techList').innerHTML =
-          '<div class="tech-none" style="color:#ef4444;">Could not load technicians.</div>';
+          '<div class="tech-none" style="color:#ef4444;">Could not load providers.</div>';
       }
     }
 
     function renderTechnicians(techs) {
-      document.getElementById('techList').innerHTML = techs.map(t => `
+      document.getElementById('techList').innerHTML = techs.map(t => {
+        const ratingDisplay = (t.rating && parseFloat(t.rating) > 0) ? `⭐ ${parseFloat(t.rating).toFixed(1)}` : 'No rating yet';
+        return `
     <div class="tech-card ${t.availability === 'unavailable' ? 'unavailable' : ''} ${selectedTechId == t.id ? 'selected' : ''}"
          id="techCard${t.id}"
          onclick="${t.availability !== 'unavailable' ? `selectTech(${t.id}, this)` : ''}">
@@ -644,13 +561,78 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         <div class="tech-name">${t.name}</div>
         <div class="tech-meta">
           <span class="avail-dot ${t.availability}"></span>${t.availability}
-          &nbsp;·&nbsp; ⭐ ${t.rating}
+          &nbsp;·&nbsp; ${ratingDisplay}
           &nbsp;·&nbsp; ${t.jobs_done} jobs
         </div>
       </div>
-      <span class="tech-badge ${t.availability}">${t.availability}</span>
+      <div class="tech-info-btn ${t.availability === 'unavailable' ? 'unavailable' : ''}" onclick="event.stopPropagation(); showTechInfo(${t.id})">
+        <i class="bi bi-info-circle"></i>
+      </div>
     </div>
-  `).join('');
+  `}).join('');
+    }
+
+    async function showTechInfo(id) {
+        const t = loadedTechs.find(x => x.id == id);
+        if (!t) return;
+        
+        const isRated = (t.rating && parseFloat(t.rating) > 0);
+        
+        document.getElementById('tmAv').textContent = t.name[0];
+        document.getElementById('tmName').textContent = t.name;
+        document.getElementById('tmSpec').textContent = t.specialty;
+        document.getElementById('tmRating').textContent = isRated ? `⭐ ${parseFloat(t.rating).toFixed(1)}` : '-';
+        document.getElementById('tmJobs').textContent = t.jobs_done;
+        document.getElementById('tmLocation').textContent = t.address || 'Address not available';
+        document.getElementById('tmPhone').textContent = t.phone || 'Phone not available';
+        document.getElementById('tmAvail').innerHTML = `<span class="avail-dot ${t.availability}"></span> ${t.availability}`;
+        
+        const btn = document.getElementById('tmSelectBtn');
+        if (t.availability === 'unavailable') {
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = 'block';
+            btn.onclick = () => {
+                const card = document.getElementById('techCard' + t.id);
+                if (card) selectTech(t.id, card);
+                closeTechInfo();
+            };
+        }
+        
+        document.getElementById('tmReviewsContainer').innerHTML = '<div style="font-size:12px; color:#7A7064; text-align:center; padding:10px;"><i class="bi bi-arrow-clockwise"></i> Loading reviews...</div>';
+        document.getElementById('techModalOverlay').classList.add('show');
+        
+        try {
+            const res = await fetch('api/reviews_api.php?action=get_reviews&provider_id=' + id);
+            const data = await res.json();
+            const rc = document.getElementById('tmReviewsContainer');
+            
+            if (!data.success || !data.reviews || data.reviews.length === 0) {
+                rc.innerHTML = '<div style="font-size:12px; color:#7A7064; text-align:center; padding:10px;">' + (isRated ? 'No written reviews yet.' : 'No rating yet.') + '</div>';
+                return;
+            }
+            
+            rc.innerHTML = data.reviews.map(r => {
+                const d = new Date(r.created_at.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const stars = '⭐'.repeat(r.rating) + '<span style="color:#DDD">★</span>'.repeat(5 - r.rating);
+                return `
+                <div class="tm-review-card">
+                    <div class="tm-review-hdr">
+                        <div class="tm-review-user">${r.user_name || 'Customer'}</div>
+                        <div class="tm-review-stars">${stars}</div>
+                    </div>
+                    ${r.comment ? `<div class="tm-review-txt">"${r.comment}"</div>` : ''}
+                    <div class="tm-review-date">${d}</div>
+                </div>`;
+            }).join('');
+            
+        } catch (e) {
+            document.getElementById('tmReviewsContainer').innerHTML = '<div style="font-size:12px; color:#ef4444; text-align:center; padding:10px;">Failed to load reviews.</div>';
+        }
+    }
+
+    function closeTechInfo() {
+        document.getElementById('techModalOverlay').classList.remove('show');
     }
 
     function selectTech(id, el) {
@@ -738,6 +720,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('customer_name', uName);
       fd.append('customer_phone', uPhone);
       fd.append('customer_address', addr);
+
+      if (selectedTechId) {
+        fd.append('technician_id', selectedTechId);
+      }
 
       // Add dynamic field data
       const dynamicData = getDynamicFieldsData();
