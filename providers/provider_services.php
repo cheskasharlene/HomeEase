@@ -40,7 +40,8 @@ if (empty($_SESSION['provider_id'])) {
     <div class="screen">
       <div class="p-scroll">
         <div class="p-hdr">
-          <div style="position:relative;z-index:1;">
+          <div class="p-hdr-back" onclick="goPage('provider_profile.php')"><i class="bi bi-arrow-left"></i></div>
+          <div class="p-hdr-main">
             <div class="p-hdr-ttl">My Services</div>
             <div class="p-hdr-sub">Manage what you offer</div>
           </div>

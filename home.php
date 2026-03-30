@@ -70,9 +70,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                 <i class="bi bi-bell-fill"></i>
                 <div class="h-bell-dot" id="bellDot" style="display:none;"></div>
               </div>
-              <div class="h-bell" onclick="openLogoutModal()" title="Log out">
-                <i class="bi bi-box-arrow-right"></i>
-              </div>
             </div>
           </div>
           <div class="s-bar" onclick="openSearch()"><i class="bi bi-search"></i><span>Search for a service...</span>
@@ -116,18 +113,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       </div>
       <div id="navContainer"></div>
     </div>
-    <div class="logout-modal" id="logoutModal" aria-hidden="true">
-      <div class="logout-card" role="dialog" aria-modal="true" aria-labelledby="logoutTitle"
-        aria-describedby="logoutDesc">
-        <div class="logout-icon"><i class="bi bi-box-arrow-right"></i></div>
-        <div class="logout-title" id="logoutTitle">Are you sure you want to log out?</div>
-        <div class="logout-desc" id="logoutDesc">You will need to log in again to access your account.</div>
-        <div class="logout-actions">
-          <button type="button" class="logout-btn logout-btn-cancel" onclick="closeLogoutModal()">Cancel</button>
-          <button type="button" class="logout-btn logout-btn-confirm" onclick="confirmLogout()">Log out</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script src="assets/js/app.js"></script>
@@ -144,30 +129,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const ic = document.getElementById('dmIcon');
       if (ic && document.body.classList.contains('dark')) ic.className = 'bi bi-sun-fill';
     })();
-
-    function openLogoutModal() {
-      const modal = document.getElementById('logoutModal');
-      modal.classList.add('on');
-      modal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeLogoutModal() {
-      const modal = document.getElementById('logoutModal');
-      modal.classList.remove('on');
-      modal.setAttribute('aria-hidden', 'true');
-    }
-
-    function confirmLogout() {
-      window.location.href = 'logout.php';
-    }
-
-    document.getElementById('logoutModal').addEventListener('click', function (e) {
-      if (e.target === this) closeLogoutModal();
-    });
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeLogoutModal();
-    });
 
     fetch('api/notifications_api.php')
       .then(r => r.json())

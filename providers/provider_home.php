@@ -47,7 +47,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     </div>
 
     <div class="screen" id="home">
-      <div style="flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;padding-bottom:90px;width:100%;" id="phScroll">
+      <div class="ph-scroll" id="phScroll">
 
         <!-- Header -->
         <div class="ph-hdr">
@@ -66,7 +66,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
               </div>
             </div>
             <div class="ph-right">
-              <button class="ph-btn" onclick="toggleDark()"><i class="bi bi-moon-fill" id="dmIcon"></i></button>
               <div class="ph-btn" onclick="goPage('provider_notifications.php')">
                 <i class="bi bi-bell-fill"></i>
                 <div class="ph-bell-dot" id="bellDot" style="display:none;"></div>
@@ -205,7 +204,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <?php endif; ?>
         </div>
 
-        <div class="h-pb"></div>
       </div>
 
       <div class="bnav">
@@ -226,7 +224,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
   <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
-    (function () { const ic = document.getElementById('dmIcon'); if (ic && document.body.classList.contains('dark')) ic.className = 'bi bi-sun-fill'; })();
     document.getElementById('bellDot').style.display = 'block';
     const toggle = document.getElementById('availToggle');
     const lbl = document.getElementById('availLabel');

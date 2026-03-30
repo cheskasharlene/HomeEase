@@ -51,11 +51,31 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .stat-lbl { font-size:10px; font-weight:700; color:var(--txt-muted); text-transform:uppercase; letter-spacing:.3px; margin-top:1px; }
 
     /* Quick actions */
-    .quick-actions { display:flex!important; gap:8px; padding:0 18px; margin-bottom:14px; overflow-x:auto; scrollbar-width:none; }
+    .quick-actions {
+      display:grid!important;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:10px;
+      padding:0 18px;
+      margin:2px 0 14px;
+      overflow:visible;
+      scrollbar-width:none;
+    }
     .quick-actions::-webkit-scrollbar { display:none; }
-    .qa-btn { display:flex!important; flex-direction:column; align-items:center; gap:5px; background:none; border:none; cursor:pointer; flex-shrink:0; }
-    .qa-ic { width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:22px; }
-    .qa-lbl { font-size:11px; font-weight:700; color:var(--txt-muted); }
+    .qa-btn {
+      display:flex!important;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      width:100%;
+      min-width:0;
+      padding:0;
+      background:none;
+      border:none;
+      cursor:pointer;
+    }
+    .qa-ic { width:50px; height:50px; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:21px; }
+    .qa-lbl { font-size:10px; font-weight:700; color:var(--txt-muted); text-align:center; line-height:1.15; }
 
     /* Chart & section cards */
     .chart-card { background:var(--bg-card); border-radius:18px; padding:16px; margin:0 18px 14px; border:1.5px solid var(--border-col); }
@@ -84,6 +104,84 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .li-sub { font-size:11px; color:var(--txt-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .li-right { display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0; }
 
+    /* Pagination */
+    .pg-wrap {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 9px 10px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(245, 166, 35, 0.12), rgba(232, 130, 12, 0.04));
+      border: 1px solid rgba(232, 130, 12, 0.2);
+    }
+    .pg-info {
+      font-size: 11px;
+      font-weight: 700;
+      color: #a16207;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-self: center;
+    }
+    .pg-info-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 50px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(232, 130, 12, 0.25);
+      background: rgba(255, 255, 255, 0.9);
+      color: #9a5a08;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .pg-btn {
+      border: 1.5px solid #f2d9ad;
+      background: #fff;
+      color: #8e8e93;
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 36px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .18s;
+      justify-self: start;
+    }
+    .pg-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      border-color: #f5a623;
+      color: #b96b0a;
+    }
+    .pg-btn.pg-next {
+      min-width: 76px;
+      gap: 5px;
+      border-color: transparent;
+      color: #fff;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      box-shadow: 0 6px 14px rgba(232, 130, 12, .24);
+      justify-self: end;
+    }
+    .pg-btn.pg-next:hover:not(:disabled) {
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 8px 18px rgba(232, 130, 12, .3);
+    }
+    .pg-btn:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
     /* Empty state */
     .empty-state { display:flex!important; flex-direction:column; align-items:center; justify-content:center; padding:36px 20px; text-align:center; gap:10px; color:var(--txt-muted); }
     .empty-state i { font-size:30px; }
@@ -98,6 +196,90 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .sh-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-shrink:0; }
     .sh-ttl { font-family:'Poppins',sans-serif; font-size:18px; font-weight:800; color:var(--txt-primary); }
     .sh-close { width:32px; height:32px; border-radius:50%; border:none; background:var(--bg-screen); color:var(--txt-muted); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+
+    /* Branded confirm dialog */
+    .confirm-ol {
+      position: absolute;
+      inset: 0;
+      background: rgba(26, 20, 8, .48);
+      z-index: 260;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .24s ease;
+      padding: 18px;
+    }
+    .confirm-ol.on {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .confirm-card {
+      width: 100%;
+      max-width: 320px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border-col);
+      border-radius: 20px;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, .16);
+      padding: 18px;
+      transform: translateY(8px) scale(.98);
+      transition: transform .24s ease;
+    }
+    .confirm-ol.on .confirm-card {
+      transform: translateY(0) scale(1);
+    }
+    .confirm-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 10px;
+      background: linear-gradient(135deg, #fee2e2, #fff1f2);
+      color: #dc2626;
+      font-size: 20px;
+    }
+    .confirm-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--txt-primary);
+      text-align: center;
+    }
+    .confirm-sub {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--txt-muted);
+      text-align: center;
+      margin-top: 5px;
+      line-height: 1.45;
+    }
+    .confirm-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .confirm-btn {
+      flex: 1;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+    }
+    .confirm-btn.cancel {
+      background: #fff;
+      border-color: var(--border-col);
+      color: var(--txt-muted);
+    }
+    .confirm-btn.ok {
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      color: #fff;
+      box-shadow: 0 8px 16px rgba(232, 130, 12, .28);
+    }
 
     /* Form rows & modal buttons */
     .fg-row { display:grid!important; grid-template-columns:1fr 1fr; gap:10px; }
@@ -438,6 +620,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <p>Loading...</p>
           </div>
         </div>
+        <div id="bkPagination"></div>
       </div>
     </div>
 
@@ -464,6 +647,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <p>Loading...</p>
           </div>
         </div>
+        <div id="wkPagination"></div>
       </div>
     </div>
 
@@ -488,6 +672,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <p>Loading...</p>
           </div>
         </div>
+        <div id="usPagination"></div>
       </div>
     </div>
 
@@ -540,7 +725,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               </div>
               <i class="bi bi-chevron-right more-arrow"></i>
             </div>
-            <div class="more-row" onclick="doLogout()">
+            <div class="more-row" onclick="openLogoutConfirm()">
               <div class="more-ic" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-box-arrow-right"></i>
               </div>
               <div>
@@ -637,6 +822,18 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           class="nl">More</span></div>
     </div>
 
+
+    <div class="confirm-ol" id="logoutConfirmOl" onclick="if(event.target===this)closeLogoutConfirm()">
+      <div class="confirm-card">
+        <div class="confirm-icon"><i class="bi bi-box-arrow-right"></i></div>
+        <div class="confirm-title">Log out?</div>
+        <div class="confirm-sub">You will be signed out of the admin portal and returned to login.</div>
+        <div class="confirm-actions">
+          <button class="confirm-btn cancel" onclick="closeLogoutConfirm()">Cancel</button>
+          <button class="confirm-btn ok" onclick="confirmLogout()">Log out</button>
+        </div>
+      </div>
+    </div>
 
     <div class="sheet-ol" id="bkDetailOl" onclick="if(event.target===this)closeSheet('bkDetailOl')">
         <div class="sheet" style="max-height:92vh;">
@@ -1020,12 +1217,40 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       let bkFilter = 'all';
+      const PAGE_SIZE = 6;
+      let bkPage = 1;
+      let wkPage = 1;
+      let usPage = 1;
+      let lastBkQuery = '';
+      let lastWkQuery = '';
+      let lastUsQuery = '';
       let _currentBk = null;   // currently viewed booking
       let _allWorkers = [];     // worker cache for picker
 
+      function buildPaginationMarkup(currentPage, totalPages, prevFn, nextFn) {
+        if (totalPages <= 1) return '';
+        return `
+          <div class="pg-wrap">
+            <button class="pg-btn" onclick="${prevFn}()" ${currentPage <= 1 ? 'disabled' : ''} aria-label="Previous page">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="pg-info">Page <span class="pg-info-badge">${currentPage} / ${totalPages}</span></div>
+            <button class="pg-btn pg-next" onclick="${nextFn}()" ${currentPage >= totalPages ? 'disabled' : ''}>
+              Next <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>`;
+      }
+
+      function prevBkPage() { if (bkPage > 1) { bkPage -= 1; loadBookings(); } }
+      function nextBkPage() { bkPage += 1; loadBookings(); }
+      function prevWkPage() { if (wkPage > 1) { wkPage -= 1; loadWorkers(); } }
+      function nextWkPage() { wkPage += 1; loadWorkers(); }
+      function prevUsPage() { if (usPage > 1) { usPage -= 1; loadUsers(); } }
+      function nextUsPage() { usPage += 1; loadUsers(); }
+
       function setBkFilter(el, f) {
         document.querySelectorAll('.stab').forEach(e => e.classList.remove('on'));
-        el.classList.add('on'); bkFilter = f; loadBookings();
+        el.classList.add('on'); bkFilter = f; bkPage = 1; loadBookings();
       }
 
       function toggleBkFilters() {
@@ -1065,6 +1290,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('bkDateTo').value = '';
         document.getElementById('bkServiceFilter').value = '';
         document.getElementById('bkWorkerFilter').value = '';
+        bkPage = 1;
         loadBookings();
       }
 
@@ -1084,10 +1310,24 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('bkList').innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
         try {
           const data = await api('bookings', 'list', null, extra);
-          if (!data.success) { document.getElementById('bkList').innerHTML = `<div class="empty-state"><p>${data.message}</p></div>`; return; }
+          if (!data.success) { document.getElementById('bkList').innerHTML = `<div class="empty-state"><p>${data.message}</p></div>`; document.getElementById('bkPagination').innerHTML = ''; return; }
           const bks = data.bookings || [];
-          if (!bks.length) { document.getElementById('bkList').innerHTML = '<div class="empty-state"><i class="bi bi-calendar-x"></i><p>No bookings found.</p></div>'; return; }
-          document.getElementById('bkList').innerHTML = bks.map(b => `
+          const bkQuery = `${bkFilter}|${search}|${dateFrom}|${dateTo}|${service}|${workerId}`;
+          if (bkQuery !== lastBkQuery) {
+            bkPage = 1;
+            lastBkQuery = bkQuery;
+          }
+          if (!bks.length) {
+            document.getElementById('bkList').innerHTML = '<div class="empty-state"><i class="bi bi-calendar-x"></i><p>No bookings found.</p></div>';
+            document.getElementById('bkPagination').innerHTML = '';
+            return;
+          }
+          const bkTotalPages = Math.max(1, Math.ceil(bks.length / PAGE_SIZE));
+          bkPage = Math.min(Math.max(1, bkPage), bkTotalPages);
+          const bkStart = (bkPage - 1) * PAGE_SIZE;
+          const bkPageItems = bks.slice(bkStart, bkStart + PAGE_SIZE);
+
+          document.getElementById('bkList').innerHTML = bkPageItems.map(b => `
       <div class="bk-card" onclick='openBkDetail(${JSON.stringify(b).replace(/'/g, "&#39;")})'>
         <div style="display:flex;align-items:flex-start;gap:11px;">
           <div style="width:42px;height:42px;border-radius:12px;background:var(--teal-mid);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
@@ -1105,7 +1345,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         </div>
       </div>`).join('');
-        } catch (e) { document.getElementById('bkList').innerHTML = '<div class="empty-state"><p>Error loading bookings.</p></div>'; }
+          document.getElementById('bkPagination').innerHTML = buildPaginationMarkup(bkPage, bkTotalPages, 'prevBkPage', 'nextBkPage');
+        } catch (e) { document.getElementById('bkList').innerHTML = '<div class="empty-state"><p>Error loading bookings.</p></div>'; document.getElementById('bkPagination').innerHTML = ''; }
       }
 
       function openBkDetail(b) {
@@ -1267,6 +1508,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         currentWkFilter = fil;
         document.getElementById('wkFilterAll').classList.toggle('on', fil === '');
         document.getElementById('wkFilterLow').classList.toggle('on', fil === 'low_rated');
+        wkPage = 1;
         loadWorkers();
       }
 
@@ -1276,8 +1518,22 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         try {
           const data = await api('workers', 'list', null, `&search=${encodeURIComponent(search)}&filter=${currentWkFilter}`);
           const workers = data.workers || [];
-          if (!workers.length) { document.getElementById('wkList').innerHTML = '<div class="empty-state"><i class="bi bi-person-x"></i><p>No workers found.</p></div>'; return; }
-          document.getElementById('wkList').innerHTML = workers.map(w => {
+          const wkQuery = `${search}|${currentWkFilter}`;
+          if (wkQuery !== lastWkQuery) {
+            wkPage = 1;
+            lastWkQuery = wkQuery;
+          }
+          if (!workers.length) {
+            document.getElementById('wkList').innerHTML = '<div class="empty-state"><i class="bi bi-person-x"></i><p>No workers found.</p></div>';
+            document.getElementById('wkPagination').innerHTML = '';
+            return;
+          }
+          const wkTotalPages = Math.max(1, Math.ceil(workers.length / PAGE_SIZE));
+          wkPage = Math.min(Math.max(1, wkPage), wkTotalPages);
+          const wkStart = (wkPage - 1) * PAGE_SIZE;
+          const wkPageItems = workers.slice(wkStart, wkStart + PAGE_SIZE);
+
+          document.getElementById('wkList').innerHTML = wkPageItems.map(w => {
             const isLow = w.rating > 0 && w.rating < 3.0;
             const starHtml = isLow ? `<span style="color:#ef4444;font-weight:800;">⭐ ${parseFloat(w.rating).toFixed(1)}</span>` : `⭐ ${parseFloat(w.rating || 0).toFixed(1)}`;
             return `
@@ -1297,7 +1553,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div style="font-size:11px;color:var(--txt-muted);margin-top:4px;">${starHtml} · ${w.jobs_done || 0} jobs</div>
         </div>
       </div>`}).join('');
-        } catch (e) { document.getElementById('wkList').innerHTML = '<div class="empty-state"><p>Error loading workers.</p></div>'; }
+          document.getElementById('wkPagination').innerHTML = buildPaginationMarkup(wkPage, wkTotalPages, 'prevWkPage', 'nextWkPage');
+        } catch (e) { document.getElementById('wkList').innerHTML = '<div class="empty-state"><p>Error loading workers.</p></div>'; document.getElementById('wkPagination').innerHTML = ''; }
       }
 
       function openWorkerSheet(w) {
@@ -1378,8 +1635,21 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         try {
           const data = await api('users', 'list', null, `&search=${encodeURIComponent(search)}`);
           const users = data.users || [];
-          if (!users.length) { document.getElementById('usList').innerHTML = '<div class="empty-state"><i class="bi bi-people"></i><p>No users found.</p></div>'; return; }
-          document.getElementById('usList').innerHTML = users.map(u => `
+          if (search !== lastUsQuery) {
+            usPage = 1;
+            lastUsQuery = search;
+          }
+          if (!users.length) {
+            document.getElementById('usList').innerHTML = '<div class="empty-state"><i class="bi bi-people"></i><p>No users found.</p></div>';
+            document.getElementById('usPagination').innerHTML = '';
+            return;
+          }
+          const usTotalPages = Math.max(1, Math.ceil(users.length / PAGE_SIZE));
+          usPage = Math.min(Math.max(1, usPage), usTotalPages);
+          const usStart = (usPage - 1) * PAGE_SIZE;
+          const usPageItems = users.slice(usStart, usStart + PAGE_SIZE);
+
+          document.getElementById('usList').innerHTML = usPageItems.map(u => `
       <div class="list-item" onclick='openUserDetail(${JSON.stringify(u)})'>
         <div class="user-av">${(u.name || '?')[0].toUpperCase()}</div>
         <div class="li-body">
@@ -1392,7 +1662,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           ${u.phone ? `<div style="font-size:11px;color:var(--txt-muted);">${u.phone}</div>` : ''}
         </div>
       </div>`).join('');
-        } catch (e) { document.getElementById('usList').innerHTML = '<div class="empty-state"><p>Error.</p></div>'; }
+          document.getElementById('usPagination').innerHTML = buildPaginationMarkup(usPage, usTotalPages, 'prevUsPage', 'nextUsPage');
+        } catch (e) { document.getElementById('usList').innerHTML = '<div class="empty-state"><p>Error.</p></div>'; document.getElementById('usPagination').innerHTML = ''; }
       }
 
       function openUserDetail(u) {
@@ -1587,8 +1858,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         else toast(data.message || 'Failed', 'e');
       }
 
-      async function doLogout() {
-        if (!confirm2('Sign out of admin portal?')) return;
+      function openLogoutConfirm() {
+        document.getElementById('logoutConfirmOl').classList.add('on');
+      }
+
+      function closeLogoutConfirm() {
+        document.getElementById('logoutConfirmOl').classList.remove('on');
+      }
+
+      async function confirmLogout() {
+        closeLogoutConfirm();
         window.location.href = 'logout.php';
       }
 

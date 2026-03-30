@@ -342,7 +342,7 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
         </div>
         <div class="st-sec">
           <div class="st-sec-ttl">Session</div>
-          <div class="st-row" onclick="location.href='../logout.php'">
+          <div class="st-row" onclick="openLogoutConfirm()">
             <div class="st-ic red"><i class="bi bi-box-arrow-right"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl" style="color:#ef4444;">Log Out</div>
@@ -350,7 +350,18 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
             </div>
           </div>
         </div>
-        <div class="st-version">HomeEase v3.2.0 · Service Provider Edition</div>
+      </div>
+    </div>
+
+    <div class="logout-confirm-ol" id="logoutConfirmOl" onclick="if(event.target===this)closeLogoutConfirm()">
+      <div class="logout-confirm-card">
+        <div class="logout-confirm-ic"><i class="bi bi-box-arrow-right"></i></div>
+        <div class="logout-confirm-ttl">Log out?</div>
+        <div class="logout-confirm-sub">You will be signed out of your provider account.</div>
+        <div class="logout-confirm-actions">
+          <button class="logout-confirm-btn cancel" onclick="closeLogoutConfirm()">Cancel</button>
+          <button class="logout-confirm-btn ok" onclick="confirmLogout()">Log out</button>
+        </div>
       </div>
     </div>
   </div>
@@ -366,6 +377,12 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
       if (stDarkToggle) stDarkToggle.classList.toggle('on', d);
     }
     function toggleDarkMode() { toggleDark(); syncDark(); }
+    function openLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.add('on'); }
+    function closeLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.remove('on'); }
+    function confirmLogout() {
+      closeLogoutConfirm();
+      window.location.href = '../logout.php';
+    }
     syncDark();
 
     async function uploadVerificationDocs() {

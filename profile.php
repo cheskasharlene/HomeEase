@@ -679,6 +679,18 @@ if ($row) {
       </div>
     </div>
 
+    <div class="logout-confirm-ol" id="logoutConfirmOl" onclick="if(event.target===this)closeLogoutConfirm()">
+      <div class="logout-confirm-card">
+        <div class="logout-confirm-ic"><i class="bi bi-box-arrow-right"></i></div>
+        <div class="logout-confirm-ttl">Log out?</div>
+        <div class="logout-confirm-sub">You will be signed out of your account.</div>
+        <div class="logout-confirm-actions">
+          <button class="logout-confirm-btn cancel" onclick="closeLogoutConfirm()">Cancel</button>
+          <button class="logout-confirm-btn ok" onclick="confirmLogout()">Log out</button>
+        </div>
+      </div>
+    </div>
+
 
     <div id="subSheet" onclick="subSheetBg(event)">
       <div class="sub-sheet-inner">
@@ -941,7 +953,22 @@ if ($row) {
       syncDarkToggles();
     }
 
-    function doLogout() { window.location.href = 'logout.php'; }
+    function doLogout() {
+      openLogoutConfirm();
+    }
+
+    function openLogoutConfirm() {
+      document.getElementById('logoutConfirmOl').classList.add('on');
+    }
+
+    function closeLogoutConfirm() {
+      document.getElementById('logoutConfirmOl').classList.remove('on');
+    }
+
+    function confirmLogout() {
+      closeLogoutConfirm();
+      window.location.href = 'logout.php';
+    }
 
     loadProfile();
     syncDarkToggles();

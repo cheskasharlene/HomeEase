@@ -83,7 +83,6 @@ $avgRating = $reviewsCount ? array_sum(array_map(static fn($r) => (float) ($r['r
           </div>
         </div>
 
-        <div class="h-pb"></div>
       </div>
 
       <div class="bnav">

@@ -89,7 +89,6 @@ $dashboardEarnings = providerDashboardEarnings();
           </div>
         </div>
 
-        <div class="h-pb"></div>
       </div>
 
       <div class="bnav">
