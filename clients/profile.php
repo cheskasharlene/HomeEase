@@ -967,7 +967,7 @@ if ($row) {
 
     function confirmLogout() {
       closeLogoutConfirm();
-      window.location.href = 'logout.php';
+      window.location.href = '../logout.php';
     }
 
     loadProfile();
