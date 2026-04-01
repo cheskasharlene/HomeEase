@@ -76,18 +76,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <div class="sec-row">
-          <div class="sec-ttl">Browse by Category</div>
-        </div>
-        <div class="cat-pills">
-          <div class="cat-pill active">All</div>
-          <div class="cat-pill">Cleaning</div>
-          <div class="cat-pill">Plumbing</div>
-          <div class="cat-pill">Helper</div>
-          <div class="cat-pill">Appliance Technician</div>
-          <div class="cat-pill">Laundry</div>
-          <div class="cat-pill">Carpentry</div>
-        </div>
 
 
         <div class="sec-row">
@@ -209,12 +197,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     loadPros();
 
 
-    document.querySelectorAll('.cat-pill').forEach(pill => {
-      pill.addEventListener('click', function () {
-        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
+
 
 
     document.getElementById('navContainer').innerHTML = `
