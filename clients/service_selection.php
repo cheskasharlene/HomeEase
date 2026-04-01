@@ -17,8 +17,8 @@ if (empty($_SESSION['user_id'])) {
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/main.css">
-  <link rel="stylesheet" href="assets/css/service_selection.css">
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/service_selection.css">
 </head>
 
 <body>
@@ -29,7 +29,7 @@ if (empty($_SESSION['user_id'])) {
           <div class="hdr-sub">What do you need?</div>
           <div class="hdr-title">Select a Service</div>
         </div>
-        <a href="home.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="../home.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 
@@ -38,7 +38,7 @@ if (empty($_SESSION['user_id'])) {
     </div>
   </div>
 
-  <script src="assets/js/app.js"></script>
+  <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
   </script>
@@ -108,7 +108,7 @@ if (empty($_SESSION['user_id'])) {
 
     async function loadServices() {
       try {
-        const res = await fetch('api/bookings_api.php?action=services');
+        const res = await fetch('../api/bookings_api.php?action=services');
         const data = await res.json();
         if (!data.success || !data.services.length) {
           document.getElementById('svcGrid').innerHTML =

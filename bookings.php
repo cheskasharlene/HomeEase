@@ -5,10 +5,10 @@ if (empty($_SESSION['user_id'])) {
   exit;
 }
 
-$target = 'booking_history.php';
+$target = 'clients/booking_history.php';
 $wantsNew = isset($_GET['newbooking']) || isset($_GET['svc']);
 if ($wantsNew) {
-  $target = 'booking_form.php';
+  $target = 'clients/booking_form.php';
 }
 
 $query = $_SERVER['QUERY_STRING'] ?? '';

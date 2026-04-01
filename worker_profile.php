@@ -123,7 +123,7 @@ if (!$worker_id) {
             
             html += `
             <div class="wp-book-footer">
-                <button class="wp-book-btn" ${!isAvailable ? 'disabled' : ''} onclick="goPage('booking_form.php?svc=${encodeURIComponent(p.specialty)}&newbooking=1')">
+                <button class="wp-book-btn" ${!isAvailable ? 'disabled' : ''} onclick="goPage('clients/booking_form.php?svc=${encodeURIComponent(p.specialty)}&newbooking=1')">
                     <i class="bi bi-calendar-check"></i> ${isAvailable ? 'Book ' + p.name : 'Currently Unavailable'}
                 </button>
             </div>

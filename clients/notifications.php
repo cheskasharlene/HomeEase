@@ -6,7 +6,7 @@ if (empty($_SESSION['user_id'])) {
   exit;
 }
 
-require_once 'api/db.php';
+require_once '../api/db.php';
 $uid = $_SESSION['user_id'];
 $stmt = $conn->prepare(
   "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"
@@ -54,8 +54,8 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="assets/css/main.css" rel="stylesheet">
-  <link href="assets/css/notifications.css" rel="stylesheet">
+  <link href="../assets/css/main.css" rel="stylesheet">
+  <link href="../assets/css/notifications.css" rel="stylesheet">
 </head>
 
 <body>
@@ -92,7 +92,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
     </div>
   </div>
 
-  <script src="assets/js/app.js"></script>
+  <script src="../assets/js/app.js"></script>
   <script>initTheme();</script>
   <script>
     window.HE = window.HE || {};
@@ -100,7 +100,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
-        <div class="ni" onclick="goPage('home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
+        <div class="ni" onclick="goPage('../home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('service_selection.php')" style="cursor:pointer;"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
         <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>

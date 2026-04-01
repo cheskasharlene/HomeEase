@@ -18,9 +18,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/main.css">
-  <link rel="stylesheet" href="assets/css/bookings.css">
-  <link rel="stylesheet" href="assets/css/booking_history.css">
+  <link rel="stylesheet" href="../assets/css/main.css">
+  <link rel="stylesheet" href="../assets/css/bookings.css">
+  <link rel="stylesheet" href="../assets/css/booking_history.css">
 </head>
 
 <body>
@@ -33,7 +33,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="hdr-sub">Hi, <?= $userName ?> 👋</div>
           <div class="hdr-title">Booking History</div>
         </div>
-        <a href="home.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="../home.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 
@@ -58,7 +58,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
 
     <div class="bnav">
-      <div class="ni" onclick="goPage('home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
+      <div class="ni" onclick="goPage('../home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
       <div class="ni on" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
       <div class="ni" onclick="goPage('service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
       <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
@@ -91,7 +91,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
   </div>
 
-  <script src="assets/js/app.js"></script>
+  <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
 

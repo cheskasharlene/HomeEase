@@ -153,7 +153,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     Object.entries(SVCS).forEach(([name, data]) => {
       const theme = svcThemeMap[name] || { icon: 'bi-tools', css: '', price: data.hr };
       svcGrid.innerHTML += `
-        <div class="svc-card" data-svc="${data.key}" onclick="goPage('booking_form.php?svc=${encodeURIComponent(name)}&newbooking=1')">
+        <div class="svc-card" data-svc="${data.key}" onclick="goPage('clients/booking_form.php?svc=${encodeURIComponent(name)}&newbooking=1')">
           <div class="svc-ic ${theme.css}"><i class="bi ${theme.icon}"></i></div>
           <div class="svc-nm">${name}</div>
           <div class="svc-price">from ₱${theme.price.toLocaleString()}/hr</div>
@@ -172,7 +172,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     const popRow = document.getElementById('popRow');
     popData.forEach(p => {
       popRow.innerHTML += `
-        <div class="pop-card" onclick="goPage('booking_form.php?svc=${encodeURIComponent(p.svc)}&newbooking=1')">
+        <div class="pop-card" onclick="goPage('clients/booking_form.php?svc=${encodeURIComponent(p.svc)}&newbooking=1')">
           <img class="pop-img" src="${p.img}" alt="${p.title}">
           <div class="pop-info">
             <div class="pop-nm">${p.title}</div>
@@ -220,10 +220,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
-        <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-        <div class="ni" onclick="goPage('service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
-        <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
+        <div class="ni" onclick="goPage('clients/booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
+        <div class="ni" onclick="goPage('clients/service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+        <div class="ni" onclick="goPage('clients/notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
+        <div class="ni" onclick="goPage('clients/profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
   </script>
 </body>

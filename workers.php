@@ -204,7 +204,7 @@ if (empty($_SESSION['user_id'])) {
 
     function bookWorker(id, role) {
       if (!role) return;
-      goPage('booking_form.php?newbooking=1&svc=' + encodeURIComponent(role));
+      goPage('clients/booking_form.php?newbooking=1&svc=' + encodeURIComponent(role));
     }
 
     function onSearch() {
