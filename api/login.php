@@ -42,7 +42,7 @@ if ($user) {
             $_SESSION['admin_id']   = $user['id'];
             $_SESSION['admin_name'] = $user['name'];
             respond(true, 'Login successful!', [
-                'redirect' => 'admindashboard.php',
+                'redirect' => 'admin/admindashboard.php',
                 'role'     => 'admin',
                 'user'     => ['id'=>$user['id'],'name'=>$user['name'],'email'=>$user['email'],'role'=>'admin']
             ]);

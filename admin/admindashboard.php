@@ -19,8 +19,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
-  <link href="assets/css/admindashboard.css?v=<?= time() ?>" rel="stylesheet">
+  <link href="../assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
+  <link href="../assets/css/admindashboard.css?v=<?= time() ?>" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
     /* ── ADMIN DASHBOARD CRITICAL INLINE CSS ── */
@@ -1089,7 +1089,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     <script>
 
       const API = (section, action = 'list', extra = '') =>
-        `api/admin_api.php?section=${section}&action=${action}${extra}`;
+        `../api/admin_api.php?section=${section}&action=${action}${extra}`;
 
       async function api(section, action = 'list', body = null, extra = '') {
         const url = API(section, action, extra);
@@ -1868,7 +1868,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       async function confirmLogout() {
         closeLogoutConfirm();
-        window.location.href = 'logout.php';
+        window.location.href = '../logout.php';
       }
 
 
@@ -2054,7 +2054,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       async function loadAdminReviews() {
         try {
-          const res = await fetch('api/admin_api.php?section=reviews&action=list');
+          const res = await fetch('../api/admin_api.php?section=reviews&action=list');
           const data = await res.json();
           if (!data.success) {
             document.getElementById('reviewSheetBody').innerHTML = `<div class="empty-state"><p>${data.message}</p></div>`;
@@ -2155,7 +2155,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const fd = new FormData();
         fd.append('section', 'reviews'); fd.append('action', 'delete'); fd.append('id', id);
         try {
-          const res = await fetch('api/admin_api.php', { method: 'POST', body: fd });
+          const res = await fetch('../api/admin_api.php', { method: 'POST', body: fd });
           const data = await res.json();
           if (data.success) {
             toast('Review deleted successfully', 's');

@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE)
   session_start();
 if (!empty($_SESSION['user_id'])) {
-  $dest = $_SESSION['user_role'] === 'admin' ? 'admindashboard.php' : 'home.php';
+  $dest = $_SESSION['user_role'] === 'admin' ? 'admin/admindashboard.php' : 'home.php';
   header("Location: $dest");
   exit;
 }
@@ -399,6 +399,41 @@ if (!empty($_SESSION['provider_id'])) {
     function goForgot() { window.location.href = 'forgot_password.php'; }
     function socialLogin(p) { window.location.href = 'api/oauth.php?provider=' + p; }
 
+    function sanitizeServerMessage(msg) {
+      if (!msg || typeof msg !== 'string') return '';
+      const cleaned = msg.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!cleaned) return '';
+      const lower = cleaned.toLowerCase();
+      if (lower.includes('fatal error') || lower.includes('uncaught') || lower.includes('stack trace') || lower.includes('warning:')) {
+        return 'The server encountered an internal error. Please try again in a moment.';
+      }
+      return cleaned;
+    }
+
+    async function parseApiResponse(res) {
+      const text = await res.text();
+      if (!text) {
+        return { success: false, message: 'The server returned an empty response.' };
+      }
+
+      try {
+        const data = JSON.parse(text);
+        return {
+          success: !!data.success,
+          message: sanitizeServerMessage(data.message) || (res.ok ? '' : 'Request failed.'),
+          redirect: data.redirect,
+          data
+        };
+      } catch (err) {
+        return {
+          success: false,
+          message: res.ok
+            ? 'The server returned an unexpected response.'
+            : 'The server could not process this request right now.'
+        };
+      }
+    }
+
   
     function doLogin() {
       clearAlert('loginErr'); clearAlert('loginOk');
@@ -411,17 +446,27 @@ if (!empty($_SESSION['provider_id'])) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pwd })
       })
-        .then(r => r.json())
-        .then(d => {
+        .then(async (r) => {
+          const result = await parseApiResponse(r);
+          return { result, status: r.status };
+        })
+        .then(({ result, status }) => {
           setLoading('btnLogin', false);
-          if (d.success) {
+          if (result.success) {
             showAlert('loginOk', 'loginOkTxt', 'Login successful! Redirecting…', 'success');
-            setTimeout(() => { window.location.href = d.redirect || 'home.php'; }, 700);
+            setTimeout(() => { window.location.href = result.redirect || 'home.php'; }, 700);
           } else {
-            showAlert('loginErr', 'loginErrTxt', d.message || 'Invalid email or password.', 'error');
+            const msg = result.message || (status >= 500 ? 'Server error. Please try again shortly.' : 'Invalid email or password.');
+            showAlert('loginErr', 'loginErrTxt', msg, 'error');
           }
         })
-        .catch(() => { setLoading('btnLogin', false); showAlert('loginErr', 'loginErrTxt', 'Network error. Please try again.', 'error'); });
+        .catch((err) => {
+          setLoading('btnLogin', false);
+          const msg = err && err.message
+            ? 'Could not reach the login service. ' + err.message
+            : 'Could not reach the login service. Please try again.';
+          showAlert('loginErr', 'loginErrTxt', msg, 'error');
+        });
     }
 
 
@@ -448,17 +493,27 @@ if (!empty($_SESSION['provider_id'])) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ first, last, email, phone, address, specialty, password: pwd, account_type: accountType })
       })
-        .then(r => r.json())
-        .then(d => {
+        .then(async (r) => {
+          const result = await parseApiResponse(r);
+          return { result, status: r.status };
+        })
+        .then(({ result, status }) => {
           setLoading('btnReg', false);
-          if (d.success) {
+          if (result.success) {
             showAlert('regOk', 'regOkTxt', 'Account created! Redirecting…', 'success');
-            setTimeout(() => { window.location.href = d.redirect || 'home.php'; }, 900);
+            setTimeout(() => { window.location.href = result.redirect || 'home.php'; }, 900);
           } else {
-            showAlert('regErr', 'regErrTxt', d.message || 'Registration failed.', 'error');
+            const msg = result.message || (status >= 500 ? 'Server error. Please try again shortly.' : 'Registration failed.');
+            showAlert('regErr', 'regErrTxt', msg, 'error');
           }
         })
-        .catch(() => { setLoading('btnReg', false); showAlert('regErr', 'regErrTxt', 'Network error. Please try again.', 'error'); });
+        .catch((err) => {
+          setLoading('btnReg', false);
+          const msg = err && err.message
+            ? 'Could not reach the registration service. ' + err.message
+            : 'Could not reach the registration service. Please try again.';
+          showAlert('regErr', 'regErrTxt', msg, 'error');
+        });
     }
 
     document.addEventListener('keydown', e => {

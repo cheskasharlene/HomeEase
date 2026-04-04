@@ -63,6 +63,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                 <div class="ph-badge"><i class="bi bi-tools"
                     style="font-size:9px;margin-right:4px;"></i><?= htmlspecialchars($_SESSION['provider_specialty'] ?? 'Service Provider') ?>
                 </div>
+                <div class="verified-pill" id="verifiedPill" style="display:none;"><i class="bi bi-patch-check-fill"></i> Verified Provider</div>
               </div>
             </div>
             <div class="ph-right">
@@ -81,6 +82,72 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             <div class="avail-status" id="availLabel">Offline</div>
           </div>
         </div>
+
+        <div class="verify-flow" id="verifyFlow">
+          <section class="verify-panel not-verified" id="panelNotVerified">
+            <div class="verify-card">
+              <div class="verify-card-icon"><i class="bi bi-shield-lock-fill"></i></div>
+              <h2>Become a Verified Provider</h2>
+              <p>Submit your requirements to start receiving bookings.</p>
+            </div>
+
+            <div class="verify-card">
+              <div class="verify-subttl">Requirements</div>
+              <ul class="verify-checklist">
+                <li><i class="bi bi-check-circle-fill"></i> Valid ID</li>
+                <li><i class="bi bi-check-circle-fill"></i> Proof of Address</li>
+                <li><i class="bi bi-check-circle-fill"></i> NBI/Police Clearance</li>
+                <li><i class="bi bi-check-circle-fill"></i> Certifications (if applicable)</li>
+              </ul>
+            </div>
+
+            <div class="verify-card">
+              <div class="verify-subttl">Upload Documents</div>
+              <div class="upload-grid">
+                <label class="upload-slot" for="uploadIdDoc">
+                  <input type="file" id="uploadIdDoc" />
+                  <i class="bi bi-card-image"></i>
+                  <span>Upload ID</span>
+                  <small>Tap to upload</small>
+                </label>
+                <label class="upload-slot" for="uploadAddressDoc">
+                  <input type="file" id="uploadAddressDoc" />
+                  <i class="bi bi-house-check-fill"></i>
+                  <span>Upload Proof of Address</span>
+                  <small>Tap to upload</small>
+                </label>
+                <label class="upload-slot" for="uploadClearanceDoc">
+                  <input type="file" id="uploadClearanceDoc" />
+                  <i class="bi bi-file-earmark-check-fill"></i>
+                  <span>Upload Clearance</span>
+                  <small>Tap to upload</small>
+                </label>
+              </div>
+              <button class="verify-primary-btn" onclick="setProviderUiState('pending')">Submit Requirements</button>
+            </div>
+          </section>
+
+          <section class="verify-panel pending" id="panelPending" style="display:none;">
+            <div class="verify-card status-card">
+              <div class="status-icon pending"><i class="bi bi-hourglass-split"></i></div>
+              <h2>Verification in Progress</h2>
+              <p>Your documents are under review. Please wait for approval.</p>
+              <div class="pending-actions">
+                <button class="verify-secondary-btn" onclick="setProviderUiState('not-verified')">Edit Submission</button>
+                <button class="verify-primary-btn" onclick="setProviderUiState('verified')">Simulate Approval</button>
+              </div>
+            </div>
+
+            <div class="verify-card disabled-modules">
+              <div class="verify-subttl">Modules Locked Until Verification</div>
+              <div class="disabled-item"><i class="bi bi-lock-fill"></i> Booking Requests</div>
+              <div class="disabled-item"><i class="bi bi-lock-fill"></i> Earnings</div>
+              <div class="disabled-item"><i class="bi bi-lock-fill"></i> Schedule</div>
+            </div>
+          </section>
+        </div>
+
+        <div id="verifiedDashboard" style="display:none;">
 
      
         <div class="p-stats-row">
@@ -204,6 +271,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <?php endif; ?>
         </div>
 
+        </div>
+
       </div>
 
       <div class="bnav">
@@ -228,6 +297,31 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     const toggle = document.getElementById('availToggle');
     const lbl = document.getElementById('availLabel');
     toggle.addEventListener('change', function () { lbl.textContent = this.checked ? 'Online' : 'Offline'; });
+
+    function setProviderUiState(state) {
+      const notVerified = document.getElementById('panelNotVerified');
+      const pending = document.getElementById('panelPending');
+      const verifiedDashboard = document.getElementById('verifiedDashboard');
+      const availWrap = document.querySelector('.avail-wrap');
+      const verifiedPill = document.getElementById('verifiedPill');
+
+      document.body.classList.remove('not-verified', 'pending', 'verified');
+      document.body.classList.add(state);
+
+      notVerified.style.display = state === 'not-verified' ? 'block' : 'none';
+      pending.style.display = state === 'pending' ? 'block' : 'none';
+      verifiedDashboard.style.display = state === 'verified' ? 'block' : 'none';
+      availWrap.style.display = state === 'verified' ? 'flex' : 'none';
+      verifiedPill.style.display = state === 'verified' ? 'inline-flex' : 'none';
+
+      if (state === 'verified') {
+        toggle.checked = true;
+        lbl.textContent = 'Online';
+      } else {
+        toggle.checked = false;
+        lbl.textContent = 'Offline';
+      }
+    }
 
     function statusClass(statusRaw) {
       const s = String(statusRaw || '').toLowerCase();
@@ -294,6 +388,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         .catch(() => renderTodaySchedule([]));
     }
 
+    setProviderUiState('not-verified');
     loadTodaySchedule();
     window.addEventListener('focus', loadTodaySchedule);
     setInterval(loadTodaySchedule, 30000);

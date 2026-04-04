@@ -66,7 +66,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                   style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#f59e0b;border-radius:50%;">
                 </div>
               </div>
-              <div class="h-bell" onclick="goPage('notifications.php')" style="position:relative;">
+              <div class="h-bell" onclick="goPage('clients/notifications.php')" style="position:relative;">
                 <i class="bi bi-bell-fill"></i>
                 <div class="h-bell-dot" id="bellDot" style="display:none;"></div>
               </div>

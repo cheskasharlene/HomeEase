@@ -24,6 +24,141 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
   <link href="../assets/css/main.css" rel="stylesheet">
   <link href="../assets/css/profile.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/provider_profile.css">
+  <style>
+    .upload-modal {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(18, 14, 8, 0.56);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 9999;
+    }
+    .upload-modal.on {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .upload-modal-card {
+      width: min(100%, 420px);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 248, 240, 0.98));
+      border: 1.5px solid rgba(245, 166, 35, 0.18);
+      box-shadow: 0 30px 70px rgba(76, 40, 0, 0.28);
+      overflow: hidden;
+      transform: translateY(10px) scale(0.98);
+      transition: transform 0.2s ease;
+    }
+    .upload-modal.on .upload-modal-card {
+      transform: translateY(0) scale(1);
+    }
+    .upload-modal-head {
+      padding: 18px 18px 16px;
+      color: #fff;
+      background: linear-gradient(135deg, #C86500 0%, #E8820C 28%, #F5A623 62%, #FFB347 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .upload-modal-head::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.16) 1px, transparent 0);
+      background-size: 18px 18px;
+      opacity: 0.75;
+      pointer-events: none;
+    }
+    .upload-modal-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1.5px solid rgba(255, 255, 255, 0.28);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .upload-modal-icon i { font-size: 22px; }
+    .upload-modal-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      position: relative;
+      z-index: 1;
+    }
+    .upload-modal-body {
+      padding: 16px 18px 18px;
+    }
+    .upload-modal-message {
+      font-size: 13px;
+      color: var(--txt-primary);
+      line-height: 1.6;
+    }
+    .upload-modal-note {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--bg-body);
+      color: var(--txt-muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .upload-modal-actions {
+      padding: 0 18px 18px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .upload-modal-btn {
+      min-width: 110px;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, var(--g-start), var(--g-mid));
+      box-shadow: 0 8px 18px rgba(232, 130, 12, 0.22);
+      cursor: pointer;
+    }
+    .upload-modal.success .upload-modal-head {
+      background: linear-gradient(135deg, #149A6F 0%, #10b981 45%, #34d399 100%);
+    }
+    .upload-modal.error .upload-modal-head {
+      background: linear-gradient(135deg, #B91C1C 0%, #DC2626 50%, #F97316 100%);
+    }
+    .upload-modal.success .upload-modal-btn {
+      background: linear-gradient(135deg, #149A6F, #10b981);
+      box-shadow: 0 8px 18px rgba(16, 185, 129, 0.22);
+    }
+    .upload-modal.error .upload-modal-btn {
+      background: linear-gradient(135deg, #B91C1C, #DC2626);
+      box-shadow: 0 8px 18px rgba(220, 38, 38, 0.22);
+    }
+    .upload-modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 34px;
+      height: 34px;
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
 </head>
 
 <body>
@@ -364,11 +499,98 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
         </div>
       </div>
     </div>
+
+    <div class="upload-modal" id="uploadModal" role="dialog" aria-modal="true" aria-hidden="true">
+      <div class="upload-modal-card">
+        <div class="upload-modal-head">
+          <button type="button" class="upload-modal-close" id="uploadModalClose" aria-label="Close dialog">
+            <i class="bi bi-x-lg"></i>
+          </button>
+          <div class="upload-modal-icon" id="uploadModalIcon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <div class="upload-modal-title" id="uploadModalTitle">Upload Notice</div>
+        </div>
+        <div class="upload-modal-body">
+          <div class="upload-modal-message" id="uploadModalMessage"></div>
+          <div class="upload-modal-note" id="uploadModalNote" style="display:none;"></div>
+        </div>
+        <div class="upload-modal-actions">
+          <button type="button" class="upload-modal-btn" id="uploadModalBtn">OK</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
+    const uploadModal = document.getElementById('uploadModal');
+    const uploadModalTitle = document.getElementById('uploadModalTitle');
+    const uploadModalMessage = document.getElementById('uploadModalMessage');
+    const uploadModalNote = document.getElementById('uploadModalNote');
+    const uploadModalIcon = document.getElementById('uploadModalIcon');
+    const uploadModalBtn = document.getElementById('uploadModalBtn');
+    const uploadModalClose = document.getElementById('uploadModalClose');
+    let uploadModalTimer = null;
+
+    function hideUploadModal() {
+      uploadModal.classList.remove('on', 'success', 'error');
+      uploadModal.setAttribute('aria-hidden', 'true');
+      if (uploadModalTimer) {
+        clearTimeout(uploadModalTimer);
+        uploadModalTimer = null;
+      }
+    }
+
+    function showUploadModal({ title = 'Upload Notice', message = '', note = '', type = 'error', icon = 'bi-exclamation-triangle-fill', autoCloseMs = 0, onClose = null }) {
+      uploadModalTitle.textContent = title;
+      uploadModalMessage.textContent = message;
+      uploadModalNote.textContent = note;
+      uploadModalNote.style.display = note ? 'block' : 'none';
+      uploadModalIcon.innerHTML = `<i class="bi ${icon}"></i>`;
+      uploadModal.classList.remove('success', 'error');
+      uploadModal.classList.add(type, 'on');
+      uploadModal.setAttribute('aria-hidden', 'false');
+
+      if (uploadModalTimer) {
+        clearTimeout(uploadModalTimer);
+        uploadModalTimer = null;
+      }
+
+      const closeHandler = () => {
+        hideUploadModal();
+        if (typeof onClose === 'function') onClose();
+      };
+
+      uploadModalBtn.onclick = closeHandler;
+      uploadModalClose.onclick = closeHandler;
+      uploadModal.onclick = (e) => {
+        if (e.target === uploadModal) closeHandler();
+      };
+
+      if (autoCloseMs > 0) {
+        uploadModalTimer = setTimeout(closeHandler, autoCloseMs);
+      }
+    }
+
+    async function parseUploadResponse(response) {
+      const rawText = await response.text();
+
+      if (!rawText) {
+        return { success: false, message: 'The upload service returned no response.' };
+      }
+
+      try {
+        return JSON.parse(rawText);
+      } catch (err) {
+        return {
+          success: false,
+          message: 'The upload service returned an unexpected response.'
+        };
+      }
+    }
+
     function openSettingsScreen() { document.getElementById('settingsScreen').classList.add('on'); syncDark(); }
     function closeSettingsScreen() { document.getElementById('settingsScreen').classList.remove('on'); }
     function syncDark() {
@@ -395,16 +617,73 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
               method: 'POST',
               body: formData
           });
-          const data = await res.json();
+          const data = await parseUploadResponse(res);
+
           if (data.success) {
-              alert('Documents uploaded successfully! Waiting for admin approval.');
+              showUploadModal({
+                title: 'Documents Submitted',
+                message: 'Documents uploaded successfully! Waiting for admin approval.',
+                note: 'Your verification request is now in review. You can continue using the app while admin checks your documents.',
+                type: 'success',
+                icon: 'bi-check-circle-fill',
+                autoCloseMs: 1400
+              });
               loadVerificationStatus();
           } else {
-              alert('Upload failed: ' + data.message);
+              const serverMessage = sanitizeUploadMessage(data.message) || 'Upload failed.';
+              const responseNote = friendlyUploadNote(serverMessage, res.status);
+              showUploadModal({
+                title: 'Upload Failed',
+                message: serverMessage,
+                note: responseNote,
+                type: 'error',
+                icon: 'bi-x-circle-fill'
+              });
           }
       } catch (err) {
-          alert('Error uploading documents.');
+          showUploadModal({
+            title: 'Request Failed',
+            message: 'We could not complete the upload request.',
+            note: 'Please try again in a moment. If the problem continues, the verification service may still be setting up.',
+            type: 'error',
+            icon: 'bi-x-circle-fill'
+          });
       }
+    }
+
+    function sanitizeUploadMessage(message) {
+      if (!message || typeof message !== 'string') return '';
+      const cleaned = message
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      if (!cleaned) return '';
+
+      const lower = cleaned.toLowerCase();
+      if (lower.includes('fatal error') || lower.includes('uncaught exception') || lower.includes('stack trace') || lower.includes('sqlstate')) {
+        return 'The verification service is not ready yet. Please try again after the database setup is completed.';
+      }
+
+      return cleaned;
+    }
+
+    function friendlyUploadNote(message, statusCode) {
+      const lower = (message || '').toLowerCase();
+
+      if (statusCode === 500 || lower.includes('not ready yet') || lower.includes('unexpected response')) {
+        return 'The verification service is still initializing or missing a database table. Please try again after the backend setup is completed.';
+      }
+
+      if (lower.includes('invalid file type')) {
+        return 'Allowed file types are JPG, JPEG, PNG, and PDF.';
+      }
+
+      if (lower.includes('too large')) {
+        return 'Each file must be 5MB or smaller.';
+      }
+
+      return 'Please make sure the files are valid, complete, and within the allowed file size and type.';
     }
 
     async function loadVerificationStatus() {
@@ -423,6 +702,11 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
     }
 
     loadVerificationStatus();
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && uploadModal.classList.contains('on')) {
+        hideUploadModal();
+      }
+    });
   </script>
 </body>
 

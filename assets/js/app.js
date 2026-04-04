@@ -231,7 +231,7 @@ function navTo(page, el) {
   const pages = {
     home: "home.php",
     bookings: "bookings.php",
-    notifications: "notifications.php",
+    notifications: "clients/notifications.php",
     profile: "profile.php",
   };
   if (pages[page]) goPage(pages[page]);
