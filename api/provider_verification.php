@@ -10,6 +10,23 @@ if (empty($_SESSION['provider_id'])) {
 $provider_id = (int)$_SESSION['provider_id'];
 $action = $_POST['action'] ?? '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'simulate_approval_ready') {
+    $_SESSION['provider_approval_ready'] = 1;
+    unset($_SESSION['provider_ui_verified']);
+    respond(true, 'Approval notification is ready.');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'activate_verified_ui') {
+    $_SESSION['provider_ui_verified'] = 1;
+    unset($_SESSION['provider_approval_ready']);
+    respond(true, 'Provider unlocked in UI simulation.');
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reset_ui_verification') {
+    unset($_SESSION['provider_ui_verified'], $_SESSION['provider_approval_ready']);
+    respond(true, 'UI verification simulation reset.');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     $uploadDir = __DIR__ . '/../assets/uploads/documents/';
     if (!is_dir($uploadDir)) {
@@ -21,6 +38,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     $params = [];
     
     $filesToUpload = ['id_picture', 'selfie_verification', 'proof_of_address', 'certificates', 'proof_of_experience'];
+
+    $columns = [];
+    $colRes = $conn->query("SHOW COLUMNS FROM service_providers");
+    if ($colRes) {
+        while ($col = $colRes->fetch_assoc()) {
+            $columns[] = (string) ($col['Field'] ?? '');
+        }
+    }
+
+    $hasCol = static function (string $name) use ($columns): bool {
+        return in_array($name, $columns, true);
+    };
     
     foreach ($filesToUpload as $field) {
         if (isset($_FILES[$field]) && $_FILES[$field]['error'] === UPLOAD_ERR_OK) {
@@ -39,7 +68,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     }
     
     if (count($updates) > 0) {
-        $sql = "UPDATE service_providers SET " . implode(", ", $updates) . ", status = IF(status='inactive', 'inactive', 'active') WHERE provider_id = ?";
+        if ($hasCol('verification_status')) {
+            $updates[] = "verification_status = 'pending_review'";
+        }
+        if ($hasCol('is_verified')) {
+            $updates[] = "is_verified = 0";
+        }
+
+        if ($hasCol('status')) {
+            $updates[] = "status = IF(status='inactive', 'inactive', 'active')";
+        }
+
+        $sql = "UPDATE service_providers SET " . implode(", ", $updates) . " WHERE provider_id = ?";
         $params[] = $provider_id;
         $types .= "i";
         
@@ -50,6 +90,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
         $stmt->close();
         
         if ($ok) {
+            unset($_SESSION['provider_ui_verified'], $_SESSION['provider_approval_ready']);
+
+            $selectedService = trim((string) ($_POST['selected_service'] ?? ''));
+            $profilePhone = trim((string) ($_POST['profile_phone'] ?? ''));
+            $profileAddress = trim((string) ($_POST['profile_address'] ?? ''));
+
+            if ($selectedService !== '') {
+                $_SESSION['provider_specialty'] = $selectedService;
+            }
+            if ($profilePhone !== '') {
+                $_SESSION['provider_phone'] = $profilePhone;
+            }
+            if ($profileAddress !== '') {
+                $_SESSION['provider_address'] = $profileAddress;
+            }
+
             // ── Notify admin about new document submission ──
             $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -88,13 +144,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'status') {
-    $stmt = $conn->prepare("SELECT is_verified, id_picture, selfie_verification, proof_of_address, certificates, proof_of_experience FROM service_providers WHERE provider_id = ?");
+    $columns = [];
+    $colRes = $conn->query("SHOW COLUMNS FROM service_providers");
+    if ($colRes) {
+        while ($col = $colRes->fetch_assoc()) {
+            $columns[] = (string) ($col['Field'] ?? '');
+        }
+    }
+
+    $selectFields = [];
+    foreach (['verification_status', 'is_verified', 'id_picture', 'selfie_verification', 'proof_of_address', 'certificates', 'proof_of_experience'] as $field) {
+        if (in_array($field, $columns, true)) {
+            $selectFields[] = $field;
+        }
+    }
+
+    if (!$selectFields) {
+        respond(true, '', ['verification' => null]);
+    }
+
+    $stmt = $conn->prepare("SELECT " . implode(', ', $selectFields) . " FROM service_providers WHERE provider_id = ?");
     $stmt->bind_param("i", $provider_id);
     $stmt->execute();
     $res = $stmt->get_result()->fetch_assoc();
     $stmt->close();
     
-    respond(true, '', ['verification' => $res]);
+    respond(true, '', [
+        'verification' => $res,
+        'ui_approval_ready' => !empty($_SESSION['provider_approval_ready']),
+        'ui_verified' => !empty($_SESSION['provider_ui_verified']),
+    ]);
 }
 
 respond(false, 'Unknown request.');

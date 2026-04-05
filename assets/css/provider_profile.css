@@ -145,6 +145,74 @@
   color: #fff;
 }
 
+.p-status-row {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 1;
+}
+
+.p-status-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.p-status-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  display: inline-block;
+}
+
+.p-status-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.p-status-slider {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  transition: background .2s ease;
+}
+
+.p-status-slider::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform .22s ease;
+}
+
+.p-status-switch input:checked + .p-status-slider {
+  background: rgba(16, 185, 129, 0.82);
+}
+
+.p-status-switch input:checked + .p-status-slider::after {
+  transform: translateX(19px);
+}
+
+.p-status-switch.disabled {
+  opacity: .55;
+  pointer-events: none;
+}
+
 /* Stats bar */
 .p-stats {
   display: flex;
@@ -157,6 +225,30 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
   border: 1.5px solid var(--border-col);
   overflow: hidden;
+  transition: opacity .22s ease, max-height .22s ease, margin .22s ease, transform .22s ease;
+  max-height: 140px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+body.not-verified .service-badge,
+body.pending .service-badge {
+  display: none;
+}
+
+body.not-verified .p-stats,
+body.pending .p-stats {
+  opacity: 0;
+  max-height: 0;
+  margin: 0 18px;
+  border-width: 0;
+  box-shadow: none;
+  transform: translateY(-8px);
+}
+
+body.not-verified .p-status-row,
+body.pending .p-status-row {
+  opacity: .78;
 }
 
 .p-stat {

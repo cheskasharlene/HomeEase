@@ -4,8 +4,10 @@ if (empty($_SESSION['provider_id'])) {
   header('Location: provider_index.php');
   exit;
 }
+require_once __DIR__ . '/provider_access.php';
 
 require_once __DIR__ . '/../api/db.php';
+enforceProviderSectionAccess('job_history', $conn);
 require_once __DIR__ . '/provider_dashboard_data.php';
 
 $providerId = (int) ($_SESSION['provider_id'] ?? 0);

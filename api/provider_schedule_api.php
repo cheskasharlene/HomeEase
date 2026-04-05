@@ -8,6 +8,9 @@ if (empty($_SESSION['provider_id'])) {
 }
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/../providers/provider_access.php';
+
+providerRequireVerifiedApi($conn);
 
 $providerId = (int) ($_SESSION['provider_id'] ?? 0);
 $providerSpecialty = trim((string) ($_SESSION['provider_specialty'] ?? ''));

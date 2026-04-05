@@ -4,6 +4,9 @@ if (empty($_SESSION['provider_id'])) {
   header('Location: provider_index.php');
   exit;
 }
+require_once __DIR__ . '/../api/db.php';
+require_once __DIR__ . '/provider_access.php';
+enforceProviderSectionAccess('schedule', $conn);
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider');
 ?>
 <!DOCTYPE html>
