@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     $types = "";
     $params = [];
     
-    $filesToUpload = ['id_picture', 'selfie_verification', 'proof_of_address', 'certificates', 'proof_of_experience'];
+    $filesToUpload = ['id_picture', 'selfie_verification', 'proof_of_address', 'certificates', 'proof_of_experience']; // No tools/skills fields
 
     $columns = [];
     $colRes = $conn->query("SHOW COLUMNS FROM service_providers");
@@ -92,6 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
         if ($ok) {
             unset($_SESSION['provider_ui_verified'], $_SESSION['provider_approval_ready']);
 
+
+            // Only update service, phone, address. No tools/skills fields.
             $selectedService = trim((string) ($_POST['selected_service'] ?? ''));
             $profilePhone = trim((string) ($_POST['profile_phone'] ?? ''));
             $profileAddress = trim((string) ($_POST['profile_address'] ?? ''));

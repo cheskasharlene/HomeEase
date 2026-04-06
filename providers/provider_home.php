@@ -101,18 +101,10 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             </div>
 
             <div class="verify-card">
-              <div class="verify-subttl">Service Selection</div>
+              <div class="verify-subttl">Service Type</div>
               <div class="section-divider"></div>
-              <select id="selectedService" class="service-select">
-                <option value="">Select your service</option>
-                <option value="Cleaner">Cleaner</option>
-                <option value="Helper">Helper</option>
-                <option value="Laundry Worker">Laundry Worker</option>
-                <option value="Plumber">Plumber</option>
-                <option value="Carpenter">Carpenter</option>
-                <option value="Appliance Technician">Appliance Technician</option>
-              </select>
-              <div class="service-grid" id="serviceGrid"></div>
+              <input type="text" class="vinput" value="<?= $providerSpecialty ?>" readonly style="background:#f7f7f7;cursor:not-allowed;">
+              <input type="hidden" name="selected_service" id="selectedService" value="<?= $providerSpecialty ?>">
             </div>
 
             <div class="verify-card">
@@ -150,6 +142,14 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                     <small id="fileNameUploadAddressDoc">Tap to upload</small>
                   </div>
                 </label>
+                <label class="upload-slot" for="uploadCertification">
+                  <input type="file" id="uploadCertification" accept="image/*,application/pdf" />
+                  <i class="bi bi-award-fill"></i>
+                  <div>
+                    <span id="serviceCertLabel">Barangay Clearance (optional)</span>
+                    <small id="fileNameUploadCertification">Tap to upload</small>
+                  </div>
+                </label>
               </div>
               <div class="profile-grid">
                 <div>
@@ -167,36 +167,26 @@ $reviewPreview = $dashboardReviews[0] ?? null;
               </div>
             </div>
 
-            <div class="verify-card" id="serviceSpecificSection" style="display:none;">
+            <div class="verify-card" id="serviceSpecificSection">
               <div class="verify-subttl">Service-Specific Requirements</div>
               <div class="section-divider"></div>
 
-              <div class="mini-section-title">Portfolio / Proof</div>
+              <div class="mini-section-title">Tools & Kits</div>
               <div class="upload-grid">
                 <label class="upload-slot" for="uploadServiceProof">
                   <input type="file" id="uploadServiceProof" accept="image/*,application/pdf" />
                   <i class="bi bi-images"></i>
                   <div>
-                    <span id="serviceProofLabel">Service Work Proof</span>
+                    <span id="serviceProofLabel">Tools & Kits</span>
                     <small id="fileNameUploadServiceProof">Tap to upload</small>
                   </div>
                 </label>
-                <label class="upload-slot" for="uploadCertification">
-                  <input type="file" id="uploadCertification" accept="image/*,application/pdf" />
-                  <i class="bi bi-award-fill"></i>
-                  <div>
-                    <span id="serviceCertLabel">Certification / Clearance</span>
-                    <small id="fileNameUploadCertification">Tap to upload</small>
-                  </div>
-                </label>
+                <!-- Certification upload moved above under Proof of Address as Barangay Clearance (optional) -->
               </div>
 
-              <div class="mini-section-title">Tools / Skills</div>
-              <div id="serviceSpecificChecks" class="skill-checks"></div>
-
               <div class="mini-section-title">Experience</div>
-              <div id="serviceSpecificNotes" class="dynamic-placeholder"></div>
               <textarea id="experienceDescription" class="vtextarea" rows="4" placeholder="Describe your experience, work samples, and years in this service."></textarea>
+              <!-- Removed empty upload slot under Experience section -->
             </div>
 
             <div class="verify-card">
@@ -396,138 +386,16 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     const backendVerificationState = <?= json_encode($verificationState) ?>;
     const backendIsVerified = <?= json_encode($isVerified) ?>;
 
-    const SERVICE_CONFIG = {
-      'Cleaner': {
-        proofLabel: 'Photos of past cleaning work',
-        certLabel: 'Barangay Clearance (optional/recommended)',
-        groups: {
-          experience: ['Experience description'],
-          toolsSkills: ['Tools declaration', 'Service checklist']
-        },
-        checkboxes: ['Tools declaration completed', 'Service checklist prepared'],
-        note: 'Upload cleaning samples and provide your standard checklist.'
-      },
-      'Helper': {
-        proofLabel: 'Experience description / references',
-        certLabel: 'Barangay Clearance (important)',
-        groups: {
-          experience: ['Experience description', 'Reference (optional)'],
-          toolsSkills: ['Skills checklist: Cleaning, Cooking, Childcare (optional)']
-        },
-        checkboxes: ['Cleaning', 'Cooking', 'Childcare (optional)'],
-        note: 'Include your strongest household support experience.'
-      },
-      'Laundry Worker': {
-        proofLabel: 'Photos of laundry work',
-        certLabel: 'Optional supporting document',
-        groups: {
-          experience: ['Experience description'],
-          toolsSkills: ['Equipment checklist: Washing machine, Dryer, Plantsa', 'Services offered: Wash and Dry, Fold, Iron, Pickup/Delivery']
-        },
-        checkboxes: ['Washing machine', 'Dryer', 'Plantsa', 'Pickup/Delivery available'],
-        note: 'Show your workflow and list the laundry services you handle.'
-      },
-      'Plumber': {
-        proofLabel: 'Upload proof of work',
-        certLabel: 'Certification (optional)',
-        groups: {
-          experience: ['Experience description'],
-          toolsSkills: ['Services offered: Pipe repair, Leak fixing, Installation', 'Tools declaration']
-        },
-        checkboxes: ['Pipe repair', 'Leak fixing', 'Installation services'],
-        note: 'Share plumbing jobs you completed and tools used.'
-      },
-      'Carpenter': {
-        proofLabel: 'Portfolio upload',
-        certLabel: 'Certification (optional)',
-        groups: {
-          experience: ['Experience description'],
-          toolsSkills: ['Skills checklist', 'Tools declaration']
-        },
-        checkboxes: ['Furniture work', 'Repair work', 'Custom woodwork'],
-        note: 'Upload portfolio photos and mention carpentry specializations.'
-      },
-      'Appliance Technician': {
-        proofLabel: 'Upload proof (photos/videos)',
-        certLabel: 'Certification (recommended)',
-        groups: {
-          experience: ['Experience description'],
-          toolsSkills: ['Appliance checklist: Aircon, Ref, Washing Machine, TV', 'Tools declaration']
-        },
-        checkboxes: ['Aircon', 'Ref', 'Washing Machine', 'TV'],
-        note: 'Describe appliance models/services you can troubleshoot.'
-      }
-    };
+      // SERVICE_CONFIG and all tools/skills/checkboxes logic removed as not needed anymore
 
     const selectedServiceInput = document.getElementById('selectedService');
-    const serviceGrid = document.getElementById('serviceGrid');
     const serviceProofLabel = document.getElementById('serviceProofLabel');
     const serviceCertLabel = document.getElementById('serviceCertLabel');
     const dynamicServiceRequirements = document.getElementById('dynamicServiceRequirements');
     const serviceSpecificSection = document.getElementById('serviceSpecificSection');
-    const serviceSpecificChecks = document.getElementById('serviceSpecificChecks');
     const serviceSpecificNotes = document.getElementById('serviceSpecificNotes');
 
-    function renderServiceCards(activeService) {
-      const cards = Object.keys(SERVICE_CONFIG).map(service => {
-        const active = service === activeService ? ' active' : '';
-        return `<button class="service-card${active}" type="button" data-service="${service}">${service}</button>`;
-      }).join('');
-      serviceGrid.innerHTML = cards;
-    }
-
-    function renderDynamicRequirements(service) {
-      const cfg = SERVICE_CONFIG[service];
-      if (!cfg) {
-        serviceProofLabel.textContent = 'Service Work Proof';
-        serviceCertLabel.textContent = 'Certification / Clearance';
-        dynamicServiceRequirements.innerHTML = '<div class="dynamic-placeholder">Choose a service to load required tools and skills.</div>';
-        serviceSpecificSection.style.display = 'none';
-        serviceSpecificChecks.innerHTML = '';
-        serviceSpecificNotes.textContent = '';
-        return;
-      }
-
-      serviceSpecificSection.style.display = 'block';
-
-      serviceProofLabel.textContent = cfg.proofLabel;
-      serviceCertLabel.textContent = cfg.certLabel;
-      serviceSpecificNotes.textContent = cfg.note || 'Provide clear details for this service.';
-
-      const checks = (cfg.checkboxes || []).map((item, index) => {
-        const cid = `skill_${service.replace(/\s+/g, '_').toLowerCase()}_${index}`;
-        return `<label class="skill-item" for="${cid}"><input class="skill-checkbox" type="checkbox" id="${cid}" value="${item}"><span>${item}</span></label>`;
-      }).join('');
-      serviceSpecificChecks.innerHTML = checks;
-
-      const makeGroup = (title, items) => {
-        const list = items.map(it => `<li><i class="bi bi-dot"></i>${it}</li>`).join('');
-        return `<div class="dyn-group"><h4>${title}</h4><ul>${list}</ul></div>`;
-      };
-
-      dynamicServiceRequirements.innerHTML = [
-        makeGroup('Experience', cfg.groups.experience || []),
-        makeGroup('Tools / Skills', cfg.groups.toolsSkills || [])
-      ].join('');
-    }
-
-    if (selectedServiceInput) {
-      renderServiceCards(selectedServiceInput.value || '');
-      renderDynamicRequirements(selectedServiceInput.value || '');
-
-      selectedServiceInput.addEventListener('change', function () {
-        renderServiceCards(this.value);
-        renderDynamicRequirements(this.value);
-      });
-
-      serviceGrid.addEventListener('click', function (event) {
-        const btn = event.target.closest('[data-service]');
-        if (!btn) return;
-        selectedServiceInput.value = btn.dataset.service || '';
-        renderServiceCards(selectedServiceInput.value);
-        renderDynamicRequirements(selectedServiceInput.value);
-      });
-    }
+    // Service selection and tools/skills logic removed
 
     function bindFileName(inputId, smallId) {
       const input = document.getElementById(inputId);
