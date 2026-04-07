@@ -915,7 +915,7 @@ if ($row) {
       }
 
       try {
-        const res = await fetch('api/profile_api.php', { method: 'POST', body: fd });
+        const res = await fetch('../api/profile_api.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {
           if (activeSection === 'profile') {

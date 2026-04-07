@@ -159,7 +159,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
       const form = new FormData();
       form.append('id', id);
-      fetch('api/notifications_api.php', { method: 'POST', body: form }).catch(() => { });
+      fetch('../api/notifications_api.php', { method: 'POST', body: form }).catch(() => { });
     }
 
     function markAllRead() {
@@ -168,7 +168,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
       const form = new FormData();
       form.append('mark_all', '1');
-      fetch('api/notifications_api.php', { method: 'POST', body: form }).catch(() => { });
+      fetch('../api/notifications_api.php', { method: 'POST', body: form }).catch(() => { });
     }
 
     renderNotifs();

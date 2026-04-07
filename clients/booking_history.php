@@ -118,7 +118,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     async function loadMyBookings() {
       const el = document.getElementById('myBookings');
       try {
-        const res = await fetch('api/bookings_api.php');
+        const res = await fetch('../api/bookings_api.php');
         const data = await res.json();
 
         allBookings = data.success && Array.isArray(data.bookings) ? data.bookings : [];
@@ -262,7 +262,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         fd.append('comment', comment);
 
         try {
-            const res = await fetch('api/reviews_api.php', { method: 'POST', body: fd });
+            const res = await fetch('../api/reviews_api.php', { method: 'POST', body: fd });
             const data = await res.json();
             if (data.success) {
                 toast(data.message, 's');
