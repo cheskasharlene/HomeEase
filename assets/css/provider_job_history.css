@@ -278,3 +278,16 @@ body {
     .h-pb {
       height: 90px;
     }
+    /* DARK MODE */
+    body.dark { background: #0f0f14; }
+    body.dark .screen { background: #14141c; }
+    body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }
+    body.dark .ni { color: #5a5a72; }
+    body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
+    body.dark .job-card { background: #1e1e2c; border-color: #2a2a3a; }
+    body.dark .empty { background: #1e1e2c; border-color: #2a2a3a; color: #6b6b88; }
+    body.dark .job-service { color: #e8e8f0; }
+    body.dark .job-client, body.dark .job-meta, body.dark .job-review-text, body.dark .job-no-review { color: #6b6b88; }
+    body.dark .job-review { background: #1a1a26; border-color: #2e2e42; }
+    body.dark .filter-chip { background: #1e1e2c; border-color: #2a2a3a; color: #8E8E93; }
+

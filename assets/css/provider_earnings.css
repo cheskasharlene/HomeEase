@@ -251,3 +251,18 @@ body {
       font-weight: 700;
     }
 
+
+    /* DARK MODE */
+    body.dark { background: #0f0f14; }
+    body.dark .screen { background: #14141c; }
+    body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }
+    body.dark .ni { color: #5a5a72; }
+    body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
+    body.dark .sec-ttl { color: #e8e8f0; }
+    body.dark .earn-card { background: #1e1e2c; border-color: #2a2a3a; }
+    body.dark .earn-card-service { color: #e8e8f0; }
+    body.dark .earn-card-meta { color: #6b6b88; }
+    body.dark .earn-card-status.completed { background: #052e1c; color: #34d399; }
+    body.dark .earn-card-status.pending { background: #2d2306; color: #f59e0b; }
+    body.dark .empty-state, body.dark .empty-txt { color: #6b6b88; }
+

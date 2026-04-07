@@ -493,3 +493,26 @@ body { background: #fff; }
       .week-grid { gap: 6px; }
       .day-cell { min-height: 62px; }
     }
+    /* DARK MODE */
+    body.dark { background: #0f0f14; }
+    body.dark .screen { background: #14141c; }
+    body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }
+    body.dark .ni { color: #5a5a72; }
+    body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
+    body.dark .cal-card, body.dark .book-card, body.dark .bk-card { background: #1e1e2c; border-color: #2a2a3a; }
+    body.dark .cal-bar { background: #181822; border-bottom-color: #2a2a3a; }
+    body.dark .cal-title, body.dark .book-service, body.dark .bk-title, body.dark .day-num, body.dark .week-day-num { color: #e8e8f0; }
+    body.dark .book-sub, body.dark .bk-desc, body.dark .wk-label, body.dark .bk-lbl { color: #6b6b88; }
+    body.dark .day-cell { background: #1e1e2c; border-color: #2a2a3a; }
+    body.dark .day-cell.empty { background: #181822; }
+    body.dark .day-cell.selected { background: #25200e; border-color: #F5A623; }
+    body.dark .week-day { background: #1e1e2c; border-color: #2a2a3a; }
+    body.dark .week-day.selected { background: #1e1a0a; border-color: #F5A623; }
+    body.dark .view-btn { background: #1e1e2c; border-color: #2a2a3a; color: #8E8E93; }
+    body.dark .f-input, body.dark .f-select, body.dark .bk-sel { background: #1a1a26; border-color: #2e2e42; color: #d4d4e8; }
+    body.dark .empty { background: #1e1e2c; border-color: #2a2a3a; color: #6b6b88; }
+    body.dark .book-status.pending { background: #2d2306; color: #f59e0b; }
+    body.dark .book-status.confirmed { background: #0f1f3d; color: #60a5fa; }
+    body.dark .book-status.completed { background: #052e1c; color: #34d399; }
+    body.dark .bk-btn.cancel { background: #1a1a26; border-color: #2e2e42; color: #F5A623; }
+

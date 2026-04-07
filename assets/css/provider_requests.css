@@ -279,3 +279,17 @@ body {
       margin-top: -22px;
       box-shadow: 0 6px 20px rgba(232, 130, 12, .45);
     }
+    /* DARK MODE */
+    body.dark { background: #0f0f14; }
+    body.dark .screen { background: #14141c; }
+    body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }
+    body.dark .ni { color: #5a5a72; }
+    body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
+    body.dark .req-card { background: #1e1e2c; border-color: #2a2a3a; }
+    body.dark .req-name { color: #e8e8f0; }
+    body.dark .req-meta { color: #6b6b88; }
+    body.dark .req-footer { border-top-color: #2a2a3a; }
+    body.dark .fpill { background: #1e1e2c; border-color: #2a2a3a; color: #8E8E93; }
+    body.dark .btn-decline { background: #1e1e2c; border-color: #2e2e42; color: #F5A623; }
+    body.dark .status-pill.declined { background: #252535; color: #6b6b88; }
+

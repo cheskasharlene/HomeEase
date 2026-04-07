@@ -1027,3 +1027,152 @@ body {
             grid-template-columns: 1fr;
           }
         }
+
+    /* ═══════════════════════════════════════════
+       DARK MODE
+    ═══════════════════════════════════════════ */
+    body.dark {
+      background: var(--bg-body);
+    }
+
+    body.dark .screen {
+      background: var(--bg-screen);
+    }
+
+    /* Header */
+    body.dark .ph-hdr {
+      background: linear-gradient(135deg, #7A3800 0%, #A85A00 30%, #C8780A 60%, #8B6200 100%) !important;
+    }
+
+    /* Bottom nav */
+    body.dark .bnav {
+      background: var(--nav-bg) !important;
+      border-top-color: var(--nav-border) !important;
+    }
+    body.dark .ni {
+      color: var(--ni-idle);
+    }
+    body.dark .ni.on,
+    body.dark .ni.on i,
+    body.dark .ni.on .nl {
+      color: var(--ni-on);
+    }
+
+    /* Cards */
+    body.dark .verify-card,
+    body.dark .p-stat-chip,
+    body.dark .req-card,
+    body.dark .sched-card,
+    body.dark .rev-card,
+    body.dark .earn-card,
+    body.dark .disabled-item,
+    body.dark .dyn-group,
+    body.dark .skill-item {
+      background: var(--bg-card);
+      border-color: var(--border-col);
+      box-shadow: 0 3px 14px rgba(0, 0, 0, .3);
+    }
+
+    /* Text colours */
+    body.dark .verify-card h2,
+    body.dark .sched-title,
+    body.dark .req-name,
+    body.dark .rev-name,
+    body.dark .sec-ttl,
+    body.dark .dyn-group h4,
+    body.dark .verify-checklist li {
+      color: var(--td);
+    }
+
+    body.dark .verify-card p,
+    body.dark .sched-sub,
+    body.dark .req-meta,
+    body.dark .rev-text,
+    body.dark .earn-lbl,
+    body.dark .p-stat-chip .lbl,
+    body.dark .upload-slot small,
+    body.dark .vlabel,
+    body.dark .verify-subttl,
+    body.dark .mini-section-title,
+    body.dark .submit-note,
+    body.dark .dyn-group li {
+      color: var(--tm);
+    }
+
+    /* Inputs */
+    body.dark .vinput,
+    body.dark .vtextarea,
+    body.dark .service-select {
+      background: var(--bg-input);
+      border-color: var(--border-col);
+      color: var(--td);
+    }
+
+    /* Upload slots */
+    body.dark .upload-slot {
+      background: rgba(0, 0, 0, 0.15);
+      border-color: var(--border-col);
+    }
+    body.dark .upload-slot span {
+      color: var(--td);
+    }
+    body.dark .upload-slot i {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* Restriction note */
+    body.dark .restriction-note {
+      background: rgba(168, 62, 0, 0.15);
+      border-color: rgba(212, 121, 10, 0.3);
+      color: var(--plight);
+    }
+
+    /* Section divider */
+    body.dark .section-divider {
+      background: var(--border-col);
+    }
+
+    /* Earnings bar track */
+    body.dark .earn-bar-track {
+      background: var(--border-col);
+    }
+
+    /* Secondary button */
+    body.dark .verify-secondary-btn {
+      background: var(--bg-card);
+      border-color: var(--border-col);
+      color: var(--tm);
+    }
+
+    /* Pending status */
+    body.dark .status-icon.pending {
+      background: rgba(212, 121, 10, 0.15);
+    }
+
+    /* Sched status badges */
+    body.dark .sched-status.pending {
+      background: rgba(212, 121, 10, 0.15);
+      color: #f59e0b;
+    }
+    body.dark .sched-status.confirmed {
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+    }
+    body.dark .sched-status.completed {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+    }
+
+    /* Dynamic placeholder */
+    body.dark .dynamic-placeholder {
+      background: rgba(0, 0, 0, 0.15);
+      border-color: var(--border-col);
+      color: var(--tm);
+    }
+
+    /* Service card unselected */
+    body.dark .service-card {
+      background: var(--bg-card);
+      border-color: var(--border-col);
+      color: var(--tm);
+    }
