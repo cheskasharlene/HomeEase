@@ -530,8 +530,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         return;
       }
 
-      const serviceProof = document.getElementById('uploadServiceProof').files[0] || null;
       const certDoc = document.getElementById('uploadCertification').files[0] || null;
+      const serviceProof = document.getElementById('uploadServiceProof').files[0] || null;
 
       const fd = new FormData();
       fd.append('action', 'upload_documents');
@@ -540,16 +540,16 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       fd.append('profile_phone', document.getElementById('profilePhone').value || '');
       fd.append('profile_address', document.getElementById('profileAddress').value || '');
       fd.append('experience_description', document.getElementById('experienceDescription').value || '');
-      const selectedSkills = Array.from(document.querySelectorAll('.skill-checkbox:checked')).map(el => el.value);
-      fd.append('selected_skills', JSON.stringify(selectedSkills));
-      fd.append('id_picture', idDoc);
-      fd.append('selfie_verification', selfieDoc);
+      
+      // Map old field names to new API field names
+      fd.append('valid_id', idDoc);
+      fd.append('barangay_clearance', certDoc);  // Barangay clearance was in certificate field
+      fd.append('selfie', selfieDoc);
       fd.append('proof_of_address', addressDoc);
-      if (serviceProof) fd.append('proof_of_experience', serviceProof);
-      if (certDoc) fd.append('certificates', certDoc);
+      if (serviceProof) fd.append('tools_kits', serviceProof);  // Tools & kits was proof_of_experience
 
       try {
-        const res = await fetch('../api/provider_verification.php', { method: 'POST', body: fd });
+        const res = await fetch('../api/provider_documents_api.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (!data.success) {
           showNotice(data.message || 'Failed to submit requirements.');
@@ -558,6 +558,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         setProviderUiState('pending');
         showNotice('Requirements submitted. Please wait for admin approval.', 'success');
       } catch (e) {
+        console.error('Error:', e);
         showNotice('Could not submit requirements right now.');
       }
     }
