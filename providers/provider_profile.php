@@ -250,19 +250,6 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
           </div>
         </div>
         
-        
-
-        <div class="st-sec">
-          <div class="st-sec-ttl">Appearance</div>
-          <div class="st-row">
-            <div class="st-ic gray"><i class="bi bi-moon-stars-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Dark Mode</div>
-              <div class="st-row-sub">Switch to dark theme</div>
-            </div>
-            <div class="st-toggle" id="stDarkToggle" onclick="toggleDarkMode()"></div>
-          </div>
-        </div>
         <div class="st-sec">
           <div class="st-sec-ttl">Notifications</div>
           <div class="st-row">
@@ -355,21 +342,14 @@ $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Servic
 
     applyProfileUiState(backendProfileState);
 
-    function openSettingsScreen() { document.getElementById('settingsScreen').classList.add('on'); syncDark(); }
+    function openSettingsScreen() { document.getElementById('settingsScreen').classList.add('on'); }
     function closeSettingsScreen() { document.getElementById('settingsScreen').classList.remove('on'); }
-    function syncDark() {
-      const d = document.body.classList.contains('dark');
-      const stDarkToggle = document.getElementById('stDarkToggle');
-      if (stDarkToggle) stDarkToggle.classList.toggle('on', d);
-    }
-    function toggleDarkMode() { toggleDark(); syncDark(); }
     function openLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.add('on'); }
     function closeLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.remove('on'); }
     function confirmLogout() {
       closeLogoutConfirm();
       window.location.href = '../logout.php';
     }
-    syncDark();
   </script>
 </body>
 

@@ -106,7 +106,6 @@ $avgRating = $reviewsCount ? array_sum(array_map(static fn($r) => (float) ($r['r
   <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
-    (function () { const ic = document.getElementById('dmIcon'); if (ic && document.body.classList.contains('dark')) ic.className = 'bi bi-sun-fill'; })();
 
     function goPage(page) {
       window.location.href = page;

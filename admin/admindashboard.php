@@ -50,33 +50,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .stat-val { font-family:'Poppins',sans-serif; font-size:18px; font-weight:800; color:var(--txt-primary); line-height:1.1; }
     .stat-lbl { font-size:10px; font-weight:700; color:var(--txt-muted); text-transform:uppercase; letter-spacing:.3px; margin-top:1px; }
 
-    /* Quick actions */
-    .quick-actions {
-      display:grid!important;
-      grid-template-columns:repeat(4,minmax(0,1fr));
-      gap:10px;
-      padding:0 18px;
-      margin:2px 0 14px;
-      overflow:visible;
-      scrollbar-width:none;
-    }
-    .quick-actions::-webkit-scrollbar { display:none; }
-    .qa-btn {
-      display:flex!important;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      gap:6px;
-      width:100%;
-      min-width:0;
-      padding:0;
-      background:none;
-      border:none;
-      cursor:pointer;
-    }
-    .qa-ic { width:50px; height:50px; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:21px; }
-    .qa-lbl { font-size:10px; font-weight:700; color:var(--txt-muted); text-align:center; line-height:1.15; }
-
     /* Chart & section cards */
     .chart-card { background:var(--bg-card); border-radius:18px; padding:16px; margin:0 18px 14px; border:1.5px solid var(--border-col); }
     .sec-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
@@ -316,6 +289,33 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .status-tabs::-webkit-scrollbar { display:none; }
     .stab { padding:6px 13px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; cursor:pointer; border:2px solid var(--border-col); color:var(--txt-muted); background:var(--bg-card); }
     .stab.on { background:var(--teal); border-color:var(--teal); color:#fff; }
+    .wk-verify-btn {
+      border: 2px solid var(--border-col);
+      background: var(--bg-card);
+      color: #b96b0a;
+      border-radius: 18px;
+      padding: 7px 12px;
+      font-size: 11px;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .wk-verify-btn.on {
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 6px 12px rgba(232, 130, 12, .22);
+    }
+    .wk-filter-note {
+      margin: -2px 18px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #b96b0a;
+      display: none;
+    }
+    .wk-filter-note.on { display: block; }
 
     /* User avatar */
     .user-av { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--teal),#E8960F); display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:800; flex-shrink:0; }
@@ -348,11 +348,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .offer-list-item { display:flex; align-items:flex-start; gap:10px; padding:12px 18px; border-bottom:1px solid var(--border-col); cursor:pointer; }
     .offer-list-item:last-child { border-bottom:none; }
     .offer-ic { width:38px; height:38px; border-radius:10px; background:#fef3c7; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
-
-    /* Notifications */
-    .notif-target { display:flex; gap:8px; margin-bottom:12px; }
-    .notif-target .nt-opt { flex:1; padding:9px; text-align:center; border-radius:10px; border:2px solid var(--border-col); font-size:12px; font-weight:700; color:var(--txt-muted); cursor:pointer; }
-    .notif-target .nt-opt.on { background:var(--teal); border-color:var(--teal); color:#fff; }
 
     /* Loading splash override */
     #ml { position:absolute; inset:0; background:linear-gradient(145deg,#E8820C 0%,#F5A623 42%,#FFB347 72%,#FFC96B 100%); z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; }
@@ -399,13 +394,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .an-metric-chg.up { color:#059669; }
     .an-metric-chg.down { color:#dc2626; }
     .an-metric-chg.flat { color:#64748b; }
-    .an-chart-card { background:var(--bg-card); border-radius:16px; border:1.5px solid var(--border-col); padding:16px; margin:0 18px 14px; }
+    .an-cards-grid { display:grid; grid-template-columns:1fr; gap:14px; padding:0 18px 14px; }
+    .an-chart-card { background:var(--bg-card); border-radius:16px; border:1.5px solid var(--border-col); padding:16px; margin:0; }
     .an-chart-ttl { font-size:14px; font-weight:800; color:var(--txt-primary); font-family:'Poppins',sans-serif; margin-bottom:4px; }
     .an-chart-sub { font-size:11px; color:var(--txt-muted); margin-bottom:14px; }
     .an-chart-canvas { width:100%; position:relative; }
-    .an-heatmap { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; }
-    .an-heat-cell { aspect-ratio:1; border-radius:6px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
-    .an-heat-lbl { font-size:8px; margin-top:1px; opacity:.7; }
     .an-worker-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-col); }
     .an-worker-row:last-child { border-bottom:none; }
     .an-worker-rank { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
@@ -418,13 +411,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .an-worker-bar { height:6px; border-radius:3px; background:var(--border-col); margin-top:4px; overflow:hidden; }
     .an-worker-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--teal),#FFB347); transition:width .6s; }
     .an-worker-jobs { font-size:11px; font-weight:700; color:var(--teal); flex-shrink:0; font-family:'Poppins',sans-serif; }
+    .an-chart-card.full-span { grid-column:1 / -1; }
 
-    /* Dark mode badge fixes */
-    body.dark .badge-gray { background:#374151; color:#9ca3af; }
-    body.dark .badge-green { background:#065f46; color:#34d399; }
-    body.dark .badge-blue { background:#1e3a5f; color:#60a5fa; }
-    body.dark .badge-amber { background:#451a03; color:#fbbf24; }
-    body.dark .badge-red { background:#7f1d1d; color:#f87171; }
+    @media (min-width:700px) {
+      .an-cards-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+
   </style>
 </head>
 
@@ -463,8 +455,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </button>
             <span class="notif-badge" id="adminNotifBadge" data-count="0"></span>
           </div>
-          <button class="hdr-btn" onclick="toggleDark()" title="Toggle dark mode"><i class="bi bi-moon-fill"
-              id="dmIcon"></i></button>
           <button class="hdr-btn" onclick="loadOverview()" title="Refresh"><i
               class="bi bi-arrow-clockwise"></i></button>
         </div>
@@ -501,27 +491,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </div>
           </div>
         </div>
-
-
-        <div class="quick-actions">
-          <button class="qa-btn" onclick="showTab('bookings')">
-            <div class="qa-ic" style="background:#d1fae5;color:#059669"><i class="bi bi-calendar3"></i></div><span
-              class="qa-lbl">Bookings</span>
-          </button>
-          <button class="qa-btn" onclick="showTab('workers')">
-            <div class="qa-ic" style="background:#dbeafe;color:#2563eb"><i class="bi bi-person-gear"></i></div><span
-              class="qa-lbl">Workers</span>
-          </button>
-          <button class="qa-btn" onclick="showTab('users')">
-            <div class="qa-ic" style="background:#fef3c7;color:#d97706"><i class="bi bi-people"></i></div><span
-              class="qa-lbl">Users</span>
-          </button>
-          <button class="qa-btn" onclick="showTab('more')">
-            <div class="qa-ic" style="background:#f3e8ff;color:#7c3aed"><i class="bi bi-grid-fill"></i></div><span
-              class="qa-lbl">More</span>
-          </button>
-        </div>
-
 
         <div class="chart-card">
           <div class="sec-hdr">
@@ -632,15 +601,17 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="a-ttl">Workers</div>
         </div>
         <div class="a-hdr-right">
+          <button class="wk-verify-btn" id="wkVerifyToggle" onclick="toggleVerificationView()">For Verification</button>
           <button class="hdr-btn" onclick="loadWorkers()"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
       <div class="search-bar"><i class="bi bi-search"></i><input type="text" id="wkSearch"
           placeholder="Search workers..." oninput="debounce(loadWorkers,400)()"></div>
-      <div class="status-tabs" style="margin-top:-5px; margin-bottom: 5px;">
+      <div class="status-tabs" id="wkStatusTabs" style="margin-top:-5px; margin-bottom: 5px;">
         <div class="stab on" id="wkFilterAll" onclick="setWkFilter('')">All Workers</div>
         <div class="stab" id="wkFilterLow" onclick="setWkFilter('low_rated')">Low Rated (&lt; 3.0)</div>
       </div>
+      <div id="wkFilterNote" class="wk-filter-note">Showing: Pending Verification</div>
       <div class="a-scroll" id="wk-scroll" style="padding:12px 18px 80px;">
         <div id="wkList">
           <div class="empty-state">
@@ -659,8 +630,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="a-ttl">Users</div>
         </div>
         <div class="a-hdr-right">
-          <button class="hdr-btn" onclick="openNotifSheet(0)" title="Broadcast notification"><i
-              class="bi bi-megaphone-fill"></i></button>
           <button class="hdr-btn" onclick="loadUsers()"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
@@ -682,9 +651,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="a-greet">Admin</div>
           <div class="a-ttl">More</div>
         </div>
-        <div class="a-hdr-right">
-          <button class="hdr-btn" onclick="toggleDark()"><i class="bi bi-moon-fill" id="dmIcon2"></i></button>
-        </div>
+        <div class="a-hdr-right"></div>
       </div>
       <div class="a-scroll" id="more-scroll">
 
@@ -708,15 +675,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="sec-pad" style="margin-top:14px;">
           <div class="sec-ttl">Admin</div>
           <div class="card">
-            <div class="more-row" onclick="openNotifSheet(0)">
-              <div class="more-ic" style="background:#fef3c7;color:#d97706;"><i class="bi bi-megaphone-fill"></i>
-              </div>
-              <div>
-                <div class="more-nm">Broadcast Notification</div>
-                <div class="more-sub">Send to all users</div>
-              </div>
-              <i class="bi bi-chevron-right more-arrow"></i>
-            </div>
             <div class="more-row" onclick="openReviewSheet()">
               <div class="more-ic" style="background:#e0e7ff;color:#4f46e5;"><i class="bi bi-star-fill"></i></div>
               <div>
@@ -768,40 +726,35 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         </div>
 
-        <!-- Bookings Trend -->
-        <div class="an-chart-card">
-          <div class="an-chart-ttl">Booking Trends</div>
-          <div class="an-chart-sub">Daily bookings over the last 30 days</div>
-          <div class="an-chart-canvas"><canvas id="chartBookingTrend" height="180"></canvas></div>
-        </div>
+        <div class="an-cards-grid">
+          <!-- Bookings Trend -->
+          <div class="an-chart-card">
+            <div class="an-chart-ttl">Booking Trends</div>
+            <div class="an-chart-sub">Daily bookings over the last 30 days</div>
+            <div class="an-chart-canvas"><canvas id="chartBookingTrend" height="180"></canvas></div>
+          </div>
 
-        <!-- Service Distribution -->
-        <div class="an-chart-card">
-          <div class="an-chart-ttl">Service Distribution</div>
-          <div class="an-chart-sub">Bookings by service category</div>
-          <div class="an-chart-canvas" style="max-width:280px;margin:0 auto;"><canvas id="chartServiceDist"
-              height="220"></canvas></div>
-        </div>
+          <!-- Service Distribution -->
+          <div class="an-chart-card">
+            <div class="an-chart-ttl">Service Distribution</div>
+            <div class="an-chart-sub">Bookings by service category</div>
+            <div class="an-chart-canvas" style="max-width:280px;margin:0 auto;"><canvas id="chartServiceDist"
+                height="220"></canvas></div>
+          </div>
 
-        <!-- Revenue Chart -->
-        <div class="an-chart-card">
-          <div class="an-chart-ttl">Weekly Revenue</div>
-          <div class="an-chart-sub">Revenue from completed bookings (last 8 weeks)</div>
-          <div class="an-chart-canvas"><canvas id="chartRevenue" height="180"></canvas></div>
-        </div>
+          <!-- Revenue Chart -->
+          <div class="an-chart-card full-span">
+            <div class="an-chart-ttl">Weekly Revenue</div>
+            <div class="an-chart-sub">Revenue from completed bookings (last 8 weeks)</div>
+            <div class="an-chart-canvas"><canvas id="chartRevenue" height="180"></canvas></div>
+          </div>
 
-        <!-- Top Workers -->
-        <div class="an-chart-card">
-          <div class="an-chart-ttl">Top Performing Workers</div>
-          <div class="an-chart-sub">Ranked by total jobs completed</div>
-          <div id="anTopWorkers"></div>
-        </div>
-
-        <!-- Hourly Heatmap -->
-        <div class="an-chart-card">
-          <div class="an-chart-ttl">Peak Hours</div>
-          <div class="an-chart-sub">When customers book most (last 30 days)</div>
-          <div class="an-heatmap" id="anHeatmap"></div>
+          <!-- Top Workers -->
+          <div class="an-chart-card full-span">
+            <div class="an-chart-ttl">Top Performing Workers</div>
+            <div class="an-chart-sub">Ranked by total jobs completed</div>
+            <div id="anTopWorkers"></div>
+          </div>
         </div>
 
       </div>
@@ -868,57 +821,24 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="sheet">
           <div class="sh-hand"></div>
           <div class="sh-hdr">
-            <div class="sh-ttl" id="wkSheetTtl">Edit Worker</div>
+            <div class="sh-ttl" id="wkSheetTtl">Worker Details</div>
             <button class="sh-close" onclick="closeSheet('wkSheetOl')"><i class="bi bi-x-lg"></i></button>
           </div>
-          <input type="hidden" id="wkId">
-          <div class="fg"><label class="fl">Full Name *</label><input class="fi" id="wkName"
-              placeholder="e.g. Juan dela Cruz"></div>
-          <div class="fg"><label class="fl">Specialty *</label>
-            <select class="fi" id="wkSpecialty">
-              <option value="Cleaning">Cleaning</option>
-              <option value="Plumbing">Plumbing</option>
-              <option value="Electrical">Electrical</option>
-              <option value="Painting">Painting</option>
-              <option value="Appliance Repair">Appliance Repair</option>
-            </select>
+          <div style="text-align:center;margin-bottom:16px;">
+            <div class="user-av" id="wkAvatar" style="width:62px;height:62px;font-size:22px;margin:0 auto 10px;">W</div>
+            <div id="wkName" style="font-size:18px;font-weight:800;color:var(--txt-primary);">Worker Name</div>
+            <div id="wkSpecialty" style="font-size:12px;color:var(--txt-muted);margin-top:2px;">Specialty</div>
           </div>
-          <div class="fg"><label class="fl">Phone</label><input class="fi" id="wkPhone" placeholder="09xxxxxxxxx"
-              type="tel"></div>
-          <div class="fg-row">
-            <div class="fg"><label class="fl">Availability</label>
-              <select class="fi" id="wkAvail">
-                <option value="available">Available</option>
-                <option value="busy">Busy</option>
-                <option value="offline">Offline</option>
-              </select>
-            </div>
-            <div class="fg"><label class="fl">Status</label>
-              <select class="fi" id="wkStatus">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-          </div>
-          <div class="fg-row">
-            <div class="fg"><label class="fl">Rating (0-5)</label><input class="fi" id="wkRating" type="number"
-                step="0.1" min="0" max="5" value="5.0"></div>
-            <div class="fg"><label class="fl">Jobs Done</label><input class="fi" id="wkJobs" type="number" min="0"
-                value="0"></div>
-          </div>
-          <div class="fg">
-            <label class="fl">Verification Documents</label>
-            <div id="wkVdocs"
-              style="padding: 10px; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-col); font-size: 11px;">
+          <div class="detail-row"><span class="detail-lbl">Phone</span><span class="detail-val" id="wkPhone">–</span></div>
+          <div class="detail-row"><span class="detail-lbl">Availability</span><span class="detail-val" id="wkAvail">–</span></div>
+          <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val" id="wkStatus">–</span></div>
+          <div class="detail-row"><span class="detail-lbl">Rating</span><span class="detail-val" id="wkRating">–</span></div>
+          <div class="detail-row"><span class="detail-lbl">Jobs Done</span><span class="detail-val" id="wkJobs">–</span></div>
+          <div class="detail-row" style="align-items:flex-start;gap:14px;">
+            <span class="detail-lbl">Verification Documents</span>
+            <div class="detail-val" id="wkVdocs" style="max-width:58%;text-align:right;font-size:12px;line-height:1.45;">
               No documents uploaded.
             </div>
-          </div>
-          <div class="modal-btns">
-            <button class="btn-p" id="wkVerifyBtn" onclick="toggleVerifyWorker()" style="background:#10b981;">Verify
-              Worker</button>
-            <button class="btn-p" onclick="saveWorker()">Save</button>
-            <button class="btn-danger" id="wkDelBtn" style="display:none;" onclick="deleteWorker()"><i
-                class="bi bi-trash-fill"></i></button>
           </div>
         </div>
       </div>
@@ -1031,37 +951,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         </div>
       </div>
-
-
-      <div class="sheet-ol" id="notifSheetOl" onclick="if(event.target===this)closeSheet('notifSheetOl')">
-        <div class="sheet">
-          <div class="sh-hand"></div>
-          <div class="sh-hdr">
-            <div class="sh-ttl" id="notifSheetTtl">Send Notification</div>
-            <button class="sh-close" onclick="closeSheet('notifSheetOl')"><i class="bi bi-x-lg"></i></button>
-          </div>
-          <input type="hidden" id="notifUserId">
-          <div class="notif-target" id="notifTargetRow">
-            <div class="nt-opt on" onclick="setNotifTarget(0)">All Users</div>
-            <div class="nt-opt" id="notifSpecificOpt" style="display:none;">Specific User</div>
-          </div>
-          <div class="fg"><label class="fl">Title *</label><input class="fi" id="notifTitle"
-              placeholder="e.g. Special Offer!"></div>
-          <div class="fg"><label class="fl">Message *</label><textarea class="fi" id="notifMsg" rows="3"
-              placeholder="Your message here..." style="resize:none;"></textarea></div>
-          <div class="fg"><label class="fl">Icon</label>
-            <select class="fi" id="notifIcon">
-              <option value="cleaning">🧹 Cleaning</option>
-              <option value="plumbing">🔧 Plumbing</option>
-              <option value="electrical">⚡ Electrical</option>
-              <option value="painting">🖌️ Painting</option>
-              <option value="appliance">🔩 Appliance</option>
-            </select>
-          </div>
-          <div class="modal-btns"><button class="btn-p" onclick="sendNotification()">Send Notification</button></div>
-        </div>
-      </div>
-
       <!-- Admin Notifications Sheet -->
       <div class="sheet-ol" id="adminNotifSheetOl" onclick="if(event.target===this)closeSheet('adminNotifSheetOl')">
         <div class="sheet" style="max-height:88vh;">
@@ -1124,19 +1013,25 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       };
 
       function statusPill(s) {
+        const key = String(s || '').toLowerCase();
         const map = { pending: 'badge-amber', progress: 'badge-blue', done: 'badge-green', cancelled: 'badge-gray', active: 'badge-green', inactive: 'badge-red', available: 'badge-green', busy: 'badge-amber', offline: 'badge-gray' };
-        return `<span class="${map[s] || 'badge-gray'}">${s}</span>`;
+        return `<span class="${map[key] || 'badge-gray'}">${key ? key.charAt(0).toUpperCase() + key.slice(1) : '–'}</span>`;
+      }
+
+      function workerStateBadge(type, value) {
+        const key = String(value || '').toLowerCase();
+        const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', busy: 'badge-amber' };
+        const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-gray', pending: 'badge-amber', 'pending verification': 'badge-amber' };
+        const labelMap = {
+          availability: { online: 'Online', available: 'Online', offline: 'Offline', busy: 'Busy' },
+          status: { active: 'Active', inactive: 'Inactive', paused: 'Paused', pending: 'Pending', 'pending verification': 'Pending Verification' }
+        };
+        const map = type === 'availability' ? availabilityMap : statusMap;
+        const label = (labelMap[type] && labelMap[type][key]) || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '–');
+        return `<span class="${map[key] || 'badge-gray'}">${label}</span>`;
       }
 
       function php(n) { return '₱' + parseFloat(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-
-      function toggleDark() {
-        document.body.classList.toggle('dark');
-        localStorage.setItem('he_dark', document.body.classList.contains('dark') ? '1' : '0');
-        document.querySelectorAll('#dmIcon,#dmIcon2').forEach(ic => {
-          ic.className = document.body.classList.contains('dark') ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
-        });
-      }
 
       let curTab = 'overview';
       const tabMap = { overview: 'sc-overview', analytics: 'sc-analytics', bookings: 'sc-bookings', workers: 'sc-workers', users: 'sc-users', more: 'sc-more' };
@@ -1151,6 +1046,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         curTab = tab;
         if (loadMap[tab]) loadMap[tab]();
       }
+
+      setInterval(() => {
+        const workerSheetOpen = document.getElementById('wkSheetOl')?.classList.contains('on') && currentWorkerDetailId;
+        if (curTab === 'workers' || workerSheetOpen) loadWorkers();
+      }, 15000);
 
       async function loadOverview() {
         try {
@@ -1477,7 +1377,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="li-body">
             <div class="li-name">${w.name}</div>
             <div class="li-sub">${w.specialty} · ${w.phone || 'No phone'}</div>
-            <div style="display:flex;gap:5px;margin-top:3px;">${statusPill(w.availability)} ${statusPill(w.status)}</div>
+            <div style="display:flex;gap:5px;margin-top:3px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', w.status)}</div>
           </div>
           <div class="li-right" style="text-align:right;">
             <div style="font-size:11px;color:var(--txt-muted);">⭐ ${parseFloat(w.rating || 0).toFixed(1)}</div>
@@ -1504,6 +1404,23 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       let currentWkFilter = '';
+      let wkVerificationOnly = false;
+
+      function updateWorkerVerificationUI() {
+        document.getElementById('wkVerifyToggle')?.classList.toggle('on', wkVerificationOnly);
+        document.getElementById('wkFilterNote')?.classList.toggle('on', wkVerificationOnly);
+        const tabs = document.getElementById('wkStatusTabs');
+        if (tabs) tabs.style.display = wkVerificationOnly ? 'none' : 'flex';
+      }
+
+      function toggleVerificationView() {
+        wkVerificationOnly = !wkVerificationOnly;
+        localStorage.setItem('he_wk_verification_only', wkVerificationOnly ? '1' : '0');
+        wkPage = 1;
+        updateWorkerVerificationUI();
+        loadWorkers();
+      }
+
       function setWkFilter(fil) {
         currentWkFilter = fil;
         document.getElementById('wkFilterAll').classList.toggle('on', fil === '');
@@ -1516,15 +1433,20 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const search = (document.getElementById('wkSearch') || {}).value || '';
         document.getElementById('wkList').innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
         try {
-          const data = await api('workers', 'list', null, `&search=${encodeURIComponent(search)}&filter=${currentWkFilter}`);
-          const workers = data.workers || [];
-          const wkQuery = `${search}|${currentWkFilter}`;
+          const data = await api('workers', 'list', null, `&search=${encodeURIComponent(search)}&filter=${currentWkFilter}&verification_filter=${wkVerificationOnly ? 'pending' : ''}`);
+          const workersRaw = data.workers || [];
+          const workers = wkVerificationOnly
+            ? workersRaw.filter(w => String(w.verification_status || '').toLowerCase() === 'pending')
+            : workersRaw;
+          const wkQuery = `${search}|${currentWkFilter}|${wkVerificationOnly ? 'pending' : 'all'}`;
           if (wkQuery !== lastWkQuery) {
             wkPage = 1;
             lastWkQuery = wkQuery;
           }
           if (!workers.length) {
-            document.getElementById('wkList').innerHTML = '<div class="empty-state"><i class="bi bi-person-x"></i><p>No workers found.</p></div>';
+            document.getElementById('wkList').innerHTML = wkVerificationOnly
+              ? '<div class="empty-state"><i class="bi bi-shield-check"></i><p>No pending verification with uploaded requirements.</p></div>'
+              : '<div class="empty-state"><i class="bi bi-person-x"></i><p>No workers found.</p></div>';
             document.getElementById('wkPagination').innerHTML = '';
             return;
           }
@@ -1537,95 +1459,63 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             const isLow = w.rating > 0 && w.rating < 3.0;
             const starHtml = isLow ? `<span style="color:#ef4444;font-weight:800;">⭐ ${parseFloat(w.rating).toFixed(1)}</span>` : `⭐ ${parseFloat(w.rating || 0).toFixed(1)}`;
             return `
-      <div class="list-item">
+      <div class="list-item" onclick='openWorkerSheet(${JSON.stringify(w).replace(/'/g, "&#39;")})' style="cursor:pointer;">
         <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=FDECC8&color=F5A623&size=80" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="">
         <div class="li-body">
           <div class="li-name">${w.name} ${w.is_verified == 1 ? '<i class="bi bi-patch-check-fill" style="color:#10b981;font-size:12px;"></i>' : ''}</div>
           <div class="li-sub">${w.specialty} · ${w.phone || 'No phone'}</div>
-          <div style="display:flex;gap:5px;margin-top:4px;">${statusPill(w.availability)} ${statusPill(w.status)}</div>
+          <div style="display:flex;gap:5px;margin-top:4px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', w.status)}</div>
         </div>
         <div class="li-right">
           <div class="act-btns">
-            <button class="act-btn edit" onclick='openWorkerSheet(${JSON.stringify(w).replace(/'/g, "&#39;")})'><i class="bi bi-pencil-fill"></i></button>
-            <button class="act-btn tog" onclick="toggleWorkerStatus(${w.id},this)"><i class="bi bi-${w.status === 'active' ? 'pause' : 'play'}-fill"></i></button>
-            <button class="act-btn del" onclick="deleteWorkerById(${w.id})"><i class="bi bi-trash-fill"></i></button>
+            <button class="act-btn edit" onclick='event.stopPropagation();openWorkerSheet(${JSON.stringify(w).replace(/'/g, "&#39;")})' title="View details"><i class="bi bi-eye-fill"></i></button>
+            <button class="act-btn del" onclick="event.stopPropagation();deleteWorkerById(${w.id})"><i class="bi bi-trash-fill"></i></button>
           </div>
           <div style="font-size:11px;color:var(--txt-muted);margin-top:4px;">${starHtml} · ${w.jobs_done || 0} jobs</div>
         </div>
       </div>`}).join('');
+          if (currentWorkerDetailId) {
+            const current = workers.find(w => w.id == currentWorkerDetailId);
+            if (current) fillWorkerSheet(current);
+          }
           document.getElementById('wkPagination').innerHTML = buildPaginationMarkup(wkPage, wkTotalPages, 'prevWkPage', 'nextWkPage');
         } catch (e) { document.getElementById('wkList').innerHTML = '<div class="empty-state"><p>Error loading workers.</p></div>'; document.getElementById('wkPagination').innerHTML = ''; }
       }
 
-      function openWorkerSheet(w) {
+      let currentWorkerDetailId = null;
+
+      function fillWorkerSheet(w) {
         if (!w) return;
-        document.getElementById('wkId').value = w.id;
-        document.getElementById('wkName').value = w.name;
-        document.getElementById('wkSpecialty').value = (w.specialty || 'Cleaning');
-        document.getElementById('wkPhone').value = (w.phone || '');
-        document.getElementById('wkAvail').value = (w.availability || 'available');
-        document.getElementById('wkStatus').value = (w.status || 'active');
-        document.getElementById('wkRating').value = parseFloat(w.rating || 5).toFixed(1);
-        document.getElementById('wkJobs').value = (w.jobs_done || 0);
-        document.getElementById('wkSheetTtl').textContent = 'Edit Worker';
-        document.getElementById('wkDelBtn').style.display = 'block';
+        currentWorkerDetailId = w.id;
+        document.getElementById('wkSheetTtl').textContent = 'Worker Details';
+        document.getElementById('wkAvatar').textContent = (w.name || '?')[0].toUpperCase();
+        document.getElementById('wkName').textContent = w.name || '–';
+        document.getElementById('wkSpecialty').textContent = w.specialty || '–';
+        document.getElementById('wkPhone').textContent = w.phone || '–';
+        document.getElementById('wkAvail').innerHTML = workerStateBadge('availability', w.availability || 'offline');
+        document.getElementById('wkStatus').innerHTML = workerStateBadge('status', w.status || 'inactive');
+        document.getElementById('wkRating').textContent = parseFloat(w.rating || 0).toFixed(1);
+        document.getElementById('wkJobs').textContent = w.jobs_done || 0;
         let docHtml = '';
-        if (w.id_picture) docHtml += `<a href="${w.id_picture}" target="_blank" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--teal);font-weight:700;text-decoration:none;"><i class="bi bi-file-earmark-image"></i> View ID Picture</a>`;
-        if (w.selfie_verification) docHtml += `<a href="${w.selfie_verification}" target="_blank" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--teal);font-weight:700;text-decoration:none;"><i class="bi bi-person-bounding-box"></i> View Selfie Verification</a>`;
-        if (w.proof_of_address) docHtml += `<a href="${w.proof_of_address}" target="_blank" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--teal);font-weight:700;text-decoration:none;"><i class="bi bi-house-check"></i> View Proof of Address</a>`;
-        if (w.certificates) docHtml += `<a href="${w.certificates}" target="_blank" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;color:var(--teal);font-weight:700;text-decoration:none;"><i class="bi bi-award"></i> View Certificates</a>`;
-        if (w.proof_of_experience) docHtml += `<a href="${w.proof_of_experience}" target="_blank" style="display:flex;align-items:center;gap:6px;color:var(--teal);font-weight:700;text-decoration:none;"><i class="bi bi-briefcase"></i> View Proof of Experience</a>`;
+        if (w.id_picture) docHtml += `<div><a href="${w.id_picture}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View ID Picture</a></div>`;
+        if (w.selfie_verification) docHtml += `<div><a href="${w.selfie_verification}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Selfie Verification</a></div>`;
+        if (w.proof_of_address) docHtml += `<div><a href="${w.proof_of_address}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Proof of Address</a></div>`;
+        if (w.certificates) docHtml += `<div><a href="${w.certificates}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Certificates</a></div>`;
+        if (w.proof_of_experience) docHtml += `<div><a href="${w.proof_of_experience}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Proof of Experience</a></div>`;
         if (!docHtml) docHtml = '<span style="color:var(--txt-muted);">No documents uploaded.</span>';
         document.getElementById('wkVdocs').innerHTML = docHtml;
-        const verifyBtn = document.getElementById('wkVerifyBtn');
-        if (w.is_verified == 1) {
-          verifyBtn.textContent = 'Unverify Worker';
-          verifyBtn.style.background = '#f59e0b';
-        } else {
-          verifyBtn.textContent = 'Verify Worker';
-          verifyBtn.style.background = '#10b981';
-        }
+      }
+
+      function openWorkerSheet(w) {
+        if (!w) return;
+        fillWorkerSheet(w);
         openSheet('wkSheetOl');
-      }
-
-      async function toggleVerifyWorker() {
-        const id = document.getElementById('wkId').value;
-        if (!id) return;
-        const data = await api('workers', 'toggle_verification', fd({ id }));
-        if (data.success) { toast(data.message); closeSheet('wkSheetOl'); loadWorkers(); }
-        else toast(data.message || 'Failed', 'e');
-      }
-
-      async function saveWorker() {
-        const id = document.getElementById('wkId').value;
-        if (!id) return;
-        const name = document.getElementById('wkName').value.trim();
-        const specialty = document.getElementById('wkSpecialty').value;
-        if (!name) { toast('Name required', 'e'); return; }
-        const body = fd({ id: id, name, specialty, phone: document.getElementById('wkPhone').value, availability: document.getElementById('wkAvail').value, status: document.getElementById('wkStatus').value, rating: document.getElementById('wkRating').value, jobs_done: document.getElementById('wkJobs').value });
-        const data = await api('workers', 'edit', body);
-        if (data.success) { toast('Worker updated'); closeSheet('wkSheetOl'); loadWorkers(); }
-        else toast(data.message || 'Failed', 'e');
-      }
-
-      async function deleteWorker() {
-        const id = document.getElementById('wkId').value;
-        if (!confirm2('Delete this worker?')) return;
-        const data = await api('workers', 'delete', fd({ id }));
-        if (data.success) { toast('Worker deleted'); closeSheet('wkSheetOl'); loadWorkers(); }
-        else toast(data.message || 'Failed', 'e');
       }
 
       async function deleteWorkerById(id) {
         if (!confirm2('Delete this worker?')) return;
         const data = await api('workers', 'delete', fd({ id }));
         if (data.success) { toast('Worker deleted'); loadWorkers(); }
-        else toast(data.message || 'Failed', 'e');
-      }
-
-      async function toggleWorkerStatus(id, btn) {
-        const data = await api('workers', 'toggle_status', fd({ id }));
-        if (data.success) { toast(data.message); loadWorkers(); }
         else toast(data.message || 'Failed', 'e');
       }
 
@@ -1679,10 +1569,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     <div class="detail-row"><span class="detail-lbl">Total Bookings</span><span class="detail-val">${u.booking_count}</span></div>
     <div class="detail-row"><span class="detail-lbl">Completed</span><span class="detail-val">${u.done_count}</span></div>
     <div class="detail-row"><span class="detail-lbl">Account Status</span><span class="detail-val">${u.disabled ? '<span class="badge-red">Disabled</span>' : '<span class="badge-green">Active</span>'}</span></div>
-    <div class="modal-btns" style="margin-top:16px;">
+    <div class="modal-btns" style="margin-top:16px;gap:14px;">
       <button class="btn-outline" onclick="toggleUserDisable(${u.id})">${u.disabled ? 'Enable Account' : 'Disable Account'}</button>
-      <button class="btn-p" onclick="openNotifSheet(${u.id},'${u.name.replace(/'/g, "\\'")}')">Send Notification</button>
-      <button class="btn-danger" onclick="deleteUser(${u.id})" style="margin-top:8px;">Delete User</button>
+      <button class="btn-danger" onclick="deleteUser(${u.id})">Delete User</button>
     </div>`;
         openSheet('usDetailOl');
       }
@@ -1820,44 +1709,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         if (!data.success) { el.classList.toggle('on'); el.classList.toggle('off'); toast('Failed', 'e'); }
         else toast(data.message);
       }
-
-
-      function openNotifSheet(userId, userName) {
-        document.getElementById('notifUserId').value = userId || 0;
-        const specOpt = document.getElementById('notifSpecificOpt');
-        if (userId && userId > 0) {
-          specOpt.style.display = 'block';
-          specOpt.textContent = userName || 'Specific User';
-          setNotifTarget(userId);
-        } else {
-          specOpt.style.display = 'none';
-          setNotifTarget(0);
-        }
-        document.getElementById('notifTitle').value = '';
-        document.getElementById('notifMsg').value = '';
-        document.getElementById('notifSheetTtl').textContent = userId ? `Notify ${userName || 'User'}` : 'Broadcast Notification';
-        openSheet('notifSheetOl');
-      }
-
-      function setNotifTarget(uid) {
-        document.getElementById('notifUserId').value = uid;
-        document.querySelectorAll('.nt-opt').forEach(o => o.classList.remove('on'));
-        if (uid == 0) { document.querySelector('.nt-opt').classList.add('on'); }
-        else { document.getElementById('notifSpecificOpt').classList.add('on'); }
-      }
-
-      async function sendNotification() {
-        const uid = parseInt(document.getElementById('notifUserId').value) || 0;
-        const title = document.getElementById('notifTitle').value.trim();
-        const msg = document.getElementById('notifMsg').value.trim();
-        const icon = document.getElementById('notifIcon').value;
-        if (!title || !msg) { toast('Title and message required', 'e'); return; }
-        const body = fd({ user_id: uid, title, message: msg, icon });
-        const data = await api('users', 'send_notification', body);
-        if (data.success) { toast(data.message); closeSheet('notifSheetOl'); }
-        else toast(data.message || 'Failed', 'e');
-      }
-
       function openLogoutConfirm() {
         document.getElementById('logoutConfirmOl').classList.add('on');
       }
@@ -2031,10 +1882,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       (function init() {
-        if (localStorage.getItem('he_dark') === '1') {
-          document.body.classList.add('dark');
-          document.querySelectorAll('#dmIcon,#dmIcon2').forEach(ic => ic.className = 'bi bi-sun-fill');
-        }
+        wkVerificationOnly = localStorage.getItem('he_wk_verification_only') === '1';
+        updateWorkerVerificationUI();
         setTimeout(() => {
           const ml = document.getElementById('ml');
           if (ml) { ml.style.opacity = '0'; setTimeout(() => ml.style.display = 'none', 200); }
@@ -2176,11 +2025,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       function chartColors() {
-        const isDark = document.body.classList.contains('dark');
         return {
-          grid: isDark ? 'rgba(255,255,255,.07)' : 'rgba(0,0,0,.06)',
-          text: isDark ? '#B8A882' : '#9ca3af',
-          bg: isDark ? '#2A2216' : '#ffffff',
+          grid: 'rgba(0,0,0,.06)',
+          text: '#9ca3af',
+          bg: '#ffffff',
         };
       }
 
@@ -2321,22 +2169,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </div>`;
             }).join('');
           }
-
-          // ── Hourly Heatmap ──
-          const hmEl = document.getElementById('anHeatmap');
-          const maxH = Math.max(...a.hourly_heatmap.map(h => h.count), 1);
-          hmEl.innerHTML = a.hourly_heatmap.map(h => {
-            const intensity = h.count / maxH;
-            let bg, color;
-            if (intensity === 0) { bg = 'var(--border-col)'; color = 'var(--txt-muted)'; }
-            else if (intensity < .33) { bg = 'rgba(245,166,35,.15)'; color = '#d97706'; }
-            else if (intensity < .66) { bg = 'rgba(245,166,35,.40)'; color = '#c2410c'; }
-            else { bg = 'rgba(245,166,35,.75)'; color = '#fff'; }
-            return `<div class="an-heat-cell" style="background:${bg};color:${color}" title="${h.hour}: ${h.count} bookings">
-            ${h.count}
-            <div class="an-heat-lbl">${h.hour.replace(':00', '')}</div>
-          </div>`;
-          }).join('');
 
         } catch (e) { console.error('Analytics error:', e); }
       }

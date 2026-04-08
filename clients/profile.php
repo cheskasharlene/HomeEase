@@ -569,30 +569,6 @@ if ($row) {
       </div>
 
       <div class="st-scroll">
-
-
-        <div class="st-sec">
-          <div class="st-sec-ttl">Appearance</div>
-          <div class="st-row">
-            <div class="st-ic gray"><i class="bi bi-moon-stars-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Dark Mode</div>
-              <div class="st-row-sub">Switch to dark theme</div>
-            </div>
-            <div class="st-toggle" id="stDarkToggle" onclick="toggleDarkMode()"></div>
-          </div>
-          <div class="st-row">
-            <div class="st-ic orange"><i class="bi bi-phone-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Language</div>
-              <div class="st-row-sub">App display language</div>
-            </div>
-            <span class="st-row-val">English</span>
-            <i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
-        </div>
-
-
         <div class="st-sec">
           <div class="st-sec-ttl">Notifications</div>
           <div class="st-row">
@@ -638,14 +614,6 @@ if ($row) {
 
         <div class="st-sec">
           <div class="st-sec-ttl">About</div>
-          <div class="st-row">
-            <div class="st-ic gray"><i class="bi bi-info-circle-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">App Version</div>
-              <div class="st-row-sub">HomeEase for Users</div>
-            </div>
-            <span class="st-row-val">v3.2.0</span>
-          </div>
           <div class="st-row">
             <div class="st-ic gray"><i class="bi bi-file-text-fill"></i></div>
             <div class="st-row-info">
@@ -838,7 +806,6 @@ if ($row) {
 
     function openSettingsScreen() {
       document.getElementById('settingsScreen').classList.add('on');
-      syncDarkToggles();
     }
     function closeSettingsScreen() {
       document.getElementById('settingsScreen').classList.remove('on');
@@ -940,19 +907,6 @@ if ($row) {
       btn.innerHTML = '<i class="bi bi-check2" style="margin-right:6px;"></i>Save Changes';
     }
 
-
-    function syncDarkToggles() {
-      const isDark = document.body.classList.contains('dark');
-      const darkModeToggle = document.getElementById('darkModeToggle');
-      const stDarkToggle = document.getElementById('stDarkToggle');
-      if (darkModeToggle) darkModeToggle.classList.toggle('on', isDark);
-      if (stDarkToggle) stDarkToggle.classList.toggle('on', isDark);
-    }
-    function toggleDarkMode() {
-      toggleDark();
-      syncDarkToggles();
-    }
-
     function doLogout() {
       openLogoutConfirm();
     }
@@ -971,7 +925,6 @@ if ($row) {
     }
 
     loadProfile();
-    syncDarkToggles();
   </script>
 </body>
 

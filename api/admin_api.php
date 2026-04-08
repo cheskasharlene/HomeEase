@@ -155,29 +155,6 @@ if ($section === 'users') {
         respond($ok, $ok ? 'User deleted.' : 'Could not delete user.');
     }
 
-    if ($method === 'POST' && $action === 'send_notification') {
-        $uid   = (int)($_POST['user_id'] ?? 0); // 0 = all users
-        $title = trim($_POST['title'] ?? '');
-        $msg   = trim($_POST['message'] ?? '');
-        $icon  = trim($_POST['icon'] ?? 'cleaning');
-        if (!$title || !$msg) respond(false, 'Title and message required.');
-
-        if ($uid > 0) {
-            $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?,?,?,?,0,NOW())");
-            $stmt->bind_param("isss", $uid, $title, $msg, $icon); $stmt->execute(); $cnt = $stmt->affected_rows; $stmt->close();
-        } else {
-            $uids = $conn->query("SELECT id FROM users WHERE role != 'admin'");
-            $cnt = 0;
-            if ($uids) {
-                $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?,?,?,?,0,NOW())");
-                while ($u = $uids->fetch_row()) {
-                    $stmt->bind_param("isss", $u[0], $title, $msg, $icon); $stmt->execute(); $cnt++;
-                }
-                $stmt->close();
-            }
-        }
-        respond(true, "Notification sent to $cnt user(s).");
-    }
 }
 
 
@@ -185,7 +162,12 @@ if ($section === 'workers') {
     if ($method === 'GET' && $action === 'list') {
         $search = trim($_GET['search'] ?? '');
         $filter = trim($_GET['filter'] ?? '');
+        $verificationFilter = trim($_GET['verification_filter'] ?? '');
         $where  = []; $params = []; $types = '';
+
+        $hasVerificationStatus = false;
+        $colCheck = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'verification_status'");
+        if ($colCheck && $colCheck->num_rows > 0) $hasVerificationStatus = true;
         
         if ($search) {
             $like = "%$search%";
@@ -195,9 +177,21 @@ if ($section === 'workers') {
         if ($filter === 'low_rated') {
             $where[] = "(rating > 0 AND rating < 3.0)";
         }
+
+        if ($verificationFilter === 'pending') {
+            $where[] = "(COALESCE(id_picture,'') <> '' OR COALESCE(selfie_verification,'') <> '' OR COALESCE(proof_of_address,'') <> '' OR COALESCE(certificates,'') <> '' OR COALESCE(proof_of_experience,'') <> '')";
+            if ($hasVerificationStatus) {
+                $where[] = "(verification_status = 'pending' OR verification_status = 'pending_review')";
+            } else {
+                $where[] = "(is_verified = 0)";
+            }
+        }
         
         $whereClause = count($where) ? "WHERE " . implode(" AND ", $where) : "";
-        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, availability_status AS availability, status, rating, jobs_done, is_verified, id_picture, selfie_verification, proof_of_address, certificates, proof_of_experience FROM service_providers $whereClause ORDER BY provider_id DESC");
+        $verificationSelect = $hasVerificationStatus
+            ? "CASE WHEN verification_status='pending_review' THEN 'pending' WHEN verification_status IS NULL OR verification_status='' THEN CASE WHEN is_verified=1 THEN 'verified' ELSE 'pending' END ELSE verification_status END AS verification_status"
+            : "CASE WHEN is_verified=1 THEN 'verified' ELSE 'pending' END AS verification_status";
+        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, availability_status AS availability, status, rating, jobs_done, is_verified, $verificationSelect, id_picture, selfie_verification, proof_of_address, certificates, proof_of_experience FROM service_providers $whereClause ORDER BY provider_id DESC");
         
         if (!$stmt) respond(false, $conn->error);
         if ($params) $stmt->bind_param($types, ...$params);

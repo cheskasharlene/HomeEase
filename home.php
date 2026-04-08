@@ -113,11 +113,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       address: <?= json_encode($_SESSION['user_address'] ?? '') ?>
     };
 
-    (function () {
-      const ic = document.getElementById('dmIcon');
-      if (ic && document.body.classList.contains('dark')) ic.className = 'bi bi-sun-fill';
-    })();
-
     fetch('api/notifications_api.php')
       .then(r => r.json())
       .then(data => {

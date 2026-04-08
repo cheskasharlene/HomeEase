@@ -51,9 +51,6 @@ if (empty($_SESSION['user_id'])) {
               <button class="w-dm-btn" onclick="manualRefresh()" title="Refresh">
                 <i class="bi bi-arrow-clockwise" id="refreshIcon"></i>
               </button>
-              <button class="w-dm-btn" onclick="toggleDark()" title="Toggle dark mode">
-                <i class="bi bi-moon-fill" id="dmIcon"></i>
-              </button>
             </div>
           </div>
           <div class="w-search">
@@ -87,10 +84,6 @@ if (empty($_SESSION['user_id'])) {
   <script src="assets/js/app.js"></script>
   <script>
     initTheme();
-    (function () {
-      const ic = document.getElementById('dmIcon');
-      if (ic && document.body.classList.contains('dark')) ic.className = 'bi bi-sun-fill';
-    })();
 
     let activeFilter = 'all';
     let searchQuery = '';

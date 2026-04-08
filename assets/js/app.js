@@ -1,25 +1,9 @@
-(function () {
-  if (localStorage.getItem("he_dark") === "1")
-    document.body.classList.add("dark");
-})();
-
 function initTheme() {
-  if (localStorage.getItem("he_dark") === "1") {
-    document.body.classList.add("dark");
-  }
+  // Dark mode removed across the system; keep light mode only.
 }
 
 function toggleDark() {
-  document.body.classList.toggle("dark");
-  localStorage.setItem(
-    "he_dark",
-    document.body.classList.contains("dark") ? "1" : "0",
-  );
-  const ic = document.getElementById("dmIcon");
-  if (ic)
-    ic.className = document.body.classList.contains("dark")
-      ? "bi bi-sun-fill"
-      : "bi bi-moon-fill";
+  // Dark mode removed across the system; keep function as a no-op for compatibility.
 }
 
 const ICONS = {
