@@ -53,26 +53,36 @@ function getProviderDocumentStatus($conn, $provider_id) {
         'total_submitted' => 0
     ];
 
-    foreach ($reqs['required'] as $doc_type => $info) {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM provider_verification_images WHERE provider_id = ? AND image_type = ?");
-        $stmt->bind_param('is', $provider_id, $doc_type);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
+    // Map document type to DB column
+    $column_map = [
+        'valid_id' => 'valid_id',
+        'barangay_clearance' => 'barangay_clearance',
+        'selfie' => 'selfie_verification',
+        'proof_of_address' => 'proof_of_address',
+        'tools_kits' => 'tools_&_kits'
+    ];
 
-        $is_submitted = $result['count'] > 0;
+    // Get provider data
+    $stmt = $conn->prepare("SELECT valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits` FROM service_providers WHERE provider_id = ?");
+    $stmt->bind_param('i', $provider_id);
+    $stmt->execute();
+    $provider_data = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$provider_data) {
+        return $status;
+    }
+
+    foreach ($reqs['required'] as $doc_type => $info) {
+        $db_column = $column_map[$doc_type] ?? null;
+        $is_submitted = $db_column && !empty($provider_data[$db_column]);
         $status['required'][$doc_type] = $is_submitted;
         if ($is_submitted) $status['total_submitted']++;
     }
 
     foreach ($reqs['optional'] as $doc_type => $info) {
-        $stmt = $conn->prepare("SELECT COUNT(*) as count FROM provider_verification_images WHERE provider_id = ? AND image_type = ?");
-        $stmt->bind_param('is', $provider_id, $doc_type);
-        $stmt->execute();
-        $result = $stmt->get_result()->fetch_assoc();
-        $stmt->close();
-
-        $is_submitted = $result['count'] > 0;
+        $db_column = $column_map[$doc_type] ?? null;
+        $is_submitted = $db_column && !empty($provider_data[$db_column]);
         $status['optional'][$doc_type] = $is_submitted;
         if ($is_submitted) $status['total_submitted']++;
     }

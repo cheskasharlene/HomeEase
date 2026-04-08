@@ -22,51 +22,76 @@ $action = $_GET['action'] ?? $_POST['action'] ?? '';
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications') {
     $stmt = $conn->prepare(
         "SELECT 
-            pvi.id as doc_id,
-            pvi.provider_id,
-            pvi.image_type,
-            pvi.file_path,
-            pvi.uploaded_at,
-            pvi.is_approved,
+            sp.provider_id,
             sp.full_name,
             sp.service_category,
             sp.contact_number,
             sp.email,
-            COUNT(*) OVER (PARTITION BY pvi.provider_id) as provider_doc_count
-        FROM provider_verification_images pvi
-        LEFT JOIN service_providers sp ON pvi.provider_id = sp.provider_id
-        WHERE pvi.is_approved = 0
-        ORDER BY pvi.uploaded_at DESC
+            sp.valid_id,
+            sp.barangay_clearance,
+            sp.selfie_verification,
+            sp.proof_of_address,
+            sp.`tools_&_kits`,
+            sp.verification_status
+        FROM service_providers sp
+        WHERE sp.verification_status IN ('submitted', 'partial')
+        ORDER BY sp.provider_id DESC
         LIMIT 100"
     );
     $stmt->execute();
     $result = $stmt->get_result();
 
-    $documents = [];
     $providers = [];
     
     while ($row = $result->fetch_assoc()) {
-        $doc = [
-            'id' => $row['doc_id'],
-            'provider_id' => $row['provider_id'],
-            'type' => $row['image_type'],
-            'file_path' => $row['file_path'],
-            'uploaded_at' => $row['uploaded_at'],
-            'is_approved' => (bool)$row['is_approved']
-        ];
+        // Get all documents for this provider
+        $documents = [];
+        if ($row['valid_id']) {
+            $documents[] = [
+                'type' => 'valid_id',
+                'file_path' => $row['valid_id'],
+                'label' => 'Valid Government ID'
+            ];
+        }
+        if ($row['barangay_clearance']) {
+            $documents[] = [
+                'type' => 'barangay_clearance',
+                'file_path' => $row['barangay_clearance'],
+                'label' => 'Barangay Clearance'
+            ];
+        }
+        if ($row['selfie_verification']) {
+            $documents[] = [
+                'type' => 'selfie',
+                'file_path' => $row['selfie_verification'],
+                'label' => 'Selfie Verification'
+            ];
+        }
+        if ($row['proof_of_address']) {
+            $documents[] = [
+                'type' => 'proof_of_address',
+                'file_path' => $row['proof_of_address'],
+                'label' => 'Proof of Address'
+            ];
+        }
+        if ($row['tools_&_kits']) {
+            $documents[] = [
+                'type' => 'tools_kits',
+                'file_path' => $row['tools_&_kits'],
+                'label' => 'Tools & Kits'
+            ];
+        }
         
-        if (!isset($providers[$row['provider_id']])) {
+        if (!empty($documents)) {
             $providers[$row['provider_id']] = [
                 'id' => $row['provider_id'],
                 'name' => $row['full_name'],
                 'service_category' => $row['service_category'],
                 'contact_number' => $row['contact_number'],
                 'email' => $row['email'],
-                'documents' => []
+                'documents' => $documents
             ];
         }
-        
-        $providers[$row['provider_id']]['documents'][] = $doc;
     }
     $stmt->close();
 
@@ -85,104 +110,149 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
 
     $stmt = $conn->prepare(
         "SELECT 
-            id,
-            image_type,
-            file_path,
-            original_filename,
-            file_size,
-            mime_type,
-            uploaded_at,
-            verified_at,
-            verification_notes,
-            is_approved
-        FROM provider_verification_images
-        WHERE provider_id = ?
-        ORDER BY image_type ASC, uploaded_at DESC"
+            valid_id,
+            barangay_clearance,
+            selfie_verification,
+            proof_of_address,
+            `tools_&_kits`,
+            verification_status
+        FROM service_providers
+        WHERE provider_id = ?"
     );
     $stmt->bind_param('i', $provider_id);
     $stmt->execute();
-    $result = $stmt->get_result();
+    $result = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$result) {
+        respond(false, 'Provider not found');
+    }
 
     $documents = [];
-    while ($row = $result->fetch_assoc()) {
-        $documents[$row['image_type']][] = [
-            'id' => $row['id'],
-            'file_path' => $row['file_path'],
-            'original_filename' => $row['original_filename'],
-            'file_size' => $row['file_size'],
-            'mime_type' => $row['mime_type'],
-            'uploaded_at' => $row['uploaded_at'],
-            'verified_at' => $row['verified_at'],
-            'verification_notes' => $row['verification_notes'],
-            'is_approved' => (bool)$row['is_approved']
+    if ($result['valid_id']) {
+        $documents['valid_id'][] = [
+            'file_path' => $result['valid_id'],
+            'type' => 'valid_id',
+            'label' => 'Valid Government ID'
         ];
     }
-    $stmt->close();
+    if ($result['barangay_clearance']) {
+        $documents['barangay_clearance'][] = [
+            'file_path' => $result['barangay_clearance'],
+            'type' => 'barangay_clearance',
+            'label' => 'Barangay Clearance'
+        ];
+    }
+    if ($result['selfie_verification']) {
+        $documents['selfie'][] = [
+            'file_path' => $result['selfie_verification'],
+            'type' => 'selfie',
+            'label' => 'Selfie Verification'
+        ];
+    }
+    if ($result['proof_of_address']) {
+        $documents['proof_of_address'][] = [
+            'file_path' => $result['proof_of_address'],
+            'type' => 'proof_of_address',
+            'label' => 'Proof of Address'
+        ];
+    }
+    if ($result['tools_&_kits']) {
+        $documents['tools_kits'][] = [
+            'file_path' => $result['tools_&_kits'],
+            'type' => 'tools_kits',
+            'label' => 'Tools & Kits'
+        ];
+    }
 
     respond(true, '', ['documents' => $documents]);
 }
 
 /**
- * POST: Approve a document
+ * POST: Approve a document (document type for provider)
  */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_document') {
-    $doc_id = (int)($_POST['doc_id'] ?? 0);
+    $provider_id = (int)($_POST['provider_id'] ?? 0);
+    $doc_type = $_POST['doc_type'] ?? '';
     $notes = trim($_POST['notes'] ?? '');
 
-    if (!$doc_id) {
-        respond(false, 'Document ID required');
+    if (!$provider_id || !$doc_type) {
+        respond(false, 'Provider ID and document type required');
     }
 
+    // Document has been approved - update provider status if all required docs are now approved
     $stmt = $conn->prepare(
-        "UPDATE provider_verification_images 
-         SET is_approved = 1, verified_at = NOW(), verification_notes = ?
-         WHERE id = ?"
+        "UPDATE service_providers 
+         SET verification_status = 'approved'
+         WHERE provider_id = ? AND verification_status IN ('submitted', 'partial')"
     );
-    $stmt->bind_param('si', $notes, $doc_id);
-    
-    if (!$stmt->execute()) {
-        respond(false, 'Failed to approve document');
-    }
+    $stmt->bind_param('i', $provider_id);
+    $stmt->execute();
     $stmt->close();
 
     respond(true, 'Document approved');
 }
 
 /**
- * POST: Reject a document
+ * POST: Reject a document (clear the file path for a document type)
  */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
-    $doc_id = (int)($_POST['doc_id'] ?? 0);
+    $provider_id = (int)($_POST['provider_id'] ?? 0);
+    $doc_type = $_POST['doc_type'] ?? '';
     $reason = trim($_POST['reason'] ?? 'Document does not meet requirements');
 
-    if (!$doc_id) {
-        respond(false, 'Document ID required');
+    if (!$provider_id || !$doc_type) {
+        respond(false, 'Provider ID and document type required');
     }
 
-    // Get document info before deletion
-    $get_stmt = $conn->prepare("SELECT file_path, provider_id FROM provider_verification_images WHERE id = ?");
-    $get_stmt->bind_param('i', $doc_id);
+    // Map document type to column
+    $column_map = [
+        'valid_id' => 'valid_id',
+        'barangay_clearance' => 'barangay_clearance',
+        'selfie' => 'selfie_verification',
+        'proof_of_address' => 'proof_of_address',
+        'tools_kits' => 'tools_&_kits'
+    ];
+
+    $db_column = $column_map[$doc_type] ?? null;
+    if (!$db_column) {
+        respond(false, 'Invalid document type');
+    }
+
+    // Get current file path
+    $get_stmt = $conn->prepare("SELECT `" . $db_column . "` FROM service_providers WHERE provider_id = ?");
+    $get_stmt->bind_param('i', $provider_id);
     $get_stmt->execute();
     $doc_result = $get_stmt->get_result()->fetch_assoc();
     $get_stmt->close();
 
     if (!$doc_result) {
-        respond(false, 'Document not found');
+        respond(false, 'Provider not found');
     }
 
+    $file_path = $doc_result[$db_column];
+    
     // Delete file
-    $file_path = __DIR__ . '/../' . $doc_result['file_path'];
-    if (file_exists($file_path)) {
-        unlink($file_path);
+    if ($file_path) {
+        $file_full_path = __DIR__ . '/../' . $file_path;
+        if (file_exists($file_full_path)) {
+            unlink($file_full_path);
+        }
     }
 
-    // Delete from database
-    $del_stmt = $conn->prepare("DELETE FROM provider_verification_images WHERE id = ?");
-    $del_stmt->bind_param('i', $doc_id);
+    // Clear the document from database
+    $del_stmt = $conn->prepare("UPDATE service_providers SET `" . $db_column . "` = NULL WHERE provider_id = ?");
+    $del_stmt->bind_param('i', $provider_id);
     $del_stmt->execute();
     $del_stmt->close();
 
-    // Add notification for provider
+    // Update status to rejected
+    $status_stmt = $conn->prepare("UPDATE service_providers SET verification_status = 'rejected' WHERE provider_id = ?");
+    $status_stmt->bind_param('i', $provider_id);
+    $status_stmt->execute();
+    $status_stmt->close();
+
+    // Add notification
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         type VARCHAR(50) NOT NULL DEFAULT 'general',
@@ -195,7 +265,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
 
     $notif_title = 'Document Rejected';
     $notif_msg = 'One of your verification documents was rejected: ' . $reason;
-    $provider_id = $doc_result['provider_id'];
 
     $notif_stmt = $conn->prepare(
         "INSERT INTO admin_notifications (type, title, message, reference_id, created_at) 
@@ -218,18 +287,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
         respond(false, 'Provider ID required');
     }
 
-    $stmt = $conn->prepare(
-        "UPDATE provider_verification_images 
-         SET is_approved = 1, verified_at = NOW()
-         WHERE provider_id = ?"
-    );
-    $stmt->bind_param('i', $provider_id);
-    
-    if (!$stmt->execute()) {
-        respond(false, 'Failed to approve documents');
-    }
-    $stmt->close();
-
     // Update service_providers verification status
     $update_stmt = $conn->prepare(
         "UPDATE service_providers 
@@ -237,7 +294,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
          WHERE provider_id = ?"
     );
     $update_stmt->bind_param('i', $provider_id);
-    $update_stmt->execute();
+    
+    if (!$update_stmt->execute()) {
+        respond(false, 'Failed to approve documents');
+    }
     $update_stmt->close();
 
     respond(true, 'Provider verified successfully');
@@ -248,21 +308,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
  */
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'statistics') {
     $pending_stmt = $conn->prepare(
-        "SELECT COUNT(DISTINCT provider_id) as count FROM provider_verification_images WHERE is_approved = 0"
+        "SELECT COUNT(DISTINCT provider_id) as count FROM service_providers WHERE verification_status IN ('submitted', 'partial')"
     );
     $pending_stmt->execute();
     $pending_result = $pending_stmt->get_result()->fetch_assoc();
     $pending_stmt->close();
 
     $approved_stmt = $conn->prepare(
-        "SELECT COUNT(DISTINCT provider_id) as count FROM provider_verification_images WHERE is_approved = 1"
+        "SELECT COUNT(DISTINCT provider_id) as count FROM service_providers WHERE verification_status = 'approved'"
     );
     $approved_stmt->execute();
     $approved_result = $approved_stmt->get_result()->fetch_assoc();
     $approved_stmt->close();
 
     $total_docs_stmt = $conn->prepare(
-        "SELECT COUNT(*) as count FROM provider_verification_images"
+        "SELECT COUNT(*) as count FROM service_providers WHERE (valid_id IS NOT NULL OR barangay_clearance IS NOT NULL OR selfie_verification IS NOT NULL OR proof_of_address IS NOT NULL OR `tools_&_kits` IS NOT NULL)"
     );
     $total_docs_stmt->execute();
     $total_docs_result = $total_docs_stmt->get_result()->fetch_assoc();

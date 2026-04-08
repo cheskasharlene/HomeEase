@@ -1497,11 +1497,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('wkRating').textContent = parseFloat(w.rating || 0).toFixed(1);
         document.getElementById('wkJobs').textContent = w.jobs_done || 0;
         let docHtml = '';
-        if (w.id_picture) docHtml += `<div><a href="${w.id_picture}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View ID Picture</a></div>`;
+        if (w.valid_id) docHtml += `<div><a href="${w.valid_id}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Valid ID</a></div>`;
         if (w.selfie_verification) docHtml += `<div><a href="${w.selfie_verification}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Selfie Verification</a></div>`;
         if (w.proof_of_address) docHtml += `<div><a href="${w.proof_of_address}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Proof of Address</a></div>`;
-        if (w.certificates) docHtml += `<div><a href="${w.certificates}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Certificates</a></div>`;
-        if (w.proof_of_experience) docHtml += `<div><a href="${w.proof_of_experience}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Proof of Experience</a></div>`;
+        if (w.barangay_clearance) docHtml += `<div><a href="${w.barangay_clearance}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Barangay Clearance</a></div>`;
+        if (w['tools_&_kits']) docHtml += `<div><a href="${w['tools_&_kits']}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Tools & Kits</a></div>`;
         if (!docHtml) docHtml = '<span style="color:var(--txt-muted);">No documents uploaded.</span>';
         document.getElementById('wkVdocs').innerHTML = docHtml;
       }

@@ -179,19 +179,16 @@ if ($section === 'workers') {
         }
 
         if ($verificationFilter === 'pending') {
-            $where[] = "(COALESCE(id_picture,'') <> '' OR COALESCE(selfie_verification,'') <> '' OR COALESCE(proof_of_address,'') <> '' OR COALESCE(certificates,'') <> '' OR COALESCE(proof_of_experience,'') <> '')";
-            if ($hasVerificationStatus) {
-                $where[] = "(verification_status = 'pending' OR verification_status = 'pending_review')";
-            } else {
-                $where[] = "(is_verified = 0)";
-            }
+            // Show workers with verification_status = 'pending' or 'submitted'
+            // These are applications waiting for admin review
+            $where[] = "(verification_status = 'pending' OR verification_status = 'submitted' OR verification_status = 'pending_review' OR COALESCE(valid_id,'') <> '')";
         }
         
         $whereClause = count($where) ? "WHERE " . implode(" AND ", $where) : "";
         $verificationSelect = $hasVerificationStatus
             ? "CASE WHEN verification_status='pending_review' THEN 'pending' WHEN verification_status IS NULL OR verification_status='' THEN CASE WHEN is_verified=1 THEN 'verified' ELSE 'pending' END ELSE verification_status END AS verification_status"
             : "CASE WHEN is_verified=1 THEN 'verified' ELSE 'pending' END AS verification_status";
-        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, availability_status AS availability, status, rating, jobs_done, is_verified, $verificationSelect, id_picture, selfie_verification, proof_of_address, certificates, proof_of_experience FROM service_providers $whereClause ORDER BY provider_id DESC");
+        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, availability_status AS availability, status, rating, jobs_done, is_verified, $verificationSelect, valid_id, selfie_verification, proof_of_address, barangay_clearance, `tools_&_kits` FROM service_providers $whereClause ORDER BY provider_id DESC");
         
         if (!$stmt) respond(false, $conn->error);
         if ($params) $stmt->bind_param($types, ...$params);
@@ -298,18 +295,11 @@ if ($section === 'services') {
         } else {
             if (!$id) respond(false, 'Service ID required.');
             $stmt = $conn->prepare("UPDATE services SET name=?,icon=?,description=?,hourly_rate=?,flat_rate=?,min_hours=?,pricing_type=?,active=? WHERE id=?");
-            $stmt->bind_param("sssdddsi i", $name, $icon, $desc, $hourly, $flat, $min_h, $ptype, $active, $id);
+            $stmt->bind_param("sssdddsii", $name, $icon, $desc, $hourly, $flat, $min_h, $ptype, $active, $id);
+            $stmt->execute();
+            $ok = $stmt->affected_rows > 0;
             $stmt->close();
-            $stmt = $conn->prepare("UPDATE services SET name=?,icon=?,description=?,hourly_rate=?,flat_rate=?,min_hours=?,pricing_type=?,active=? WHERE id=?");
-            $stmt->bind_param("sssddisi", $name, $icon, $desc, $hourly, $flat, $min_h, $ptype, $active);
-            $stmt->close();
-            $conn->query("UPDATE services SET name='".mysqli_real_escape_string($conn,$name)."',
-                icon='".mysqli_real_escape_string($conn,$icon)."',
-                description='".mysqli_real_escape_string($conn,$desc)."',
-                hourly_rate=$hourly, flat_rate=$flat, min_hours=$min_h,
-                pricing_type='".mysqli_real_escape_string($conn,$ptype)."',
-                active=$active WHERE id=$id");
-            respond(true, 'Service updated.');
+            respond($ok, $ok ? 'Service updated.' : 'Failed.');
         }
     }
 

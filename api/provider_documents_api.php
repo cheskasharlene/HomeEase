@@ -53,28 +53,9 @@ $DOCUMENT_TYPES = [
 ];
 
 /**
- * Initialize database tables if they don't exist
+ * Initialize database - ensure verification columns exist in service_providers
  */
 function initializeTables($conn) {
-    // Create provider_verification_images table
-    $conn->query("CREATE TABLE IF NOT EXISTS provider_verification_images (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        provider_id INT NOT NULL,
-        image_type ENUM('valid_id', 'barangay_clearance', 'selfie', 'proof_of_address', 'tools_kits') NOT NULL,
-        file_path VARCHAR(500) NOT NULL,
-        original_filename VARCHAR(255),
-        file_size INT,
-        mime_type VARCHAR(50),
-        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        verified_at TIMESTAMP NULL,
-        verification_notes TEXT,
-        is_approved TINYINT(1) DEFAULT 0,
-        FOREIGN KEY (provider_id) REFERENCES service_providers(provider_id) ON DELETE CASCADE,
-        INDEX idx_provider (provider_id),
-        INDEX idx_type (image_type),
-        INDEX idx_uploaded (uploaded_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
     // Add verification fields to service_providers if needed
     $columns = [];
     $result = $conn->query("SHOW COLUMNS FROM service_providers");
@@ -84,6 +65,7 @@ function initializeTables($conn) {
         }
     }
 
+    // Add verification status fields
     if (!in_array('verification_status', $columns)) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN verification_status VARCHAR(50) DEFAULT 'not_submitted'");
     }
@@ -92,6 +74,23 @@ function initializeTables($conn) {
     }
     if (!in_array('verification_approved_at', $columns)) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN verification_approved_at TIMESTAMP NULL");
+    }
+
+    // Add document columns if they don't exist
+    if (!in_array('valid_id', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN valid_id VARCHAR(500)");
+    }
+    if (!in_array('selfie_verification', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN selfie_verification VARCHAR(500)");
+    }
+    if (!in_array('proof_of_address', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN proof_of_address VARCHAR(500)");
+    }
+    if (!in_array('barangay_clearance', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN barangay_clearance VARCHAR(500)");
+    }
+    if (!in_array('tools_&_kits', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN `tools_&_kits` VARCHAR(500)");
     }
 }
 
@@ -242,28 +241,38 @@ function uploadDocument($file, $document_type, $provider_id, &$file_path) {
 }
 
 /**
- * Store document info in database
+ * Map document type to database column name
+ */
+function getColumnNameForDocType($doc_type) {
+    $mapping = [
+        'valid_id' => 'valid_id',
+        'barangay_clearance' => 'barangay_clearance',
+        'selfie' => 'selfie_verification',
+        'proof_of_address' => 'proof_of_address',
+        'tools_kits' => 'tools_&_kits'
+    ];
+    return $mapping[$doc_type] ?? null;
+}
+
+/**
+ * Store document info in database (direct to service_providers)
  */
 function storeDocumentInfo($conn, $provider_id, $document_type, $file_path, $original_filename, $file_size, $mime_type) {
-    $stmt = $conn->prepare(
-        "INSERT INTO provider_verification_images 
-        (provider_id, image_type, file_path, original_filename, file_size, mime_type, uploaded_at) 
-        VALUES (?, ?, ?, ?, ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE 
-            file_path = VALUES(file_path),
-            original_filename = VALUES(original_filename),
-            file_size = VALUES(file_size),
-            mime_type = VALUES(mime_type),
-            uploaded_at = NOW(),
-            is_approved = 0,
-            verified_at = NULL"
-    );
+    $column_name = getColumnNameForDocType($document_type);
+    
+    if (!$column_name) {
+        return ['success' => false, 'error' => 'Invalid document type'];
+    }
+
+    // Use UPDATE to set the column directly for this provider
+    $query = "UPDATE service_providers SET `" . $column_name . "` = ? WHERE provider_id = ?";
+    $stmt = $conn->prepare($query);
 
     if (!$stmt) {
         return ['success' => false, 'error' => 'Database error: ' . $conn->error];
     }
 
-    $stmt->bind_param('isssss', $provider_id, $document_type, $file_path, $original_filename, $file_size, $mime_type);
+    $stmt->bind_param('si', $file_path, $provider_id);
     
     if (!$stmt->execute()) {
         return ['success' => false, 'error' => 'Failed to store document info'];
@@ -279,8 +288,8 @@ function storeDocumentInfo($conn, $provider_id, $document_type, $file_path, $ori
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     initializeTables($conn);
 
-    $required_docs = ['valid_id', 'barangay_clearance', 'selfie', 'proof_of_address'];
-    $optional_docs = ['tools_kits'];
+    $required_docs = ['valid_id', 'selfie', 'proof_of_address', 'tools_kits'];
+    $optional_docs = ['barangay_clearance'];
     
     $uploaded_docs = [];
     $errors = [];
@@ -351,8 +360,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
         respond(false, 'Upload failed. ' . implode(' | ', $errors));
     }
 
-    // Update provider verification status
-    $verification_status = count($uploaded_docs) >= count($required_docs) ? 'submitted' : 'partial';
+    // Update provider verification status to 'pending' so admin can see it in "For Verification"
+    $verification_status = count($uploaded_docs) >= count($required_docs) ? 'pending' : 'partial';
     $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW() WHERE provider_id = ?");
     $stmt->bind_param('si', $verification_status, $provider_id);
     $stmt->execute();
@@ -403,61 +412,72 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
     initializeTables($conn);
 
     $stmt = $conn->prepare(
-        "SELECT id, image_type, file_path, original_filename, file_size, mime_type, uploaded_at, is_approved, verified_at, verification_notes 
-         FROM provider_verification_images 
-         WHERE provider_id = ? 
-         ORDER BY uploaded_at DESC"
+        "SELECT valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits`, 
+                verification_status, verification_submitted_at, verification_approved_at
+         FROM service_providers 
+         WHERE provider_id = ?"
     );
     $stmt->bind_param('i', $provider_id);
     $stmt->execute();
-    $result = $stmt->get_result();
-
-    $documents = [];
-    while ($row = $result->fetch_assoc()) {
-        $documents[$row['image_type']][] = $row;
-    }
+    $result = $stmt->get_result()->fetch_assoc();
     $stmt->close();
+
+    if (!$result) {
+        respond(false, 'Provider not found');
+    }
+
+    // Convert to document type structure
+    $documents = [];
+    if ($result['valid_id']) $documents['valid_id'] = ['file_path' => $result['valid_id'], 'type' => 'valid_id'];
+    if ($result['barangay_clearance']) $documents['barangay_clearance'] = ['file_path' => $result['barangay_clearance'], 'type' => 'barangay_clearance'];
+    if ($result['selfie_verification']) $documents['selfie'] = ['file_path' => $result['selfie_verification'], 'type' => 'selfie'];
+    if ($result['proof_of_address']) $documents['proof_of_address'] = ['file_path' => $result['proof_of_address'], 'type' => 'proof_of_address'];
+    if ($result['tools_&_kits']) $documents['tools_kits'] = ['file_path' => $result['tools_&_kits'], 'type' => 'tools_kits'];
 
     respond(true, '', ['documents' => $documents]);
 }
 
 /**
- * POST: Delete a document (admin only or own document)
+ * POST: Delete a document (clear the file path for a document type)
  */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_document') {
     initializeTables($conn);
 
-    $doc_id = (int)($_POST['doc_id'] ?? 0);
+    $doc_type = $_POST['doc_type'] ?? '';
     
-    if (!$doc_id) {
-        respond(false, 'Invalid document ID');
+    if (!$doc_type) {
+        respond(false, 'Invalid document type');
     }
 
-    // Verify ownership
-    $stmt = $conn->prepare("SELECT provider_id, file_path FROM provider_verification_images WHERE id = ?");
-    $stmt->bind_param('i', $doc_id);
-    $stmt->execute();
-    $doc_result = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
+    $column_name = getColumnNameForDocType($doc_type);
+    if (!$column_name) {
+        respond(false, 'Invalid document type');
+    }
+
+    // Get current file path to delete the file
+    $get_stmt = $conn->prepare("SELECT `" . $column_name . "` FROM service_providers WHERE provider_id = ?");
+    $get_stmt->bind_param('i', $provider_id);
+    $get_stmt->execute();
+    $doc_result = $get_stmt->get_result()->fetch_assoc();
+    $get_stmt->close();
 
     if (!$doc_result) {
-        respond(false, 'Document not found');
+        respond(false, 'Provider not found');
     }
 
-    if ($doc_result['provider_id'] != $provider_id) {
-        http_response_code(403);
-        respond(false, 'Unauthorized');
+    $file_path = $doc_result[$column_name];
+    
+    // Delete file from filesystem
+    if ($file_path) {
+        $file_full_path = __DIR__ . '/../' . $file_path;
+        if (file_exists($file_full_path)) {
+            unlink($file_full_path);
+        }
     }
 
-    // Delete file
-    $file_full_path = __DIR__ . '/../' . $doc_result['file_path'];
-    if (file_exists($file_full_path)) {
-        unlink($file_full_path);
-    }
-
-    // Delete database record
-    $delete_stmt = $conn->prepare("DELETE FROM provider_verification_images WHERE id = ?");
-    $delete_stmt->bind_param('i', $doc_id);
+    // Clear the database column
+    $delete_stmt = $conn->prepare("UPDATE service_providers SET `" . $column_name . "` = NULL WHERE provider_id = ?");
+    $delete_stmt->bind_param('i', $provider_id);
     $delete_stmt->execute();
     $delete_stmt->close();
 
@@ -471,7 +491,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check_status') {
     initializeTables($conn);
 
     $stmt = $conn->prepare(
-        "SELECT verification_status, verification_submitted_at, verification_approved_at 
+        "SELECT verification_status, verification_submitted_at, verification_approved_at,
+                IF(valid_id IS NOT NULL, 1, 0) as has_valid_id,
+                IF(barangay_clearance IS NOT NULL, 1, 0) as has_barangay_clearance,
+                IF(selfie_verification IS NOT NULL, 1, 0) as has_selfie,
+                IF(proof_of_address IS NOT NULL, 1, 0) as has_proof_of_address,
+                IF(`tools_&_kits` IS NOT NULL, 1, 0) as has_tools_kits
          FROM service_providers WHERE provider_id = ?"
     );
     $stmt->bind_param('i', $provider_id);
@@ -480,17 +505,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check_status') {
     $stmt->close();
 
     // Count documents
-    $count_stmt = $conn->prepare("SELECT COUNT(*) as total FROM provider_verification_images WHERE provider_id = ?");
-    $count_stmt->bind_param('i', $provider_id);
-    $count_stmt->execute();
-    $count_result = $count_stmt->get_result()->fetch_assoc();
-    $count_stmt->close();
+    $document_count = 0;
+    if ($result['has_valid_id']) $document_count++;
+    if ($result['has_barangay_clearance']) $document_count++;
+    if ($result['has_selfie']) $document_count++;
+    if ($result['has_proof_of_address']) $document_count++;
+    if ($result['has_tools_kits']) $document_count++;
 
     respond(true, '', [
         'status' => $result['verification_status'] ?? 'not_submitted',
         'submitted_at' => $result['verification_submitted_at'],
         'approved_at' => $result['verification_approved_at'],
-        'document_count' => $count_result['total'] ?? 0
+        'document_count' => $document_count
     ]);
 }
 

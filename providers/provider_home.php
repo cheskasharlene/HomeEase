@@ -118,38 +118,61 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                 <li><i class="bi bi-check-circle-fill"></i> Selected Service</li>
               </ul>
               <div class="upload-grid" style="margin-top:12px;">
-                <label class="upload-slot" for="uploadIdDoc">
-                  <input type="file" id="uploadIdDoc" accept="image/*,application/pdf" />
-                  <i class="bi bi-card-image"></i>
-                  <div>
-                    <span>Valid Government ID</span>
-                    <small id="fileNameUploadIdDoc">Tap to upload</small>
-                  </div>
-                </label>
-                <label class="upload-slot" for="uploadSelfieDoc">
-                  <input type="file" id="uploadSelfieDoc" accept="image/*" />
-                  <i class="bi bi-person-bounding-box"></i>
-                  <div>
-                    <span>Selfie Verification</span>
-                    <small id="fileNameUploadSelfieDoc">Tap to upload</small>
-                  </div>
-                </label>
-                <label class="upload-slot" for="uploadAddressDoc">
-                  <input type="file" id="uploadAddressDoc" accept="image/*,application/pdf" />
-                  <i class="bi bi-house-check-fill"></i>
-                  <div>
-                    <span>Proof of Address</span>
-                    <small id="fileNameUploadAddressDoc">Tap to upload</small>
-                  </div>
-                </label>
-                <label class="upload-slot" for="uploadCertification">
-                  <input type="file" id="uploadCertification" accept="image/*,application/pdf" />
-                  <i class="bi bi-award-fill"></i>
-                  <div>
-                    <span id="serviceCertLabel">Barangay Clearance (optional)</span>
-                    <small id="fileNameUploadCertification">Tap to upload</small>
-                  </div>
-                </label>
+                <!-- Valid Government ID (Required) -->
+                <div class="upload-wrapper" id="wrapUploadIdDoc">
+                  <label class="upload-slot" for="uploadIdDoc">
+                    <input type="file" id="uploadIdDoc" accept="image/*,application/pdf" />
+                    <i class="bi bi-card-image"></i>
+                    <div>
+                      <span>Valid Government ID <span class="req-asterisk">*</span></span>
+                      <small id="fileNameUploadIdDoc">Tap to upload</small>
+                    </div>
+                  </label>
+                  <div class="upload-feedback" id="feedbackUploadIdDoc"></div>
+                  <div class="upload-preview" id="previewUploadIdDoc"></div>
+                </div>
+
+                <!-- Selfie Verification (Required) -->
+                <div class="upload-wrapper" id="wrapUploadSelfieDoc">
+                  <label class="upload-slot" for="uploadSelfieDoc">
+                    <input type="file" id="uploadSelfieDoc" accept="image/*" />
+                    <i class="bi bi-person-bounding-box"></i>
+                    <div>
+                      <span>Selfie Verification <span class="req-asterisk">*</span></span>
+                      <small id="fileNameUploadSelfieDoc">Tap to upload</small>
+                    </div>
+                  </label>
+                  <div class="upload-feedback" id="feedbackUploadSelfieDoc"></div>
+                  <div class="upload-preview" id="previewUploadSelfieDoc"></div>
+                </div>
+
+                <!-- Proof of Address (Required) -->
+                <div class="upload-wrapper" id="wrapUploadAddressDoc">
+                  <label class="upload-slot" for="uploadAddressDoc">
+                    <input type="file" id="uploadAddressDoc" accept="image/*,application/pdf" />
+                    <i class="bi bi-house-check-fill"></i>
+                    <div>
+                      <span>Proof of Address <span class="req-asterisk">*</span></span>
+                      <small id="fileNameUploadAddressDoc">Tap to upload</small>
+                    </div>
+                  </label>
+                  <div class="upload-feedback" id="feedbackUploadAddressDoc"></div>
+                  <div class="upload-preview" id="previewUploadAddressDoc"></div>
+                </div>
+
+                <!-- Barangay Clearance (Optional) -->
+                <div class="upload-wrapper" id="wrapUploadCertification">
+                  <label class="upload-slot" for="uploadCertification">
+                    <input type="file" id="uploadCertification" accept="image/*,application/pdf" />
+                    <i class="bi bi-award-fill"></i>
+                    <div>
+                      <span id="serviceCertLabel">Barangay Clearance</span>
+                      <small id="fileNameUploadCertification">Tap to upload (optional)</small>
+                    </div>
+                  </label>
+                  <div class="upload-feedback" id="feedbackUploadCertification"></div>
+                  <div class="upload-preview" id="previewUploadCertification"></div>
+                </div>
               </div>
               <div class="profile-grid">
                 <div>
@@ -173,20 +196,23 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
               <div class="mini-section-title">Tools & Kits</div>
               <div class="upload-grid">
-                <label class="upload-slot" for="uploadServiceProof">
-                  <input type="file" id="uploadServiceProof" accept="image/*,application/pdf" />
-                  <i class="bi bi-images"></i>
-                  <div>
-                    <span id="serviceProofLabel">Tools & Kits</span>
-                    <small id="fileNameUploadServiceProof">Tap to upload</small>
-                  </div>
-                </label>
-                <!-- Certification upload moved above under Proof of Address as Barangay Clearance (optional) -->
+                <div class="upload-wrapper" id="wrapUploadServiceProof">
+                  <label class="upload-slot" for="uploadServiceProof">
+                    <input type="file" id="uploadServiceProof" accept="image/*,application/pdf" />
+                    <i class="bi bi-images"></i>
+                    <div>
+                      <span id="serviceProofLabel">Tools & Kits <span class="req-asterisk">*</span></span>
+                      <small id="fileNameUploadServiceProof">Tap to upload</small>
+                    </div>
+                  </label>
+                  <div class="upload-feedback" id="feedbackUploadServiceProof"></div>
+                  <div class="upload-preview" id="previewUploadServiceProof"></div>
+                </div>
               </div>
 
-              <div class="mini-section-title">Experience</div>
+              <div class="mini-section-title">Working Experience <span class="req-asterisk">*</span></div>
               <textarea id="experienceDescription" class="vtextarea" rows="4" placeholder="Describe your experience, work samples, and years in this service."></textarea>
-              <!-- Removed empty upload slot under Experience section -->
+              <div class="validation-message error" id="experienceValidation" style="display:none;">Experience description is required</div>
             </div>
 
             <div class="verify-card">
@@ -348,7 +374,16 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
   <script src="../assets/js/app.js"></script>
   <script>
-    initTheme();
+    // Call initTheme if it exists, otherwise delay and retry
+    if (typeof initTheme === 'function') {
+      initTheme();
+    } else {
+      setTimeout(() => {
+        if (typeof initTheme === 'function') {
+          initTheme();
+        }
+      }, 100);
+    }
 
     function showNotice(message, type = 'error') {
       const old = document.getElementById('homeToast');
@@ -397,20 +432,127 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     // Service selection and tools/skills logic removed
 
-    function bindFileName(inputId, smallId) {
-      const input = document.getElementById(inputId);
-      const small = document.getElementById(smallId);
-      if (!input || !small) return;
-      input.addEventListener('change', function () {
-        small.textContent = this.files && this.files[0] ? this.files[0].name : 'Tap to upload';
+    /**
+     * Enhanced upload field handler with preview and success indicators
+     */
+    function setupUploadFields() {
+      // Define all upload fields with their corresponding element IDs
+      const uploadFields = [
+        { inputId: 'uploadIdDoc', isRequired: true },
+        { inputId: 'uploadSelfieDoc', isRequired: true },
+        { inputId: 'uploadAddressDoc', isRequired: true },
+        { inputId: 'uploadCertification', isRequired: false },
+        { inputId: 'uploadServiceProof', isRequired: true }
+      ];
+
+      uploadFields.forEach(field => {
+        const input = document.getElementById(field.inputId);
+        if (!input) {
+          console.warn('Upload input not found:', field.inputId);
+          return;
+        }
+
+        input.addEventListener('change', function () {
+          const file = this.files && this.files[0];
+          
+          // Get related elements - construct IDs consistently with HTML (fileNameUploadIdDoc pattern)
+          // Extract suffix after 'upload' (e.g., 'uploadIdDoc' -> 'IdDoc')
+          const suffix = field.inputId.substring(6);  // Remove 'upload' (6 chars)
+          const fileNameId = 'fileNameUpload' + suffix;
+          const feedbackId = 'feedbackUpload' + suffix;
+          const previewId = 'previewUpload' + suffix;
+          
+          const fileNameEl = document.getElementById(fileNameId);
+          const feedbackEl = document.getElementById(feedbackId);
+          const previewEl = document.getElementById(previewId);
+
+          if (!file) {
+            // File cleared
+            if (fileNameEl) fileNameEl.textContent = field.isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
+            if (feedbackEl) feedbackEl.classList.remove('success');
+            if (previewEl) {
+              previewEl.classList.remove('active');
+              previewEl.innerHTML = '';
+            }
+            return;
+          }
+
+          // Update filename
+          if (fileNameEl) fileNameEl.textContent = file.name;
+
+          // Show success feedback
+          if (feedbackEl) {
+            feedbackEl.classList.add('success');
+            feedbackEl.textContent = 'Uploaded successfully';
+          }
+
+          // Handle preview
+          handleFilePreview(file, previewEl, field.inputId);
+        });
       });
     }
 
-    bindFileName('uploadIdDoc', 'fileNameUploadIdDoc');
-    bindFileName('uploadSelfieDoc', 'fileNameUploadSelfieDoc');
-    bindFileName('uploadAddressDoc', 'fileNameUploadAddressDoc');
-    bindFileName('uploadServiceProof', 'fileNameUploadServiceProof');
-    bindFileName('uploadCertification', 'fileNameUploadCertification');
+    /**
+     * Generate preview for uploaded file
+     */
+    function handleFilePreview(file, previewEl, fieldId) {
+      if (!previewEl) {
+        console.warn('Preview element not found for:', fieldId);
+        return;
+      }
+
+      // Check if it's an image
+      const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.name.toLowerCase());
+      
+      if (isImage) {
+        try {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            previewEl.innerHTML = `<img src="${e.target.result}" alt="${file.name}" />`;
+            previewEl.classList.add('active');
+          };
+          reader.onerror = function () {
+            console.error('Failed to read file:', file.name);
+            showFileTypePreview(previewEl, file);
+          };
+          reader.readAsDataURL(file);
+        } catch (err) {
+          console.error('Error creating preview:', err);
+          showFileTypePreview(previewEl, file);
+        }
+      } else {
+        showFileTypePreview(previewEl, file);
+      }
+    }
+
+    /**
+     * Show file type icon for non-image files
+     */
+    function showFileTypePreview(previewEl, file) {
+      if (!previewEl) return;
+
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+      let html = '<div style="padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; background: #f3f4f6;justify-content: center;min-height:120px;">';
+      
+      if (isPdf) {
+        html += '<i class="bi bi-file-pdf" style="font-size: 40px; color: #ef4444;"></i>';
+        html += '<div style="font-size: 12px; color: #6b7280; text-align: center; font-weight: 700;">PDF File Uploaded</div>';
+      } else {
+        html += '<i class="bi bi-file-earmark" style="font-size: 40px; color: #6b7280;"></i>';
+        html += '<div style="font-size: 12px; color: #6b7280; text-align: center; font-weight: 700;">File Uploaded</div>';
+      }
+      
+      html += '</div>';
+      previewEl.innerHTML = html;
+      previewEl.classList.add('active');
+    }
+
+    // Initialize upload fields when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', setupUploadFields);
+    } else {
+      setupUploadFields();
+    }
 
     const toggle = document.getElementById('availToggle');
     const lbl = document.getElementById('availLabel');
@@ -515,7 +657,84 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         .catch(() => renderTodaySchedule([]));
     }
 
+    /**
+     * Validate form and show validation messages
+     * Returns true if valid, false otherwise
+     */
+    function validateVerificationForm() {
+      let isValid = true;
+      const errors = [];
+
+      // Check required uploads
+      const idDoc = document.getElementById('uploadIdDoc').files[0];
+      const selfieDoc = document.getElementById('uploadSelfieDoc').files[0];
+      const addressDoc = document.getElementById('uploadAddressDoc').files[0];
+      const serviceProof = document.getElementById('uploadServiceProof').files[0];
+
+      if (!idDoc) {
+        errors.push('Valid Government ID is required');
+        isValid = false;
+      }
+      if (!selfieDoc) {
+        errors.push('Selfie Verification is required');
+        isValid = false;
+      }
+      if (!addressDoc) {
+        errors.push('Proof of Address is required');
+        isValid = false;
+      }
+      if (!serviceProof) {
+        errors.push('Tools & Kits image is required');
+        isValid = false;
+      }
+
+      // Check experience textarea
+      const experienceField = document.getElementById('experienceDescription');
+      const experienceValidation = document.getElementById('experienceValidation');
+      const experienceValue = (experienceField.value || '').trim();
+
+      if (!experienceValue) {
+        errors.push('Working Experience description is required');
+        if (experienceValidation) {
+          experienceValidation.style.display = 'block';
+          experienceValidation.textContent = 'Experience description is required';
+        }
+        isValid = false;
+      } else {
+        if (experienceValidation) {
+          experienceValidation.style.display = 'none';
+        }
+      }
+
+      // Display all errors if any
+      if (!isValid) {
+        const errorMessage = errors.join('\n• ');
+        showNotice('• ' + errorMessage);
+      }
+
+      return isValid;
+    }
+
+    // Add real-time validation to experience textarea
+    const experienceField = document.getElementById('experienceDescription');
+    if (experienceField) {
+      experienceField.addEventListener('input', function () {
+        const experienceValidation = document.getElementById('experienceValidation');
+        if (!experienceValidation) return;
+
+        const value = (this.value || '').trim();
+        if (value.length > 0) {
+          experienceValidation.style.display = 'none';
+        }
+      });
+    }
+
     async function submitRequirements() {
+      // Validate form first
+      if (!validateVerificationForm()) {
+        return;
+      }
+
       const selectedService = selectedServiceInput.value.trim();
       if (!selectedService) {
         showNotice('Please select a service first.');
@@ -525,13 +744,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       const idDoc = document.getElementById('uploadIdDoc').files[0];
       const selfieDoc = document.getElementById('uploadSelfieDoc').files[0];
       const addressDoc = document.getElementById('uploadAddressDoc').files[0];
-      if (!idDoc || !selfieDoc || !addressDoc) {
-        showNotice('Please upload a valid Government ID, Selfie Verification, and Proof of Address.');
-        return;
-      }
-
       const certDoc = document.getElementById('uploadCertification').files[0] || null;
-      const serviceProof = document.getElementById('uploadServiceProof').files[0] || null;
+      const serviceProof = document.getElementById('uploadServiceProof').files[0];
 
       const fd = new FormData();
       fd.append('action', 'upload_documents');

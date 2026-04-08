@@ -49,10 +49,10 @@ if (!function_exists('providerGetVerificationState')) {
             $selectParts[] = 'is_verified';
         }
 
-        $fallbackDocs = ['id_picture', 'selfie_verification', 'proof_of_address', 'certificates', 'proof_of_experience'];
+        $fallbackDocs = ['valid_id', 'selfie_verification', 'proof_of_address', 'barangay_clearance', 'tools_&_kits'];
         foreach ($fallbackDocs as $field) {
             if (in_array($field, $columns, true)) {
-                $selectParts[] = $field;
+                $selectParts[] = (strpos($field, '&') !== false) ? '`' . $field . '`' : $field;
             }
         }
 
