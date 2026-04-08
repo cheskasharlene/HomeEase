@@ -10,7 +10,6 @@ include __DIR__ . '/includes/sidebar.php';
       <div class="a-ttl">Workers</div>
     </div>
     <div class="a-hdr-right">
-      <button class="wk-verify-btn" id="wkVerifyToggle" onclick="toggleVerificationView()">For Verification</button>
       <button class="hdr-btn" onclick="loadWorkers()"><i class="bi bi-arrow-clockwise"></i></button>
     </div>
   </div>

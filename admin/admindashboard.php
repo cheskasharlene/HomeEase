@@ -253,6 +253,26 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       color: #fff;
       box-shadow: 0 8px 16px rgba(232, 130, 12, .28);
     }
+    .confirm-reason-wrap {
+      margin-top: 12px;
+    }
+    .confirm-reason {
+      width: 100%;
+      min-height: 86px;
+      border: 1.5px solid var(--border-col);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      color: var(--txt-primary);
+      background: var(--bg-screen);
+      resize: vertical;
+      outline: none;
+    }
+    .confirm-reason:focus {
+      border-color: #f5a623;
+      box-shadow: 0 0 0 3px rgba(245, 166, 35, .16);
+    }
 
     /* Form rows & modal buttons */
     .fg-row { display:grid!important; grid-template-columns:1fr 1fr; gap:10px; }
@@ -266,11 +286,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .search-bar input { flex:1; border:none; outline:none; background:transparent; font-family:'Nunito',sans-serif; font-size:13px; color:var(--txt-primary); }
 
     /* Action buttons */
-    .act-btns { display:flex; gap:5px; }
-    .act-btn { width:30px; height:30px; border-radius:9px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; }
+    .act-btns { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; }
+    .act-btn { width:30px; height:30px; border-radius:9px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; transition:all .16s; }
     .act-btn.edit { background:#eff6ff; color:#2563eb; }
-    .act-btn.tog { background:#f0fdf4; color:#059669; }
+    .act-btn.edit:hover { background:#dbeafe; }
+    .act-btn.pause { background:#fff4df; color:#d4790a; }
+    .act-btn.pause:hover { background:#ffe6bc; }
+    .act-btn.resume { background:linear-gradient(135deg, #E8820C, #F5A623); color:#fff; box-shadow:0 4px 10px rgba(232,130,12,.24); }
+    .act-btn.resume:hover { filter:brightness(1.03); }
     .act-btn.del { background:#fef2f2; color:#dc2626; }
+    .act-btn.del:hover { background:#fee2e2; }
 
     /* Detail rows */
     .detail-row { display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid var(--border-col); }
@@ -601,7 +626,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="a-ttl">Workers</div>
         </div>
         <div class="a-hdr-right">
-          <button class="wk-verify-btn" id="wkVerifyToggle" onclick="toggleVerificationView()">For Verification</button>
           <button class="hdr-btn" onclick="loadWorkers()"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
@@ -611,7 +635,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="stab on" id="wkFilterAll" onclick="setWkFilter('')">All Workers</div>
         <div class="stab" id="wkFilterLow" onclick="setWkFilter('low_rated')">Low Rated (&lt; 3.0)</div>
       </div>
-      <div id="wkFilterNote" class="wk-filter-note">Showing: Pending Verification</div>
+      <div id="wkFilterNote" class="wk-filter-note">Showing: All Workers</div>
       <div class="a-scroll" id="wk-scroll" style="padding:12px 18px 80px;">
         <div id="wkList">
           <div class="empty-state">
@@ -788,6 +812,21 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       </div>
     </div>
 
+    <div class="confirm-ol" id="workerVerifyConfirmOl" onclick="if(event.target===this)closeWorkerVerificationModal(null)">
+      <div class="confirm-card">
+        <div class="confirm-icon" id="workerVerifyIcon"><i class="bi bi-shield-check"></i></div>
+        <div class="confirm-title" id="workerVerifyTitle">Approve worker verification?</div>
+        <div class="confirm-sub" id="workerVerifySub">This will verify the worker and allow them to accept jobs.</div>
+        <div class="confirm-reason-wrap" id="workerVerifyReasonWrap" style="display:none;">
+          <textarea id="workerVerifyReasonInput" class="confirm-reason" placeholder="Enter rejection reason..."></textarea>
+        </div>
+        <div class="confirm-actions">
+          <button class="confirm-btn cancel" onclick="closeWorkerVerificationModal(null)">Cancel</button>
+          <button class="confirm-btn ok" id="workerVerifyOkBtn" onclick="submitWorkerVerificationModal()">Approve</button>
+        </div>
+      </div>
+    </div>
+
     <div class="sheet-ol" id="bkDetailOl" onclick="if(event.target===this)closeSheet('bkDetailOl')">
         <div class="sheet" style="max-height:92vh;">
           <div class="sh-hand"></div>
@@ -839,6 +878,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <div class="detail-val" id="wkVdocs" style="max-width:58%;text-align:right;font-size:12px;line-height:1.45;">
               No documents uploaded.
             </div>
+          </div>
+          <div id="wkActionButtons" class="modal-btns" style="margin-top:18px;gap:10px;display:none;">
+            <button class="btn-outline-p" id="wkRejectBtn" onclick="rejectWorkerVerification()">Reject</button>
+            <button class="btn-p" id="wkApproveBtn" onclick="approveWorkerVerification()">Approve</button>
           </div>
         </div>
       </div>
@@ -1004,6 +1047,72 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       function confirm2(msg) { return window.confirm(msg); }
 
+      let workerVerifyResolver = null;
+      let workerVerifyMode = 'approve';
+
+      function openWorkerVerificationModal(mode = 'approve') {
+        const overlay = document.getElementById('workerVerifyConfirmOl');
+        const title = document.getElementById('workerVerifyTitle');
+        const sub = document.getElementById('workerVerifySub');
+        const okBtn = document.getElementById('workerVerifyOkBtn');
+        const icon = document.getElementById('workerVerifyIcon');
+        const reasonWrap = document.getElementById('workerVerifyReasonWrap');
+        const reasonInput = document.getElementById('workerVerifyReasonInput');
+
+        if (!overlay || !title || !sub || !okBtn || !icon || !reasonWrap || !reasonInput) {
+          return Promise.resolve(mode === 'approve' ? false : '');
+        }
+
+        workerVerifyMode = mode;
+        reasonInput.value = '';
+
+        if (mode === 'reject') {
+          title.textContent = 'Reject worker verification?';
+          sub.textContent = 'Provide a reason so the worker knows what to fix before resubmitting.';
+          okBtn.textContent = 'Submit Rejection';
+          icon.innerHTML = '<i class="bi bi-shield-x"></i>';
+          reasonWrap.style.display = 'block';
+        } else {
+          title.textContent = 'Approve worker verification?';
+          sub.textContent = 'This will verify the worker and allow them to accept jobs.';
+          okBtn.textContent = 'Approve';
+          icon.innerHTML = '<i class="bi bi-shield-check"></i>';
+          reasonWrap.style.display = 'none';
+        }
+
+        overlay.classList.add('on');
+        if (mode === 'reject') {
+          setTimeout(() => reasonInput.focus(), 60);
+        }
+
+        return new Promise(resolve => {
+          workerVerifyResolver = resolve;
+        });
+      }
+
+      function closeWorkerVerificationModal(result = null) {
+        const overlay = document.getElementById('workerVerifyConfirmOl');
+        if (overlay) overlay.classList.remove('on');
+        const resolve = workerVerifyResolver;
+        workerVerifyResolver = null;
+        if (resolve) resolve(result);
+      }
+
+      function submitWorkerVerificationModal() {
+        if (workerVerifyMode === 'reject') {
+          const reasonInput = document.getElementById('workerVerifyReasonInput');
+          const reason = (reasonInput?.value || '').trim();
+          if (!reason) {
+            toast('Please enter a rejection reason', 'e');
+            if (reasonInput) reasonInput.focus();
+            return;
+          }
+          closeWorkerVerificationModal(reason);
+          return;
+        }
+        closeWorkerVerificationModal(true);
+      }
+
       function openSheet(id) { document.getElementById(id).classList.add('on'); }
       function closeSheet(id) { document.getElementById(id).classList.remove('on'); }
 
@@ -1021,14 +1130,33 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       function workerStateBadge(type, value) {
         const key = String(value || '').toLowerCase();
         const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', busy: 'badge-amber' };
-        const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-gray', pending: 'badge-amber', 'pending verification': 'badge-amber' };
+        const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-amber', pending: 'badge-gray', 'pending verification': 'badge-gray' };
         const labelMap = {
-          availability: { online: 'Online', available: 'Online', offline: 'Offline', busy: 'Busy' },
-          status: { active: 'Active', inactive: 'Inactive', paused: 'Paused', pending: 'Pending', 'pending verification': 'Pending Verification' }
+          availability: { online: 'Available', available: 'Available', offline: 'Unavailable', busy: 'On Job' },
+          status: { active: 'Online', inactive: 'Offline', paused: 'Paused', pending: 'Offline', 'pending verification': 'Offline' }
         };
         const map = type === 'availability' ? availabilityMap : statusMap;
         const label = (labelMap[type] && labelMap[type][key]) || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '–');
         return `<span class="${map[key] || 'badge-gray'}">${label}</span>`;
+      }
+
+      function getWorkerVerificationBadgeState(worker) {
+        if (isWorkerUiPaused(worker?.id)) return 'paused';
+        const verificationStatus = String(worker?.verification_status || '').toLowerCase().trim();
+        const isVerified = Number(worker?.is_verified) === 1 || verificationStatus === 'approved' || verificationStatus === 'verified';
+        return isVerified ? 'active' : 'inactive';
+      }
+
+      function isWorkerUiPaused(workerId) {
+        return !!(workerUiState[String(workerId)] && workerUiState[String(workerId)].paused);
+      }
+
+      function toggleWorkerPause(workerId) {
+        const key = String(workerId);
+        const currentlyPaused = isWorkerUiPaused(workerId);
+        workerUiState[key] = { paused: !currentlyPaused };
+        toast(!currentlyPaused ? 'Worker temporarily suspended (UI only)' : 'Worker reactivated (UI only)');
+        loadWorkers();
       }
 
       function php(n) { return '₱' + parseFloat(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -1126,6 +1254,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       let lastUsQuery = '';
       let _currentBk = null;   // currently viewed booking
       let _allWorkers = [];     // worker cache for picker
+      let workerUiState = {};   // local pause/resume state (UI only)
 
       function buildPaginationMarkup(currentPage, totalPages, prevFn, nextFn) {
         if (totalPages <= 1) return '';
@@ -1377,7 +1506,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="li-body">
             <div class="li-name">${w.name}</div>
             <div class="li-sub">${w.specialty} · ${w.phone || 'No phone'}</div>
-            <div style="display:flex;gap:5px;margin-top:3px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', w.status)}</div>
+            <div style="display:flex;gap:5px;margin-top:3px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', getWorkerVerificationBadgeState(w))}</div>
           </div>
           <div class="li-right" style="text-align:right;">
             <div style="font-size:11px;color:var(--txt-muted);">⭐ ${parseFloat(w.rating || 0).toFixed(1)}</div>
@@ -1404,23 +1533,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       let currentWkFilter = '';
-      let wkVerificationOnly = false;
-
-      function updateWorkerVerificationUI() {
-        document.getElementById('wkVerifyToggle')?.classList.toggle('on', wkVerificationOnly);
-        document.getElementById('wkFilterNote')?.classList.toggle('on', wkVerificationOnly);
-        const tabs = document.getElementById('wkStatusTabs');
-        if (tabs) tabs.style.display = wkVerificationOnly ? 'none' : 'flex';
-      }
-
-      function toggleVerificationView() {
-        wkVerificationOnly = !wkVerificationOnly;
-        localStorage.setItem('he_wk_verification_only', wkVerificationOnly ? '1' : '0');
-        wkPage = 1;
-        updateWorkerVerificationUI();
-        loadWorkers();
-      }
-
       function setWkFilter(fil) {
         currentWkFilter = fil;
         document.getElementById('wkFilterAll').classList.toggle('on', fil === '');
@@ -1433,20 +1545,19 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const search = (document.getElementById('wkSearch') || {}).value || '';
         document.getElementById('wkList').innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
         try {
-          const data = await api('workers', 'list', null, `&search=${encodeURIComponent(search)}&filter=${currentWkFilter}&verification_filter=${wkVerificationOnly ? 'pending' : ''}`);
-          const workersRaw = data.workers || [];
-          const workers = wkVerificationOnly
-            ? workersRaw.filter(w => String(w.verification_status || '').toLowerCase() === 'pending')
-            : workersRaw;
-          const wkQuery = `${search}|${currentWkFilter}|${wkVerificationOnly ? 'pending' : 'all'}`;
+          const data = await api('workers', 'list', null, `&search=${encodeURIComponent(search)}&filter=${currentWkFilter}`);
+          const workers = (data.workers || []).slice().sort((a, b) => {
+            const aName = String(a.name || '').toLowerCase();
+            const bName = String(b.name || '').toLowerCase();
+            return aName.localeCompare(bName);
+          });
+          const wkQuery = `${search}|${currentWkFilter}`;
           if (wkQuery !== lastWkQuery) {
             wkPage = 1;
             lastWkQuery = wkQuery;
           }
           if (!workers.length) {
-            document.getElementById('wkList').innerHTML = wkVerificationOnly
-              ? '<div class="empty-state"><i class="bi bi-shield-check"></i><p>No pending verification with uploaded requirements.</p></div>'
-              : '<div class="empty-state"><i class="bi bi-person-x"></i><p>No workers found.</p></div>';
+            document.getElementById('wkList').innerHTML = '<div class="empty-state"><i class="bi bi-person-x"></i><p>No workers found.</p></div>';
             document.getElementById('wkPagination').innerHTML = '';
             return;
           }
@@ -1458,17 +1569,22 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           document.getElementById('wkList').innerHTML = wkPageItems.map(w => {
             const isLow = w.rating > 0 && w.rating < 3.0;
             const starHtml = isLow ? `<span style="color:#ef4444;font-weight:800;">⭐ ${parseFloat(w.rating).toFixed(1)}</span>` : `⭐ ${parseFloat(w.rating || 0).toFixed(1)}`;
+            const isPaused = isWorkerUiPaused(w.id);
+            const pauseBtnClass = isPaused ? 'resume' : 'pause';
+            const pauseIcon = isPaused ? 'bi-play-fill' : 'bi-pause-fill';
+            const pauseTooltip = isPaused ? 'Reactivate Worker' : 'Suspend Worker';
             return `
       <div class="list-item" onclick='openWorkerSheet(${JSON.stringify(w).replace(/'/g, "&#39;")})' style="cursor:pointer;">
         <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=FDECC8&color=F5A623&size=80" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="">
         <div class="li-body">
           <div class="li-name">${w.name} ${w.is_verified == 1 ? '<i class="bi bi-patch-check-fill" style="color:#10b981;font-size:12px;"></i>' : ''}</div>
           <div class="li-sub">${w.specialty} · ${w.phone || 'No phone'}</div>
-          <div style="display:flex;gap:5px;margin-top:4px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', w.status)}</div>
+          <div style="display:flex;gap:5px;margin-top:4px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', getWorkerVerificationBadgeState(w))}</div>
         </div>
         <div class="li-right">
           <div class="act-btns">
             <button class="act-btn edit" onclick='event.stopPropagation();openWorkerSheet(${JSON.stringify(w).replace(/'/g, "&#39;")})' title="View details"><i class="bi bi-eye-fill"></i></button>
+            <button class="act-btn ${pauseBtnClass}" onclick="event.stopPropagation();toggleWorkerPause(${w.id})" title="${pauseTooltip}"><i class="bi ${pauseIcon}"></i></button>
             <button class="act-btn del" onclick="event.stopPropagation();deleteWorkerById(${w.id})"><i class="bi bi-trash-fill"></i></button>
           </div>
           <div style="font-size:11px;color:var(--txt-muted);margin-top:4px;">${starHtml} · ${w.jobs_done || 0} jobs</div>
@@ -1493,7 +1609,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('wkSpecialty').textContent = w.specialty || '–';
         document.getElementById('wkPhone').textContent = w.phone || '–';
         document.getElementById('wkAvail').innerHTML = workerStateBadge('availability', w.availability || 'offline');
-        document.getElementById('wkStatus').innerHTML = workerStateBadge('status', w.status || 'inactive');
+        document.getElementById('wkStatus').innerHTML = workerStateBadge('status', getWorkerVerificationBadgeState(w));
         document.getElementById('wkRating').textContent = parseFloat(w.rating || 0).toFixed(1);
         document.getElementById('wkJobs').textContent = w.jobs_done || 0;
         let docHtml = '';
@@ -1504,6 +1620,17 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         if (w['tools_&_kits']) docHtml += `<div><a href="${w['tools_&_kits']}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Tools & Kits</a></div>`;
         if (!docHtml) docHtml = '<span style="color:var(--txt-muted);">No documents uploaded.</span>';
         document.getElementById('wkVdocs').innerHTML = docHtml;
+        
+        // Show action buttons for workers that have docs and are still awaiting review
+        const hasDocuments = !!(w.valid_id || w.selfie_verification || w.proof_of_address || w.barangay_clearance || w['tools_&_kits']);
+        const verificationStatus = String(w.verification_status || '').toLowerCase().trim();
+        const reviewableStatuses = ['pending', 'pending_review', 'submitted', 'partial', 'approval_ready', 'not_verified', 'not_submitted'];
+        const isReviewable = reviewableStatuses.includes(verificationStatus);
+        const isApproved = verificationStatus === 'approved' || verificationStatus === 'verified' || Number(w.is_verified) === 1;
+        const actionBtns = document.getElementById('wkActionButtons');
+        if (actionBtns) {
+          actionBtns.style.display = (hasDocuments && isReviewable && !isApproved) ? 'flex' : 'none';
+        }
       }
 
       function openWorkerSheet(w) {
@@ -1517,6 +1644,59 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const data = await api('workers', 'delete', fd({ id }));
         if (data.success) { toast('Worker deleted'); loadWorkers(); }
         else toast(data.message || 'Failed', 'e');
+      }
+
+      async function approveWorkerVerification() {
+        if (!currentWorkerDetailId) return;
+        const approved = await openWorkerVerificationModal('approve');
+        if (!approved) return;
+        
+        const formData = new FormData();
+        formData.append('provider_id', currentWorkerDetailId);
+        
+        try {
+          const response = await fetch('../api/admin_documents_api.php?action=approve_provider', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await response.json();
+          if (data.success) {
+            toast('Worker approved successfully');
+            closeSheet('wkSheetOl');
+            loadWorkers();
+          } else {
+            toast(data.message || 'Failed to approve worker', 'e');
+          }
+        } catch (e) {
+          toast('Error: ' + e.message, 'e');
+        }
+      }
+
+      async function rejectWorkerVerification() {
+        if (!currentWorkerDetailId) return;
+        const reason = await openWorkerVerificationModal('reject');
+        if (!reason) return;
+        
+        const formData = new FormData();
+        formData.append('provider_id', currentWorkerDetailId);
+        formData.append('reason', reason);
+        
+        try {
+          const response = await fetch('../api/admin_documents_api.php?action=reject_provider', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await response.json();
+          if (data.success) {
+            toast('Worker verification rejected');
+            closeSheet('wkSheetOl');
+            loadWorkers();
+          } else {
+            toast(data.message || 'Failed to reject worker', 'e');
+          }
+        } catch (e) {
+          toast('Error: ' + e.message, 'e');
+        }
       }
 
       async function loadUsers() {
@@ -1882,8 +2062,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       (function init() {
-        wkVerificationOnly = localStorage.getItem('he_wk_verification_only') === '1';
-        updateWorkerVerificationUI();
         setTimeout(() => {
           const ml = document.getElementById('ml');
           if (ml) { ml.style.opacity = '0'; setTimeout(() => ml.style.display = 'none', 200); }

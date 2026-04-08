@@ -304,6 +304,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
 }
 
 /**
+ * POST: Reject verification for a provider
+ */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_provider') {
+    $provider_id = (int)($_POST['provider_id'] ?? 0);
+    $reason = trim($_POST['reason'] ?? 'No reason provided');
+
+    if (!$provider_id) {
+        respond(false, 'Provider ID required');
+    }
+
+    // Update service_providers verification status to rejected
+    $update_stmt = $conn->prepare(
+        "UPDATE service_providers 
+         SET verification_status = 'rejected', rejection_reason = ?
+         WHERE provider_id = ?"
+    );
+    $update_stmt->bind_param('si', $reason, $provider_id);
+    
+    if (!$update_stmt->execute()) {
+        respond(false, 'Failed to reject documents');
+    }
+    $update_stmt->close();
+
+    respond(true, 'Provider verification rejected');
+}
+
+/**
  * GET: Get verification statistics
  */
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'statistics') {

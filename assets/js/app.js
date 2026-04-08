@@ -23,10 +23,10 @@ function statusPill(s) {
 function workerStateBadge(type, value) {
   const key = String(value || '').toLowerCase();
   const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', busy: 'badge-amber' };
-  const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-gray', pending: 'badge-amber', 'pending verification': 'badge-amber' };
+  const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-amber', pending: 'badge-gray', 'pending verification': 'badge-gray' };
   const labelMap = {
-    availability: { online: 'Online', available: 'Online', offline: 'Offline', busy: 'Busy' },
-    status: { active: 'Active', inactive: 'Inactive', paused: 'Paused', pending: 'Pending', 'pending verification': 'Pending Verification' }
+    availability: { online: 'Available', available: 'Available', offline: 'Unavailable', busy: 'On Job' },
+    status: { active: 'Online', inactive: 'Offline', paused: 'Paused', pending: 'Offline', 'pending verification': 'Offline' }
   };
   const map = type === 'availability' ? availabilityMap : statusMap;
   const label = (labelMap[type] && labelMap[type][key]) || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '–');
