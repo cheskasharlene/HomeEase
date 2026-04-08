@@ -1,133 +1,143 @@
-function initTheme() {
-  // Dark mode removed across the system; keep light mode only.
+
+// ────────────── Shared Utilities ──────────────
+function toast(msg, type = 's') {
+  const box = document.getElementById('toastBox');
+  const t = document.createElement('div');
+  t.className = `toast-n ${type}`;
+  t.innerHTML = `<i class="bi bi-${type === 's' ? 'check-circle-fill' : 'exclamation-circle-fill'}"></i>${msg}`;
+  box.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
 }
 
-function toggleDark() {
-  // Dark mode removed across the system; keep function as a no-op for compatibility.
+function confirm2(msg) { return window.confirm(msg); }
+function openSheet(id) { document.getElementById(id).classList.add('on'); }
+function closeSheet(id) { document.getElementById(id).classList.remove('on'); }
+const debounce = (fn, ms) => { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); }; };
+
+function statusPill(s) {
+  const key = String(s || '').toLowerCase();
+  const map = { pending: 'badge-amber', progress: 'badge-blue', done: 'badge-green', cancelled: 'badge-gray', active: 'badge-green', inactive: 'badge-red', available: 'badge-green', busy: 'badge-amber', offline: 'badge-gray' };
+  return `<span class="${map[key] || 'badge-gray'}">${key ? key.charAt(0).toUpperCase() + key.slice(1) : '–'}</span>`;
 }
 
-const ICONS = {
-  cleaning: "🧹",
-  plumbing: "🔧",
-  helper: "🤝",
-  technician: "🔩",
-  laundry: "👕",
-  carpentry: "🪚",
-};
-
-const SVCS = {
-  Cleaning: { ic: ICONS.cleaning, hr: 400, flat: 800, key: "cleaning" },
-  Plumbing: { ic: ICONS.plumbing, hr: 400, flat: 800, key: "plumbing" },
-  Helper: { ic: ICONS.helper, hr: 350, flat: 700, key: "helper" },
-  "Appliance Technician": {
-    ic: ICONS.technician,
-    hr: 400,
-    flat: 800,
-    key: "technician",
-  },
-  Laundry: { ic: ICONS.laundry, hr: 300, flat: 600, key: "laundry" },
-  Carpentry: { ic: ICONS.carpentry, hr: 500, flat: 1000, key: "carpentry" },
-};
-
-const SVC_IMGS = {
-  cleaning:
-    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80",
-  plumbing:
-    "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400&q=80",
-  helper:
-    "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&q=80",
-  technician:
-    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80",
-  laundry:
-    "https://images.unsplash.com/photo-1604335399105-a0c585fd81a1?w=400&q=80",
-  carpentry:
-    "https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80"
-};
-
-const OB_IMGS = [
-  "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80",
-  "https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=500&q=80",
-  "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=500&q=80",
-];
-
-if (!window.HE) {
-  window.HE = {
-    bookings: [
-      {
-        id: 1,
-        svc: "Cleaning",
-        key: "cleaning",
-        status: "pending",
-        date: "Feb 25, 2026",
-        time: "9:00 AM",
-        price: 400,
-        addr: "123 Mauban St.",
-        desc: "Full house cleaning",
-        rateType: "hourly",
-        dur: 2,
-      },
-      {
-        id: 2,
-        svc: "Plumbing",
-        key: "plumbing",
-        status: "progress",
-        date: "Feb 24, 2026",
-        time: "2:00 PM",
-        price: 450,
-        addr: "45 Barangay Uno",
-        desc: "Fix kitchen sink",
-        rateType: "flat",
-        dur: null,
-      },
-      {
-        id: 3,
-        svc: "Electrical",
-        key: "electrical",
-        status: "done",
-        date: "Feb 20, 2026",
-        time: "10:00 AM",
-        price: 750,
-        addr: "Brgy. Cagsiay I",
-        desc: "Rewire outlets",
-        rateType: "flat",
-        dur: null,
-      },
-    ],
-    nid: 4,
-    user: {
-      name: "Juan dela Cruz",
-      email: "juan@email.com",
-      phone: "09171234567",
-      address: "123 Mauban, Quezon",
-    },
-    notifications: [
-      {
-        id: 1,
-        title: "Booking Confirmed",
-        msg: "Your cleaning service on Feb 25 is confirmed.",
-        time: "2h ago",
-        read: false,
-        icon: "cleaning",
-      },
-      {
-        id: 2,
-        title: "Service In Progress",
-        msg: "Your plumbing service has started.",
-        time: "5h ago",
-        read: false,
-        icon: "plumbing",
-      },
-      {
-        id: 3,
-        title: "Service Completed",
-        msg: "Electrical wiring job is done! Rate your experience.",
-        time: "4d ago",
-        read: true,
-        icon: "electrical",
-      },
-    ],
+function workerStateBadge(type, value) {
+  const key = String(value || '').toLowerCase();
+  const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', busy: 'badge-amber' };
+  const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-gray', pending: 'badge-amber', 'pending verification': 'badge-amber' };
+  const labelMap = {
+    availability: { online: 'Online', available: 'Online', offline: 'Offline', busy: 'Busy' },
+    status: { active: 'Active', inactive: 'Inactive', paused: 'Paused', pending: 'Pending', 'pending verification': 'Pending Verification' }
   };
+  const map = type === 'availability' ? availabilityMap : statusMap;
+  const label = (labelMap[type] && labelMap[type][key]) || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '–');
+  return `<span class="${map[key] || 'badge-gray'}">${label}</span>`;
 }
+
+function php(n) { return '₱' + parseFloat(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+// ────────────── Modular Admin Page Initializers ──────────────
+
+// Overview Page
+function initAdminOverview() {
+  loadOverview();
+  loadAdminNotifCount();
+}
+
+async function loadOverview() {
+  try {
+    const data = await api('stats');
+    if (!data.success) return;
+    const s = data.stats;
+    document.getElementById('st-users').textContent = s.total_users;
+    document.getElementById('st-bookings').textContent = s.total_bookings;
+    document.getElementById('st-revenue').textContent = '₱' + (s.total_revenue / 1000).toFixed(1) + 'k';
+    document.getElementById('st-workers').textContent = s.active_workers;
+    document.getElementById('revTotal').textContent = php(s.total_revenue);
+    // Revenue chart
+    const chart = document.getElementById('revChart');
+    const revRows = s.revenue_chart || [];
+    if (revRows.length) {
+      const max = Math.max(...revRows.map(r => parseFloat(r.rev)), 1);
+      chart.innerHTML = revRows.map(r => {
+        const h = Math.max(4, Math.round((parseFloat(r.rev) / max) * 60));
+        return `<div class="rev-bar-item"><div class="rev-bar-fill" style="height:${h}px;" title="${php(r.rev)}"></div><div class="rev-bar-lbl">${r.mo}</div></div>`;
+      }).join('');
+    } else {
+      chart.innerHTML = '<div style="font-size:12px;color:var(--txt-muted);text-align:center;width:100%;padding:20px 0;">No revenue data yet</div>';
+    }
+    // Donut
+    const bd = s.breakdown || {};
+    const colors = { pending: '#f59e0b', progress: '#3b82f6', done: '#F5A623', cancelled: '#9ca3af' };
+    const total = Object.values(bd).reduce((a, b) => a + b, 0) || 1;
+    let offset = 0; const circ = 2 * Math.PI * 30;
+    const svg = document.getElementById('donutSvg');
+    const legend = document.getElementById('donutLegend');
+    svg.innerHTML = '<circle cx="40" cy="40" r="30" fill="none" stroke="var(--border-col)" stroke-width="12"/>';
+    legend.innerHTML = '';
+    Object.entries(bd).forEach(([st, cnt]) => {
+      const pct = cnt / total; const dash = pct * circ;
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', '40'); circle.setAttribute('cy', '40'); circle.setAttribute('r', '30');
+      circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', colors[st] || '#e5e7eb');
+      circle.setAttribute('stroke-width', '12');
+      circle.setAttribute('stroke-dasharray', `${dash} ${circ}`);
+      circle.setAttribute('stroke-dashoffset', `${-offset}`);
+      svg.appendChild(circle);
+      offset += dash;
+      legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${colors[st] || '#e5e7eb'}"></div>${st}: <strong>${cnt}</strong></div>`;
+    });
+    // Recent bookings
+    const rb = document.getElementById('recentBookings');
+    const recent = s.recent_bookings || [];
+    if (!recent.length) { rb.innerHTML = '<div class="empty-state"><i class="bi bi-calendar-x"></i><p>No bookings yet</p></div>'; return; }
+    rb.innerHTML = recent.map(b => `<div class="list-item" onclick="openBkDetail(${JSON.stringify(b).replace(/\"/g, '&quot;')})"><div class="li-av" style="font-size:13px;">${(b.service || '?')[0]}</div><div class="li-body"><div class="li-name">${b.service}</div><div class="li-sub">${b.user_name || '–'} · ${b.date}</div></div><div class="li-right">${statusPill(b.status)}<span style="font-size:12px;font-weight:700;color:var(--teal);">${php(b.price)}</span></div></div>`).join('');
+  } catch (e) { console.error(e); }
+}
+
+// Analytics Page
+function initAdminAnalytics() {
+  loadAnalytics();
+}
+
+// Bookings Page
+function initAdminBookings() {
+  loadBookings();
+}
+
+// Workers Page
+function initAdminWorkers() {
+  loadWorkers();
+}
+
+// Users Page
+function initAdminUsers() {
+  loadUsers();
+}
+
+// More Page
+function initAdminMore() {
+  loadServices();
+}
+
+// Notification Count (shared)
+async function loadAdminNotifCount() {
+  try {
+    const data = await api('admin_notifications', 'count');
+    if (data.success) {
+      updateNotifBadge(data.unread_count);
+    }
+  } catch (e) { /* silent */ }
+}
+
+function updateNotifBadge(count) {
+  const badge = document.getElementById('adminNotifBadge');
+  if (!badge) return;
+  badge.dataset.count = count;
+  badge.textContent = count > 99 ? '99+' : count;
+  badge.style.display = count > 0 ? 'flex' : 'none';
+}
+
+// ... (all other admin JS functions from admindashboard.php can be modularized here as needed)
 
 function _loadBookmarks() {
   try {
