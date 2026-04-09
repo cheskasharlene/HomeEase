@@ -309,7 +309,57 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .toast-n.s { background:#10b981; }
     .toast-n.e { background:#ef4444; }
 
-    /* Status tabs */
+    /* Workers filter row */
+    .wk-filter-row {
+      display: flex;
+      gap: 9px;
+      padding: 0 18px 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .wk-search {
+      margin: 0;
+      flex: 1 1 100%;
+    }
+    .wk-dd {
+      appearance: none;
+      border: 1.5px solid var(--border-col);
+      border-radius: 12px;
+      padding: 10px 30px 10px 12px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--txt-muted);
+      background:
+        linear-gradient(45deg, transparent 50%, #caa06b 50%) calc(100% - 15px) calc(50% - 2px) / 6px 6px no-repeat,
+        linear-gradient(135deg, #caa06b 50%, transparent 50%) calc(100% - 10px) calc(50% - 2px) / 6px 6px no-repeat,
+        var(--bg-card);
+      min-height: 40px;
+      flex: 1 1 calc(33.33% - 6px);
+      min-width: 120px;
+      outline: none;
+      box-shadow: 0 1px 2px rgba(0,0,0,.03);
+      transition: border-color .18s, box-shadow .18s, background-color .18s;
+    }
+    .wk-dd:focus {
+      border-color: #f5a623;
+      box-shadow: 0 0 0 3px rgba(245, 166, 35, .14);
+    }
+    .wk-dd.on {
+      color: #b96b0a;
+      font-weight: 800;
+      border-color: #f6c77f;
+      background:
+        linear-gradient(45deg, transparent 50%, #d68b1b 50%) calc(100% - 15px) calc(50% - 2px) / 6px 6px no-repeat,
+        linear-gradient(135deg, #d68b1b 50%, transparent 50%) calc(100% - 10px) calc(50% - 2px) / 6px 6px no-repeat,
+        #fff6e8;
+    }
+    @media (max-width: 460px) {
+      .wk-dd {
+        flex: 1 1 calc(50% - 6px);
+      }
+    }
     .status-tabs { display:flex; gap:6px; padding:12px 18px; overflow-x:auto; scrollbar-width:none; flex-shrink:0; }
     .status-tabs::-webkit-scrollbar { display:none; }
     .stab { padding:6px 13px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; cursor:pointer; border:2px solid var(--border-col); color:var(--txt-muted); background:var(--bg-card); }
@@ -334,11 +384,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       box-shadow: 0 6px 12px rgba(232, 130, 12, .22);
     }
     .wk-filter-note {
-      margin: -2px 18px 8px;
+      margin: -1px 18px 8px;
       font-size: 11px;
       font-weight: 700;
       color: #b96b0a;
-      display: none;
+      display: block;
     }
     .wk-filter-note.on { display: block; }
 
@@ -629,13 +679,33 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <button class="hdr-btn" onclick="loadWorkers()"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
-      <div class="search-bar"><i class="bi bi-search"></i><input type="text" id="wkSearch"
-          placeholder="Search workers..." oninput="debounce(loadWorkers,400)()"></div>
-      <div class="status-tabs" id="wkStatusTabs" style="margin-top:-5px; margin-bottom: 5px;">
-        <div class="stab on" id="wkFilterAll" onclick="setWkFilter('')">All Workers</div>
-        <div class="stab" id="wkFilterLow" onclick="setWkFilter('low_rated')">Low Rated (&lt; 3.0)</div>
+      <div class="wk-filter-row" id="wkFilterRow">
+        <div class="search-bar wk-search"><i class="bi bi-search"></i><input type="text" id="wkSearch"
+            placeholder="Search workers..." oninput="debounce(loadWorkers,320)()"></div>
+        <select class="wk-dd" id="wkStatusFilter" onchange="loadWorkers()">
+          <option value="all">Status: All</option>
+          <option value="pending">Pending</option>
+          <option value="verified">Verified</option>
+          <option value="rejected">Rejected</option>
+          <option value="paused">Paused / Inactive</option>
+        </select>
+        <select class="wk-dd" id="wkAvailabilityFilter" onchange="loadWorkers()">
+          <option value="all">Availability: All</option>
+          <option value="available">Available</option>
+          <option value="unavailable">Unavailable</option>
+          <option value="on_job">On Job</option>
+        </select>
+        <select class="wk-dd" id="wkServiceFilter" onchange="loadWorkers()">
+          <option value="all">Service: All</option>
+          <option value="cleaner">Cleaner</option>
+          <option value="helper">Helper</option>
+          <option value="laundry">Laundry</option>
+          <option value="plumber">Plumber</option>
+          <option value="carpenter">Carpenter</option>
+          <option value="appliance technician">Appliance Technician</option>
+        </select>
       </div>
-      <div id="wkFilterNote" class="wk-filter-note">Showing: All Workers</div>
+      <div id="wkFilterNote" class="wk-filter-note">Showing: All workers</div>
       <div class="a-scroll" id="wk-scroll" style="padding:12px 18px 80px;">
         <div id="wkList">
           <div class="empty-state">
@@ -657,8 +727,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <button class="hdr-btn" onclick="loadUsers()"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
-      <div class="search-bar"><i class="bi bi-search"></i><input type="text" id="usSearch"
-          placeholder="Search users..." oninput="debounce(loadUsers,400)()"></div>
+      <div class="wk-filter-row" id="usFilterRow">
+        <div class="search-bar wk-search"><i class="bi bi-search"></i><input type="text" id="usSearch"
+            placeholder="Search users..." oninput="debounce(loadUsers,320)()"></div>
+        <select class="wk-dd" id="usStatusFilter" onchange="loadUsers()">
+          <option value="all">Status: All</option>
+          <option value="active">Active</option>
+          <option value="disabled">Disabled / Suspended</option>
+        </select>
+      </div>
+      <div id="usFilterNote" class="wk-filter-note">Showing: All users</div>
       <div class="a-scroll" id="us-scroll" style="padding:12px 18px 80px;">
         <div id="usList">
           <div class="empty-state">
@@ -1532,26 +1610,78 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         } else toast(data.message || 'Failed', 'e');
       }
 
-      let currentWkFilter = '';
-      function setWkFilter(fil) {
-        currentWkFilter = fil;
-        document.getElementById('wkFilterAll').classList.toggle('on', fil === '');
-        document.getElementById('wkFilterLow').classList.toggle('on', fil === 'low_rated');
-        wkPage = 1;
-        loadWorkers();
+      function getWorkerDisplayStatus(worker) {
+        if (isWorkerUiPaused(worker?.id)) return 'paused';
+        const verificationStatus = String(worker?.verification_status || '').toLowerCase().trim();
+        if (Number(worker?.is_verified) === 1 || verificationStatus === 'approved' || verificationStatus === 'verified') return 'verified';
+        if (verificationStatus === 'rejected') return 'rejected';
+        return 'pending';
+      }
+
+      function getWorkerDisplayAvailability(worker) {
+        const raw = String(worker?.availability || '').toLowerCase().trim();
+        if (raw === 'online' || raw === 'available') return 'available';
+        if (raw === 'busy') return 'on_job';
+        return 'unavailable';
+      }
+
+      function getWorkerServiceKey(worker) {
+        const svc = String(worker?.specialty || '').toLowerCase().trim();
+        if (svc.includes('clean')) return 'cleaner';
+        if (svc.includes('helper')) return 'helper';
+        if (svc.includes('laundry')) return 'laundry';
+        if (svc.includes('plumb')) return 'plumber';
+        if (svc.includes('carpent')) return 'carpenter';
+        if (svc.includes('appliance') || svc.includes('technician')) return 'appliance technician';
+        return svc;
+      }
+
+      function updateWorkerFilterHighlighting() {
+        ['wkStatusFilter', 'wkAvailabilityFilter', 'wkServiceFilter'].forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.toggle('on', String(el.value || 'all') !== 'all');
+        });
+      }
+
+      function updateWorkerFilterNote(statusFilter, availabilityFilter, serviceFilter, count) {
+        const noteEl = document.getElementById('wkFilterNote');
+        if (!noteEl) return;
+        const parts = [];
+        if (statusFilter !== 'all') parts.push(`Status: ${statusFilter.replace('_', ' ')}`);
+        if (availabilityFilter !== 'all') parts.push(`Availability: ${availabilityFilter.replace('_', ' ')}`);
+        if (serviceFilter !== 'all') parts.push(`Service: ${serviceFilter}`);
+        noteEl.textContent = parts.length
+          ? `Showing ${count} worker(s) · ${parts.join(' · ')}`
+          : `Showing: All workers (${count})`;
       }
 
       async function loadWorkers() {
         const search = (document.getElementById('wkSearch') || {}).value || '';
+        const statusFilter = (document.getElementById('wkStatusFilter') || {}).value || 'all';
+        const availabilityFilter = (document.getElementById('wkAvailabilityFilter') || {}).value || 'all';
+        const serviceFilter = (document.getElementById('wkServiceFilter') || {}).value || 'all';
         document.getElementById('wkList').innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
         try {
-          const data = await api('workers', 'list', null, `&search=${encodeURIComponent(search)}&filter=${currentWkFilter}`);
-          const workers = (data.workers || []).slice().sort((a, b) => {
+          const data = await api('workers', 'list');
+          const allWorkers = (data.workers || []).slice().sort((a, b) => {
             const aName = String(a.name || '').toLowerCase();
             const bName = String(b.name || '').toLowerCase();
             return aName.localeCompare(bName);
           });
-          const wkQuery = `${search}|${currentWkFilter}`;
+          const workers = allWorkers.filter(w => {
+            const q = String(search || '').toLowerCase().trim();
+            const matchesSearch = !q || String(w.name || '').toLowerCase().includes(q) || String(w.specialty || '').toLowerCase().includes(q);
+            const matchesStatus = statusFilter === 'all' || getWorkerDisplayStatus(w) === statusFilter;
+            const matchesAvailability = availabilityFilter === 'all' || getWorkerDisplayAvailability(w) === availabilityFilter;
+            const matchesService = serviceFilter === 'all' || getWorkerServiceKey(w) === serviceFilter;
+            return matchesSearch && matchesStatus && matchesAvailability && matchesService;
+          });
+
+          updateWorkerFilterHighlighting();
+          updateWorkerFilterNote(statusFilter, availabilityFilter, serviceFilter, workers.length);
+
+          const wkQuery = `${search}|${statusFilter}|${availabilityFilter}|${serviceFilter}`;
           if (wkQuery !== lastWkQuery) {
             wkPage = 1;
             lastWkQuery = wkQuery;
@@ -1591,7 +1721,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>`}).join('');
           if (currentWorkerDetailId) {
-            const current = workers.find(w => w.id == currentWorkerDetailId);
+            const current = allWorkers.find(w => w.id == currentWorkerDetailId);
             if (current) fillWorkerSheet(current);
           }
           document.getElementById('wkPagination').innerHTML = buildPaginationMarkup(wkPage, wkTotalPages, 'prevWkPage', 'nextWkPage');
@@ -1701,13 +1831,26 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       async function loadUsers() {
         const search = (document.getElementById('usSearch') || {}).value || '';
+        const statusFilter = (document.getElementById('usStatusFilter') || {}).value || 'all';
         document.getElementById('usList').innerHTML = '<div class="empty-state"><p>Loading...</p></div>';
         try {
-          const data = await api('users', 'list', null, `&search=${encodeURIComponent(search)}`);
-          const users = data.users || [];
-          if (search !== lastUsQuery) {
+          const data = await api('users', 'list');
+          const allUsers = (data.users || []).slice().sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' }));
+          const users = allUsers.filter(u => {
+            const q = String(search || '').toLowerCase().trim();
+            const matchesSearch = !q || String(u.name || '').toLowerCase().includes(q) || String(u.email || '').toLowerCase().includes(q);
+            const userStatus = u.disabled ? 'disabled' : 'active';
+            const matchesStatus = statusFilter === 'all' || statusFilter === userStatus;
+            return matchesSearch && matchesStatus;
+          });
+
+          updateUserFilterHighlighting(statusFilter);
+          updateUserFilterNote(statusFilter, users.length);
+
+          const usQuery = `${search}|${statusFilter}`;
+          if (usQuery !== lastUsQuery) {
             usPage = 1;
-            lastUsQuery = search;
+            lastUsQuery = usQuery;
           }
           if (!users.length) {
             document.getElementById('usList').innerHTML = '<div class="empty-state"><i class="bi bi-people"></i><p>No users found.</p></div>';
@@ -1725,7 +1868,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="li-body">
           <div class="li-name" style="${u.disabled ? 'text-decoration:line-through;color:var(--txt-muted);' : ''}">${u.name}</div>
           <div class="li-sub">${u.email}</div>
-          <div class="li-sub">${u.booking_count} bookings · ${u.done_count} done</div>
+          <div class="li-sub">${u.booking_count} bookings · ${u.done_count} done · ${Number(u.booking_count || 0) > 0 ? 'Engaged User' : 'New User'}</div>
         </div>
         <div class="li-right">
           ${u.disabled ? '<span class="badge-red">Disabled</span>' : '<span class="badge-green">Active</span>'}
@@ -1734,6 +1877,21 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       </div>`).join('');
           document.getElementById('usPagination').innerHTML = buildPaginationMarkup(usPage, usTotalPages, 'prevUsPage', 'nextUsPage');
         } catch (e) { document.getElementById('usList').innerHTML = '<div class="empty-state"><p>Error.</p></div>'; document.getElementById('usPagination').innerHTML = ''; }
+      }
+
+      function updateUserFilterHighlighting(statusFilter) {
+        const statusEl = document.getElementById('usStatusFilter');
+        if (statusEl) statusEl.classList.toggle('on', statusFilter !== 'all');
+      }
+
+      function updateUserFilterNote(statusFilter, count) {
+        const noteEl = document.getElementById('usFilterNote');
+        if (!noteEl) return;
+        const parts = [];
+        if (statusFilter !== 'all') parts.push(`Status: ${statusFilter === 'disabled' ? 'Disabled / Suspended' : 'Active'}`);
+        noteEl.textContent = parts.length
+          ? `Showing ${count} user(s) · ${parts.join(' · ')}`
+          : `Showing: All users (${count})`;
       }
 
       function openUserDetail(u) {
