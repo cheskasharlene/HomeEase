@@ -76,7 +76,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-
+        <div class="sec-row">
+          <div class="sec-ttl">Browse by Category</div>
+        </div>
+        <div class="cat-pills" id="catPills"></div>
 
         <div class="sec-row">
           <div class="sec-ttl">Our Services</div><span class="see-more" onclick="openAllServices()">See all →</span>
@@ -122,6 +125,24 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         }
       }).catch(() => { });
 
+    // Category pills
+    const catPills = document.getElementById('catPills');
+    const categories = ['All', ...Object.keys(SVCS)];
+    let selectedCategory = 'All';
+    
+    categories.forEach(cat => {
+      const pill = document.createElement('div');
+      pill.className = 'cat-pill' + (cat === 'All' ? ' active' : '');
+      pill.textContent = cat;
+      pill.onclick = () => {
+        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        selectedCategory = cat;
+        filterServices(cat);
+      };
+      catPills.appendChild(pill);
+    });
+
     // Services grid – unique icon & color per service
     const svcThemeMap = {
       'Cleaning': { icon: 'bi-stars', css: 'svc-cleaning', price: 400 },
@@ -133,15 +154,31 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     };
 
     const svcGrid = document.getElementById('svcGrid');
+    const allServices = {};
     Object.entries(SVCS).forEach(([name, data]) => {
       const theme = svcThemeMap[name] || { icon: 'bi-tools', css: '', price: data.hr };
-      svcGrid.innerHTML += `
+      allServices[name] = `
         <div class="svc-card" data-svc="${data.key}" onclick="goPage('clients/booking_form.php?svc=${encodeURIComponent(name)}&newbooking=1')">
           <div class="svc-ic ${theme.css}"><i class="bi ${theme.icon}"></i></div>
           <div class="svc-nm">${name}</div>
           <div class="svc-price">from ₱${theme.price.toLocaleString()}/hr</div>
         </div>`;
     });
+
+    function filterServices(category) {
+      svcGrid.innerHTML = '';
+      if (category === 'All') {
+        Object.values(allServices).forEach(html => {
+          svcGrid.innerHTML += html;
+        });
+      } else {
+        if (allServices[category]) {
+          svcGrid.innerHTML += allServices[category];
+        }
+      }
+    }
+
+    filterServices('All');
 
 
     const popData = [

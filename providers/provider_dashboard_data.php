@@ -119,10 +119,6 @@ function providerJobHistory(mysqli $conn, int $providerId, string $providerSpeci
     $where[] = "b.technician_id = ?";
     $types .= 'i';
     $params[] = $providerId;
-  } elseif ($providerSpecialty !== '') {
-    $where[] = "LOWER(b.service) LIKE ?";
-    $types .= 's';
-    $params[] = '%' . strtolower($providerSpecialty) . '%';
   } else {
     return [];
   }

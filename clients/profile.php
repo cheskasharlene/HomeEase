@@ -18,6 +18,20 @@ if ($row) {
   $_SESSION['user_address'] = $row['address'] ?? '';
 }
 
+$scriptDir = str_replace('\\', '/', dirname($_SERVER['PHP_SELF'] ?? ''));
+$scriptDir = rtrim($scriptDir, '/');
+if ($scriptDir === '' || $scriptDir === '.') {
+  $scriptDir = '';
+}
+if (substr($scriptDir, -8) === '/clients') {
+  $appBase = substr($scriptDir, 0, -8);
+} else {
+  $appBase = $scriptDir;
+}
+if ($appBase === '') {
+  $appBase = '/';
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -32,8 +46,8 @@ if ($row) {
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <link href="../assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
-  <link href="../assets/css/profile.css?v=<?= time() ?>" rel="stylesheet">
+  <link href="<?= htmlspecialchars(rtrim($appBase, '/')) ?>/assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
+  <link href="<?= htmlspecialchars(rtrim($appBase, '/')) ?>/assets/css/profile.css?v=<?= time() ?>" rel="stylesheet">
   <style>
     /* ── Profile Page Critical CSS ── */
 
@@ -49,20 +63,25 @@ if ($row) {
       justify-content: flex-start !important;
     }
 
+    /* Profile screen layout */
     #profile {
       display: flex !important;
       flex-direction: column;
       align-items: stretch;
       justify-content: flex-start;
+      position: absolute !important;
+      inset: 0;
     }
 
-    /* Profile main scroll */
+    /* Profile main scroll - ensure it doesn't overlap navbar */
     .p-scroll {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding-bottom: 90px;
+      padding-bottom: 96px;
       scrollbar-width: none;
+      position: relative;
+      z-index: 1;
     }
 
     .p-scroll::-webkit-scrollbar {
@@ -462,7 +481,7 @@ if ($row) {
 
 
         <div class="p-hdr">
-          <div class="p-hdr-back" onclick="goPage('../home.php')">
+          <div class="p-hdr-back" onclick="goPage(APP_BASE + '/home.php')">
             <i class="bi bi-arrow-left"></i>
           </div>
 
@@ -553,7 +572,15 @@ if ($row) {
 
         </div>
       </div>
-      <div id="navContainer"></div>
+      <div id="navContainer">
+        <div class="bnav">
+          <div class="ni" onclick="goPage('<?= htmlspecialchars(rtrim($appBase, '/')) ?>/home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
+          <div class="ni" onclick="goPage('<?= htmlspecialchars(rtrim($appBase, '/')) ?>/clients/booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
+          <div class="ni" onclick="goPage('<?= htmlspecialchars(rtrim($appBase, '/')) ?>/clients/service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+          <div class="ni" onclick="goPage('<?= htmlspecialchars(rtrim($appBase, '/')) ?>/clients/notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
+          <div class="ni on"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
+        </div>
+      </div>
     </div>
 
 
@@ -753,9 +780,13 @@ if ($row) {
 
   </div><!-- /shell -->
 
-  <script src="../assets/js/app.js"></script>
+  <script src="<?= htmlspecialchars(rtrim($appBase, '/')) ?>/assets/js/app.js"></script>
   <script>
-    initTheme();
+    if (typeof initTheme === 'function') {
+      initTheme();
+    }
+
+    const APP_BASE = <?= json_encode(rtrim($appBase, '/')) ?> || '';
 
     window.HE = window.HE || {};
     window.HE.user = {
@@ -768,10 +799,10 @@ if ($row) {
 
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
-        <div class="ni" onclick="goPage('../home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
-        <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-        <div class="ni" onclick="goPage('service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
+        <div class="ni" onclick="goPage(APP_BASE + '/home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
+        <div class="ni" onclick="goPage(APP_BASE + '/clients/booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
+        <div class="ni" onclick="goPage(APP_BASE + '/clients/service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
+        <div class="ni" onclick="goPage(APP_BASE + '/clients/notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
         <div class="ni on"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
 
@@ -882,7 +913,7 @@ if ($row) {
       }
 
       try {
-        const res = await fetch('../api/profile_api.php', { method: 'POST', body: fd });
+        const res = await fetch(APP_BASE + '/api/profile_api.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {
           if (activeSection === 'profile') {
@@ -921,7 +952,7 @@ if ($row) {
 
     function confirmLogout() {
       closeLogoutConfirm();
-      window.location.href = '../logout.php';
+      window.location.href = APP_BASE + '/logout.php';
     }
 
     loadProfile();

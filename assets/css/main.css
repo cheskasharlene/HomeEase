@@ -805,6 +805,20 @@ body {
   z-index: 50;
 }
 
+/* Navigation container for screens that use navContainer div */
+#navContainer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 50;
+}
+
+#navContainer .bnav {
+  position: relative;
+}
+
 .ni {
   flex: 1;
   display: flex;

@@ -62,10 +62,9 @@ if ($method === 'POST' && $action === 'update_status') {
         $ownerClause = "technician_id = ?";
         $types .= 'i';
         $params[] = $providerId;
-    } elseif ($providerSpecialty !== '') {
-        $ownerClause = "LOWER(service) LIKE ?";
-        $types .= 's';
-        $params[] = '%' . strtolower($providerSpecialty) . '%';
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Booking system not properly configured.']);
+        exit;
     }
 
     $sql = "UPDATE bookings SET status = ? WHERE id = ? AND $ownerClause";
@@ -103,12 +102,9 @@ if ($has('provider_id')) {
     $where[] = "b.technician_id = ?";
     $types .= 'i';
     $params[] = $providerId;
-} elseif ($providerSpecialty !== '') {
-    $where[] = "LOWER(b.service) LIKE ?";
-    $types .= 's';
-    $params[] = '%' . strtolower($providerSpecialty) . '%';
 } else {
-    $where[] = "1 = 0";
+    echo json_encode(['success' => false, 'message' => 'Booking system not properly configured.']);
+    exit;
 }
 
 if ($statusFilter !== '' && strtolower($statusFilter) !== 'all') {

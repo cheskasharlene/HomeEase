@@ -1,13 +1,15 @@
 #notifications {
   background: var(--bg-screen);
   justify-content: flex-start;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .n-scroll {
   width: 100%;
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px;
+  padding-bottom: 96px;
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
