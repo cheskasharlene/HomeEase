@@ -19,6 +19,8 @@ $providerPhone = htmlspecialchars($_SESSION['provider_phone'] ?? '');
 $providerAddress = htmlspecialchars($_SESSION['provider_address'] ?? '');
 $providerSpecialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'Service Provider');
 
+$availabilityStatus = $isVerified ? 'online' : 'offline';
+
 require_once __DIR__ . '/provider_dashboard_data.php';
 $dashboardSummary = providerDashboardSummary();
 $dashboardReviews = providerDashboardReviews();
@@ -81,10 +83,10 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <div class="avail-wrap" id="availWrap" style="<?= $isVerified ? '' : 'display:none;' ?>">
             <div class="avail-lbl">Status:</div>
             <label class="avail-sw">
-              <input type="checkbox" id="availToggle">
+              <input type="checkbox" id="availToggle" <?= ($isVerified && $availabilityStatus === 'online') ? 'checked' : '' ?> disabled>
               <span class="avail-slider"></span>
             </label>
-            <div class="avail-status" id="availLabel">Offline</div>
+            <div class="avail-status" id="availLabel"><?= ($isVerified && $availabilityStatus === 'online') ? 'Online' : 'Offline' ?></div>
           </div>
         </div>
 
@@ -420,6 +422,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     const backendVerificationState = <?= json_encode($verificationState) ?>;
     const backendIsVerified = <?= json_encode($isVerified) ?>;
+    const backendAvailability = <?= json_encode($availabilityStatus) ?>;
 
       // SERVICE_CONFIG and all tools/skills/checkboxes logic removed as not needed anymore
 
@@ -556,9 +559,54 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     const toggle = document.getElementById('availToggle');
     const lbl = document.getElementById('availLabel');
+    let isSavingAvailability = false;
+
+    function applyAvailability(availability) {
+      const isOnline = String(availability || '').toLowerCase() === 'online';
+      if (toggle) toggle.checked = isOnline;
+      if (lbl) lbl.textContent = isOnline ? 'Online' : 'Offline';
+    }
+
+    async function syncAvailabilityFromServer() {
+      if (!backendIsVerified) {
+        applyAvailability('offline');
+        return;
+      }
+      try {
+        const res = await fetch('../api/provider_availability_api.php', { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success) {
+          applyAvailability(data.availability || 'offline');
+        }
+      } catch (e) {
+        applyAvailability(backendAvailability);
+      }
+    }
+
     if (toggle && lbl) {
-      toggle.addEventListener('change', function () {
-        lbl.textContent = this.checked ? 'Online' : 'Offline';
+      toggle.addEventListener('change', async function () {
+        if (!backendIsVerified || isSavingAvailability) {
+          applyAvailability('offline');
+          return;
+        }
+        isSavingAvailability = true;
+        const desired = this.checked ? 'online' : 'offline';
+        const previous = this.checked ? 'offline' : 'online';
+        try {
+          const fd = new FormData();
+          fd.append('availability', desired);
+          const res = await fetch('../api/provider_availability_api.php', { method: 'POST', body: fd });
+          const data = await res.json();
+          if (!data.success) {
+            applyAvailability(previous);
+            return;
+          }
+          applyAvailability(data.availability || desired);
+        } catch (e) {
+          applyAvailability(previous);
+        } finally {
+          isSavingAvailability = false;
+        }
       });
     }
 
@@ -580,11 +628,11 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
       if (toggle && lbl) {
         if (state === 'verified') {
-          toggle.checked = true;
-          lbl.textContent = 'Online';
+          toggle.disabled = true;
+          applyAvailability('online');
         } else {
-          toggle.checked = false;
-          lbl.textContent = 'Offline';
+          toggle.disabled = true;
+          applyAvailability('offline');
         }
       }
     }
@@ -817,6 +865,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     if (backendVerificationState === 'verified') {
       setProviderUiState('verified');
+      syncAvailabilityFromServer();
     } else if (backendVerificationState === 'pending' || backendVerificationState === 'approval_ready') {
       setProviderUiState('pending');
       updatePendingStateDetails();

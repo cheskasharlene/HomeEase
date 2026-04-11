@@ -868,3 +868,539 @@ body { background: #fff; }
     body.dark .book-status.completed { background: #052e1c; color: #34d399; }
     body.dark .bk-btn.cancel { background: #1a1a26; border-color: #2e2e42; color: #F5A623; }
 
+    .p-hdr-main {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .p-hdr-ttl {
+      font-size: 24px;
+      letter-spacing: -.4px;
+    }
+
+    .p-hdr-sub {
+      font-size: 12px;
+      color: rgba(26, 26, 46, .72);
+      margin-top: 0;
+    }
+
+    .cal-bar {
+      background: linear-gradient(135deg, #FFF9F2 0%, #FFF4E8 100%);
+    }
+
+    .cal-title {
+      min-width: 0;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .book-list {
+      padding-bottom: 8px;
+    }
+
+    .schedule-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-bottom: 2px;
+    }
+
+    .schedule-section + .schedule-section {
+      margin-top: 8px;
+      padding-top: 4px;
+      border-top: 1px solid #F0E7DA;
+    }
+
+    .schedule-section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 4px;
+    }
+
+    .schedule-section-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: #1A1A2E;
+      line-height: 1.2;
+    }
+
+    .schedule-section-sub {
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #A19A8E;
+    }
+
+    .schedule-section-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .schedule-empty-row {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #FFF8F0;
+      border: 1px dashed #E8D8C3;
+      color: #8E8E93;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .book-card {
+      padding: 14px;
+      border-radius: 18px;
+      background: #fff;
+      border: 1.5px solid #EDE8E0;
+      box-shadow: 0 3px 14px rgba(232, 130, 12, .08);
+    }
+
+    .book-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .book-type {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1A1A2E;
+      line-height: 1.15;
+      flex: 1;
+    }
+
+    .book-price {
+      flex-shrink: 0;
+      font-size: 14px;
+      font-weight: 900;
+      color: #D4790A;
+      background: linear-gradient(135deg, #FFF1E0 0%, #FFF8EF 100%);
+      border: 1px solid #F2DFC5;
+      padding: 6px 10px;
+      border-radius: 999px;
+    }
+
+    .book-client {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #3F3F55;
+    }
+
+    .book-meta {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #8E8E93;
+      line-height: 1.45;
+    }
+
+    .book-foot {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .book-detail-btn,
+    .empty-cta {
+      border: none;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 9px 14px;
+      box-shadow: 0 6px 16px rgba(232, 130, 12, .24);
+      cursor: pointer;
+    }
+
+    .book-detail-btn {
+      flex-shrink: 0;
+    }
+
+    .book-status.cancelled {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      color: #b91c1c;
+    }
+
+    .empty.empty-schedule {
+      margin: 12px 0 0;
+      padding: 28px 18px;
+      background: linear-gradient(135deg, #FFF9F1 0%, #FFFDF9 100%);
+      border-style: solid;
+      border-color: #F1E2D0;
+      box-shadow: 0 8px 24px rgba(232, 130, 12, .08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .empty-ic {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #FFF1E0 0%, #FFE7C2 100%);
+      color: #D4790A;
+      font-size: 26px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+    }
+
+    .empty-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #1A1A2E;
+      line-height: 1.15;
+    }
+
+    .empty-copy {
+      max-width: 260px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #7F7F92;
+      text-align: center;
+    }
+
+    .empty-cta {
+      margin-top: 4px;
+    }
+
+    .schedule-skeleton-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .schedule-skeleton-card,
+    .day-summary-skeleton {
+      width: 100%;
+      border-radius: 18px;
+      background: linear-gradient(90deg, #f3ede4 25%, #fbf7f1 37%, #f3ede4 63%);
+      background-size: 400% 100%;
+      animation: scheduleShimmer 1.25s ease-in-out infinite;
+    }
+
+    .schedule-skeleton-card {
+      height: 132px;
+      border: 1px solid #EDE8E0;
+    }
+
+    .day-summary-skeleton {
+      height: 142px;
+      border: 1px solid #EDE8E0;
+    }
+
+    @keyframes scheduleShimmer {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .day-summary {
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #FFF8F0 0%, #FFFDF8 100%);
+      border: 1px solid #F0E2CF;
+      box-shadow: 0 4px 18px rgba(232, 130, 12, .07);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .day-summary-label {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+      color: #D4790A;
+    }
+
+    .day-summary-date {
+      margin-top: 4px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: #1A1A2E;
+      line-height: 1.15;
+    }
+
+    .day-summary-count {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #FFF1E0;
+      color: #D4790A;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .day-preview-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .day-mini-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: #fff;
+      border: 1px solid #F0E7DA;
+    }
+
+    .day-mini-service {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1A1A2E;
+    }
+
+    .day-mini-meta {
+      margin-top: 2px;
+      font-size: 11px;
+      color: #8E8E93;
+    }
+
+    .day-mini-status {
+      flex-shrink: 0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .day-mini-status.pending { background: #fef3c7; color: #92400e; }
+    .day-mini-status.confirmed { background: #dbeafe; color: #1e40af; }
+    .day-mini-status.completed { background: #d1fae5; color: #065f46; }
+    .day-mini-status.cancelled { background: #fee2e2; color: #b91c1c; }
+
+    .day-mini-more {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: #A19A8E;
+      margin-top: 2px;
+    }
+
+    body.dark .schedule-section + .schedule-section {
+      border-top-color: #2a2a3a;
+    }
+
+    body.dark .schedule-section-title,
+    body.dark .book-type,
+    body.dark .day-summary-date,
+    body.dark .empty-title,
+    body.dark .cal-title,
+    body.dark .p-hdr-ttl {
+      color: #eef0f8;
+    }
+
+    body.dark .schedule-section-sub,
+    body.dark .book-client,
+    body.dark .book-meta,
+    body.dark .day-mini-meta,
+    body.dark .p-hdr-sub,
+    body.dark .empty-copy,
+    body.dark .day-mini-more {
+      color: #9b9bb6;
+    }
+
+    body.dark .book-card,
+    body.dark .schedule-empty-row,
+    body.dark .day-mini-row,
+    body.dark .day-summary,
+    body.dark .empty.empty-schedule,
+    body.dark .schedule-skeleton-card,
+    body.dark .day-summary-skeleton {
+      background: #1e1e2c;
+      border-color: #2a2a3a;
+    }
+
+    body.dark .book-price,
+    body.dark .day-summary-count {
+      background: #302414;
+      border-color: #4b3620;
+      color: #f5a623;
+    }
+
+    body.dark .book-detail-btn,
+    body.dark .empty-cta {
+      box-shadow: 0 6px 16px rgba(245, 166, 35, .18);
+    }
+
+    /* Layout stability fixes: prevent visual overlap between cards/cells */
+    .screen,
+    .p-scroll,
+    .cal-card,
+    .month-grid,
+    .week-grid,
+    .day-view,
+    .book-list,
+    .book-card,
+    .day-cell,
+    .week-day {
+      box-sizing: border-box;
+    }
+
+    .month-grid {
+      grid-auto-rows: minmax(52px, 52px);
+      align-items: stretch;
+      gap: 5px;
+      background: #fff;
+    }
+
+    .wk-label {
+      font-size: 10px;
+      letter-spacing: .2px;
+      color: #A8A194;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .day-filler {
+      border-radius: 10px;
+      background: transparent;
+      border: none;
+    }
+
+    .day-cell {
+      min-height: 50px;
+      height: 50px;
+      overflow: hidden;
+      padding: 6px 5px;
+      transform: none;
+      border-color: #EEE6D8;
+      position: relative;
+      box-shadow: none;
+    }
+
+    .day-cell:hover,
+    .day-cell.selected {
+      transform: none;
+    }
+
+    .day-num {
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .day-count {
+      font-size: 9px;
+      line-height: 1.1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #B48E5A;
+      margin-top: auto;
+    }
+
+    .day-badge {
+      position: absolute;
+      right: 4px;
+      top: 4px;
+      min-width: 14px;
+      height: 14px;
+      border-radius: 7px;
+      background: #F5A623;
+      color: #fff;
+      font-size: 9px;
+      line-height: 14px;
+      text-align: center;
+      font-weight: 800;
+      padding: 0 3px;
+    }
+
+    .day-cell.today {
+      border-color: #E8B35E;
+      background: #FFF8ED;
+    }
+
+    .day-cell.selected {
+      border-color: #F5A623;
+      box-shadow: inset 0 0 0 1px #F5A623;
+      background: #FFF4E3;
+    }
+
+    .day-cell.has-bookings .day-count {
+      color: #C47A0C;
+      font-weight: 700;
+    }
+
+    .week-grid {
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .week-day {
+      min-height: 70px;
+      padding: 7px 5px;
+      overflow: hidden;
+      transform: none;
+      box-shadow: none;
+      border-color: #EEE6D8;
+    }
+
+    .week-day:hover,
+    .week-day.selected {
+      transform: none;
+    }
+
+    .week-day-count {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .week-day.today {
+      background: #FFF8ED;
+      border-color: #E8B35E;
+    }
+
+    .week-day.selected {
+      border-color: #F5A623;
+      box-shadow: inset 0 0 0 1px #F5A623;
+      background: #FFF4E3;
+    }
+
+    .book-list {
+      gap: 12px;
+      margin-top: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .schedule-section {
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    .book-card {
+      position: relative;
+      z-index: 1;
+      transform: none;
+      margin: 0;
+    }
+
+    .book-card:hover,
+    .book-card:active {
+      transform: none;
+    }
+

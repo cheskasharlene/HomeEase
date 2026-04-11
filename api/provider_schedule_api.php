@@ -40,6 +40,7 @@ if ($method === 'POST' && $action === 'update_status') {
         'pending' => 'pending',
         'confirmed' => 'progress',
         'completed' => 'done',
+        'cancelled' => 'cancelled',
         'progress' => 'progress',
         'done' => 'done',
     ];
@@ -85,7 +86,7 @@ if ($method === 'POST' && $action === 'update_status') {
 $statusFilter = trim((string) ($_GET['status'] ?? ''));
 $search = trim((string) ($_GET['search'] ?? ''));
 
-$select = "b.id, b.service, b.status, b.date, b.address, b.created_at, COALESCE(u.name, 'Client') AS client_name";
+$select = "b.id, b.service, b.status, b.date, b.address, b.price, b.created_at, COALESCE(u.name, 'Client') AS client_name";
 if ($has('time_slot')) {
     $select .= ", b.time_slot";
 }
@@ -186,6 +187,7 @@ $bookings = array_map(function (array $r): array {
         'time' => $timeRaw !== '' ? $timeRaw : 'All day',
         'service' => (string) ($r['service'] ?? 'Service'),
         'client_name' => (string) ($r['client_name'] ?? 'Client'),
+        'price' => (float) ($r['price'] ?? 0),
         'status' => $status,
         'status_raw' => $statusRaw,
         'address' => (string) ($r['address'] ?? ''),
