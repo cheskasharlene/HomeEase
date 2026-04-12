@@ -22,6 +22,7 @@ $rawEmail = trim((string)($_SESSION['provider_email'] ?? ''));
 $rawPhone = trim((string)($_SESSION['provider_phone'] ?? ''));
 $rawAddress = trim((string)($_SESSION['provider_address'] ?? ''));
 $rawSpecialty = trim((string)($_SESSION['provider_specialty'] ?? 'General Services'));
+$providerId = (int)($_SESSION['provider_id'] ?? 0);
 
 $availabilityStatus = $isVerified ? 'online' : 'offline';
 ?>
@@ -64,10 +65,11 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         <div class="p-hdr">
           <div class="p-hdr-back" onclick="goPage('provider_home.php')"><i class="bi bi-arrow-left"></i></div>
           <div class="p-hdr-settings" onclick="openSettingsScreen()"><i class="bi bi-gear-fill"></i></div>
-          <div
-            style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.1));border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;color:#fff;margin:0 auto 12px;box-shadow:0 8px 24px rgba(0,0,0,.12);">
-            <?= strtoupper(substr($name, 0, 1)) ?>
-          </div>
+          <img
+            id="profileAvatar"
+            class="p-avatar"
+            src="https://ui-avatars.com/api/?name=Provider&background=FDECC8&color=E8820C&size=200"
+            alt="Profile Avatar">
           <div class="p-name" id="profileName"><?= $name ?></div>
           <div class="p-email" id="profileEmail"><?= $email ?></div>
           <div class="p-badges">
@@ -348,6 +350,14 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           </div>
 
           <div class="sheet-section" id="sheetEditProfile">
+            <div class="sheet-profile-avatar-wrap">
+              <input id="sheetProfileAvatarInput" type="file" accept="image/*" hidden>
+              <button type="button" class="sheet-profile-avatar-btn" onclick="triggerProfilePhotoPicker()" aria-label="Upload profile photo">
+                <img id="sheetProfileAvatar" src="https://ui-avatars.com/api/?name=Provider&background=FDECC8&color=E8820C&size=200" alt="Edit profile photo">
+                <span class="sheet-profile-avatar-cam"><i class="bi bi-camera-fill"></i></span>
+              </button>
+              <button type="button" class="sheet-profile-avatar-label" onclick="triggerProfilePhotoPicker()">Tap to change photo</button>
+            </div>
             <div class="edit-modal-form">
               <div class="edit-fg">
                 <label class="edit-flbl">Name</label>
@@ -409,6 +419,8 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     const backendProfileState = <?= json_encode($profileUiState) ?>;
     const backendIsVerified = <?= json_encode($isVerified) ?>;
     const backendAvailability = <?= json_encode($availabilityStatus) ?>;
+    const providerId = <?= json_encode($providerId) ?>;
+    const providerAvatarStorageKey = 'he_provider_avatar_' + String(providerId || 'default');
     const providerUiState = {
       name: <?= json_encode($rawName) ?>,
       email: <?= json_encode($rawEmail) ?>,
@@ -417,6 +429,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       workingStart: '08:00',
       workingEnd: '18:00',
       specialty: <?= json_encode($rawSpecialty) ?>,
+      avatarUrl: '',
       services: []
     };
     const providerServicesCatalog = [
@@ -553,6 +566,74 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       return count + ' services selected';
     }
 
+    function getDefaultAvatarUrl() {
+      const encodedName = encodeURIComponent(providerUiState.name || 'Provider');
+      return 'https://ui-avatars.com/api/?name=' + encodedName + '&background=FDECC8&color=E8820C&size=200';
+    }
+
+    function applyAvatarEverywhere(url) {
+      const profileAvatar = document.getElementById('profileAvatar');
+      const sheetAvatar = document.getElementById('sheetProfileAvatar');
+      if (profileAvatar) profileAvatar.src = url;
+      if (sheetAvatar) sheetAvatar.src = url;
+
+      document.querySelectorAll('[data-provider-avatar-id="' + providerId + '"]').forEach(function (node) {
+        if (node.tagName === 'IMG') {
+          node.src = url;
+        } else {
+          node.style.backgroundImage = 'url("' + url + '")';
+          node.style.backgroundSize = 'cover';
+          node.style.backgroundPosition = 'center';
+        }
+      });
+    }
+
+    function loadSavedAvatar() {
+      let savedAvatar = '';
+      try {
+        savedAvatar = localStorage.getItem(providerAvatarStorageKey) || '';
+      } catch (e) {
+        savedAvatar = '';
+      }
+      providerUiState.avatarUrl = savedAvatar || getDefaultAvatarUrl();
+      applyAvatarEverywhere(providerUiState.avatarUrl);
+    }
+
+    function triggerProfilePhotoPicker() {
+      const input = document.getElementById('sheetProfileAvatarInput');
+      if (input) input.click();
+    }
+
+    function handleProfilePhotoPick(event) {
+      const file = event && event.target && event.target.files ? event.target.files[0] : null;
+      if (!file) return;
+      if (!String(file.type || '').startsWith('image/')) {
+        setSheetAlert('Please choose an image file.', 'err');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (loadEvent) {
+        const nextAvatar = String(loadEvent && loadEvent.target ? loadEvent.target.result || '' : '');
+        if (!nextAvatar) return;
+        providerUiState.avatarUrl = nextAvatar;
+        applyAvatarEverywhere(nextAvatar);
+        try {
+          localStorage.setItem(providerAvatarStorageKey, nextAvatar);
+        } catch (e) {
+          // Ignore storage limit errors and keep in-memory preview.
+        }
+        const sheetAvatar = document.getElementById('sheetProfileAvatar');
+        if (sheetAvatar) {
+          sheetAvatar.classList.remove('avatar-pop');
+          void sheetAvatar.offsetWidth;
+          sheetAvatar.classList.add('avatar-pop');
+        }
+        setSheetAlert('Profile photo updated.', 'ok');
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
     function renderServicesChecklist() {
       const wrap = document.getElementById('sheetServicesList');
       if (!wrap) return;
@@ -584,6 +665,10 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       if (specialtyEl) specialtyEl.textContent = providerUiState.services[0] || providerUiState.specialty || 'General Services';
       if (editSubEl) editSubEl.textContent = (providerUiState.name || 'Name') + ', ' + getPhoneText() + ', ' + getServiceAreaText();
       if (serviceSubEl) serviceSubEl.textContent = getManageServicesSummary();
+      if (!providerUiState.avatarUrl || String(providerUiState.avatarUrl).indexOf('ui-avatars.com/api/?name=') !== -1) {
+        providerUiState.avatarUrl = getDefaultAvatarUrl();
+      }
+      applyAvatarEverywhere(providerUiState.avatarUrl);
     }
 
     let activeSheetAction = 'edit-profile';
@@ -737,6 +822,12 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       if (event.key === 'Escape') closeActionSheet();
     });
 
+    const sheetProfileAvatarInput = document.getElementById('sheetProfileAvatarInput');
+    if (sheetProfileAvatarInput) {
+      sheetProfileAvatarInput.addEventListener('change', handleProfilePhotoPick);
+    }
+
+    loadSavedAvatar();
     refreshProviderUi();
   </script>
 </body>

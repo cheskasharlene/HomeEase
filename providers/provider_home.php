@@ -18,6 +18,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 $providerPhone = htmlspecialchars($_SESSION['provider_phone'] ?? '');
 $providerAddress = htmlspecialchars($_SESSION['provider_address'] ?? '');
 $providerSpecialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'Service Provider');
+$providerId = (int) ($_SESSION['provider_id'] ?? 0);
 
 $availabilityStatus = $isVerified ? 'online' : 'offline';
 
@@ -372,6 +373,18 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         <?php endif; ?>
       </div>
     </div>
+
+    <div class="verify-intro-ol" id="verifiedIntroOl" onclick="if(event.target===this)closeVerifiedIntro()">
+      <div class="verify-intro-card">
+        <div class="verify-intro-handle"></div>
+        <button class="verify-intro-close" type="button" onclick="closeVerifiedIntro()"><i class="bi bi-x-lg"></i></button>
+        <div class="verify-intro-icon"><i class="bi bi-patch-check-fill"></i></div>
+        <div class="verify-intro-title">You're Now Verified! 🎉</div>
+        <div class="verify-intro-msg">Your account has been approved. You now have full access to accept bookings and provide services.</div>
+        <div class="verify-intro-help">Your dashboard has been updated. You can now view requests, manage your schedule, and track your earnings.</div>
+        <button class="verify-intro-cta" type="button" onclick="goToDashboardFromIntro()">Go to Dashboard</button>
+      </div>
+    </div>
   </div>
 
   <script src="../assets/js/app.js"></script>
@@ -418,11 +431,14 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       }, 2200);
     }
     const bellDot = document.getElementById('bellDot');
-    if (bellDot) bellDot.style.display = 'block';
 
     const backendVerificationState = <?= json_encode($verificationState) ?>;
     const backendIsVerified = <?= json_encode($isVerified) ?>;
     const backendAvailability = <?= json_encode($availabilityStatus) ?>;
+    const providerId = <?= json_encode($providerId) ?>;
+    const localStateKey = 'he_provider_last_state_' + providerId;
+    const localOnboardingSeenKey = 'he_provider_verified_seen_' + providerId;
+    const localVerifiedNotifKey = 'he_provider_notifs_' + providerId;
 
       // SERVICE_CONFIG and all tools/skills/checkboxes logic removed as not needed anymore
 
@@ -635,6 +651,78 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           applyAvailability('offline');
         }
       }
+    }
+
+    function getTimestampLabel(dateString) {
+      try {
+        const d = new Date(dateString);
+        return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      } catch (e) {
+        return 'Just now';
+      }
+    }
+
+    function getStoredProviderNotifs() {
+      try {
+        const raw = localStorage.getItem(localVerifiedNotifKey);
+        const parsed = JSON.parse(raw || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveStoredProviderNotifs(list) {
+      try {
+        localStorage.setItem(localVerifiedNotifKey, JSON.stringify(Array.isArray(list) ? list : []));
+      } catch (e) {
+        // Ignore storage errors.
+      }
+    }
+
+    function updateBellDot() {
+      if (!bellDot) return;
+      const unreadLocal = getStoredProviderNotifs().some(n => n && !n.read);
+      bellDot.style.display = (backendVerificationState === 'approval_ready' || unreadLocal) ? 'block' : 'none';
+    }
+
+    function ensureAccountVerifiedNotification() {
+      const notifs = getStoredProviderNotifs();
+      const existing = notifs.find(n => n && n.id === 'account_verified');
+      if (existing) return;
+      const createdAt = new Date().toISOString();
+      notifs.unshift({
+        id: 'account_verified',
+        type: 'account_verified',
+        title: 'Account Verified',
+        msg: 'You can now start accepting bookings.',
+        createdAt,
+        time: getTimestampLabel(createdAt),
+        read: false,
+        icon: 'verified'
+      });
+      saveStoredProviderNotifs(notifs);
+    }
+
+    function openVerifiedIntro() {
+      const intro = document.getElementById('verifiedIntroOl');
+      if (intro) intro.classList.add('on');
+    }
+
+    function closeVerifiedIntro() {
+      const intro = document.getElementById('verifiedIntroOl');
+      if (intro) intro.classList.remove('on');
+      try {
+        localStorage.setItem(localOnboardingSeenKey, '1');
+      } catch (e) {
+        // Ignore storage errors.
+      }
+    }
+
+    function goToDashboardFromIntro() {
+      closeVerifiedIntro();
+      const scrollHost = document.getElementById('phScroll');
+      if (scrollHost) scrollHost.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function statusClass(statusRaw) {
@@ -872,6 +960,25 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     } else {
       setProviderUiState('not-verified');
     }
+
+    let previousState = '';
+    let onboardingSeen = false;
+    try {
+      previousState = localStorage.getItem(localStateKey) || '';
+      onboardingSeen = localStorage.getItem(localOnboardingSeenKey) === '1';
+      localStorage.setItem(localStateKey, backendVerificationState);
+    } catch (e) {
+      previousState = '';
+      onboardingSeen = false;
+    }
+
+    const justBecameVerified = backendVerificationState === 'verified' && previousState !== 'verified';
+    if (backendVerificationState === 'verified' && (justBecameVerified || !onboardingSeen)) {
+      ensureAccountVerifiedNotification();
+      openVerifiedIntro();
+    }
+
+    updateBellDot();
 
     loadTodaySchedule();
     window.addEventListener('focus', loadTodaySchedule);

@@ -9,23 +9,12 @@ require_once __DIR__ . '/provider_access.php';
 $access = enforceProviderSectionAccess('notifications', $conn);
 $isVerified = $access['is_verified'];
 $verificationState = $access['state'];
+$providerId = (int) ($_SESSION['provider_id'] ?? 0);
 $notifs = [
   ['id' => 1, 'title' => 'New service request', 'msg' => 'You have a new plumbing request waiting.', 'time' => 'Just now', 'read' => false, 'icon' => 'plumbing'],
   ['id' => 2, 'title' => 'Job reminder', 'msg' => 'Upcoming job with Jane Smith starts in 2 hours.', 'time' => '2h ago', 'read' => false, 'icon' => 'cleaning'],
   ['id' => 3, 'title' => 'New review posted', 'msg' => 'A customer rated your latest service 5 stars!', 'time' => 'Yesterday', 'read' => true, 'icon' => 'electrical'],
 ];
-
-if ($verificationState === 'approval_ready' || $verificationState === 'verified') {
-  array_unshift($notifs, [
-    'id' => 999,
-    'title' => 'You are now a Verified Provider!',
-    'msg' => 'You can now accept bookings and go online.',
-    'time' => 'Now',
-    'read' => ($verificationState === 'verified'),
-    'icon' => 'verified',
-    'type' => 'approval',
-  ]);
-}
 $unread = count(array_filter($notifs, fn($n) => !$n['read']));
 ?>
 <!DOCTYPE html>
@@ -130,6 +119,51 @@ $unread = count(array_filter($notifs, fn($n) => !$n['read']));
     window.HE = window.HE || {};
     window.HE.notifications = <?= json_encode(array_values($notifs)) ?>;
     window.HE.verificationState = <?= json_encode($verificationState) ?>;
+    window.HE.providerId = <?= json_encode($providerId) ?>;
+
+    const localNotifKey = 'he_provider_notifs_' + String(window.HE.providerId || 'default');
+
+    function getTimestampLabel(dateString) {
+      try {
+        const d = new Date(dateString);
+        return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      } catch (e) {
+        return 'Just now';
+      }
+    }
+
+    function readLocalNotifs() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(localNotifKey) || '[]');
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function writeLocalNotifs(list) {
+      try {
+        localStorage.setItem(localNotifKey, JSON.stringify(Array.isArray(list) ? list : []));
+      } catch (e) {
+        // Ignore storage errors.
+      }
+    }
+
+    function mergeNotifications() {
+      const localList = readLocalNotifs().map(item => {
+        if (!item.time && item.createdAt) item.time = getTimestampLabel(item.createdAt);
+        return item;
+      });
+      const byId = new Map();
+
+      localList.forEach(item => byId.set(String(item.id), item));
+      window.HE.notifications.forEach(item => {
+        const key = String(item.id);
+        if (!byId.has(key)) byId.set(key, item);
+      });
+
+      window.HE.notifications = Array.from(byId.values());
+    }
 
     function renderNotifs() {
       const notifs = window.HE.notifications, unread = notifs.filter(n => !n.read), read = notifs.filter(n => n.read);
@@ -141,8 +175,8 @@ $unread = count(array_filter($notifs, fn($n) => !$n['read']));
       document.getElementById('nBody').innerHTML = html;
     }
     function notifCard(n) {
-      if (n.type === 'approval') {
-        return `<div class="n-card${n.read ? '' : ' unread'}" onclick="markRead(${n.id})">${!n.read ? '<div class="n-unread-bar"></div>' : ''}<div class="n-ic" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#059669;font-size:20px;">✔</div><div class="n-content"><div class="n-title">${n.title}</div><div class="n-msg">${n.msg}</div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;"><span style="font-size:11px;font-weight:800;color:#059669;background:#dcfce7;border:1px solid #86efac;padding:3px 10px;border-radius:999px;">Verified</span><button onclick="activateAndGoDashboard(event)" style="border:none;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;cursor:pointer;">Go to Dashboard</button></div></div></div>`;
+      if (n.type === 'account_verified') {
+        return `<div class="n-card${n.read ? '' : ' unread'}" onclick="markRead('${String(n.id)}')">${!n.read ? '<div class="n-unread-bar"></div>' : ''}<div class="n-ic" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#059669;font-size:20px;display:flex;align-items:center;justify-content:center;">✔</div><div class="n-content"><div class="n-title">${n.title}</div><div class="n-msg">${n.msg}</div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;"><span style="font-size:11px;font-weight:800;color:#059669;background:#dcfce7;border:1px solid #86efac;padding:3px 10px;border-radius:999px;">Verified</span><button onclick="activateAndGoDashboard(event)" style="border:none;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;cursor:pointer;">Go to Dashboard</button></div><div class="n-time" style="margin-top:7px;">${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all" style="color:var(--teal);font-size:12px;"></i>'}${n.time || 'Now'}</div></div></div>`;
       }
       const img = SVC_IMGS[n.icon] || SVC_IMGS.cleaning;
       return `<div class="n-card${n.read ? '' : ' unread'}" onclick="markRead(${n.id})">${!n.read ? '<div class="n-unread-bar"></div>' : ''}<div class="n-ic"><img src="${img}" alt=""></div><div class="n-content"><div class="n-title">${n.title}</div><div class="n-msg">${n.msg}</div><div class="n-time">${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all" style="color:var(--teal);font-size:12px;"></i>'}${n.time}</div></div></div>`;
@@ -172,8 +206,26 @@ $unread = count(array_filter($notifs, fn($n) => !$n['read']));
       }
     }
 
-    function markRead(id) { const n = window.HE.notifications.find(nf => nf.id === id); if (n && !n.read) { n.read = true; renderNotifs(); } }
-    function markAllRead() { window.HE.notifications.forEach(n => n.read = true); renderNotifs(); }
+    function markRead(id) {
+      const n = window.HE.notifications.find(nf => String(nf.id) === String(id));
+      if (n && !n.read) {
+        n.read = true;
+        const localList = readLocalNotifs();
+        const localNotif = localList.find(item => String(item.id) === String(id));
+        if (localNotif) {
+          localNotif.read = true;
+          writeLocalNotifs(localList);
+        }
+        renderNotifs();
+      }
+    }
+    function markAllRead() {
+      window.HE.notifications.forEach(n => n.read = true);
+      const localList = readLocalNotifs().map(item => ({ ...item, read: true }));
+      writeLocalNotifs(localList);
+      renderNotifs();
+    }
+    mergeNotifications();
     renderNotifs();
   </script>
 </body>
