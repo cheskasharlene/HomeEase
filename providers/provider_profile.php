@@ -16,25 +16,12 @@ $email = htmlspecialchars($_SESSION['provider_email'] ?? '');
 $phone = htmlspecialchars($_SESSION['provider_phone'] ?? 'Not set');
 $address = htmlspecialchars($_SESSION['provider_address'] ?? 'Not set');
 $specialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'General Services');
-$workingHours = 'Mon-Sat, 8:00 AM - 6:00 PM';
 
-$providerId = (int) ($_SESSION['provider_id'] ?? 0);
-$colCheck = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'working_hours'");
-$hasWorkingHours = $colCheck && $colCheck->num_rows > 0;
-
-if ($hasWorkingHours) {
-  $profileStmt = $conn->prepare('SELECT working_hours FROM service_providers WHERE provider_id = ? LIMIT 1');
-  if ($profileStmt) {
-    $profileStmt->bind_param('i', $providerId);
-    $profileStmt->execute();
-    $profileRow = $profileStmt->get_result()->fetch_assoc();
-    $profileStmt->close();
-    $wh = trim((string) ($profileRow['working_hours'] ?? ''));
-    if ($wh !== '') {
-      $workingHours = htmlspecialchars($wh);
-    }
-  }
-}
+$rawName = trim((string)($_SESSION['provider_name'] ?? 'Service Provider'));
+$rawEmail = trim((string)($_SESSION['provider_email'] ?? ''));
+$rawPhone = trim((string)($_SESSION['provider_phone'] ?? ''));
+$rawAddress = trim((string)($_SESSION['provider_address'] ?? ''));
+$rawSpecialty = trim((string)($_SESSION['provider_specialty'] ?? 'General Services'));
 
 $availabilityStatus = $isVerified ? 'online' : 'offline';
 ?>
@@ -81,11 +68,11 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             style="width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.1));border:3px solid rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;font-family:'Poppins',sans-serif;font-size:32px;font-weight:800;color:#fff;margin:0 auto 12px;box-shadow:0 8px 24px rgba(0,0,0,.12);">
             <?= strtoupper(substr($name, 0, 1)) ?>
           </div>
-          <div class="p-name" id="profileNameValue"><?= $name ?></div>
-          <div class="p-email"><?= $email ?></div>
+          <div class="p-name" id="profileName"><?= $name ?></div>
+          <div class="p-email" id="profileEmail"><?= $email ?></div>
           <div class="p-badges">
             <div class="p-badge"><i class="bi <?= $isVerified ? 'bi-patch-check-fill' : 'bi-hourglass-split' ?>" style="font-size:11px;"></i> <?= $isVerified ? 'Verified Provider' : ('Verification: ' . ucfirst(str_replace('_', ' ', $verificationState))) ?></div>
-            <div class="p-badge service-badge"><i class="bi bi-tools" style="font-size:11px;"></i> <?= $specialty ?></div>
+            <div class="p-badge service-badge"><i class="bi bi-tools" style="font-size:11px;"></i> <span id="profileSpecialty"><?= $specialty ?></span></div>
           </div>
           <div class="p-status-row" id="profileStatusRow">
             <div class="p-status-text">Status: <span id="profileAvailLabel"><?= ($isVerified && $availabilityStatus === 'online') ? 'Online' : 'Offline' ?></span></div>
@@ -116,7 +103,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         
           <div class="p-sec">
             <div class="p-sec-ttl">Contact & Availability</div>
-            <div class="p-row" onclick="editPhone()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();editPhone();}">
+            <div class="p-row actionable" onclick="openActionSheet('phone')">
               <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
                   <path
                     d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 11.18 19.79 19.79 0 01.12 2.57 2 2 0 012.11.39h3A2 2 0 017.1 2.07c.36 1.07.83 2.1 1.38 3.07a2 2 0 01-.46 2.31L6.29 9A16 16 0 0015 17.71l1.55-1.73a2 2 0 012.31-.46c.97.55 2 1.02 3.07 1.38a2 2 0 011.07 1.02z"
@@ -128,25 +115,25 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
-            <div class="p-row" onclick="editServiceArea()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();editServiceArea();}">
+            <div class="p-row actionable" onclick="openActionSheet('service-area')">
               <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
                   <path d="M12 2a8 8 0 00-8 8c0 5.5 8 13 8 13s8-7.5 8-13a8 8 0 00-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z"
                     stroke="#F5A623" stroke-width="2" />
                 </svg></div>
               <div class="p-row-info">
                 <div class="p-row-lbl">Service Area</div>
-                <div class="p-row-sub" id="profileAddressValue"><?= $address ?></div>
+                <div class="p-row-sub" id="profileServiceAreaValue"><?= $address ?></div>
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
-            <div class="p-row" onclick="editWorkingHours()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();editWorkingHours();}">
+            <div class="p-row actionable" onclick="openActionSheet('working-hours')">
               <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
                   <circle cx="12" cy="12" r="10" stroke="#F5A623" stroke-width="2" />
                   <path d="M12 6v6l4 2" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
                 </svg></div>
               <div class="p-row-info">
                 <div class="p-row-lbl">Working Hours</div>
-                <div class="p-row-sub" id="profileWorkingHoursValue"><?= $workingHours ?></div>
+                <div class="p-row-sub" id="profileWorkingHoursValue">Mon-Sat, 8:00 AM - 6:00 PM</div>
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
@@ -251,25 +238,18 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       <div class="st-scroll">
         <div class="st-sec">
           <div class="st-sec-ttl">Account</div>
-          <div class="st-row" onclick="openEditProfile()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openEditProfile();}">
+          <div class="st-row" onclick="openActionSheet('edit-profile')">
             <div class="st-ic orange"><i class="bi bi-person-fill"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl">Edit Profile</div>
-              <div class="st-row-sub">Name, phone, service area</div>
+              <div class="st-row-sub" id="settingsEditProfileSub">Name, phone, service area</div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
-          <div class="st-row" onclick="openChangePassword()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openChangePassword();}">
+          <div class="st-row" onclick="openActionSheet('change-password')">
             <div class="st-ic blue"><i class="bi bi-shield-lock-fill"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl">Change Password</div>
               <div class="st-row-sub">Update your password</div>
-            </div><i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
-          <div class="st-row" onclick="editServiceArea()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();editServiceArea();}">
-            <div class="st-ic green"><i class="bi bi-geo-alt-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Service Area</div>
-              <div class="st-row-sub" id="settingsServiceAreaValue"><?= $address ?></div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
         </div>
@@ -293,13 +273,6 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               <div class="st-row-lbl">Help Center</div>
               <div class="st-row-sub">FAQs & guides</div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
-          <div class="st-row">
-            <div class="st-ic gray"><i class="bi bi-info-circle-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">App Version</div>
-              <div class="st-row-sub">HomeEase for Providers</div>
-            </div><span style="font-size:12px;color:var(--tm);font-weight:700;margin-right:6px;">v3.2.0</span>
           </div>
         </div>
         <div class="st-sec">
@@ -327,14 +300,101 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       </div>
     </div>
 
-    <div class="edit-modal-ol" id="editModalOl" onclick="if(event.target===this)closeEditModal(null)">
-      <div class="edit-modal-card" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
-        <div class="edit-modal-ttl" id="editModalTitle">Edit</div>
-        <div class="edit-modal-sub" id="editModalSubtitle">Update your details.</div>
-        <form id="editModalForm" class="edit-modal-form"></form>
+    <div class="edit-modal-ol" id="actionSheetOl" onclick="actionSheetBg(event)">
+      <div class="edit-modal-card" role="dialog" aria-modal="true" aria-labelledby="actionSheetTitle">
+        <div class="edit-sheet-handle-zone">
+          <div class="edit-sheet-handle"></div>
+        </div>
+        <div class="edit-sheet-header">
+          <div>
+            <div class="edit-modal-ttl" id="actionSheetTitle">Edit Profile</div>
+            <div class="edit-modal-sub" id="actionSheetSubTitle">Update your account details</div>
+          </div>
+          <button class="edit-sheet-close" type="button" onclick="closeActionSheet()"><i class="bi bi-x-lg"></i></button>
+        </div>
+
+        <div class="edit-modal-content">
+          <div id="sheetAlert" class="sheet-alert"></div>
+
+          <div class="sheet-section" id="sheetPhone">
+            <div class="edit-modal-form">
+              <div class="edit-fg">
+                <label class="edit-flbl">Phone Number</label>
+                <input class="edit-fin" id="sheetPhoneInput" type="tel" placeholder="09xx xxx xxxx">
+              </div>
+            </div>
+          </div>
+
+          <div class="sheet-section" id="sheetServiceArea">
+            <div class="edit-modal-form">
+              <div class="edit-fg">
+                <label class="edit-flbl">Service Area</label>
+                <input class="edit-fin" id="sheetServiceAreaInput" type="text" placeholder="Enter service area">
+              </div>
+            </div>
+          </div>
+
+          <div class="sheet-section" id="sheetWorkingHours">
+            <div class="edit-modal-form sheet-time-grid">
+              <div class="edit-fg">
+                <label class="edit-flbl">Start Time</label>
+                <input class="edit-fin" id="sheetStartTime" type="time" value="08:00">
+              </div>
+              <div class="edit-fg">
+                <label class="edit-flbl">End Time</label>
+                <input class="edit-fin" id="sheetEndTime" type="time" value="18:00">
+              </div>
+            </div>
+          </div>
+
+          <div class="sheet-section" id="sheetEditProfile">
+            <div class="edit-modal-form">
+              <div class="edit-fg">
+                <label class="edit-flbl">Name</label>
+                <input class="edit-fin" id="sheetProfileName" type="text" placeholder="Full name">
+              </div>
+              <div class="edit-fg">
+                <label class="edit-flbl">Email</label>
+                <input class="edit-fin" id="sheetProfileEmail" type="email" placeholder="you@email.com">
+              </div>
+              <div class="edit-fg">
+                <label class="edit-flbl">Phone</label>
+                <input class="edit-fin" id="sheetProfilePhone" type="tel" placeholder="09xx xxx xxxx">
+              </div>
+              <div class="edit-fg">
+                <label class="edit-flbl">Address</label>
+                <input class="edit-fin" id="sheetProfileAddress" type="text" placeholder="Service area or address">
+              </div>
+            </div>
+          </div>
+
+          <div class="sheet-section" id="sheetChangePassword">
+            <div class="edit-modal-form">
+              <div class="edit-fg">
+                <label class="edit-flbl">Current Password</label>
+                <input class="edit-fin" id="sheetCurrentPassword" type="password" placeholder="Current password">
+              </div>
+              <div class="edit-fg">
+                <label class="edit-flbl">New Password</label>
+                <input class="edit-fin" id="sheetNewPassword" type="password" placeholder="New password">
+              </div>
+              <div class="edit-fg">
+                <label class="edit-flbl">Confirm Password</label>
+                <input class="edit-fin" id="sheetConfirmPassword" type="password" placeholder="Confirm new password">
+              </div>
+            </div>
+          </div>
+
+          <div class="sheet-section" id="sheetManageServices">
+            <div class="edit-modal-form">
+              <div class="sheet-service-list" id="sheetServicesList"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="edit-modal-actions">
-          <button type="button" class="edit-modal-btn cancel" onclick="closeEditModal(null)">Cancel</button>
-          <button type="button" class="edit-modal-btn save" id="editModalSaveBtn" onclick="submitEditModal()">Save</button>
+          <button class="edit-modal-btn cancel" id="actionSheetCancelBtn" type="button" onclick="closeActionSheet()">Cancel</button>
+          <button class="edit-modal-btn save" id="actionSheetSaveBtn" type="button" onclick="saveActionSheet()">Save</button>
         </div>
       </div>
     </div>
@@ -347,12 +407,35 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       initTheme();
     }
     const backendProfileState = <?= json_encode($profileUiState) ?>;
-    const backendName = <?= json_encode(htmlspecialchars_decode($name, ENT_QUOTES)) ?>;
-    const backendPhone = <?= json_encode(htmlspecialchars_decode($phone, ENT_QUOTES)) ?>;
-    const backendAddress = <?= json_encode(htmlspecialchars_decode($address, ENT_QUOTES)) ?>;
-    const backendWorkingHours = <?= json_encode(htmlspecialchars_decode($workingHours, ENT_QUOTES)) ?>;
     const backendIsVerified = <?= json_encode($isVerified) ?>;
     const backendAvailability = <?= json_encode($availabilityStatus) ?>;
+    const providerUiState = {
+      name: <?= json_encode($rawName) ?>,
+      email: <?= json_encode($rawEmail) ?>,
+      phone: <?= json_encode($rawPhone) ?>,
+      serviceArea: <?= json_encode($rawAddress) ?>,
+      workingStart: '08:00',
+      workingEnd: '18:00',
+      specialty: <?= json_encode($rawSpecialty) ?>,
+      services: []
+    };
+    const providerServicesCatalog = [
+      'General Services',
+      'Home Cleaning',
+      'Plumbing',
+      'Electrical Repair',
+      'Carpentry',
+      'Appliance Repair'
+    ];
+    providerUiState.services = providerServicesCatalog.filter(function (svc) {
+      return svc === providerUiState.specialty;
+    });
+    if (!providerUiState.services.length) {
+      providerUiState.services = [providerUiState.specialty || 'General Services'];
+      if (providerServicesCatalog.indexOf(providerUiState.services[0]) === -1) {
+        providerServicesCatalog.push(providerUiState.services[0]);
+      }
+    }
 
     function applyProfileUiState(state) {
       document.body.classList.remove('not-verified', 'pending', 'verified');
@@ -374,99 +457,6 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     const profileAvailToggle = document.getElementById('profileAvailToggle');
     const profileAvailLabel = document.getElementById('profileAvailLabel');
     let isSavingAvailability = false;
-    let editModalResolver = null;
-
-    function showProfileToast(message, type = 'success') {
-      const old = document.getElementById('profileToast');
-      if (old) old.remove();
-
-      const toast = document.createElement('div');
-      toast.id = 'profileToast';
-      toast.textContent = message;
-      toast.style.position = 'fixed';
-      toast.style.left = '50%';
-      toast.style.bottom = '98px';
-      toast.style.transform = 'translateX(-50%)';
-      toast.style.maxWidth = '78%';
-      toast.style.zIndex = '9999';
-      toast.style.padding = '11px 14px';
-      toast.style.borderRadius = '12px';
-      toast.style.fontSize = '12px';
-      toast.style.fontWeight = '800';
-      toast.style.textAlign = 'center';
-      toast.style.boxShadow = '0 10px 24px rgba(0,0,0,.18)';
-      toast.style.border = type === 'success' ? '1px solid #86efac' : '1px solid #fecaca';
-      toast.style.background = type === 'success' ? '#dcfce7' : '#fef2f2';
-      toast.style.color = type === 'success' ? '#166534' : '#991b1b';
-      document.body.appendChild(toast);
-
-      setTimeout(() => {
-        toast.style.transition = 'opacity .25s ease';
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 260);
-      }, 2100);
-    }
-
-    function closeEditModal(result) {
-      const ol = document.getElementById('editModalOl');
-      if (ol) ol.classList.remove('on');
-      if (editModalResolver) {
-        const resolve = editModalResolver;
-        editModalResolver = null;
-        resolve(result);
-      }
-    }
-
-    function submitEditModal() {
-      const form = document.getElementById('editModalForm');
-      if (!form) {
-        closeEditModal(null);
-        return;
-      }
-      const firstInvalid = form.querySelector(':invalid');
-      if (firstInvalid) {
-        firstInvalid.reportValidity();
-        return;
-      }
-      const formData = new FormData(form);
-      const payload = {};
-      for (const [k, v] of formData.entries()) payload[k] = String(v);
-      closeEditModal(payload);
-    }
-
-    function openEditModal(config) {
-      const titleEl = document.getElementById('editModalTitle');
-      const subEl = document.getElementById('editModalSubtitle');
-      const form = document.getElementById('editModalForm');
-      const saveBtn = document.getElementById('editModalSaveBtn');
-      const ol = document.getElementById('editModalOl');
-      if (!titleEl || !subEl || !form || !saveBtn || !ol) return Promise.resolve(null);
-
-      titleEl.textContent = config.title || 'Edit';
-      subEl.textContent = config.subtitle || 'Update your details.';
-      saveBtn.textContent = config.submitLabel || 'Save';
-
-      form.innerHTML = (config.fields || []).map((field, idx) => {
-        const type = field.type || 'text';
-        const value = field.value || '';
-        const req = field.required ? 'required' : '';
-        const ph = field.placeholder || '';
-        const max = field.maxLength ? `maxlength="${field.maxLength}"` : '';
-        const min = field.minLength ? `minlength="${field.minLength}"` : '';
-        return `
-          <label class="edit-fg">
-            <span class="edit-flbl">${field.label || field.name}</span>
-            <input class="edit-fin" type="${type}" name="${field.name}" value="${value.replace(/\"/g, '&quot;')}" placeholder="${ph.replace(/\"/g, '&quot;')}" ${req} ${max} ${min} ${idx === 0 ? 'autofocus' : ''}>
-          </label>`;
-      }).join('');
-
-      ol.classList.add('on');
-      setTimeout(() => form.querySelector('.edit-fin')?.focus(), 20);
-
-      return new Promise(resolve => {
-        editModalResolver = resolve;
-      });
-    }
 
     function applyAvailability(availability) {
       const isOnline = String(availability || '').toLowerCase() === 'online';
@@ -528,160 +518,226 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     function closeSettingsScreen() { document.getElementById('settingsScreen').classList.remove('on'); }
     function openLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.add('on'); }
     function closeLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.remove('on'); }
-    function updateProfileUiValues(next) {
-      const nameEl = document.getElementById('profileNameValue');
-      const phoneEl = document.getElementById('profilePhoneValue');
-      const addrEl = document.getElementById('profileAddressValue');
-      const setAddrEl = document.getElementById('settingsServiceAreaValue');
-      const hoursEl = document.getElementById('profileWorkingHoursValue');
-
-      if (nameEl && typeof next.name === 'string') nameEl.textContent = next.name || 'Service Provider';
-      if (phoneEl && typeof next.phone === 'string') phoneEl.textContent = next.phone || 'Not set';
-      if (addrEl && typeof next.address === 'string') addrEl.textContent = next.address || 'Not set';
-      if (setAddrEl && typeof next.address === 'string') setAddrEl.textContent = next.address || 'Not set';
-      if (hoursEl && typeof next.working_hours === 'string') hoursEl.textContent = next.working_hours || 'Not set';
-    }
-
-    async function postProfileAction(action, payload) {
-      const fd = new FormData();
-      fd.append('action', action);
-      Object.keys(payload || {}).forEach(k => fd.append(k, payload[k]));
-      const res = await fetch('../api/provider_profile_api.php', { method: 'POST', body: fd });
-      return res.json();
-    }
-
-    async function editPhone() {
-      const current = document.getElementById('profilePhoneValue')?.textContent?.trim() || backendPhone || '';
-      const result = await openEditModal({
-        title: 'Update Phone Number',
-        subtitle: 'Use an active number so clients can reach you.',
-        submitLabel: 'Update',
-        fields: [{ name: 'phone', label: 'Phone', value: current, required: true, maxLength: 40 }]
-      });
-      if (!result) return;
-      const value = String(result.phone || '').trim();
-      const data = await postProfileAction('update_phone', { phone: value });
-      if (!data.success) {
-        showProfileToast(data.message || 'Could not update phone.', 'error');
-        return;
-      }
-      updateProfileUiValues({ phone: data.phone || value });
-      showProfileToast('Phone updated.');
-    }
-
-    async function editServiceArea() {
-      const current = document.getElementById('profileAddressValue')?.textContent?.trim() || backendAddress || '';
-      const result = await openEditModal({
-        title: 'Update Service Area',
-        subtitle: 'Set where you currently accept bookings.',
-        submitLabel: 'Update',
-        fields: [{ name: 'address', label: 'Service Area', value: current, required: true, maxLength: 255 }]
-      });
-      if (!result) return;
-      const value = String(result.address || '').trim();
-      const data = await postProfileAction('update_service_area', { address: value });
-      if (!data.success) {
-        showProfileToast(data.message || 'Could not update service area.', 'error');
-        return;
-      }
-      updateProfileUiValues({ address: data.address || value });
-      showProfileToast('Service area updated.');
-    }
-
-    async function editWorkingHours() {
-      const current = document.getElementById('profileWorkingHoursValue')?.textContent?.trim() || backendWorkingHours || '';
-      const result = await openEditModal({
-        title: 'Update Working Hours',
-        subtitle: 'Example: Mon-Sat, 8:00 AM - 6:00 PM',
-        submitLabel: 'Update',
-        fields: [{ name: 'working_hours', label: 'Working Hours', value: current, required: true, maxLength: 120 }]
-      });
-      if (!result) return;
-      const value = String(result.working_hours || '').trim();
-      const data = await postProfileAction('update_working_hours', { working_hours: value });
-      if (!data.success) {
-        showProfileToast(data.message || 'Could not update working hours.', 'error');
-        return;
-      }
-      updateProfileUiValues({ working_hours: data.working_hours || value });
-      showProfileToast('Working hours updated.');
-    }
-
-    async function openEditProfile() {
-      const currentName = document.getElementById('profileNameValue')?.textContent?.trim() || backendName || '';
-      const currentPhone = document.getElementById('profilePhoneValue')?.textContent?.trim() || backendPhone || '';
-      const currentAddress = document.getElementById('profileAddressValue')?.textContent?.trim() || backendAddress || '';
-
-      const result = await openEditModal({
-        title: 'Edit Profile',
-        subtitle: 'Update your account basics.',
-        submitLabel: 'Save Profile',
-        fields: [
-          { name: 'name', label: 'Full Name', value: currentName, required: true, maxLength: 120 },
-          { name: 'phone', label: 'Phone', value: currentPhone, required: false, maxLength: 40 },
-          { name: 'address', label: 'Service Area', value: currentAddress, required: false, maxLength: 255 }
-        ]
-      });
-      if (!result) return;
-
-      const name = String(result.name || '').trim();
-      const phone = String(result.phone || '').trim();
-      const address = String(result.address || '').trim();
-
-      const data = await postProfileAction('update_profile', {
-        name,
-        phone,
-        address
-      });
-      if (!data.success) {
-        showProfileToast(data.message || 'Could not update profile.', 'error');
-        return;
-      }
-      updateProfileUiValues({
-        name: data.name || name,
-        phone: data.phone || phone,
-        address: data.address || address
-      });
-      showProfileToast('Profile updated.');
-    }
-
-    async function openChangePassword() {
-      const result = await openEditModal({
-        title: 'Change Password',
-        subtitle: 'Use at least 6 characters for your new password.',
-        submitLabel: 'Change Password',
-        fields: [
-          { name: 'current_password', label: 'Current Password', type: 'password', value: '', required: true },
-          { name: 'new_password', label: 'New Password', type: 'password', value: '', required: true, minLength: 6 },
-          { name: 'confirm_password', label: 'Confirm New Password', type: 'password', value: '', required: true, minLength: 6 }
-        ]
-      });
-      if (!result) return;
-
-      const current = String(result.current_password || '');
-      const next = String(result.new_password || '');
-      const confirm = String(result.confirm_password || '');
-
-      const data = await postProfileAction('change_password', {
-        current_password: current,
-        new_password: next,
-        confirm_password: confirm
-      });
-      if (!data.success) {
-        showProfileToast(data.message || 'Could not change password.', 'error');
-        return;
-      }
-      showProfileToast('Password updated successfully.');
-    }
-
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeEditModal(null);
-    });
-
     function confirmLogout() {
       closeLogoutConfirm();
       window.location.href = '../logout.php';
     }
+
+    function to12Hour(timeValue) {
+      if (!timeValue || String(timeValue).indexOf(':') === -1) return '8:00 AM';
+      const parts = String(timeValue).split(':');
+      const hour = Number(parts[0]);
+      const mins = Number(parts[1]);
+      const suffix = hour >= 12 ? 'PM' : 'AM';
+      const hour12 = ((hour + 11) % 12) + 1;
+      const minText = String(mins).padStart(2, '0');
+      return hour12 + ':' + minText + ' ' + suffix;
+    }
+
+    function formatWorkingHoursText() {
+      return 'Mon-Sat, ' + to12Hour(providerUiState.workingStart) + ' - ' + to12Hour(providerUiState.workingEnd);
+    }
+
+    function getPhoneText() {
+      return providerUiState.phone || 'Not set';
+    }
+
+    function getServiceAreaText() {
+      return providerUiState.serviceArea || 'Not set';
+    }
+
+    function getManageServicesSummary() {
+      const count = providerUiState.services.length;
+      if (!count) return 'No services selected';
+      if (count === 1) return providerUiState.services[0];
+      return count + ' services selected';
+    }
+
+    function renderServicesChecklist() {
+      const wrap = document.getElementById('sheetServicesList');
+      if (!wrap) return;
+      wrap.innerHTML = providerServicesCatalog.map(function (service) {
+        const checked = providerUiState.services.indexOf(service) !== -1 ? 'checked' : '';
+        return '' +
+          '<label class="sheet-service-item">' +
+            '<span>' + service + '</span>' +
+            '<input type="checkbox" class="sheet-service-check" value="' + service.replace(/"/g, '&quot;') + '" ' + checked + '>' +
+          '</label>';
+      }).join('');
+    }
+
+    function refreshProviderUi() {
+      const nameEl = document.getElementById('profileName');
+      const emailEl = document.getElementById('profileEmail');
+      const phoneEl = document.getElementById('profilePhoneValue');
+      const areaEl = document.getElementById('profileServiceAreaValue');
+      const hoursEl = document.getElementById('profileWorkingHoursValue');
+      const specialtyEl = document.getElementById('profileSpecialty');
+      const editSubEl = document.getElementById('settingsEditProfileSub');
+      const serviceSubEl = document.getElementById('settingsManageServicesSub');
+
+      if (nameEl) nameEl.textContent = providerUiState.name || 'Service Provider';
+      if (emailEl) emailEl.textContent = providerUiState.email || '';
+      if (phoneEl) phoneEl.textContent = getPhoneText();
+      if (areaEl) areaEl.textContent = getServiceAreaText();
+      if (hoursEl) hoursEl.textContent = formatWorkingHoursText();
+      if (specialtyEl) specialtyEl.textContent = providerUiState.services[0] || providerUiState.specialty || 'General Services';
+      if (editSubEl) editSubEl.textContent = (providerUiState.name || 'Name') + ', ' + getPhoneText() + ', ' + getServiceAreaText();
+      if (serviceSubEl) serviceSubEl.textContent = getManageServicesSummary();
+    }
+
+    let activeSheetAction = 'edit-profile';
+
+    function setSheetAlert(message, type) {
+      const alert = document.getElementById('sheetAlert');
+      if (!alert) return;
+      if (!message) {
+        alert.className = 'sheet-alert';
+        alert.textContent = '';
+        return;
+      }
+      alert.className = 'sheet-alert on ' + (type || 'ok');
+      alert.textContent = message;
+    }
+
+    function populateActionFields(action) {
+      if (action === 'phone') {
+        document.getElementById('sheetPhoneInput').value = providerUiState.phone || '';
+      }
+      if (action === 'service-area') {
+        document.getElementById('sheetServiceAreaInput').value = providerUiState.serviceArea || '';
+      }
+      if (action === 'working-hours') {
+        document.getElementById('sheetStartTime').value = providerUiState.workingStart || '08:00';
+        document.getElementById('sheetEndTime').value = providerUiState.workingEnd || '18:00';
+      }
+      if (action === 'edit-profile') {
+        document.getElementById('sheetProfileName').value = providerUiState.name || '';
+        document.getElementById('sheetProfileEmail').value = providerUiState.email || '';
+        document.getElementById('sheetProfilePhone').value = providerUiState.phone || '';
+        document.getElementById('sheetProfileAddress').value = providerUiState.serviceArea || '';
+      }
+      if (action === 'change-password') {
+        document.getElementById('sheetCurrentPassword').value = '';
+        document.getElementById('sheetNewPassword').value = '';
+        document.getElementById('sheetConfirmPassword').value = '';
+      }
+      if (action === 'manage-services') {
+        renderServicesChecklist();
+      }
+    }
+
+    function openActionSheet(action) {
+      const configMap = {
+        phone: { title: 'Update Phone Number', sub: 'Update your contact number', save: 'Update' },
+        'service-area': { title: 'Edit Service Area', sub: 'Set where you can accept jobs', save: 'Save' },
+        'working-hours': { title: 'Update Working Hours', sub: 'Choose your available time window', save: 'Save' },
+        'edit-profile': { title: 'Edit Profile', sub: 'Update profile information', save: 'Save' },
+        'change-password': { title: 'Change Password', sub: 'Set a stronger password', save: 'Save' },
+        'manage-services': { title: 'Manage Services', sub: 'Choose services you currently offer', save: 'Save' }
+      };
+      activeSheetAction = action;
+      setSheetAlert('', 'ok');
+      const config = configMap[action] || configMap['edit-profile'];
+      document.getElementById('actionSheetTitle').textContent = config.title;
+      document.getElementById('actionSheetSubTitle').textContent = config.sub;
+      document.getElementById('actionSheetSaveBtn').textContent = config.save;
+      document.querySelectorAll('.sheet-section').forEach(function (sectionEl) {
+        sectionEl.classList.remove('on');
+      });
+      const targetByAction = {
+        phone: 'sheetPhone',
+        'service-area': 'sheetServiceArea',
+        'working-hours': 'sheetWorkingHours',
+        'edit-profile': 'sheetEditProfile',
+        'change-password': 'sheetChangePassword',
+        'manage-services': 'sheetManageServices'
+      };
+      const target = document.getElementById(targetByAction[action]);
+      if (target) target.classList.add('on');
+      populateActionFields(action);
+      document.getElementById('actionSheetOl').classList.add('on');
+    }
+
+    function closeActionSheet() {
+      document.getElementById('actionSheetOl').classList.remove('on');
+      setSheetAlert('', 'ok');
+    }
+
+    function actionSheetBg(event) {
+      if (event.target === document.getElementById('actionSheetOl')) {
+        closeActionSheet();
+      }
+    }
+
+    function saveActionSheet() {
+      if (activeSheetAction === 'phone') {
+        providerUiState.phone = document.getElementById('sheetPhoneInput').value.trim();
+      }
+      if (activeSheetAction === 'service-area') {
+        providerUiState.serviceArea = document.getElementById('sheetServiceAreaInput').value.trim();
+      }
+      if (activeSheetAction === 'working-hours') {
+        const start = document.getElementById('sheetStartTime').value;
+        const end = document.getElementById('sheetEndTime').value;
+        if (!start || !end) {
+          setSheetAlert('Please select both start and end time.', 'err');
+          return;
+        }
+        if (start >= end) {
+          setSheetAlert('End time must be later than start time.', 'err');
+          return;
+        }
+        providerUiState.workingStart = start;
+        providerUiState.workingEnd = end;
+      }
+      if (activeSheetAction === 'edit-profile') {
+        providerUiState.name = document.getElementById('sheetProfileName').value.trim();
+        providerUiState.email = document.getElementById('sheetProfileEmail').value.trim();
+        providerUiState.phone = document.getElementById('sheetProfilePhone').value.trim();
+        providerUiState.serviceArea = document.getElementById('sheetProfileAddress').value.trim();
+      }
+      if (activeSheetAction === 'change-password') {
+        const current = document.getElementById('sheetCurrentPassword').value;
+        const next = document.getElementById('sheetNewPassword').value;
+        const confirm = document.getElementById('sheetConfirmPassword').value;
+        if (!current || !next || !confirm) {
+          setSheetAlert('Please complete all password fields.', 'err');
+          return;
+        }
+        if (next.length < 6) {
+          setSheetAlert('New password must be at least 6 characters.', 'err');
+          return;
+        }
+        if (next !== confirm) {
+          setSheetAlert('New password and confirmation do not match.', 'err');
+          return;
+        }
+      }
+      if (activeSheetAction === 'manage-services') {
+        const selected = Array.from(document.querySelectorAll('.sheet-service-check:checked')).map(function (node) {
+          return node.value;
+        });
+        if (!selected.length) {
+          setSheetAlert('Select at least one service.', 'err');
+          return;
+        }
+        providerUiState.services = selected;
+        providerUiState.specialty = selected[0];
+      }
+
+      refreshProviderUi();
+      setSheetAlert('Saved successfully.', 'ok');
+      setTimeout(function () {
+        closeActionSheet();
+      }, 700);
+    }
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeActionSheet();
+    });
+
+    refreshProviderUi();
   </script>
 </body>
 
