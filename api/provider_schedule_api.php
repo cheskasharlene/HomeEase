@@ -59,10 +59,6 @@ if ($method === 'POST' && $action === 'update_status') {
         $ownerClause = "provider_id = ?";
         $types .= 'i';
         $params[] = $providerId;
-    } elseif ($has('technician_id')) {
-        $ownerClause = "technician_id = ?";
-        $types .= 'i';
-        $params[] = $providerId;
     } else {
         echo json_encode(['success' => false, 'message' => 'Booking system not properly configured.']);
         exit;
@@ -97,10 +93,6 @@ $types = '';
 
 if ($has('provider_id')) {
     $where[] = "b.provider_id = ?";
-    $types .= 'i';
-    $params[] = $providerId;
-} elseif ($has('technician_id')) {
-    $where[] = "b.technician_id = ?";
     $types .= 'i';
     $params[] = $providerId;
 } else {

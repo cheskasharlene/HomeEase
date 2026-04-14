@@ -245,10 +245,24 @@ if ($section === 'workers') {
     if ($method === 'POST' && $action === 'toggle_verification') {
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) respond(false, 'Invalid ID.');
+        
+        // Check if verification_status column exists
+        $hasVerificationStatus = false;
+        $colCheck = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'verification_status'");
+        if ($colCheck && $colCheck->num_rows > 0) $hasVerificationStatus = true;
+        
         $r = $conn->query("SELECT is_verified FROM service_providers WHERE provider_id=$id");
         $cur = $r ? (int)$r->fetch_row()[0] : 0;
         $new = $cur ? 0 : 1;
-        $conn->query("UPDATE service_providers SET is_verified=$new WHERE provider_id=$id");
+        
+        // Update both columns for consistency
+        if ($hasVerificationStatus) {
+            $verStatus = $new ? 'verified' : 'not_verified';
+            $conn->query("UPDATE service_providers SET is_verified=$new, verification_status='$verStatus', verification_approved_at=" . ($new ? 'NOW()' : 'NULL') . " WHERE provider_id=$id");
+        } else {
+            $conn->query("UPDATE service_providers SET is_verified=$new WHERE provider_id=$id");
+        }
+        
         respond(true, $new ? 'Worker verified.' : 'Worker unverified.', ['is_verified' => $new]);
     }
 }
@@ -387,9 +401,6 @@ if ($section === 'offers') {
 // ── BOOKINGS (admin) ─────────────────────────────────────────────────────────
 if ($section === 'bookings') {
 
-    // Ensure technician_id column exists on bookings
-    $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS technician_id INT NULL DEFAULT NULL");
-
     if ($method === 'GET' && $action === 'list') {
         $search    = trim($_GET['search']    ?? '');
         $status    = trim($_GET['status']    ?? 'all');
@@ -411,18 +422,18 @@ if ($section === 'bookings') {
         if ($dateFrom) { $where[] = 'b.date >= ?'; $params[] = $dateFrom; $types .= 's'; }
         if ($dateTo)   { $where[] = 'b.date <= ?'; $params[] = $dateTo;   $types .= 's'; }
         if ($service)  { $where[] = 'b.service = ?'; $params[] = $service; $types .= 's'; }
-        if ($workerId) { $where[] = 'b.technician_id = ?'; $params[] = $workerId; $types .= 'i'; }
+        if ($workerId) { $where[] = 'b.provider_id = ?'; $params[] = $workerId; $types .= 'i'; }
 
         $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
         $sql = "SELECT b.id, b.service, b.date, b.time_slot, b.address, b.price, b.status,
-                       b.notes, b.technician_id, b.created_at,
+                       b.notes, b.provider_id, b.created_at,
                        u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
-                       t.provider_id AS tech_id, t.full_name AS technician_name, t.contact_number AS tech_phone,
+                       t.full_name AS technician_name, t.contact_number AS tech_phone,
                        t.service_category AS tech_specialty, t.rating AS tech_rating
                 FROM bookings b
                 LEFT JOIN users u ON b.user_id = u.id
-                LEFT JOIN service_providers t ON b.technician_id = t.provider_id
+                LEFT JOIN service_providers t ON b.provider_id = t.provider_id
                 $whereClause
                 ORDER BY b.created_at DESC LIMIT 200";
 
@@ -449,10 +460,7 @@ if ($section === 'bookings') {
         $workerId  = (int)($_POST['worker_id']  ?? 0);
         if (!$bookingId || !$workerId) respond(false, 'Booking and worker IDs required.');
 
-        // Ensure column exists
-        $conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS technician_id INT NULL DEFAULT NULL");
-
-        $stmt = $conn->prepare("UPDATE bookings SET technician_id = ? WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE bookings SET provider_id = ? WHERE id = ?");
         $stmt->bind_param("ii", $workerId, $bookingId);
         $stmt->execute(); $ok = $stmt->affected_rows >= 0; $stmt->close();
 

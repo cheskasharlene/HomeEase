@@ -77,6 +77,86 @@ function providerDashboardSummary(): array
   ];
 }
 
+function normalizeServiceKey(string $value): string
+{
+  $v = strtolower(trim($value));
+  $v = preg_replace('/[^a-z0-9\s]/', ' ', $v);
+  if ($v === '') {
+    return '';
+  }
+
+  if (strpos($v, 'clean') !== false) return 'clean';
+  if (strpos($v, 'plumb') !== false) return 'plumb';
+  if (strpos($v, 'electric') !== false) return 'electric';
+  if (strpos($v, 'paint') !== false) return 'paint';
+  if (strpos($v, 'laundry') !== false) return 'laundry';
+  if (strpos($v, 'carpenter') !== false) return 'carpenter';
+  if (strpos($v, 'helper') !== false) return 'helper';
+  if (strpos($v, 'appliance') !== false) return 'appliance';
+  if (strpos($v, 'garden') !== false) return 'garden';
+
+  return $v;
+}
+
+function serviceMatches(string $providerService, string $requestService): bool
+{
+  $p = normalizeServiceKey($providerService);
+  $r = normalizeServiceKey($requestService);
+  if ($p === '' || $r === '') {
+    return false;
+  }
+  if ($p === $r) {
+    return true;
+  }
+  return stripos($r, $p) !== false || stripos($p, $r) !== false;
+}
+
+function providerIncomingRequests(mysqli $conn, int $providerId, int $limit = 2): array
+{
+  if ($providerId <= 0) {
+    return [];
+  }
+
+  $provStmt = $conn->prepare('SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1');
+  if (!$provStmt) {
+    return [];
+  }
+  $provStmt->bind_param('i', $providerId);
+  $provStmt->execute();
+  $provRow = $provStmt->get_result()->fetch_assoc();
+  $provStmt->close();
+
+  if (!$provRow) {
+    return [];
+  }
+
+  $providerService = (string) ($provRow['service_category'] ?? '');
+  if ($providerService === '') {
+    return [];
+  }
+
+  $limitSql = max(1, (int) $limit);
+  $sql = "SELECT id, service, fixed_price, date, time_slot, address, customer_name
+          FROM booking_requests
+          WHERE provider_id = ? AND status = 'pending'
+          ORDER BY created_at DESC
+          LIMIT $limitSql";
+  $stmt = $conn->prepare($sql);
+  if (!$stmt) {
+    return [];
+  }
+  $stmt->bind_param('i', $providerId);
+  $stmt->execute();
+  $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+  $stmt->close();
+
+  $rows = array_values(array_filter($rows, function ($row) use ($providerService) {
+    return serviceMatches($providerService, (string) ($row['service'] ?? ''));
+  }));
+
+  return $rows;
+}
+
 function providerJobHistory(mysqli $conn, int $providerId, string $providerSpecialty = ''): array
 {
   $reviews = providerDashboardReviews();
@@ -113,10 +193,6 @@ function providerJobHistory(mysqli $conn, int $providerId, string $providerSpeci
 
   if ($has('provider_id')) {
     $where[] = "b.provider_id = ?";
-    $types .= 'i';
-    $params[] = $providerId;
-  } elseif ($has('technician_id')) {
-    $where[] = "b.technician_id = ?";
     $types .= 'i';
     $params[] = $providerId;
   } else {

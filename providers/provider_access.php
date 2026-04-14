@@ -90,6 +90,16 @@ if (!function_exists('providerGetVerificationState')) {
             $state = 'verified';
         }
 
+        // Sync verification_status with is_verified if they're out of sync
+        if ($hasVerificationStatus && $hasIsVerified) {
+            $isVerified = (int) ($row['is_verified'] ?? 0) === 1;
+            $statusValue = strtolower(trim((string) ($row['verification_status'] ?? '')));
+            // If is_verified=1 but verification_status is not 'verified', update it
+            if ($isVerified && $statusValue !== 'verified') {
+                $conn->query("UPDATE service_providers SET verification_status='verified', verification_approved_at=NOW() WHERE provider_id=$providerId LIMIT 1");
+            }
+        }
+
         if ($state === 'not_verified') {
             foreach ($fallbackDocs as $field) {
                 if (array_key_exists($field, $row) && trim((string) $row[$field]) !== '') {

@@ -173,9 +173,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             </div>`
           : '';
 
-        const leaveReviewHint = rawStatus === 'completed' && b.technician_id && parseInt(b.has_reviewed || 0) === 0
+        const leaveReviewHint = rawStatus === 'completed' && parseInt(b.has_reviewed || 0) === 0
           ? `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px;">
-              <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="openReviewModal(${b.id}, ${b.technician_id}, '${providerName.replace(/'/g, "\\'")}')">
+              <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">
                 <i class="bi bi-star-fill" style="color:#F59E0B;"></i> Rate & Review
               </button>
             </div>`

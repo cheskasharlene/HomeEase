@@ -60,13 +60,8 @@ try {
         $select[] = 'b.pricing_type';
     if (in_array('hours', $bCols))
         $select[] = 'b.hours';
-    if (in_array('technician_id', $bCols)) {
-        $select[] = 't.full_name AS technician_name';
-        $join = "LEFT JOIN service_providers t ON b.technician_id = t.provider_id";
-    } else {
-        $join = "";
-        $select[] = "NULL AS technician_name";
-    }
+    $select[] = "NULL AS technician_name";
+    $join = "";
     $selectStr = implode(', ', $select);
     $sql = "SELECT $selectStr FROM bookings b $join WHERE b.user_id = ? ORDER BY b.created_at DESC LIMIT 20";
     $bStmt = $conn->prepare($sql);

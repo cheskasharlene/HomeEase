@@ -21,6 +21,24 @@ ensureBookingRequestsTable($conn);
 if ($method === 'GET') {
     $filter = strtolower(trim((string) ($_GET['filter'] ?? 'all')));
 
+    // First, get the provider's service category
+    $providerStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+    if (!$providerStmt) {
+        echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
+        exit;
+    }
+    $providerStmt->bind_param('i', $providerId);
+    $providerStmt->execute();
+    $providerRow = $providerStmt->get_result()->fetch_assoc();
+    $providerStmt->close();
+
+    if (!$providerRow) {
+        echo json_encode(['success' => false, 'message' => 'Provider not found.']);
+        exit;
+    }
+
+    $providerService = (string) ($providerRow['service_category'] ?? '');
+
     $where = 'br.provider_id = ?';
     $types = 'i';
     $params = [$providerId];
@@ -48,11 +66,22 @@ if ($method === 'GET') {
         exit;
     }
     $stmt->bind_param($types, ...$params);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        echo json_encode(['success' => false, 'message' => 'Query error: ' . $conn->error]);
+        exit;
+    }
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    echo json_encode(['success' => true, 'requests' => $rows]);
+    if ($providerService !== '') {
+        $rows = array_values(array_filter($rows, function ($row) use ($providerService) {
+            return serviceMatches($providerService, (string) ($row['service'] ?? ''));
+        }));
+    } else {
+        $rows = [];
+    }
+
+    echo json_encode(['success' => true, 'requests' => $rows, 'provider_service' => $providerService]);
     exit;
 }
 
@@ -65,7 +94,20 @@ if ($method === 'POST' && $action === 'accept') {
 
     $conn->begin_transaction();
     try {
-        $stmt = $conn->prepare("SELECT booking_id, status FROM booking_requests WHERE id = ? AND provider_id = ? FOR UPDATE");
+        // Get provider's service category
+        $provStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+        $provStmt->bind_param('i', $providerId);
+        $provStmt->execute();
+        $provRow = $provStmt->get_result()->fetch_assoc();
+        $provStmt->close();
+
+        if (!$provRow) {
+            throw new RuntimeException('Provider not found.');
+        }
+        $providerService = (string) ($provRow['service_category'] ?? '');
+
+        // Get request with booking details
+        $stmt = $conn->prepare("SELECT booking_id, status, service FROM booking_requests WHERE id = ? AND provider_id = ? FOR UPDATE");
         $stmt->bind_param('ii', $requestId, $providerId);
         $stmt->execute();
         $row = $stmt->get_result()->fetch_assoc();
@@ -77,6 +119,12 @@ if ($method === 'POST' && $action === 'accept') {
 
         if ($row['status'] !== 'pending') {
             throw new RuntimeException('Request is already closed.');
+        }
+
+        // Validate service type matches
+        $requestService = (string) ($row['service'] ?? '');
+        if (!serviceMatches($providerService, $requestService)) {
+            throw new RuntimeException('This request service does not match your specialty.');
         }
 
         $bookingId = (int) $row['booking_id'];
@@ -164,6 +212,40 @@ function ensureBookingRequestsTable(mysqli $conn): void
     $conn->query($sql);
 }
 
+function normalizeServiceKey(string $value): string
+{
+    $v = strtolower(trim($value));
+    $v = preg_replace('/[^a-z0-9\s]/', ' ', $v);
+    if ($v === '') {
+        return '';
+    }
+
+    if (strpos($v, 'clean') !== false) return 'clean';
+    if (strpos($v, 'plumb') !== false) return 'plumb';
+    if (strpos($v, 'electric') !== false) return 'electric';
+    if (strpos($v, 'paint') !== false) return 'paint';
+    if (strpos($v, 'laundry') !== false) return 'laundry';
+    if (strpos($v, 'carpenter') !== false) return 'carpenter';
+    if (strpos($v, 'helper') !== false) return 'helper';
+    if (strpos($v, 'appliance') !== false) return 'appliance';
+    if (strpos($v, 'garden') !== false) return 'garden';
+
+    return $v;
+}
+
+function serviceMatches(string $providerService, string $requestService): bool
+{
+    $p = normalizeServiceKey($providerService);
+    $r = normalizeServiceKey($requestService);
+    if ($p === '' || $r === '') {
+        return false;
+    }
+    if ($p === $r) {
+        return true;
+    }
+    return stripos($r, $p) !== false || stripos($p, $r) !== false;
+}
+
 function updateAssignedProvider(mysqli $conn, int $bookingId, int $providerId): void
 {
     $cols = [];
@@ -176,13 +258,6 @@ function updateAssignedProvider(mysqli $conn, int $bookingId, int $providerId): 
 
     if (in_array('provider_id', $cols, true)) {
         $stmt = $conn->prepare('UPDATE bookings SET provider_id = ? WHERE id = ?');
-        $stmt->bind_param('ii', $providerId, $bookingId);
-        $stmt->execute();
-        $stmt->close();
-    }
-
-    if (in_array('technician_id', $cols, true)) {
-        $stmt = $conn->prepare('UPDATE bookings SET technician_id = ? WHERE id = ?');
         $stmt->bind_param('ii', $providerId, $bookingId);
         $stmt->execute();
         $stmt->close();

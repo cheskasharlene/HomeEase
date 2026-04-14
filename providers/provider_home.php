@@ -265,36 +265,50 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             <span class="sec-lnk" onclick="goPage('provider_requests.php')">See all -></span>
           </div>
           <div class="req-list">
-            <div class="req-card">
-              <div class="req-ic">PL</div>
-              <div class="req-body">
-                <div class="req-type">Plumbing</div>
-                <div class="req-name">John Doe</div>
-                <div class="req-meta">Address: 123 Main St<br>Time: Apr 1, 10:00 AM</div>
-              </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
-                <div class="req-price">PHP 2,500</div>
-                <div class="req-btns">
-                  <button class="btn-accept">Accept</button>
-                  <button class="btn-decline">Decline</button>
+            <?php
+            $incomingRequests = providerIncomingRequests($conn, $providerId, 2);
+            ?>
+            <?php if (empty($incomingRequests)): ?>
+              <div class="req-card">
+                <div class="req-ic">—</div>
+                <div class="req-body">
+                  <div class="req-type">No incoming requests</div>
+                  <div class="req-meta">Check back later for new jobs.</div>
                 </div>
               </div>
-            </div>
-            <div class="req-card">
-              <div class="req-ic">EL</div>
-              <div class="req-body">
-                <div class="req-type">Electrical</div>
-                <div class="req-name">Maria Santos</div>
-                <div class="req-meta">Address: Rizal Avenue<br>Time: Apr 2, 2:00 PM</div>
-              </div>
-              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
-                <div class="req-price">PHP 3,750</div>
-                <div class="req-btns">
-                  <button class="btn-accept">Accept</button>
-                  <button class="btn-decline">Decline</button>
+            <?php else: ?>
+              <?php foreach ($incomingRequests as $req):
+                $service = htmlspecialchars((string) ($req['service'] ?? 'Service'));
+                $customer = htmlspecialchars((string) ($req['customer_name'] ?? 'Homeowner'));
+                $address = htmlspecialchars((string) ($req['address'] ?? ''));
+                $date = htmlspecialchars((string) ($req['date'] ?? ''));
+                $time = htmlspecialchars((string) ($req['time_slot'] ?? ''));
+                $price = number_format((float) ($req['fixed_price'] ?? 0), 0);
+                $words = preg_split('/\s+/', trim($service));
+                $initials = '';
+                if (!empty($words[0])) { $initials .= strtoupper(substr($words[0], 0, 1)); }
+                if (!empty($words[1])) { $initials .= strtoupper(substr($words[1], 0, 1)); }
+                if ($initials === '' && $service !== '') { $initials = strtoupper(substr($service, 0, 2)); }
+                $timeLabel = $date !== '' ? $date : 'TBD';
+                if ($time !== '') { $timeLabel .= ', ' . $time; }
+              ?>
+                <div class="req-card">
+                  <div class="req-ic"><?= $initials ?></div>
+                  <div class="req-body">
+                    <div class="req-type"><?= $service ?></div>
+                    <div class="req-name"><?= $customer ?></div>
+                    <div class="req-meta">Address: <?= $address ?: '—' ?><br>Time: <?= $timeLabel ?></div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+                    <div class="req-price">PHP <?= $price ?></div>
+                    <div class="req-btns">
+                      <button class="btn-accept">Accept</button>
+                      <button class="btn-decline">Decline</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </div>
 
           <div class="sec-row">

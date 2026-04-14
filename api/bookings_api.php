@@ -79,24 +79,12 @@ if ($method === 'GET' && $action === '') {
         UNIQUE KEY idx_unique_booking_review (booking_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    if (in_array('technician_id', $cols)) {
-        $stmt = $conn->prepare(
-            "SELECT b.*, t.full_name AS technician_name, t.contact_number AS tech_phone,
-             (CASE WHEN r.id IS NOT NULL THEN 1 ELSE 0 END) AS has_reviewed
-             FROM bookings b
-             LEFT JOIN service_providers t ON b.technician_id = t.provider_id
-             LEFT JOIN provider_reviews r ON b.id = r.booking_id
-             WHERE b.user_id = ?
-             ORDER BY b.created_at DESC"
-        );
-    } else {
-        $stmt = $conn->prepare(
-            "SELECT *, NULL AS technician_name, NULL AS tech_phone, 0 AS has_reviewed
-             FROM bookings
-             WHERE user_id = ?
-             ORDER BY created_at DESC"
-        );
-    }
+    $stmt = $conn->prepare(
+        "SELECT *, NULL AS technician_name, NULL AS tech_phone, 0 AS has_reviewed
+         FROM bookings
+         WHERE user_id = ?
+         ORDER BY created_at DESC"
+    );
 
     if (!$stmt) {
         echo json_encode(['success' => true, 'bookings' => []]);
@@ -121,8 +109,6 @@ if ($method === 'POST' && $action === '') {
     $customer_address = trim($_POST['customer_address'] ?? $address);
     $pricing_type = 'flat';
     $hours = 1;
-    $tech_id = isset($_POST['technician_id']) ? (int)$_POST['technician_id'] : null;
-    if ($tech_id <= 0) $tech_id = null;
 
     if (!$service || !$date || !$address) {
         echo json_encode(['success' => false, 'message' => 'Service, date, and address are required.']);
@@ -216,12 +202,7 @@ if ($method === 'POST' && $action === '') {
         $types .= "i";
         $params[] = $hours;
     }
-    if (in_array('technician_id', $bcols)) {
-        $col_list .= ", technician_id";
-        $val_list .= ", ?";
-        $types .= "i";
-        $params[] = $tech_id;
-    }
+
 
     $stmt = $conn->prepare("INSERT INTO bookings ($col_list) VALUES ($val_list)");
     if (!$stmt) {
@@ -243,11 +224,10 @@ if ($method === 'POST' && $action === '') {
         ensureBookingRequestsTable($conn);
 
         $providers = [];
-        if ($tech_id) {
-            $providers = [['id' => $tech_id, 'name' => 'Selected Technician']];
-        } else {
+        {
+            // Fetch providers matching the requested service category
             $providerStmt = $conn->prepare(
-                "SELECT provider_id AS id, full_name AS name FROM service_providers
+                "SELECT provider_id AS id, full_name AS name, service_category FROM service_providers
                  WHERE status = 'active'
                    AND LOWER(availability_status) <> 'unavailable'
                    AND LOWER(service_category) LIKE ?
@@ -262,19 +242,8 @@ if ($method === 'POST' && $action === '') {
                 $providerStmt->close();
             }
 
-            if (empty($providers)) {
-                $fallbackStmt = $conn->prepare(
-                    "SELECT provider_id AS id, full_name AS name FROM service_providers
-                     WHERE status = 'active' AND LOWER(availability_status) <> 'unavailable'
-                     ORDER BY rating DESC, jobs_done DESC, provider_id ASC
-                     LIMIT 5"
-                );
-                if ($fallbackStmt) {
-                    $fallbackStmt->execute();
-                    $providers = $fallbackStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-                    $fallbackStmt->close();
-                }
-            }
+            // NO FALLBACK - if no providers match the service category, don't send requests
+            // This ensures requests only go to providers who offer that specific service
         }
 
         if (!empty($providers)) {

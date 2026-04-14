@@ -750,10 +750,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('customer_phone', uPhone);
       fd.append('customer_address', addr);
 
-      if (selectedTechId) {
-        fd.append('technician_id', selectedTechId);
-      }
-
       // Add dynamic field data
       const dynamicData = getDynamicFieldsData();
       Object.keys(dynamicData).forEach(key => {

@@ -83,7 +83,9 @@ enforceProviderSectionAccess('requests', $conn);
   </div>
   <script src="../assets/js/app.js"></script>
   <script>
-    initTheme();
+    if (typeof initTheme === 'function') {
+      initTheme();
+    }
 
     const reqList = document.getElementById('reqList');
     let currentFilter = 'all';

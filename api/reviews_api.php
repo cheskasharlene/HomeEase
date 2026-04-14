@@ -39,7 +39,7 @@ if ($method === 'POST' && $action === 'add_review') {
     }
 
     // Verify booking belongs to user and is completed
-    $chk = $conn->prepare("SELECT status, technician_id FROM bookings WHERE id = ? AND user_id = ?");
+    $chk = $conn->prepare("SELECT status FROM bookings WHERE id = ? AND user_id = ?");
     if (!$chk) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
@@ -57,11 +57,6 @@ if ($method === 'POST' && $action === 'add_review') {
     $bStatus = strtolower($bRow['status'] ?? '');
     if ($bStatus !== 'completed' && $bStatus !== 'done') {
         echo json_encode(['success' => false, 'message' => 'You can only review completed bookings.']);
-        exit;
-    }
-    
-    if (empty($bRow['technician_id']) || $bRow['technician_id'] != $provider_id) {
-        echo json_encode(['success' => false, 'message' => 'Provider mismatch.']);
         exit;
     }
 
