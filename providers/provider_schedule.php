@@ -115,11 +115,6 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider
 
   <script src="../assets/js/app.js"></script>
   <script>
-    (function initScheduleTheme() {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.body.classList.toggle('dark', prefersDark);
-    })();
-
     const currentProviderId = <?= (int) ($_SESSION['provider_id'] ?? 0) ?>;
 
     const state = {
