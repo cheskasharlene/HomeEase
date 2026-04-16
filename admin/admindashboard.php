@@ -303,6 +303,15 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .detail-lbl { font-size:12px; font-weight:700; color:var(--txt-muted); }
     .detail-val { font-size:13px; font-weight:700; color:var(--txt-primary); text-align:right; }
 
+    /* Verification Documents Container */
+    #wkVdocs {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-end !important;
+      gap: 8px !important;
+      text-align: right !important;
+    }
+
     /* Toast notifications */
     #toastBox { position:absolute; top:16px; left:50%; transform:translateX(-50%); z-index:999; display:flex; flex-direction:column; gap:6px; width:90%; max-width:340px; }
     .toast-n { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:14px; font-size:13px; font-weight:700; color:#fff; animation:slideDown .35s forwards; }
@@ -415,6 +424,153 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .toggle-sw.off { background:#e5e7eb; }
     .toggle-sw::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; }
     .toggle-sw.on::after { transform:translateX(20px); }
+
+    /* Document View Button */
+    .doc-view-btn { 
+      background: var(--teal); 
+      color: #fff; 
+      border: none; 
+      padding: 6px 14px; 
+      border-radius: 8px; 
+      font-size: 12px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      transition: all 0.2s; 
+      font-family: 'Nunito', sans-serif;
+      text-decoration: none;
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .doc-view-btn:hover { 
+      background: #0d9488; 
+      transform: translateY(-2px); 
+      box-shadow: 0 4px 12px rgba(15, 153, 128, 0.3); 
+    }
+
+    /* Image Preview Modal */
+    .image-preview-overlay { 
+      display: none; 
+      position: fixed; 
+      inset: 0; 
+      background: rgba(0, 0, 0, 0.85); 
+      z-index: 9999; 
+      padding: 20px; 
+      overflow: auto;
+    }
+    .image-preview-overlay.active { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+    }
+    .image-preview-modal { 
+      background: var(--bg-card); 
+      border-radius: 20px; 
+      max-width: 90%; 
+      max-height: 90vh; 
+      width: 100%; 
+      display: flex; 
+      flex-direction: column; 
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
+    .image-preview-header { 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      padding: 18px 24px; 
+      border-bottom: 1.5px solid var(--border-col); 
+      background: linear-gradient(135deg, rgba(232, 130, 12, 0.08), rgba(245, 166, 35, 0.04));
+    }
+    .image-preview-title { 
+      font-family: 'Poppins', sans-serif; 
+      font-size: 16px; 
+      font-weight: 800; 
+      color: var(--txt-primary); 
+    }
+    .image-preview-controls { 
+      display: flex; 
+      align-items: center; 
+      gap: 8px; 
+    }
+    .preview-btn { 
+      width: 36px; 
+      height: 36px; 
+      border-radius: 50%; 
+      border: 1.5px solid var(--border-col); 
+      background: var(--bg-screen); 
+      color: var(--txt-primary); 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 14px; 
+      transition: all 0.2s;
+    }
+    .preview-btn:hover { 
+      background: var(--teal); 
+      border-color: var(--teal); 
+      color: #fff; 
+    }
+    .preview-close { 
+      width: 36px; 
+      height: 36px; 
+      border-radius: 50%; 
+      border: none; 
+      background: #ef4444; 
+      color: #fff; 
+      cursor: pointer; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 16px; 
+      transition: all 0.2s;
+    }
+    .preview-close:hover { 
+      background: #dc2626; 
+      transform: scale(1.1); 
+    }
+    .image-preview-container { 
+      flex: 1; 
+      overflow: auto; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      background: #000; 
+      position: relative;
+      padding: 20px;
+      min-height: 300px;
+    }
+    .preview-image { 
+      max-width: 100%; 
+      max-height: 100%; 
+      object-fit: contain; 
+      transition: transform 0.2s; 
+      cursor: grab;
+      display: block;
+    }
+    .preview-image:active { 
+      cursor: grabbing; 
+    }
+    .image-preview-footer { 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      padding: 12px 24px; 
+      border-top: 1.5px solid var(--border-col); 
+      background: var(--bg-screen);
+    }
+    .zoom-level { 
+      font-size: 12px; 
+      font-weight: 700; 
+      color: var(--txt-muted); 
+      min-width: 50px; 
+      text-align: center;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
 
     /* Offer & svc rows */
     .svc-row { display:flex; align-items:center; gap:10px; padding:11px 18px; border-bottom:1px solid var(--border-col); cursor:pointer; }
@@ -964,6 +1120,34 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
+      <!-- Image Preview Modal -->
+      <div class="image-preview-overlay" id="imagePreviewOverlay" onclick="if(event.target===this)closeImagePreview()">
+        <div class="image-preview-modal">
+          <div class="image-preview-header">
+            <div class="image-preview-title" id="imagePreviewTitle">Document Preview</div>
+            <div class="image-preview-controls">
+              <button class="preview-btn" id="zoomInBtn" onclick="zoomImage(0.1)" title="Zoom In">
+                <i class="bi bi-zoom-in"></i>
+              </button>
+              <button class="preview-btn" id="zoomOutBtn" onclick="zoomImage(-0.1)" title="Zoom Out">
+                <i class="bi bi-zoom-out"></i>
+              </button>
+              <button class="preview-btn" id="resetZoomBtn" onclick="resetImageZoom()" title="Reset Zoom">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+              <button class="preview-close" onclick="closeImagePreview()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+          <div class="image-preview-container" id="imagePreviewContainer">
+            <img id="previewImage" class="preview-image" src="" alt="Document preview">
+          </div>
+          <div class="image-preview-footer">
+            <span class="zoom-level" id="zoomLevel">100%</span>
+          </div>
+        </div>
+      </div>
 
       <div class="sheet-ol" id="usDetailOl" onclick="if(event.target===this)closeSheet('usDetailOl')">
         <div class="sheet">
@@ -1743,11 +1927,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('wkRating').textContent = parseFloat(w.rating || 0).toFixed(1);
         document.getElementById('wkJobs').textContent = w.jobs_done || 0;
         let docHtml = '';
-        if (w.valid_id) docHtml += `<div><a href="${w.valid_id}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Valid ID</a></div>`;
-        if (w.selfie_verification) docHtml += `<div><a href="${w.selfie_verification}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Selfie Verification</a></div>`;
-        if (w.proof_of_address) docHtml += `<div><a href="${w.proof_of_address}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Proof of Address</a></div>`;
-        if (w.barangay_clearance) docHtml += `<div><a href="${w.barangay_clearance}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Barangay Clearance</a></div>`;
-        if (w['tools_&_kits']) docHtml += `<div><a href="${w['tools_&_kits']}" target="_blank" style="color:var(--teal);font-weight:700;text-decoration:none;">View Tools & Kits</a></div>`;
+        if (w.valid_id) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.valid_id}', 'Valid ID')">View Valid ID</button>`;
+        if (w.selfie_verification) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.selfie_verification}', 'Selfie Verification')">View Selfie Verification</button>`;
+        if (w.proof_of_address) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.proof_of_address}', 'Proof of Address')">View Proof of Address</button>`;
+        if (w.barangay_clearance) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.barangay_clearance}', 'Barangay Clearance')">View Barangay Clearance</button>`;
+        if (w['tools_&_kits']) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w['tools_&_kits']}', 'Tools & Kits')">View Tools & Kits</button>`;
         if (!docHtml) docHtml = '<span style="color:var(--txt-muted);">No documents uploaded.</span>';
         document.getElementById('wkVdocs').innerHTML = docHtml;
         
@@ -2507,6 +2691,108 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           }
 
         } catch (e) { console.error('Analytics error:', e); }
+      }
+
+      // ── Image Preview Modal ──────────────────────────────────────────────────
+      let currentImageZoom = 1;
+
+      function openImagePreview(imagePath, title) {
+        console.log('Opening image preview:', { title, imagePath });
+        
+        const container = document.getElementById('imagePreviewContainer');
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#ccc;"><i class="bi bi-hourglass-split" style="font-size:36px;opacity:0.5;animation:spin 1s linear infinite;"></i></div>';
+        
+        // Use the image server endpoint to bypass .htaccess restrictions
+        const imageUrl = `../api/image_serve.php?path=${encodeURIComponent(imagePath)}`;
+        
+        // Verify file exists first using the verification endpoint
+        fetch(`../api/verify_document.php?path=${encodeURIComponent(imagePath)}`)
+          .then(r => r.json())
+          .then(data => {
+            console.log('File verification result:', data);
+            
+            if (!data.success) {
+              container.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:#ccc;font-size:14px;padding:20px;text-align:center;">
+                  <i class="bi bi-exclamation-circle" style="font-size:48px;margin-bottom:16px;opacity:0.4;"></i>
+                  <p style="margin-bottom:8px;"><strong>File Not Found</strong></p>
+                  <p style="font-size:12px;opacity:0.6;max-width:90%;word-break:break-all;margin-bottom:8px;">${imagePath}</p>
+                  <p style="font-size:11px;opacity:0.4;">The file may have been deleted or moved</p>
+                </div>
+              `;
+              return;
+            }
+            
+            // File exists, now load it through the image server
+            const img = document.createElement('img');
+            img.id = 'previewImage';
+            img.className = 'preview-image';
+            img.alt = title || 'Document preview';
+            img.style.transform = 'scale(1)';
+            
+            img.onload = function() {
+              console.log('Image loaded successfully');
+              currentImageZoom = 1;
+            };
+            
+            img.onerror = function() {
+              console.error('Image element failed to load:', imageUrl);
+              container.innerHTML = `
+                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:#ccc;font-size:14px;padding:20px;text-align:center;">
+                  <i class="bi bi-image" style="font-size:48px;margin-bottom:16px;opacity:0.4;"></i>
+                  <p style="margin-bottom:8px;">Failed to Display Image</p>
+                  <p style="font-size:12px;opacity:0.6;">File: ${data.mime_type ? data.mime_type : 'unknown type'}</p>
+                  <p style="font-size:11px;opacity:0.4;">Size: ${data.size ? (data.size / 1024).toFixed(2) + ' KB' : 'unknown'}</p>
+                </div>
+              `;
+            };
+            
+            container.innerHTML = '';
+            container.appendChild(img);
+            img.src = imageUrl;
+            console.log('Image src set to:', imageUrl);
+          })
+          .catch(err => {
+            console.error('File verification error:', err);
+            container.innerHTML = `
+              <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:#ccc;font-size:14px;padding:20px;text-align:center;">
+                <i class="bi bi-exclamation-triangle" style="font-size:48px;margin-bottom:16px;opacity:0.4;"></i>
+                <p>Could Not Verify File</p>
+                <p style="font-size:11px;opacity:0.4;margin-top:12px;">Please try again</p>
+              </div>
+            `;
+          });
+        
+        document.getElementById('imagePreviewTitle').textContent = title || 'Document Preview';
+        document.getElementById('zoomLevel').textContent = '100%';
+        currentImageZoom = 1;
+        
+        document.getElementById('imagePreviewOverlay').classList.add('active');
+      }
+
+      function closeImagePreview() {
+        document.getElementById('imagePreviewOverlay').classList.remove('active');
+        document.getElementById('previewImage').src = '';
+        document.getElementById('imagePreviewContainer').innerHTML = '<img id="previewImage" class="preview-image" src="" alt="Document preview">';
+        currentImageZoom = 1;
+      }
+
+      function zoomImage(delta) {
+        currentImageZoom = Math.max(0.5, Math.min(currentImageZoom + delta, 3));
+        const img = document.getElementById('previewImage');
+        if (img) {
+          img.style.transform = `scale(${currentImageZoom})`;
+        }
+        document.getElementById('zoomLevel').textContent = Math.round(currentImageZoom * 100) + '%';
+      }
+
+      function resetImageZoom() {
+        currentImageZoom = 1;
+        const img = document.getElementById('previewImage');
+        if (img) {
+          img.style.transform = 'scale(1)';
+        }
+        document.getElementById('zoomLevel').textContent = '100%';
       }
     </script>
 </body>
