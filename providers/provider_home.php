@@ -75,10 +75,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
               </div>
             </div>
             <div class="ph-right">
-              <div class="ph-btn" onclick="goPage('provider_notifications.php')">
-                <i class="bi bi-bell-fill"></i>
-                <div class="ph-bell-dot" id="bellDot" style="display:none;"></div>
-              </div>
             </div>
           </div>
           <div class="avail-wrap" id="availWrap" style="<?= $isVerified ? '' : 'display:none;' ?>">
@@ -234,32 +230,12 @@ $reviewPreview = $dashboardReviews[0] ?? null;
               <p id="pendingMessage">Please wait for admin approval.</p>
               <div class="pending-actions">
                 <button class="verify-primary-btn" id="simulateApprovalBtn" onclick="simulateApprovalNotification()">Simulate Approval Notification</button>
-                <button class="verify-secondary-btn" id="goNotifBtn" style="display:none;" onclick="goPage('provider_notifications.php')">Go to Notifications</button>
               </div>
             </div>
           </section>
         </div>
 
         <div id="verifiedDashboard" style="display:none;">
-          <div class="p-stats-row">
-            <div class="p-stat-chip">
-              <div class="val">5</div>
-              <div class="lbl">Pending</div>
-            </div>
-            <div class="p-stat-chip">
-              <div class="val">2</div>
-              <div class="lbl">Active</div>
-            </div>
-            <div class="p-stat-chip">
-              <div class="val">4.8</div>
-              <div class="lbl">Rating</div>
-            </div>
-            <div class="p-stat-chip">
-              <div class="val">24</div>
-              <div class="lbl">Done</div>
-            </div>
-          </div>
-
           <div class="sec-row">
             <div class="sec-ttl">Incoming Requests</div>
             <span class="sec-lnk" onclick="goPage('provider_requests.php')">See all -></span>
@@ -378,11 +354,9 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <div class="ni on" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
           <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span class="nl">Requests</span></div>
           <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span class="nl">Calendar</span></div>
-          <div class="ni" onclick="goPage('provider_notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php else: ?>
           <div class="ni on" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
-          <div class="ni" onclick="goPage('provider_notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php endif; ?>
       </div>
@@ -444,7 +418,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         setTimeout(() => toast.remove(), 260);
       }, 2200);
     }
-    const bellDot = document.getElementById('bellDot');
 
     const backendVerificationState = <?= json_encode($verificationState) ?>;
     const backendIsVerified = <?= json_encode($isVerified) ?>;
@@ -694,12 +667,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       }
     }
 
-    function updateBellDot() {
-      if (!bellDot) return;
-      const unreadLocal = getStoredProviderNotifs().some(n => n && !n.read);
-      bellDot.style.display = (backendVerificationState === 'approval_ready' || unreadLocal) ? 'block' : 'none';
-    }
-
     function ensureAccountVerifiedNotification() {
       const notifs = getStoredProviderNotifs();
       const existing = notifs.find(n => n && n.id === 'account_verified');
@@ -934,17 +901,14 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     function updatePendingStateDetails() {
       const pendingMessage = document.getElementById('pendingMessage');
-      const goNotifBtn = document.getElementById('goNotifBtn');
       const simulateApprovalBtn = document.getElementById('simulateApprovalBtn');
-      if (!pendingMessage || !goNotifBtn || !simulateApprovalBtn) return;
+      if (!pendingMessage || !simulateApprovalBtn) return;
 
       if (backendVerificationState === 'approval_ready') {
-        pendingMessage.textContent = 'Admin approved your application. Check Notifications to unlock your dashboard.';
-        goNotifBtn.style.display = 'block';
+        pendingMessage.textContent = 'Admin approved your application. Your dashboard has been unlocked.';
         simulateApprovalBtn.style.display = 'none';
       } else {
         pendingMessage.textContent = 'Please wait for admin approval.';
-        goNotifBtn.style.display = 'none';
         simulateApprovalBtn.style.display = 'block';
       }
     }
@@ -959,7 +923,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           showNotice(data.message || 'Could not simulate approval.');
           return;
         }
-        goPage('provider_notifications.php');
+        goPage('provider_home.php');
       } catch (error) {
         showNotice('Could not simulate approval right now.');
       }
@@ -991,8 +955,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       ensureAccountVerifiedNotification();
       openVerifiedIntro();
     }
-
-    updateBellDot();
 
     loadTodaySchedule();
     window.addEventListener('focus', loadTodaySchedule);

@@ -215,14 +215,10 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             class="nl">Requests</span></div>
           <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span
             class="nl">Calendar</span></div>
-          <div class="ni" onclick="goPage('provider_notifications.php')"><i class="bi bi-bell-fill"></i><span
-            class="nl">Notifications</span></div>
           <div class="ni on"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php else: ?>
           <div class="ni" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span
             class="nl">Home</span></div>
-          <div class="ni" onclick="goPage('provider_notifications.php')"><i class="bi bi-bell-fill"></i><span
-            class="nl">Notifications</span></div>
           <div class="ni on"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php endif; ?>
       </div>
