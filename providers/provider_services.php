@@ -7,6 +7,23 @@ if (empty($_SESSION['provider_id'])) {
 require_once __DIR__ . '/../api/db.php';
 require_once __DIR__ . '/provider_access.php';
 enforceProviderSectionAccess('services', $conn);
+
+$providerId = (int)($_SESSION['provider_id'] ?? 0);
+$providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider');
+
+// Fetch provider's services
+$stmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ?");
+$stmt->bind_param('i', $providerId);
+$stmt->execute();
+$result = $stmt->get_result();
+$provider = $result->fetch_assoc();
+$providerServices = $provider ? explode(',', trim($provider['service_category'] ?? '')) : [];
+$providerServices = array_filter(array_map('trim', $providerServices));
+$stmt->close();
+
+// Fetch all available services from database
+$servicesResult = $conn->query("SELECT id, name, description, flat_rate, hourly_rate, icon FROM services WHERE active = 1 ORDER BY name ASC");
+$availableServices = $servicesResult ? $servicesResult->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,37 +67,37 @@ enforceProviderSectionAccess('services', $conn);
           </div>
         </div>
 
-        <button class="btn-add"><i class="bi bi-plus-lg"></i> Add New Service</button>
+        <button class="btn-add" onclick="openAddServiceModal()"><i class="bi bi-plus-lg"></i> Add New Service</button>
 
-        <div class="svc-list">
-          <div class="svc-card">
-            <div class="svc-top">
-              <div class="svc-ic">🔧</div>
-              <div>
-                <div class="svc-nm">Plumbing</div>
-                <div class="svc-desc">Leak repair, fixtures & maintenance</div>
+        <div class="svc-list" id="servicesList">
+          <?php 
+            // Filter to show only services the provider offers
+            $providerOfferedServices = array_filter($availableServices, function($service) use ($providerServices) {
+              return in_array($service['name'], $providerServices, true);
+            });
+          ?>
+          <?php if (empty($providerOfferedServices)): ?>
+            <div style="text-align:center;padding:40px 20px;color:#8E8E93;">
+              <p>You haven't added any services yet.</p>
+              <p style="font-size:12px;margin-top:8px;">Tap "Add New Service" to get started.</p>
+            </div>
+          <?php else: ?>
+            <?php foreach ($providerOfferedServices as $service): ?>
+              <div class="svc-card" data-service-id="<?= $service['id'] ?>" data-service-name="<?= htmlspecialchars($service['name']) ?>">
+                <div class="svc-top">
+                  <div class="svc-ic"><?= htmlspecialchars($service['icon'] ?? '🔧') ?></div>
+                  <div>
+                    <div class="svc-nm"><?= htmlspecialchars($service['name']) ?></div>
+                    <div class="svc-desc"><?= htmlspecialchars($service['description'] ?? '') ?></div>
+                  </div>
+                  <div class="svc-price">₱<?= number_format($service['flat_rate'] ?? 0, 0) ?></div>
+                </div>
+                <div class="svc-footer">
+                  <button class="btn-edit" onclick="editService(<?= $service['id'] ?>, '<?= htmlspecialchars($service['name']) ?>')"><i class="bi bi-pencil-fill" style="margin-right:5px;"></i>Edit</button>
+                </div>
               </div>
-              <div class="svc-price">₱2,000</div>
-            </div>
-            <div class="svc-footer">
-              <button class="btn-edit"><i class="bi bi-pencil-fill" style="margin-right:5px;"></i>Edit</button>
-              <button class="btn-pause"><i class="bi bi-pause-fill" style="margin-right:5px;"></i>Pause</button>
-            </div>
-          </div>
-          <div class="svc-card">
-            <div class="svc-top">
-              <div class="svc-ic">⚡</div>
-              <div>
-                <div class="svc-nm">Electrical Repair</div>
-                <div class="svc-desc">Wiring, outlets & diagnostics</div>
-              </div>
-              <div class="svc-price">₱3,000</div>
-            </div>
-            <div class="svc-footer">
-              <button class="btn-edit"><i class="bi bi-pencil-fill" style="margin-right:5px;"></i>Edit</button>
-              <button class="btn-pause"><i class="bi bi-pause-fill" style="margin-right:5px;"></i>Pause</button>
-            </div>
-          </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -97,7 +114,35 @@ enforceProviderSectionAccess('services', $conn);
     </div>
   </div>
   <script src="../assets/js/app.js"></script>
-  <script>initTheme();</script>
+  <script>
+    initTheme();
+
+    const providerId = <?= $providerId ?>;
+
+    function editService(serviceId, serviceName) {
+      showToast('Edit feature coming soon for: ' + serviceName, 'info');
+    }
+
+    function openAddServiceModal() {
+      showToast('Add service feature coming soon', 'info');
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#F5A623;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,0.15);animation:slideUp 0.3s ease-out;';
+      if (type === 'error') toast.style.background = '#EF4444';
+      if (type === 'success') toast.style.background = '#10B981';
+      
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+      }, 2500);
+    }
+  </script>
 </body>
 
 </html>
