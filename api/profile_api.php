@@ -98,4 +98,43 @@ if ($section === 'pin') {
     respond(false, 'Could not update PIN.');
 }
 
+if ($section === 'photo') {
+    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255) DEFAULT NULL");
+    
+    if (empty($_FILES['photo']) || $_FILES['photo']['error'] !== UPLOAD_ERR_OK) {
+        respond(false, 'No image file provided or upload failed.');
+    }
+
+    $file = $_FILES['photo'];
+    if (!preg_match('/^image\/(jpeg|png|gif|webp)$/', $file['type'])) {
+        respond(false, 'Only image files (JPG, PNG, GIF, WebP) are allowed.');
+    }
+    if ($file['size'] > 5 * 1024 * 1024) {
+        respond(false, 'Image size must not exceed 5MB.');
+    }
+
+    $uploadDir = __DIR__ . '/../assets/uploads/profile_photos/';
+    if (!is_dir($uploadDir)) {
+        @mkdir($uploadDir, 0755, true);
+    }
+
+    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $fileName = 'user_' . $uid . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+    $filePath = $uploadDir . $fileName;
+    $dbPath = 'assets/uploads/profile_photos/' . $fileName;
+
+    if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+        respond(false, 'Failed to save image. Please try again.');
+    }
+
+    $stmt = $conn->prepare("UPDATE users SET profile_photo=? WHERE id=?");
+    $stmt->bind_param("si", $dbPath, $uid);
+    if ($stmt->execute()) {
+        respond(true, 'Profile photo updated successfully!', ['photo_url' => $dbPath . '?t=' . time()]);
+    }
+    
+    @unlink($filePath);
+    respond(false, 'Could not update profile photo.');
+}
+
 respond(false, 'Unknown section.');

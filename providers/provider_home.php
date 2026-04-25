@@ -13,7 +13,7 @@ $verificationState = $access['state'];
 $isVerified = $access['is_verified'];
 
 $hour = (int) date('H');
-$greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
+$greeting = $hour < 12 ? 'Good Morning' : ($hour < 18 ? 'Good Afternoon' : 'Good Evening');
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 $providerPhone = htmlspecialchars($_SESSION['provider_phone'] ?? '');
 $providerAddress = htmlspecialchars($_SESSION['provider_address'] ?? '');
@@ -959,6 +959,24 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     loadTodaySchedule();
     window.addEventListener('focus', loadTodaySchedule);
     setInterval(loadTodaySchedule, 30000);
+
+    // Dynamic greeting update
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let greeting = 'Good Morning';
+      if (hour >= 12 && hour < 18) {
+        greeting = 'Good Afternoon';
+      } else if (hour >= 18) {
+        greeting = 'Good Evening';
+      }
+      const greetingElement = document.querySelector('.ph-greet');
+      if (greetingElement) {
+        greetingElement.textContent = greeting;
+      }
+    }
+
+    updateGreeting();
+    setInterval(updateGreeting, 60000); // Update every 60 seconds
   </script>
 </body>
 

@@ -7,11 +7,11 @@ if (empty($_SESSION['user_id'])) {
 
 $hour = (int) date('H');
 if ($hour < 12)
-  $greeting = 'Good morning';
+  $greeting = 'Good Morning';
 elseif ($hour < 18)
-  $greeting = 'Good afternoon';
+  $greeting = 'Good Afternoon';
 else
-  $greeting = 'Good evening';
+  $greeting = 'Good Evening';
 
 $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 ?>
@@ -77,11 +77,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>
 
         <div class="sec-row">
-          <div class="sec-ttl">Browse by Category</div>
-        </div>
-        <div class="cat-pills" id="catPills"></div>
-
-        <div class="sec-row">
           <div class="sec-ttl">Our Services</div><span class="see-more" onclick="openAllServices()">See all →</span>
         </div>
         <div class="svc-grid" id="svcGrid"></div>
@@ -95,7 +90,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
 
         <div class="sec-row">
-          <div class="sec-ttl">Our Pros</div><span class="see-more" onclick="goPage('workers.php')">See all →</span>
+          <div>
+            <div class="sec-ttl">Our Trusted Pros</div>
+            <div class="sec-desc">Verified providers with proven track records</div>
+          </div>
         </div>
         <div class="worker-row" id="workerRow"></div>
 
@@ -124,24 +122,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           if (unread.length > 0) document.getElementById('bellDot').style.display = 'block';
         }
       }).catch(() => { });
-
-    // Category pills
-    const catPills = document.getElementById('catPills');
-    const categories = ['All', ...Object.keys(SVCS)];
-    let selectedCategory = 'All';
-    
-    categories.forEach(cat => {
-      const pill = document.createElement('div');
-      pill.className = 'cat-pill' + (cat === 'All' ? ' active' : '');
-      pill.textContent = cat;
-      pill.onclick = () => {
-        document.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
-        selectedCategory = cat;
-        filterServices(cat);
-      };
-      catPills.appendChild(pill);
-    });
 
     // Services grid – unique icon & color per service
     const svcThemeMap = {
@@ -214,8 +194,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           return;
         }
         workerRow.innerHTML = data.pros.map(w => `
-          <div class="worker-card" onclick="goPage('worker_profile.php?id=${w.id}')">
-            ${w.top ? '<div class="worker-badge">TOP</div>' : ''}
+          <div class="worker-card">
+            ${w.top ? '<div class="worker-badge">TOP PRO</div>' : ''}
             <img class="worker-avatar" src="${w.img}" alt="${w.name}"
               onerror="this.src='https://ui-avatars.com/api/?name='+encodeURIComponent('${w.name}')+'&background=FDECC8&color=F5A623&size=128'">
             <div class="worker-name">${w.name} ${w.is_verified ? '<i class="bi bi-patch-check-fill" style="color:#10b981;font-size:12px;"></i>' : ''}</div>
@@ -240,6 +220,24 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         <div class="ni" onclick="goPage('clients/notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
         <div class="ni" onclick="goPage('clients/profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
+
+    // Dynamic greeting update
+    function updateGreeting() {
+      const hour = new Date().getHours();
+      let greeting = 'Good Morning';
+      if (hour >= 12 && hour < 18) {
+        greeting = 'Good Afternoon';
+      } else if (hour >= 18) {
+        greeting = 'Good Evening';
+      }
+      const greetingElement = document.querySelector('.h-greet');
+      if (greetingElement) {
+        greetingElement.textContent = greeting;
+      }
+    }
+
+    updateGreeting();
+    setInterval(updateGreeting, 60000); // Update every 60 seconds
   </script>
 </body>
 

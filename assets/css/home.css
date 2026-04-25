@@ -61,12 +61,6 @@
       color: #B8A882 !important;
     }
 
-    body.dark .cat-pill {
-      background: #2A2216 !important;
-      border-color: #4A3E28 !important;
-      color: #B8A882 !important;
-    }
-
     body.dark .sec-ttl,
     body.dark .sec-row .sec-ttl {
       color: #FFF3DC !important;
@@ -97,8 +91,9 @@
     }
 
     body.dark .worker-card {
-      background: #2A2216 !important;
-      border-color: #4A3E28 !important;
+      background: linear-gradient(135deg, rgba(42, 34, 22, 0.9), rgba(42, 34, 22, 0.7)) !important;
+      border-color: rgba(245, 166, 35, 0.2) !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,.3), inset 1px 1px 0 rgba(255, 255, 255, 0.05) !important;
     }
 
     body.dark .worker-name {
@@ -306,45 +301,21 @@
       letter-spacing: -.2px;
     }
 
+    .sec-desc {
+      font-size: 12px;
+      color: var(--tm);
+      font-family: 'Nunito', sans-serif;
+      font-weight: 600;
+      margin-top: 4px;
+      letter-spacing: 0.3px;
+    }
+
     .see-more {
       font-size: 13px;
       color: var(--teal);
       font-family: 'Nunito', sans-serif;
       font-weight: 700;
       cursor: pointer;
-    }
-
-    /* CATEGORY PILLS */
-    .cat-pills {
-      display: flex;
-      gap: 8px;
-      padding: 0 var(--page-gutter) 4px;
-      overflow-x: auto;
-    }
-
-    .cat-pills::-webkit-scrollbar {
-      display: none;
-    }
-
-    .cat-pill {
-      background: var(--card);
-      border: 2px solid var(--border);
-      border-radius: 30px;
-      padding: 7px 16px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--tm);
-      font-family: 'Nunito', sans-serif;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all .2s;
-      flex-shrink: 0;
-    }
-
-    .cat-pill.active {
-      background: linear-gradient(135deg, #FFB84D 0%, #F5A623 100%);
-      border-color: #F5A623;
-      color: #fff;
     }
 
     /* SERVICES GRID */
@@ -577,27 +548,29 @@
     }
 
     .worker-card {
-      background: var(--card);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), rgba(253, 236, 200, 0.3));
       border-radius: 16px;
       padding: 16px 14px;
       min-width: 140px;
       flex-shrink: 0;
       text-align: center;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06), inset 1px 1px 0 rgba(255, 255, 255, 0.5);
+      border: 1.5px solid rgba(245, 166, 35, 0.15);
+      cursor: default;
       position: relative;
-      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: none;
+      user-select: none;
+      pointer-events: none;
     }
 
     .worker-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,.12);
-      border-color: #F5A623;
+      transform: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06), inset 1px 1px 0 rgba(255, 255, 255, 0.5);
+      border-color: rgba(245, 166, 35, 0.15);
     }
 
     .worker-card:active {
-      transform: scale(.97);
+      transform: none;
     }
 
     .worker-avatar {
@@ -607,19 +580,21 @@
       object-fit: cover;
       margin: 0 auto 8px;
       display: block;
-      border: 3px solid var(--teal-lt);
-      transition: transform 0.2s ease;
+      border: 3px solid linear-gradient(135deg, #E8820C, #F5A623);
+      transition: none;
     }
 
     .worker-card:hover .worker-avatar {
-      transform: scale(1.08);
+      transform: none;
     }
 
     .worker-name {
       font-size: 13px;
-      font-weight: 800;
+      font-weight: 900;
       color: var(--td);
       font-family: 'Poppins', sans-serif;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
     }
 
     .worker-role {
@@ -627,27 +602,32 @@
       color: var(--tm);
       font-family: 'Nunito', sans-serif;
       margin-top: 3px;
+      font-weight: 700;
+      letter-spacing: 0.2px;
     }
 
     .worker-jobs {
       font-size: 11px;
       color: #F5A623;
-      font-weight: 700;
+      font-weight: 800;
       font-family: 'Nunito', sans-serif;
       margin-top: 6px;
+      letter-spacing: 0.3px;
     }
 
     .worker-badge {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      background: #F5A623;
+      top: 10px;
+      right: 10px;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
       color: #fff;
-      font-size: 9px;
-      font-weight: 800;
+      font-size: 10px;
+      font-weight: 900;
       font-family: 'Poppins', sans-serif;
-      padding: 2px 7px;
+      padding: 3px 9px;
       border-radius: 20px;
+      box-shadow: 0 4px 12px rgba(245, 166, 35, .3);
+      letter-spacing: 0.5px;
     }
 
     .nearby-list {
@@ -928,17 +908,17 @@
     }
 
     .nb-c {
-      width: 52px;
-      height: 52px;
+      width: 56px;
+      height: 56px;
       background: linear-gradient(135deg, #E8820C, #F5A623);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       box-shadow: 0 6px 20px rgba(245, 166, 35, .4);
-      margin-top: -22px;
+      margin-top: -28px;
       transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-      border: 3px solid var(--card);
+      border: none;
     }
 
     .nb-c:hover {
@@ -952,7 +932,7 @@
 
     .nb-c i {
       color: #fff !important;
-      font-size: 24px;
+      font-size: 26px;
       transition: transform 0.2s ease;
     }
 
@@ -1102,13 +1082,13 @@
       }
 
       .nb-c {
-        width: 46px !important;
-        height: 46px !important;
-        margin-top: -18px !important;
+        width: 50px !important;
+        height: 50px !important;
+        margin-top: -24px !important;
       }
 
       .nb-c i {
-        font-size: 20px !important;
+        font-size: 22px !important;
       }
     }
 

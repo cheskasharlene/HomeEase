@@ -493,12 +493,6 @@ if ($appBase === '') {
           <div class="p-name" id="profileName">Loading…</div>
           <div class="p-email" id="profileEmail"></div>
           <div class="p-badges">
-            <div class="p-badge">
-              <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
-                <path d="M8 1l1.8 4H14l-3.3 2.4 1.2 4L8 9 4.1 11.4l1.2-4L2 5h4.2L8 1z" fill="#fff" />
-              </svg>
-              Verified Member
-            </div>
             <div class="p-badge" id="profileAddressBadge">
               <i class="bi bi-geo-alt-fill" style="font-size:11px;"></i>
               <span id="profileAddressShort">No address</span>
@@ -611,7 +605,7 @@ if ($appBase === '') {
 
         <div class="st-sec">
           <div class="st-sec-ttl">Support</div>
-          <div class="st-row" id="stHelpRow">
+          <div class="st-row" id="stHelpRow" onclick="openHelpCenter()">
             <div class="st-ic orange"><i class="bi bi-question-circle-fill"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl">Help Center</div>
@@ -628,20 +622,12 @@ if ($appBase === '') {
             <span class="st-badge">Live</span>
             <i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
-          <div class="st-row">
-            <div class="st-ic green"><i class="bi bi-star-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Rate the App</div>
-              <div class="st-row-sub">Share your experience</div>
-            </div>
-            <i class="bi bi-chevron-right st-row-arrow"></i>
-          </div>
         </div>
 
 
         <div class="st-sec">
           <div class="st-sec-ttl">About</div>
-          <div class="st-row">
+          <div class="st-row" onclick="openTermsOfService()">
             <div class="st-ic gray"><i class="bi bi-file-text-fill"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl">Terms of Service</div>
@@ -686,6 +672,214 @@ if ($appBase === '') {
       </div>
     </div>
 
+    <!-- Help Center Modal -->
+    <div class="modal-overlay" id="helpCenterModal" onclick="if(event.target===this)closeHelpCenter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
+      <div class="modal-card" style="background:#fff;border-radius:20px;max-width:600px;margin:40px auto;box-shadow:0 10px 40px rgba(0,0,0,.15);">
+        <div style="padding:28px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:20px;font-weight:800;color:#0f172a;">Help Center</div>
+          <button onclick="closeHelpCenter()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="max-height:70vh;overflow-y:auto;padding:24px;">
+          <!-- Account Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">Account</div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">How do I create an account?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Download the app, sign up, and fill in the required details to register.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">I forgot my password. What should I do?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Click "Forgot Password" and follow the instructions to reset it.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Can I update my profile information?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, you can edit your profile anytime in the account settings.</div>
+            </div>
+          </div>
+
+          <!-- General Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">General</div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">What is HOME EASE?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">HOME EASE is an AI-assisted mobile platform for booking household services with real-time GPS tracking.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Is the app free to use?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, the app is free to download and register, but services are paid.</div>
+            </div>
+          </div>
+
+          <!-- Booking Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">Booking</div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">How do I book a service?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Choose a service, select your preferred date and time, then confirm your booking.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Can I cancel my booking?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, you can cancel before the scheduled time. Cancellation fees may apply.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">How will I know if my booking is confirmed?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">You will receive a notification once a service provider accepts your request.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Can I reschedule my booking?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, rescheduling is allowed depending on the provider's availability.</div>
+            </div>
+          </div>
+
+          <!-- Payment Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">Payment</div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">What payment methods are available?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Payments can be made via cash or online payment options.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">When do I pay for the service?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Payment is usually made after the service is completed or as required by the system.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Are there additional fees?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Additional charges may apply depending on the service type or cancellation policy.</div>
+            </div>
+          </div>
+
+          <!-- Service Questions Section -->
+          <div>
+            <div style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">Service Questions</div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">What types of services are available?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Services include cleaning, plumbing, electrical work, and other household tasks.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Are service providers verified?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, all providers go through a verification process for safety and reliability.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Can I track the service provider?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, you can track their real-time location through GPS once the booking is confirmed.</div>
+            </div>
+            <div class="faq-item" style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;" onclick="toggleFaqItem(this)">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div style="font-weight:600;color:#0f172a;">Can I rate the service provider?</div>
+                <i class="bi bi-chevron-down" style="color:#d1d5db;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, after the service, you can leave ratings and feedback.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Terms of Service Modal -->
+    <div class="modal-overlay" id="tosModal" onclick="if(event.target===this)closeTermsOfService()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
+      <div class="modal-card" style="background:#fff;border-radius:20px;max-width:600px;margin:40px auto;box-shadow:0 10px 40px rgba(0,0,0,.15);">
+        <div style="padding:28px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:20px;font-weight:800;color:#0f172a;">Terms of Service</div>
+          <button onclick="closeTermsOfService()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="max-height:70vh;overflow-y:auto;padding:24px;line-height:1.7;color:#4b5563;font-size:14px;">
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">1. INTRODUCTION</div>
+            <p style="margin:0;">This Terms of Service Agreement ("Agreement") governs the use of HOME EASE services. By using the platform, the User agrees to comply with all terms and conditions stated herein.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">2. DEFINITIONS</div>
+            <p style="margin:0 0 8px 0;"><strong>User:</strong> Any individual or entity using HOME EASE services.</p>
+            <p style="margin:0 0 8px 0;"><strong>Services:</strong> Booking of household services, AI recommendations, and GPS tracking features.</p>
+            <p style="margin:0 0 8px 0;"><strong>Content:</strong> Reviews, ratings, text, images, or materials submitted by users.</p>
+            <p style="margin:0 0 8px 0;"><strong>Provider:</strong> HOME EASE platform operator.</p>
+            <p style="margin:0;"><strong>Agreement:</strong> This Terms of Service and its future updates.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">3. ACCEPTANCE OF TERMS</div>
+            <p style="margin:0;">Users must be at least 18 years old or have guardian consent. By using the app, users agree to all terms. Continued use means acceptance of updates.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">4. USER OBLIGATIONS</div>
+            <p style="margin:0;">Users must secure their account credentials and avoid prohibited activities such as fraud, illegal use, impersonation, data scraping, or system interference.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">5. INTELLECTUAL PROPERTY</div>
+            <p style="margin:0;">All platform rights belong to HOME EASE. User content grants the platform a license to use and display content for service operation.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">6. DISCLAIMER</div>
+            <p style="margin:0;">Services are provided "as is." HOME EASE does not guarantee uninterrupted or error-free service. Third-party links are used at user's own risk.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">7. TERMINATION</div>
+            <p style="margin:0;">HOME EASE may suspend or terminate accounts violating terms without prior notice.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">8. MODIFICATIONS</div>
+            <p style="margin:0;">Terms may be updated anytime. Continued use means acceptance of changes.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">9. GOVERNING LAW</div>
+            <p style="margin:0;">This agreement is governed by the laws of the Philippines.</p>
+          </div>
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">10. CONTACT</div>
+            <p style="margin:0;">Users may contact support via the app or official channels.</p>
+          </div>
+          <div>
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">11. ACCEPTANCE</div>
+            <p style="margin:0;">By clicking "I Agree," users confirm acceptance of all terms.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <div id="subSheet" onclick="subSheetBg(event)">
       <div class="sub-sheet-inner">
@@ -709,8 +903,9 @@ if ($appBase === '') {
                 style="position:absolute;bottom:0;right:0;width:28px;height:28px;background:linear-gradient(135deg,#E8820C,#F5A623);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;box-shadow:0 3px 10px rgba(232,130,12,0.3);">
                 <i class="bi bi-camera-fill"></i>
               </div>
+              <input type="file" id="profilePhotoInput" accept="image/*" style="display:none;">
             </div>
-            <div style="font-size:12px;color:var(--teal);font-weight:700;">Change photo</div>
+            <div style="font-size:12px;color:var(--teal);font-weight:700;cursor:pointer;" onclick="document.getElementById('profilePhotoInput').click();">Change photo</div>
           </div>
           <div
             style="font-size:10px;font-weight:800;color:var(--tm);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;">
@@ -953,6 +1148,37 @@ if ($appBase === '') {
     function confirmLogout() {
       closeLogoutConfirm();
       window.location.href = APP_BASE + '/logout.php';
+    }
+
+    // Help Center Functions
+    function openHelpCenter() {
+      document.getElementById('helpCenterModal').style.display = 'flex';
+      document.getElementById('helpCenterModal').style.flexDirection = 'column';
+      document.getElementById('helpCenterModal').style.justifyContent = 'center';
+    }
+
+    function closeHelpCenter() {
+      document.getElementById('helpCenterModal').style.display = 'none';
+    }
+
+    function toggleFaqItem(element) {
+      const answer = element.querySelector('.faq-answer');
+      const icon = element.querySelector('.bi-chevron-down');
+      const isOpen = answer.style.display !== 'none';
+      answer.style.display = isOpen ? 'none' : 'block';
+      icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+      icon.style.transition = 'transform .3s ease';
+    }
+
+    // Terms of Service Functions
+    function openTermsOfService() {
+      document.getElementById('tosModal').style.display = 'flex';
+      document.getElementById('tosModal').style.flexDirection = 'column';
+      document.getElementById('tosModal').style.justifyContent = 'center';
+    }
+
+    function closeTermsOfService() {
+      document.getElementById('tosModal').style.display = 'none';
     }
 
     loadProfile();

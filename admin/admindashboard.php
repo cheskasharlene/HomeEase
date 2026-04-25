@@ -307,9 +307,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     #wkVdocs {
       display: flex !important;
       flex-direction: column !important;
-      align-items: flex-end !important;
-      gap: 8px !important;
-      text-align: right !important;
+      align-items: stretch !important;
+      gap: 10px !important;
+      text-align: left !important;
+      width: 100% !important;
     }
 
     /* Toast notifications */
@@ -425,26 +426,66 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .toggle-sw::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; }
     .toggle-sw.on::after { transform:translateX(20px); }
 
+    /* Document View Button Container */
+    #wkVdocs {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+
     /* Document View Button */
     .doc-view-btn { 
-      background: var(--teal); 
+      background: linear-gradient(135deg, #E8820C 0%, #F5A623 100%);
       color: #fff; 
       border: none; 
-      padding: 6px 14px; 
-      border-radius: 8px; 
-      font-size: 12px; 
+      padding: 10px 18px; 
+      border-radius: 10px; 
+      font-size: 13px; 
       font-weight: 700; 
       cursor: pointer; 
-      transition: all 0.2s; 
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       font-family: 'Nunito', sans-serif;
       text-decoration: none;
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(232, 130, 12, 0.2);
+      position: relative;
+      overflow: hidden;
     }
+
+    .doc-view-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.15);
+      transition: left 0.3s ease;
+    }
+
     .doc-view-btn:hover { 
-      background: #0d9488; 
-      transform: translateY(-2px); 
-      box-shadow: 0 4px 12px rgba(15, 153, 128, 0.3); 
+      background: linear-gradient(135deg, #D46C00 0%, #E67600 100%);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(232, 130, 12, 0.35);
+    }
+
+    .doc-view-btn:hover::before {
+      left: 100%;
+    }
+
+    .doc-view-btn:active {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(232, 130, 12, 0.25);
+    }
+
+    .doc-view-btn i {
+      font-size: 14px;
+      opacity: 0.95;
     }
 
     /* Image Preview Modal */
@@ -1107,9 +1148,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val" id="wkStatus">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Rating</span><span class="detail-val" id="wkRating">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Jobs Done</span><span class="detail-val" id="wkJobs">–</span></div>
-          <div class="detail-row" style="align-items:flex-start;gap:14px;">
+          <div class="detail-row" style="align-items:flex-start;gap:14px;flex-direction:column;">
             <span class="detail-lbl">Verification Documents</span>
-            <div class="detail-val" id="wkVdocs" style="max-width:58%;text-align:right;font-size:12px;line-height:1.45;">
+            <div class="detail-val" id="wkVdocs" style="width:100%;font-size:12px;line-height:1.45;text-align:left;">
               No documents uploaded.
             </div>
           </div>
@@ -1927,11 +1968,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('wkRating').textContent = parseFloat(w.rating || 0).toFixed(1);
         document.getElementById('wkJobs').textContent = w.jobs_done || 0;
         let docHtml = '';
-        if (w.valid_id) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.valid_id}', 'Valid ID')">View Valid ID</button>`;
-        if (w.selfie_verification) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.selfie_verification}', 'Selfie Verification')">View Selfie Verification</button>`;
-        if (w.proof_of_address) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.proof_of_address}', 'Proof of Address')">View Proof of Address</button>`;
-        if (w.barangay_clearance) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.barangay_clearance}', 'Barangay Clearance')">View Barangay Clearance</button>`;
-        if (w['tools_&_kits']) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w['tools_&_kits']}', 'Tools & Kits')">View Tools & Kits</button>`;
+        if (w.valid_id) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.valid_id}', 'Valid ID')"><i class="bi bi-card-list"></i>View Valid ID</button>`;
+        if (w.selfie_verification) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.selfie_verification}', 'Selfie Verification')"><i class="bi bi-person-circle"></i>View Selfie Verification</button>`;
+        if (w.proof_of_address) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.proof_of_address}', 'Proof of Address')"><i class="bi bi-geo-alt"></i>View Proof of Address</button>`;
+        if (w.barangay_clearance) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.barangay_clearance}', 'Barangay Clearance')"><i class="bi bi-shield-check"></i>View Barangay Clearance</button>`;
+        if (w['tools_&_kits']) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w['tools_&_kits']}', 'Tools & Kits')"><i class="bi bi-hammer"></i>View Tools & Kits</button>`;
         if (!docHtml) docHtml = '<span style="color:var(--txt-muted);">No documents uploaded.</span>';
         document.getElementById('wkVdocs').innerHTML = docHtml;
         
