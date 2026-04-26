@@ -598,7 +598,7 @@ if ($appBase === '') {
               <div class="st-row-lbl">Push Notifications</div>
               <div class="st-row-sub">Booking alerts & updates</div>
             </div>
-            <div class="st-toggle on" onclick="this.classList.toggle('on')"></div>
+            <div class="st-toggle on" id="pushNotifToggle" onclick="togglePushNotifications()"></div>
           </div>
         </div>
 
@@ -635,7 +635,7 @@ if ($appBase === '') {
             </div>
             <i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
-          <div class="st-row">
+          <div class="st-row" onclick="openPrivacyPolicy()">
             <div class="st-ic gray"><i class="bi bi-lock-fill"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl">Privacy Policy</div>
@@ -880,6 +880,124 @@ if ($appBase === '') {
       </div>
     </div>
 
+    <!-- Privacy Policy Modal -->
+    <div class="modal-overlay" id="privacyModal" onclick="if(event.target===this)closePrivacyPolicy()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
+      <div class="modal-card" style="background:#fff;border-radius:20px;max-width:600px;margin:40px auto;box-shadow:0 10px 40px rgba(0,0,0,.15);">
+        <div style="padding:28px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:20px;font-weight:800;color:#0f172a;">Privacy Policy</div>
+          <button onclick="closePrivacyPolicy()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="max-height:70vh;overflow-y:auto;padding:24px;line-height:1.7;color:#4b5563;font-size:14px;">
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">1. Introduction</div>
+            <p style="margin:0;">HomeEase respects your privacy and is committed to protecting your personal data. This Privacy Policy explains how we collect, use, store, and protect your information when you use our platform.</p>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">2. Information We Collect</div>
+            
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:700;color:#0f172a;margin-bottom:8px;font-size:14px;">2.1 Personal Information</div>
+              <p style="margin:0;">We may collect the following:</p>
+              <ul style="margin:8px 0 0 20px;padding:0;">
+                <li style="margin-bottom:4px;">Full Name</li>
+                <li style="margin-bottom:4px;">Contact Number</li>
+                <li style="margin-bottom:4px;">Email Address</li>
+                <li style="margin-bottom:4px;">Home Address</li>
+                <li style="margin-bottom:4px;">Profile Photo (optional)</li>
+              </ul>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:700;color:#0f172a;margin-bottom:8px;font-size:14px;">2.2 Location Data</div>
+              <p style="margin:0;">Real-time GPS location (for booking and tracking services).</p>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:700;color:#0f172a;margin-bottom:8px;font-size:14px;">2.3 Account Information</div>
+              <p style="margin:0;">Username and password, booking history, preferences and saved data.</p>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:700;color:#0f172a;margin-bottom:8px;font-size:14px;">2.4 Payment Information</div>
+              <p style="margin:0;">Payment method details (excluding sensitive banking credentials).</p>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <div style="font-weight:700;color:#0f172a;margin-bottom:8px;font-size:14px;">2.5 Device Information</div>
+              <p style="margin:0;">Device type, IP address, and app usage data.</p>
+            </div>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">3. How We Use Your Information</div>
+            <p style="margin:0 0 8px 0;">We use your data to:</p>
+            <ul style="margin:0 0 0 20px;padding:0;">
+              <li style="margin-bottom:4px;">Process and manage bookings</li>
+              <li style="margin-bottom:4px;">Match users with service providers</li>
+              <li style="margin-bottom:4px;">Enable real-time GPS tracking</li>
+              <li style="margin-bottom:4px;">Improve app performance and user experience</li>
+              <li style="margin-bottom:4px;">Send notifications and updates</li>
+              <li style="margin-bottom:4px;">Prevent fraud and ensure platform security</li>
+            </ul>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">4. Sharing of Information</div>
+            <p style="margin:0 0 8px 0;">We may share your data with:</p>
+            <ul style="margin:0 0 8px 20px;padding:0;">
+              <li style="margin-bottom:4px;">Service providers (for booking fulfillment)</li>
+              <li style="margin-bottom:4px;">Payment partners (for transaction processing)</li>
+              <li style="margin-bottom:4px;">Legal authorities (if required by law)</li>
+            </ul>
+            <p style="margin:0;"><strong>We do NOT sell your personal data.</strong></p>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">5. Data Storage and Security</div>
+            <p style="margin:0 0 8px 0;">We implement appropriate security measures to protect your data, including:</p>
+            <ul style="margin:0 0 8px 20px;padding:0;">
+              <li style="margin-bottom:4px;">Encryption</li>
+              <li style="margin-bottom:4px;">Secure servers</li>
+              <li style="margin-bottom:4px;">Restricted access</li>
+            </ul>
+            <p style="margin:0;"><em>However, no system is 100% secure.</em></p>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">6. Your Rights</div>
+            <p style="margin:0 0 8px 0;">You have the right to:</p>
+            <ul style="margin:0 0 0 20px;padding:0;">
+              <li style="margin-bottom:4px;">Access your personal data</li>
+              <li style="margin-bottom:4px;">Update or correct your information</li>
+              <li style="margin-bottom:4px;">Request deletion of your account</li>
+              <li style="margin-bottom:4px;">Withdraw consent</li>
+            </ul>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">7. Data Retention</div>
+            <p style="margin:0 0 8px 0;">We retain your data only as long as necessary for:</p>
+            <ul style="margin:0 0 0 20px;padding:0;">
+              <li style="margin-bottom:4px;">Service delivery</li>
+              <li style="margin-bottom:4px;">Legal compliance</li>
+              <li style="margin-bottom:4px;">Dispute resolution</li>
+            </ul>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">8. Changes to Policy</div>
+            <p style="margin:0;">We may update this Privacy Policy anytime. Continued use of the app means you accept the changes.</p>
+          </div>
+
+          <div>
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:16px;">9. Contact Us</div>
+            <p style="margin:0;">For concerns, contact us through the app or official support channels.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <div id="subSheet" onclick="subSheetBg(event)">
       <div class="sub-sheet-inner">
@@ -1032,11 +1150,63 @@ if ($appBase === '') {
 
     function openSettingsScreen() {
       document.getElementById('settingsScreen').classList.add('on');
+      loadNotificationPreference();
     }
     function closeSettingsScreen() {
       document.getElementById('settingsScreen').classList.remove('on');
     }
 
+    // Load notification preference from server
+    async function loadNotificationPreference() {
+      try {
+        const response = await fetch(APP_BASE + '/api/profile_api.php?action=get_notification_preference');
+        const data = await response.json();
+        if (data.success && data.hasOwnProperty('enabled')) {
+          const toggle = document.getElementById('pushNotifToggle');
+          if (data.enabled === 1 || data.enabled === true) {
+            toggle.classList.add('on');
+          } else {
+            toggle.classList.remove('on');
+          }
+        }
+      } catch (e) {
+        console.error('Error loading notification preference:', e);
+      }
+    }
+
+    // Toggle push notifications and save preference
+    async function togglePushNotifications() {
+      const toggle = document.getElementById('pushNotifToggle');
+      const isCurrentlyOn = toggle.classList.contains('on');
+      const newState = !isCurrentlyOn;
+      
+      // Optimistically update UI
+      toggle.classList.toggle('on');
+      
+      try {
+        const fd = new FormData();
+        fd.append('section', 'notifications');
+        fd.append('enabled', newState ? 1 : 0);
+        
+        const response = await fetch(APP_BASE + '/api/profile_api.php', {
+          method: 'POST',
+          body: fd
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          // Preference saved successfully
+        } else {
+          // Revert toggle if save failed
+          toggle.classList.toggle('on');
+          console.error('Failed to save notification preference:', data.message);
+        }
+      } catch (e) {
+        // Revert toggle if request failed
+        toggle.classList.toggle('on');
+        console.error('Error saving notification preference:', e);
+      }
+    }
 
     let activeSection = 'profile';
 
@@ -1179,6 +1349,16 @@ if ($appBase === '') {
 
     function closeTermsOfService() {
       document.getElementById('tosModal').style.display = 'none';
+    }
+
+    function openPrivacyPolicy() {
+      document.getElementById('privacyModal').style.display = 'flex';
+      document.getElementById('privacyModal').style.flexDirection = 'column';
+      document.getElementById('privacyModal').style.justifyContent = 'center';
+    }
+
+    function closePrivacyPolicy() {
+      document.getElementById('privacyModal').style.display = 'none';
     }
 
     loadProfile();

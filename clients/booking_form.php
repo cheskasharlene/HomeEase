@@ -248,7 +248,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         { name: 'inclusions_note', label: 'Additional Notes', type: 'text', placeholder: 'e.g., windows, carpets, etc.' }
       ],
       'Helper': [
-        { name: 'helper_tasks', label: 'Tasks Needed', type: 'checkbox-group', options: ['Cleaning', 'Cooking', 'Childcare', 'General Errands'], defaultChecked: ['Cleaning'] },
+        { name: 'helper_tasks', label: 'Tasks Needed', type: 'checkbox-group', options: ['Cooking', 'Childcare', 'General Errands'], defaultChecked: [] },
         { name: 'helper_hours', label: 'Number of Hours', type: 'number', min: 4, max: 12 }
       ],
       'Laundry Worker': [
@@ -261,12 +261,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         { name: 'urgency', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'] }
       ],
       'Carpenter': [
-        { name: 'carpentry_task', label: 'Task', type: 'select', options: ['Repairs', 'Furniture Making', 'Installation'] },
+        { name: 'carpentry_task', label: 'Task', type: 'select', options: ['Repairs', 'Installation'] },
         { name: 'complexity', label: 'Complexity', type: 'select', options: ['Simple', 'Complex'] },
         { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Describe the woodwork needed...' }
       ],
       'Appliance Technician': [
-        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Ref', 'Washing Machine', 'TV', 'Other'] },
+        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Ref', 'Washing Machine', 'TV'] },
         { name: 'problem_severity', label: 'Problem Severity', type: 'select', options: ['Minor', 'Major'] },
         { name: 'urgency_level', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'] },
         { name: 'problem_desc', label: 'Problem Description', type: 'textarea', placeholder: 'Describe the issue in detail' }
@@ -292,11 +292,33 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     };
 
     async function initForm() {
-      // Populate user info
-      document.getElementById('uName').value = window.HE.user.name || '';
-      document.getElementById('uPhone').value = window.HE.user.phone || '';
-      document.getElementById('uAddress').value = window.HE.user.address || '';
-      document.getElementById('bAddr').value = window.HE.user.address || '';
+      // Populate user info from session with validation
+      const nameField = document.getElementById('uName');
+      const phoneField = document.getElementById('uPhone');
+      const addressField = document.getElementById('uAddress');
+      const bAddrField = document.getElementById('bAddr');
+
+      // Set values if they exist and are not empty
+      if (window.HE.user.name && window.HE.user.name.trim()) {
+        nameField.value = window.HE.user.name;
+        nameField.setAttribute('data-autofilled', 'true');
+      }
+      if (window.HE.user.phone && window.HE.user.phone.trim()) {
+        phoneField.value = window.HE.user.phone;
+        phoneField.setAttribute('data-autofilled', 'true');
+      }
+      if (window.HE.user.address && window.HE.user.address.trim()) {
+        addressField.value = window.HE.user.address;
+        addressField.setAttribute('data-autofilled', 'true');
+        bAddrField.value = window.HE.user.address;
+      }
+
+      // Add event listeners to mark fields as manually edited
+      [nameField, phoneField, addressField].forEach(field => {
+        field.addEventListener('input', function() {
+          this.removeAttribute('data-autofilled');
+        });
+      });
 
       try {
         const res = await fetch('../api/bookings_api.php?action=services');
@@ -484,7 +506,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         lines.push('Base helper: ₱400 (4 hours)');
 
         const tasks = Array.isArray(v.helper_tasks) ? v.helper_tasks : [];
-        const taskAdd = tasks.reduce((sum, t) => sum + ({ 'Cleaning': 100, 'Cooking': 150, 'Childcare': 200, 'General Errands': 100 }[t] ?? 0), 0);
+        const taskAdd = tasks.reduce((sum, t) => sum + ({ 'Cooking': 150, 'Childcare': 200, 'General Errands': 100 }[t] ?? 0), 0);
         const hours = Math.max(1, normalizeNumber(v.helper_hours, 4));
         const excess = (hours > 4) ? ((hours - 4) * 100) : 0;
 
@@ -518,7 +540,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         total = 600;
         lines.push('Base carpentry: ₱600');
 
-        const typeAdd = ({ 'Repairs': 0, 'Furniture Making': 500, 'Installation': 300 }[v.carpentry_task] ?? 0);
+        const typeAdd = ({ 'Repairs': 0, 'Installation': 300 }[v.carpentry_task] ?? 0);
         const prepAdd = ({ 'Simple': 0, 'Complex': 500 }[v.complexity] ?? 0);
 
         total += typeAdd + prepAdd;
@@ -528,7 +550,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         total = 500;
         lines.push('Base repair: ₱500');
 
-        const appAdd = ({ 'Aircon': 500, 'Ref': 400, 'Washing Machine': 400, 'TV': 300, 'Other': 200 }[v.appliance_type] ?? 0);
+        const appAdd = ({ 'Aircon': 500, 'Ref': 400, 'Washing Machine': 400, 'TV': 300 }[v.appliance_type] ?? 0);
         const sevAdd = ({ 'Minor': 300, 'Major': 800 }[v.problem_severity] ?? 0);
         const urgAdd = ({ 'Normal': 0, 'Urgent': 300 }[v.urgency_level] ?? 0);
 
@@ -763,9 +785,43 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         if (data.success) {
           toast(data.waiting_message || 'Waiting for a provider to accept your booking…', 's');
           document.getElementById('bookForm').classList.remove('show');
+          
+          // Reset form and re-apply auto-fill
           document.getElementById('bDate').value = '';
-          document.getElementById('uAddress').value = window.HE.user.address || '';
-          document.getElementById('bAddr').value = window.HE.user.address || '';
+          
+          // Reset name field and re-apply auto-fill if available
+          const nameField = document.getElementById('uName');
+          if (window.HE.user.name && window.HE.user.name.trim()) {
+            nameField.value = window.HE.user.name;
+            nameField.setAttribute('data-autofilled', 'true');
+          } else {
+            nameField.value = '';
+            nameField.removeAttribute('data-autofilled');
+          }
+          
+          // Reset phone field and re-apply auto-fill if available
+          const phoneField = document.getElementById('uPhone');
+          if (window.HE.user.phone && window.HE.user.phone.trim()) {
+            phoneField.value = window.HE.user.phone;
+            phoneField.setAttribute('data-autofilled', 'true');
+          } else {
+            phoneField.value = '';
+            phoneField.removeAttribute('data-autofilled');
+          }
+          
+          // Reset address fields and re-apply auto-fill if available
+          const addressField = document.getElementById('uAddress');
+          const bAddrField = document.getElementById('bAddr');
+          if (window.HE.user.address && window.HE.user.address.trim()) {
+            addressField.value = window.HE.user.address;
+            bAddrField.value = window.HE.user.address;
+            addressField.setAttribute('data-autofilled', 'true');
+          } else {
+            addressField.value = '';
+            bAddrField.value = '';
+            addressField.removeAttribute('data-autofilled');
+          }
+          
           document.getElementById('bNotes').value = '';
           selectedSvc = null;
           selectedTechId = null;

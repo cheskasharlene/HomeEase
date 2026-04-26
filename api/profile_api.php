@@ -2,7 +2,7 @@
 session_start();
 
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Content-Type: application/json; charset=utf-8');
 
@@ -11,9 +11,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 require 'db.php';
 
 if (empty($_SESSION['user_id'])) { respond(false, 'Not logged in.'); }
+
+$uid = $_SESSION['user_id'];
+
+// Handle GET requests
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $action = $_GET['action'] ?? '';
+    
+    if ($action === 'get_notification_preference') {
+        // Ensure column exists
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS push_notifications TINYINT(1) DEFAULT 1");
+        
+        $stmt = $conn->prepare("SELECT push_notifications FROM users WHERE id=?");
+        $stmt->bind_param("i", $uid);
+        $stmt->execute();
+        $result = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        
+        if ($result) {
+            respond(true, 'Notification preference retrieved', ['enabled' => (int)$result['push_notifications']]);
+        }
+        respond(false, 'Could not retrieve preference.');
+    }
+    
+    respond(false, 'Invalid action.');
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') { respond(false, 'Invalid request.'); }
 
-$uid     = $_SESSION['user_id'];
 $section = $_POST['section'] ?? 'profile';
 
 
@@ -96,6 +121,18 @@ if ($section === 'pin') {
         respond(true, 'PIN updated successfully!');
     }
     respond(false, 'Could not update PIN.');
+}
+
+if ($section === 'notifications') {
+    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS push_notifications TINYINT(1) DEFAULT 1");
+    
+    $enabled = isset($_POST['enabled']) ? (int)$_POST['enabled'] : 1;
+    $stmt = $conn->prepare("UPDATE users SET push_notifications=? WHERE id=?");
+    $stmt->bind_param("ii", $enabled, $uid);
+    if ($stmt->execute()) {
+        respond(true, 'Notification preference updated!', ['enabled' => $enabled]);
+    }
+    respond(false, 'Could not update notification preference.');
 }
 
 if ($section === 'photo') {

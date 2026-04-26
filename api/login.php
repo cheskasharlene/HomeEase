@@ -17,7 +17,7 @@ if (!$email || !$pass) {
 }
 
 
-$stmt = $conn->prepare("SELECT id, name, email, password, role FROM users WHERE email = ?");
+$stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role FROM users WHERE email = ?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
@@ -36,6 +36,8 @@ if ($user) {
         $_SESSION['user_id']    = $user['id'];
         $_SESSION['user_name']  = $user['name'];
         $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_phone'] = $user['phone'] ?? '';
+        $_SESSION['user_address'] = $user['address'] ?? '';
         $_SESSION['user_role']  = $user['role'];
 
         if ($user['role'] === 'admin') {

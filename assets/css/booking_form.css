@@ -209,3 +209,28 @@
     .tm-review-stars { color: #E8820C; font-size: 11px; }
     .tm-review-txt { font-size: 12px; color: #5E564D; line-height: 1.4; }
     .tm-review-date { font-size: 10px; color: #999; margin-top: 4px; }
+
+    /* Auto-filled field styling */
+    .fi[data-autofilled="true"] {
+      background: linear-gradient(to right, #FFF8EE 0%, #FFFBF5 100%);
+      border-color: #F3DFC2;
+      position: relative;
+    }
+
+    .fi[data-autofilled="true"]::after {
+      content: '✓ Auto-filled from your profile';
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 10px;
+      color: #10b981;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Dark mode styling for auto-filled fields */
+    body.dark .fi[data-autofilled="true"] {
+      background: linear-gradient(to right, #2A2216 0%, #332A1C 100%);
+      border-color: #4A3E28;
+    }

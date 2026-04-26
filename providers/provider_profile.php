@@ -265,7 +265,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         </div>
         <div class="st-sec">
           <div class="st-sec-ttl">Support</div>
-          <div class="st-row">
+          <div class="st-row" onclick="openHelpCenter()">
             <div class="st-ic orange"><i class="bi bi-question-circle-fill"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl">Help Center</div>
@@ -280,6 +280,172 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <div class="st-row-info">
               <div class="st-row-lbl" style="color:#ef4444;">Log Out</div>
               <div class="st-row-sub">Sign out of your account</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="helpCenterModal" onclick="if(event.target===this)closeHelpCenter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
+      <div class="modal-card" style="background:#fff;border-radius:20px;max-width:650px;margin:40px auto;box-shadow:0 10px 40px rgba(0,0,0,.15);">
+        <div style="padding:28px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:20px;font-weight:800;color:#0f172a;">Service Provider Help Center</div>
+          <button onclick="closeHelpCenter()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="max-height:70vh;overflow-y:auto;padding:24px;">
+          <!-- Account Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Account</div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>How do I register as a service provider?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Download the app, select "Register as Provider," and submit your personal details and required documents for verification.
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>Can I edit my profile?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Yes, go to account settings to update your profile anytime.
+              </div>
+            </div>
+          </div>
+
+          <!-- Verification Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Verification</div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>What documents are required?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Valid ID, proof of address, and supporting documents related to your service (if applicable).
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>How long does verification take?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Usually 24–72 hours depending on the review.
+              </div>
+            </div>
+          </div>
+
+          <!-- Booking & Jobs Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Booking & Jobs</div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>How do I receive bookings?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                You will get notifications when a customer requests your service.
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>Can I accept or decline bookings?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Yes, you can choose based on your availability.
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>What happens after I accept a booking?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                You proceed to the customer's location and complete the service.
+              </div>
+            </div>
+          </div>
+
+          <!-- Earnings & Payments Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Earnings & Payments</div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>How do I get paid?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Payments are released after service completion via selected payout methods.
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>Are there deductions or fees?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Yes, a service/platform fee may apply.
+              </div>
+            </div>
+          </div>
+
+          <!-- Conduct & Responsibilities Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Conduct & Responsibilities</div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>What are my responsibilities?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                <ul style="margin:0;padding:0 0 0 20px;">
+                  <li style="margin-bottom:6px;">Provide quality service</li>
+                  <li style="margin-bottom:6px;">Be on time</li>
+                  <li style="margin-bottom:6px;">Maintain professionalism</li>
+                </ul>
+              </div>
+            </div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>What happens if I violate policies?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Your account may be suspended or terminated.
+              </div>
+            </div>
+          </div>
+
+          <!-- Ratings & Reviews Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Ratings & Reviews</div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>Can customers rate me?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Yes, ratings help build your reputation.
+              </div>
+            </div>
+          </div>
+
+          <!-- Support Section -->
+          <div style="margin-bottom:28px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Support</div>
+            <div class="faq-item">
+              <div class="faq-question" onclick="toggleFaq(this)" style="cursor:pointer;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;font-weight:600;color:#0f172a;display:flex;justify-content:space-between;align-items:center;">
+                <span>Who do I contact for issues?</span>
+                <i class="bi bi-chevron-down" style="font-size:14px;transition:transform .3s;"></i>
+              </div>
+              <div class="faq-answer" style="display:none;padding:12px 12px 12px 16px;background:#fafbfc;border-left:3px solid #e8820c;color:#4b5563;line-height:1.6;font-size:14px;">
+                Use the in-app support feature.
+              </div>
             </div>
           </div>
         </div>
@@ -527,6 +693,26 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     function closeSettingsScreen() { document.getElementById('settingsScreen').classList.remove('on'); }
     function openLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.add('on'); }
     function closeLogoutConfirm() { document.getElementById('logoutConfirmOl').classList.remove('on'); }
+    
+    function openHelpCenter() {
+      document.getElementById('helpCenterModal').style.display = 'flex';
+      document.getElementById('helpCenterModal').style.flexDirection = 'column';
+      document.getElementById('helpCenterModal').style.justifyContent = 'center';
+    }
+
+    function closeHelpCenter() {
+      document.getElementById('helpCenterModal').style.display = 'none';
+    }
+
+    function toggleFaq(element) {
+      const answer = element.nextElementSibling;
+      const icon = element.querySelector('.bi-chevron-down');
+      const isOpen = answer.style.display !== 'none';
+      answer.style.display = isOpen ? 'none' : 'block';
+      if (icon) {
+        icon.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(180deg)';
+      }
+    }
     function confirmLogout() {
       closeLogoutConfirm();
       window.location.href = '../logout.php';
