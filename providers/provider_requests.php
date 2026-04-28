@@ -139,7 +139,9 @@ enforceProviderSectionAccess('requests', $conn);
         reqList.innerHTML = items.map(item => {
           const sClass = statusClass(item.status);
           const sLabel = statusLabel(item.status);
-          const canAction = String(item.status).toLowerCase() === 'pending';
+          const statusRaw = String(item.status).toLowerCase();
+          const canAction = statusRaw === 'pending';
+          const isAccepted = statusRaw === 'accepted';
           const dateText = `${item.date || '—'}${item.time_slot ? ' · ' + item.time_slot : ''}`;
           const details = item.details ? String(item.details) : 'No additional details';
 
@@ -157,7 +159,9 @@ enforceProviderSectionAccess('requests', $conn);
               ${canAction ? `<div class="req-footer">
                 <button class="btn-accept" onclick="respondRequest(${item.id},'accept')"><i class="bi bi-check2" style="margin-right:5px;"></i>Accept</button>
                 <button class="btn-decline" onclick="respondRequest(${item.id},'decline')"><i class="bi bi-x-lg" style="margin-right:5px;"></i>Decline</button>
-              </div>` : ''}
+              </div>` : (isAccepted ? `<div class="req-footer">
+                <button class="btn-view" onclick="openAccepted(${item.booking_id || 0})"><i class="bi bi-eye" style="margin-right:5px;"></i>View details</button>
+              </div>` : '')}
             </div>`;
         }).join('');
       } catch (e) {
@@ -173,8 +177,18 @@ enforceProviderSectionAccess('requests', $conn);
       const data = await res.json();
       if (!data.success) {
         alert(data.message || 'Action failed.');
+        return;
+      }
+      if (action === 'accept' && data.booking_id) {
+        window.location.href = `provider_accepted_booking.php?booking_id=${encodeURIComponent(data.booking_id)}`;
+        return;
       }
       loadRequests();
+    }
+
+    function openAccepted(bookingId) {
+      if (!bookingId) return;
+      window.location.href = `provider_accepted_booking.php?booking_id=${encodeURIComponent(bookingId)}`;
     }
 
     document.getElementById('filterRow').addEventListener('click', function (e) {

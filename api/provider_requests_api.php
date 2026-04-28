@@ -129,7 +129,7 @@ if ($method === 'POST' && $action === 'accept') {
 
         $bookingId = (int) $row['booking_id'];
 
-        $stmt = $conn->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ? AND LOWER(status) = 'pending'");
+        $stmt = $conn->prepare("UPDATE bookings SET status = 'progress' WHERE id = ? AND LOWER(status) = 'pending'");
         $stmt->bind_param('i', $bookingId);
         $stmt->execute();
         $bookingUpdated = $stmt->affected_rows > 0;
@@ -160,7 +160,7 @@ if ($method === 'POST' && $action === 'accept') {
         notifyHomeownerAccepted($conn, $bookingId, $providerId);
 
         $conn->commit();
-        echo json_encode(['success' => true, 'message' => 'Booking accepted successfully.']);
+        echo json_encode(['success' => true, 'message' => 'Booking accepted successfully.', 'booking_id' => $bookingId]);
     } catch (Throwable $e) {
         $conn->rollback();
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);

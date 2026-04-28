@@ -159,6 +159,10 @@
     }
     .review-textarea:focus { border-color: #E8820C; box-shadow: 0 0 0 3px rgba(245,166,35,.1); }
 
+    .bk-card {
+      cursor: pointer;
+    }
+
     /* Dark mode for bottom nav */
     body.dark .bnav {
       background: var(--bg-card) !important;

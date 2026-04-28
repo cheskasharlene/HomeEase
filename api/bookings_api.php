@@ -62,6 +62,122 @@ if ($method === 'GET' && $action === 'offers') {
     exit;
 }
 
+if ($method === 'GET' && $action === 'detail') {
+    $bookingId = (int) ($_GET['booking_id'] ?? 0);
+    if ($bookingId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid booking id.']);
+        exit;
+    }
+
+    $cols = [];
+    $cr = $conn->query("SHOW COLUMNS FROM bookings");
+    if ($cr) {
+        while ($c = $cr->fetch_assoc()) {
+            $cols[] = $c['Field'];
+        }
+    }
+
+    $hasProviderId = in_array('provider_id', $cols, true);
+    $hasTimeSlot = in_array('time_slot', $cols, true);
+    $hasNotes = in_array('notes', $cols, true);
+    $hasPrice = in_array('price', $cols, true);
+
+    ensureBookingRequestsTable($conn);
+    ensureProviderReviewsTable($conn);
+
+    $select = 'b.id, b.service, b.date, b.address, b.status, b.created_at';
+    if ($hasTimeSlot) {
+        $select .= ', b.time_slot';
+    }
+    if ($hasNotes) {
+        $select .= ', b.notes';
+    }
+    if ($hasPrice) {
+        $select .= ', b.price';
+    }
+    $select .= ', br.details, br.fixed_price, br.provider_id AS request_provider_id';
+
+    $providerJoinExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id)' : 'br.provider_id';
+    $select .= ', sp.provider_id AS provider_id, sp.full_name AS provider_name, sp.contact_number AS provider_phone,';
+    $select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, sp.service_category AS provider_service';
+
+    $sql = "SELECT $select
+            FROM bookings b
+            LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'
+            LEFT JOIN service_providers sp ON sp.provider_id = $providerJoinExpr
+            WHERE b.user_id = ? AND b.id = ?
+            LIMIT 1";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
+        exit;
+    }
+    $stmt->bind_param('ii', $uid, $bookingId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$row) {
+        echo json_encode(['success' => false, 'message' => 'Booking not found.']);
+        exit;
+    }
+
+    $providerIdResolved = (int) ($row['provider_id'] ?? 0);
+    if ($providerIdResolved <= 0) {
+        $providerIdResolved = (int) ($row['request_provider_id'] ?? 0);
+    }
+
+    $reviewCount = 0;
+    $reviewAvg = null;
+    if ($providerIdResolved > 0) {
+        $revStmt = $conn->prepare('SELECT COUNT(*) AS review_count, AVG(rating) AS avg_rating FROM provider_reviews WHERE provider_id = ?');
+        if ($revStmt) {
+            $revStmt->bind_param('i', $providerIdResolved);
+            $revStmt->execute();
+            $revRow = $revStmt->get_result()->fetch_assoc();
+            $revStmt->close();
+            $reviewCount = (int) ($revRow['review_count'] ?? 0);
+            if ($revRow && $revRow['avg_rating'] !== null) {
+                $reviewAvg = (float) $revRow['avg_rating'];
+            }
+        }
+    }
+
+    $rating = $row['provider_rating'] ?? null;
+    if ($rating === null || (float) $rating <= 0) {
+        $rating = $reviewAvg ?? 0;
+    }
+
+    $price = $row['fixed_price'] ?? null;
+    if ($price === null && $hasPrice) {
+        $price = $row['price'] ?? 0;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'booking' => [
+            'id' => (int) ($row['id'] ?? 0),
+            'service' => (string) ($row['service'] ?? ''),
+            'date' => (string) ($row['date'] ?? ''),
+            'time_slot' => (string) ($row['time_slot'] ?? ''),
+            'address' => (string) ($row['address'] ?? ''),
+            'notes' => (string) ($row['notes'] ?? ''),
+            'details' => (string) ($row['details'] ?? ''),
+            'price' => (float) ($price ?? 0),
+            'status' => (string) ($row['status'] ?? ''),
+            'provider_id' => $providerIdResolved,
+            'provider_name' => (string) ($row['provider_name'] ?? ''),
+            'provider_phone' => (string) ($row['provider_phone'] ?? ''),
+            'provider_service' => (string) ($row['provider_service'] ?? ''),
+            'provider_rating' => (float) ($rating ?? 0),
+            'provider_review_count' => $reviewCount,
+            'provider_jobs' => (int) ($row['provider_jobs'] ?? 0),
+        ]
+    ]);
+    exit;
+}
+
 if ($method === 'GET' && $action === '') {
 
     $cols = [];
@@ -70,6 +186,7 @@ if ($method === 'GET' && $action === '') {
         while ($c = $cr->fetch_assoc())
             $cols[] = $c['Field'];
     }
+    $hasProviderId = in_array('provider_id', $cols, true);
 
     $conn->query("CREATE TABLE IF NOT EXISTS provider_reviews (
         id INT AUTO_INCREMENT PRIMARY KEY, booking_id INT NOT NULL,
@@ -79,18 +196,35 @@ if ($method === 'GET' && $action === '') {
         UNIQUE KEY idx_unique_booking_review (booking_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+    $select = 'b.*';
+    $select .= ', COALESCE(sp.full_name, sp2.full_name) AS technician_name';
+    $select .= ', COALESCE(sp.contact_number, sp2.contact_number) AS tech_phone';
+    $providerIdExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id, 0)' : 'COALESCE(br.provider_id, 0)';
+    $select .= ", {$providerIdExpr} AS provider_id";
+    $select .= ', IF(pr.id IS NULL, 0, 1) AS has_reviewed';
+
+    $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'";
+    $join .= ' LEFT JOIN service_providers sp ON sp.provider_id = br.provider_id';
+    if ($hasProviderId) {
+        $join .= ' LEFT JOIN service_providers sp2 ON sp2.provider_id = b.provider_id';
+    } else {
+        $join .= ' LEFT JOIN service_providers sp2 ON 1 = 0';
+    }
+    $join .= ' LEFT JOIN provider_reviews pr ON pr.booking_id = b.id AND pr.user_id = ?';
+
     $stmt = $conn->prepare(
-        "SELECT *, NULL AS technician_name, NULL AS tech_phone, 0 AS has_reviewed
-         FROM bookings
-         WHERE user_id = ?
-         ORDER BY created_at DESC"
+        "SELECT $select
+         FROM bookings b
+         $join
+         WHERE b.user_id = ?
+         ORDER BY b.created_at DESC"
     );
 
     if (!$stmt) {
         echo json_encode(['success' => true, 'bookings' => []]);
         exit;
     }
-    $stmt->bind_param("i", $uid);
+    $stmt->bind_param("ii", $uid, $uid);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
@@ -420,6 +554,17 @@ function ensureBookingRequestsTable(mysqli $conn)
         INDEX idx_booking (booking_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $conn->query($sql);
+}
+
+function ensureProviderReviewsTable(mysqli $conn): void
+{
+    $conn->query("CREATE TABLE IF NOT EXISTS provider_reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY, booking_id INT NOT NULL,
+        provider_id INT NOT NULL, user_id INT NOT NULL,
+        rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+        comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY idx_unique_booking_review (booking_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 function _asInt($value, $fallback = 0)

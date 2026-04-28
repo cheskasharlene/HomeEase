@@ -91,9 +91,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
   </div>
 
+
   <script src="../assets/js/app.js"></script>
   <script>
-    initTheme();
+    if (typeof initTheme === 'function') {
+      initTheme();
+    }
 
     function goPage(page) {
       window.location.href = page;
@@ -101,6 +104,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     let allBookings = [];
     let activeFilter = 'all';
+    let pollTimer = null;
 
     function normalizeStatus(raw) {
       const s = String(raw || '').toLowerCase();
@@ -108,6 +112,16 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       if (s === 'cancelled' || s === 'canceled') return 'canceled';
       if (s === 'confirmed' || s === 'progress' || s === 'active') return 'pending';
       return 'pending';
+    }
+
+    function isAcceptedStatus(raw) {
+      const s = String(raw || '').toLowerCase();
+      return s === 'confirmed' || s === 'progress' || s === 'active';
+    }
+
+    function hasAssignedProvider(b) {
+      const pid = Number(b.provider_id || 0);
+      return pid > 0 || (b.technician_name && b.technician_name !== 'Awaiting assignment');
     }
 
     function filterBookings() {
@@ -123,8 +137,38 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         allBookings = data.success && Array.isArray(data.bookings) ? data.bookings : [];
         renderBookings();
+        if (checkAcceptedRedirect()) {
+          return;
+        }
+        setupPolling();
       } catch (e) {
         el.innerHTML = `<div class="empty"><i class="bi bi-wifi-off"></i><p>Could not load bookings.</p></div>`;
+      }
+    }
+
+    function checkAcceptedRedirect() {
+      const accepted = allBookings.find(b => isAcceptedStatus(b.status) && hasAssignedProvider(b));
+      if (!accepted) return false;
+      const stored = localStorage.getItem('heAcceptedBookingId');
+      if (stored && String(stored) === String(accepted.id)) {
+        return false;
+      }
+      localStorage.setItem('heAcceptedBookingId', accepted.id);
+      window.location.href = `booking_accepted.php?booking_id=${encodeURIComponent(accepted.id)}`;
+      return true;
+    }
+
+    function setupPolling() {
+      const hasPending = allBookings.some(b => String(b.status || '').toLowerCase() === 'pending');
+      if (hasPending) {
+        if (!pollTimer) {
+          pollTimer = setInterval(loadMyBookings, 15000);
+        }
+        return;
+      }
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
       }
     }
 
@@ -152,6 +196,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const icon = svcIcon[b.service] || '🏠';
         const icCls = svcIcClass[b.service] || '';
         const rawStatus = normalizeStatus(b.status);
+        const isAccepted = isAcceptedStatus(b.status);
         const pillClass = rawStatus === 'canceled' ? 'cancelled' : rawStatus === 'completed' ? 'done' : 'pending';
         const srcStatus = String(b.status || '').toLowerCase();
         const statusText = rawStatus === 'canceled'
@@ -165,8 +210,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const price = b.price ? '₱' + parseFloat(b.price).toLocaleString('en-PH', { minimumFractionDigits: 0 }) : '';
         const createdAt = b.created_at ? new Date(String(b.created_at).replace(' ', 'T')) : null;
         const minsWaiting = createdAt ? ((Date.now() - createdAt.getTime()) / 60000) : 0;
-        const isUnserved = rawStatus === 'pending' && !b.technician_name && minsWaiting >= 5;
-        const waitingHint = rawStatus === 'pending' && !b.technician_name
+        const isUnserved = rawStatus === 'pending' && !isAccepted && !b.technician_name && minsWaiting >= 5;
+        const waitingHint = rawStatus === 'pending' && !isAccepted && !b.technician_name
           ? `<div style="margin-top:10px;padding:8px 12px;background:${isUnserved ? '#FEF2F2' : '#FFFBEB'};border-radius:10px;font-size:11px;color:${isUnserved ? '#B91C1C' : '#92400E'};font-weight:600;display:flex;align-items:center;gap:6px;">
               <i class="bi bi-${isUnserved ? 'exclamation-triangle-fill' : 'hourglass-split'}" style="font-size:13px;"></i>
               ${isUnserved ? 'No providers available. Try changing schedule.' : 'Waiting for a provider to accept…'}
@@ -175,14 +220,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         const leaveReviewHint = rawStatus === 'completed' && parseInt(b.has_reviewed || 0) === 0
           ? `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px;">
-              <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">
+              <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">
                 <i class="bi bi-star-fill" style="color:#F59E0B;"></i> Rate & Review
               </button>
             </div>`
           : '';
 
         return `
-        <div class="bk-card" data-svc="${b.service || ''}">
+        <div class="bk-card" data-svc="${b.service || ''}" onclick="openBookingDetail(${b.id})">
           <div class="bk-top">
             <div class="bk-ic ${icCls}">${icon}</div>
             <div style="flex:1;min-width:0;">
@@ -201,6 +246,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           ${leaveReviewHint}
         </div>`;
       }).join('');
+    }
+
+    function openBookingDetail(id) {
+      if (!id) return;
+      window.location.href = `booking_detail.php?booking_id=${encodeURIComponent(id)}`;
     }
 
     document.querySelectorAll('.tab-chip').forEach(btn => {

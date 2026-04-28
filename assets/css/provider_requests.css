@@ -201,6 +201,24 @@ body {
       transition: all .2s;
     }
 
+    .btn-view {
+      flex: 1;
+      padding: 11px;
+      background: #fff;
+      color: #D4790A;
+      border: 2px solid #FFE5B4;
+      border-radius: 50px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .btn-view:hover {
+      transform: translateY(-1px);
+    }
+
     .status-pill {
       display: inline-flex;
       align-items: center;
