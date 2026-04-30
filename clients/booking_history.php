@@ -196,7 +196,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const icon = svcIcon[b.service] || '🏠';
         const icCls = svcIcClass[b.service] || '';
         const rawStatus = normalizeStatus(b.status);
-        const isAccepted = isAcceptedStatus(b.status);
         const pillClass = rawStatus === 'canceled' ? 'cancelled' : rawStatus === 'completed' ? 'done' : 'pending';
         const srcStatus = String(b.status || '').toLowerCase();
         const statusText = rawStatus === 'canceled'
@@ -205,36 +204,47 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             ? 'Completed'
             : (srcStatus === 'confirmed' || srcStatus === 'progress' ? 'In Progress' : 'Pending');
         const providerName = b.technician_name ? b.technician_name : 'Awaiting assignment';
-        const dateFormatted = b.date ? new Date(b.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
-        const timeSlot = b.time_slot || '';
-        const price = b.price ? '₱' + parseFloat(b.price).toLocaleString('en-PH', { minimumFractionDigits: 0 }) : '';
+        
+        const isPending = rawStatus === 'pending' && !isAcceptedStatus(b.status);
+
+        // For real-time bookings, show "Now" instead of date
         const createdAt = b.created_at ? new Date(String(b.created_at).replace(' ', 'T')) : null;
+        const minsAgo = createdAt ? ((Date.now() - createdAt.getTime()) / 60000) : 0;
+        const isRecentBooking = minsAgo < 120; // booked within last 2 hours
+        const dateFormatted = isRecentBooking
+          ? 'Now · ' + (createdAt ? createdAt.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'}) : '')
+          : (b.date ? new Date(b.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + (b.time_slot ? ' · ' + b.time_slot : '') : '—');
+
+        const price = b.price ? '₱' + parseFloat(b.price).toLocaleString('en-PH', { minimumFractionDigits: 0 }) : '';
         const minsWaiting = createdAt ? ((Date.now() - createdAt.getTime()) / 60000) : 0;
-        const isUnserved = rawStatus === 'pending' && !isAccepted && !b.technician_name && minsWaiting >= 5;
-        const waitingHint = rawStatus === 'pending' && !isAccepted && !b.technician_name
+        const isUnserved = isPending && minsWaiting >= 20;
+        const waitingHint = isPending
           ? `<div style="margin-top:10px;padding:8px 12px;background:${isUnserved ? '#FEF2F2' : '#FFFBEB'};border-radius:10px;font-size:11px;color:${isUnserved ? '#B91C1C' : '#92400E'};font-weight:600;display:flex;align-items:center;gap:6px;">
               <i class="bi bi-${isUnserved ? 'exclamation-triangle-fill' : 'hourglass-split'}" style="font-size:13px;"></i>
-              ${isUnserved ? 'No providers available. Try changing schedule.' : 'Waiting for a provider to accept…'}
+              ${isUnserved ? 'Still searching… tap to view map' : 'Waiting for a provider to accept…'}
+            </div>
+            <div style="margin-top:6px;padding:6px 12px;background:#F0FDF4;border-radius:10px;font-size:11px;color:#166534;font-weight:700;display:flex;align-items:center;gap:6px;">
+              <i class="bi bi-map-fill" style="font-size:12px;"></i> Tap to track on map
             </div>`
           : '';
 
         const leaveReviewHint = rawStatus === 'completed' && parseInt(b.has_reviewed || 0) === 0
           ? `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px;">
-              <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">
-                <i class="bi bi-star-fill" style="color:#F59E0B;"></i> Rate & Review
+              <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">  
+                <i class="bi bi-star-fill" style="color:#F59E0B;"></i> Rate &amp; Review
               </button>
             </div>`
           : '';
 
         return `
-        <div class="bk-card" data-svc="${b.service || ''}" onclick="openBookingDetail(${b.id})">
+        <div class="bk-card" data-svc="${b.service || ''}" onclick="openBookingDetail(${b.id}, '${b.status || ''}')">
           <div class="bk-top">
             <div class="bk-ic ${icCls}">${icon}</div>
             <div style="flex:1;min-width:0;">
               <div class="bk-svc">${b.service || 'Service'}</div>
               <div class="bk-meta">
                 <i class="bi bi-person-badge" style="font-size:9px;margin-right:2px;"></i> ${providerName}<br>
-                <i class="bi bi-calendar3" style="font-size:9px;margin-right:2px;"></i> ${dateFormatted}${timeSlot ? ' · ' + timeSlot : ''}
+                <i class="bi bi-clock" style="font-size:9px;margin-right:2px;"></i> ${dateFormatted}
               </div>
             </div>
             <div class="bk-right">
@@ -248,8 +258,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }).join('');
     }
 
-    function openBookingDetail(id) {
+    function openBookingDetail(id, status) {
       if (!id) return;
+      const s = String(status || '').toLowerCase();
+      // Pending bookings → show tracking map
+      if (s === 'pending' || s === 'confirmed' || s === 'progress' || s === 'active') {
+        window.location.href = `waiting_for_provider.php?booking_id=${encodeURIComponent(id)}`;
+        return;
+      }
       window.location.href = `booking_detail.php?booking_id=${encodeURIComponent(id)}`;
     }
 

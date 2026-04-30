@@ -18,7 +18,83 @@ $action = trim((string) ($_GET['action'] ?? $_POST['action'] ?? ''));
 
 ensureBookingRequestsTable($conn);
 
+if ($method === 'GET' && $action === 'live_feed') {
+    // Return ALL live pending bookings matching provider's service category
+    $providerStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+    if (!$providerStmt) {
+        echo json_encode(['success' => false, 'message' => 'DB error.']);
+        exit;
+    }
+    $providerStmt->bind_param('i', $providerId);
+    $providerStmt->execute();
+    $providerRow = $providerStmt->get_result()->fetch_assoc();
+    $providerStmt->close();
+
+    if (!$providerRow) {
+        echo json_encode(['success' => false, 'message' => 'Provider not found.']);
+        exit;
+    }
+
+    $provService = strtolower(trim((string)($providerRow['service_category'] ?? '')));
+
+    // Check if provider already has an accepted booking active
+    $hasActive = false;
+    $activeStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM booking_requests WHERE provider_id = ? AND status = 'accepted'");
+    if ($activeStmt) {
+        $activeStmt->bind_param('i', $providerId);
+        $activeStmt->execute();
+        $activeRow = $activeStmt->get_result()->fetch_assoc();
+        $activeStmt->close();
+        $hasActive = (int)($activeRow['cnt'] ?? 0) > 0;
+    }
+
+    // Get all pending bookings of matching service type (last 2 hours)
+    $sql = "SELECT b.id AS booking_id, b.service, b.address, b.price, b.created_at,
+                   b.notes, u.name AS customer_name, u.phone AS customer_phone,
+                   br.id AS request_id, br.status AS request_status
+            FROM bookings b
+            LEFT JOIN users u ON u.id = b.user_id
+            LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ?
+            WHERE b.status = 'pending'
+              AND LOWER(b.service) LIKE ?
+              AND b.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
+              AND NOT EXISTS (
+                  SELECT 1 FROM booking_requests br2
+                  WHERE br2.booking_id = b.id AND br2.status = 'accepted'
+              )
+            ORDER BY b.created_at DESC
+            LIMIT 30";
+
+    $like = '%' . $provService . '%';
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
+        exit;
+    }
+    $stmt->bind_param('is', $providerId, $like);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    // Also filter by service key matching
+    if ($provService !== '') {
+        $rows = array_values(array_filter($rows, function($row) use ($provService) {
+            return serviceMatches($provService, (string)($row['service'] ?? ''));
+        }));
+    }
+
+    echo json_encode([
+        'success' => true,
+        'live_bookings' => $rows,
+        'provider_service' => $provService,
+        'has_active_job' => $hasActive,
+        'count' => count($rows)
+    ]);
+    exit;
+}
+
 if ($method === 'GET') {
+
     $filter = strtolower(trim((string) ($_GET['filter'] ?? 'all')));
 
     // First, get the provider's service category
@@ -85,7 +161,76 @@ if ($method === 'GET') {
     exit;
 }
 
+// Accept directly from live feed by booking_id
+if ($method === 'POST' && $action === 'accept_booking') {
+    $bookingId = (int)($_POST['booking_id'] ?? 0);
+    if ($bookingId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid booking ID.']);
+        exit;
+    }
+
+    $conn->begin_transaction();
+    try {
+        // Lock the booking row
+        $stmt = $conn->prepare("SELECT id, status, service, user_id FROM bookings WHERE id = ? FOR UPDATE");
+        $stmt->bind_param('i', $bookingId);
+        $stmt->execute();
+        $booking = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$booking) throw new RuntimeException('Booking not found.');
+        if (strtolower($booking['status']) !== 'pending') {
+            throw new RuntimeException('This booking has already been accepted by another provider.');
+        }
+
+        // Get provider's service category
+        $provStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+        $provStmt->bind_param('i', $providerId);
+        $provStmt->execute();
+        $provRow = $provStmt->get_result()->fetch_assoc();
+        $provStmt->close();
+        if (!$provRow) throw new RuntimeException('Provider not found.');
+        $provService = (string)($provRow['service_category'] ?? '');
+        if (!serviceMatches($provService, (string)($booking['service'] ?? ''))) {
+            throw new RuntimeException('This service does not match your specialty.');
+        }
+
+        // Ensure a booking_request row exists for this provider (upsert)
+        $conn->query("INSERT IGNORE INTO booking_requests
+            (booking_id, provider_id, service, fixed_price, date, time_slot, address, details, status, created_at)
+            SELECT id, {$providerId}, service, price, date, time_slot, address, notes, 'pending', NOW()
+            FROM bookings WHERE id = {$bookingId}");
+
+        // Accept the booking
+        $stmt = $conn->prepare("UPDATE bookings SET status = 'progress' WHERE id = ? AND status = 'pending'");
+        $stmt->bind_param('i', $bookingId);
+        $stmt->execute();
+        if ($stmt->affected_rows <= 0) {
+            $stmt->close();
+            throw new RuntimeException('Another provider already accepted this booking.');
+        }
+        $stmt->close();
+
+        updateAssignedProvider($conn, $bookingId, $providerId);
+
+        // Mark this provider's request as accepted
+        $conn->query("UPDATE booking_requests SET status='accepted', responded_at=NOW() WHERE booking_id={$bookingId} AND provider_id={$providerId}");
+        // Close all other providers' requests
+        $conn->query("UPDATE booking_requests SET status='closed', responded_at=NOW() WHERE booking_id={$bookingId} AND provider_id<>{$providerId} AND status='pending'");
+
+        notifyHomeownerAccepted($conn, $bookingId, $providerId);
+
+        $conn->commit();
+        echo json_encode(['success' => true, 'message' => 'Booking accepted!', 'booking_id' => $bookingId]);
+    } catch (Throwable $e) {
+        $conn->rollback();
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
 if ($method === 'POST' && $action === 'accept') {
+
     $requestId = (int) ($_POST['request_id'] ?? 0);
     if ($requestId <= 0) {
         echo json_encode(['success' => false, 'message' => 'Invalid request id.']);

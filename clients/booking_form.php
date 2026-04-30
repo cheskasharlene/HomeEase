@@ -103,44 +103,22 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <span class="pp-val" id="ppValLegacy">₱0</span>
         </div>
 
-        <div class="fg-row">
-          <div class="fg">
-            <label class="fl">Date</label>
-            <input class="fi" type="date" id="bDate" min="">
-          </div>
-          <div class="fg">
-            <label class="fl">Time Slot</label>
-            <select class="fi" id="bTime">
-              <option value="8:00 AM">8:00 AM</option>
-              <option value="9:00 AM">9:00 AM</option>
-              <option value="10:00 AM">10:00 AM</option>
-              <option value="11:00 AM">11:00 AM</option>
-              <option value="1:00 PM">1:00 PM</option>
-              <option value="2:00 PM">2:00 PM</option>
-              <option value="3:00 PM">3:00 PM</option>
-              <option value="4:00 PM">4:00 PM</option>
-            </select>
+        <!-- Real-time notice -->
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:14px;border:1.5px solid #6EE7B7;margin-bottom:4px;">
+          <i class="bi bi-lightning-charge-fill" style="color:#059669;font-size:18px;"></i>
+          <div>
+            <div style="font-size:12px;font-weight:800;color:#065F46;font-family:'Poppins',sans-serif;">Real-Time Booking</div>
+            <div style="font-size:11px;color:#047857;font-weight:600;">Your request goes live now — providers will accept instantly</div>
           </div>
         </div>
 
         <div class="fg" style="display:none;">
-          <label class="fl">Service Address</label>
-          <input class="fi" type="text" id="bAddr" placeholder="House No., Street, Barangay">
+          <input class="fi" type="hidden" id="bAddr" value="">
         </div>
 
         <div class="fg">
           <label class="fl">Notes <span style="font-weight:400;color:var(--tm);">(optional)</span></label>
-          <input class="fi" type="text" id="bNotes" placeholder="Any special instructions?">
-        </div>
-
-        <div class="tech-section" style="display:none;">
-          <label class="fl">Choose Professional <span style="font-weight:400;color:var(--tm);">(optional)</span></label>
-          <div class="tech-list" id="techList">
-            <div class="tech-none"><i class="bi bi-arrow-clockwise"></i> Loading providers...</div>
-          </div>
-          <div class="skip-tech" onclick="skipTech()">
-            <i class="bi bi-person-x"></i> Skip — assign later
-          </div>
+          <input class="fi" type="text" id="bNotes" placeholder="Any special instructions?">  
         </div>
 
         <div class="fixed-total-wrap">
@@ -360,8 +338,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       renderDynamicFields(selectedSvc.name);
 
       updatePricePreview();
-      document.querySelector('.tech-section').style.display = 'block';
-      loadTechnicians(selectedSvc.name);
     }
 
     function renderDynamicFields(serviceName) {
@@ -739,18 +715,24 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     async function submitBooking() {
       if (!selectedSvc) { toast('Please select a service first', 'e'); return; }
-      const date = document.getElementById('bDate').value;
-      const time = document.getElementById('bTime').value;
       const uName = document.getElementById('uName').value.trim();
       const uPhone = document.getElementById('uPhone').value.trim();
       const addr = document.getElementById('uAddress').value.trim();
       const notes = document.getElementById('bNotes').value.trim();
       const price = getPrice();
 
-      if (!date) { toast('Please pick a date', 'e'); return; }
       if (!uName) { toast('Please enter your full name', 'e'); return; }
       if (!uPhone) { toast('Please enter your phone number', 'e'); return; }
       if (!addr) { toast('Please enter your address', 'e'); return; }
+
+      // Auto-set date to today, time to now
+      const now = new Date();
+      const date = now.toISOString().split('T')[0];
+      const hrs = now.getHours();
+      const mins = now.getMinutes();
+      const ampm = hrs >= 12 ? 'PM' : 'AM';
+      const h12 = ((hrs % 12) || 12);
+      const time = `${h12}:${String(mins).padStart(2,'0')} ${ampm}`;
 
       const ok = window.confirm(buildConfirmationMessage(price));
       if (!ok) return;
@@ -771,6 +753,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('customer_name', uName);
       fd.append('customer_phone', uPhone);
       fd.append('customer_address', addr);
+      fd.append('realtime', '1');
 
       // Add dynamic field data
       const dynamicData = getDynamicFieldsData();
@@ -783,49 +766,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const data = await res.json();
 
         if (data.success) {
-          toast(data.waiting_message || 'Waiting for a provider to accept your booking…', 's');
-          document.getElementById('bookForm').classList.remove('show');
+          // Redirect to the Angkas-style waiting/tracking screen
+          const bookingId = data.booking_id;
+          toast(data.waiting_message || 'Booking submitted! Finding a provider…', 's');
           
-          // Reset form and re-apply auto-fill
-          document.getElementById('bDate').value = '';
-          
-          // Reset name field and re-apply auto-fill if available
-          const nameField = document.getElementById('uName');
-          if (window.HE.user.name && window.HE.user.name.trim()) {
-            nameField.value = window.HE.user.name;
-            nameField.setAttribute('data-autofilled', 'true');
-          } else {
-            nameField.value = '';
-            nameField.removeAttribute('data-autofilled');
-          }
-          
-          // Reset phone field and re-apply auto-fill if available
-          const phoneField = document.getElementById('uPhone');
-          if (window.HE.user.phone && window.HE.user.phone.trim()) {
-            phoneField.value = window.HE.user.phone;
-            phoneField.setAttribute('data-autofilled', 'true');
-          } else {
-            phoneField.value = '';
-            phoneField.removeAttribute('data-autofilled');
-          }
-          
-          // Reset address fields and re-apply auto-fill if available
-          const addressField = document.getElementById('uAddress');
-          const bAddrField = document.getElementById('bAddr');
-          if (window.HE.user.address && window.HE.user.address.trim()) {
-            addressField.value = window.HE.user.address;
-            bAddrField.value = window.HE.user.address;
-            addressField.setAttribute('data-autofilled', 'true');
-          } else {
-            addressField.value = '';
-            bAddrField.value = '';
-            addressField.removeAttribute('data-autofilled');
-          }
-          
-          document.getElementById('bNotes').value = '';
-          selectedSvc = null;
-          selectedTechId = null;
-          setTimeout(() => goPage('booking_history.php'), 450);
+          // Short delay so toast is visible, then go to tracking screen
+          setTimeout(() => {
+            goPage('waiting_for_provider.php?booking_id=' + bookingId);
+          }, 800);
         } else {
           toast(data.message || 'Failed to book. Try again.', 'e');
         }
@@ -846,7 +794,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .3s'; setTimeout(() => t.remove(), 300); }, 3000);
     }
 
-    document.getElementById('bDate').min = new Date().toISOString().split('T')[0];
     initForm();
   </script>
 </body>

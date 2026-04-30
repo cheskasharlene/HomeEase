@@ -243,9 +243,18 @@ if ($method === 'POST' && $action === '') {
     $customer_address = trim($_POST['customer_address'] ?? $address);
     $pricing_type = 'flat';
     $hours = 1;
+    $is_realtime = (trim($_POST['realtime'] ?? '0') === '1');
 
-    if (!$service || !$date || !$address) {
-        echo json_encode(['success' => false, 'message' => 'Service, date, and address are required.']);
+    // Real-time: override date/time to now
+    if ($is_realtime || $date === '') {
+        $date = date('Y-m-d');
+    }
+    if ($time_slot === '') {
+        $time_slot = date('g:i A');
+    }
+
+    if (!$service || !$address) {
+        echo json_encode(['success' => false, 'message' => 'Service and address are required.']);
         exit;
     }
 
@@ -359,14 +368,13 @@ if ($method === 'POST' && $action === '') {
 
         $providers = [];
         {
-            // Fetch providers matching the requested service category
+            // Broadcast to ALL available providers matching the service (no cap)
             $providerStmt = $conn->prepare(
                 "SELECT provider_id AS id, full_name AS name, service_category FROM service_providers
                  WHERE status = 'active'
                    AND LOWER(availability_status) <> 'unavailable'
                    AND LOWER(service_category) LIKE ?
-                 ORDER BY rating DESC, jobs_done DESC, provider_id ASC
-                 LIMIT 5"
+                 ORDER BY rating DESC, jobs_done DESC"
             );
             $specialtyLike = '%' . strtolower($service) . '%';
             if ($providerStmt) {
@@ -384,7 +392,7 @@ if ($method === 'POST' && $action === '') {
             $reqStmt = $conn->prepare(
                 "INSERT INTO booking_requests
                 (booking_id, provider_id, service, fixed_price, date, time_slot, address, details, customer_name, customer_phone, customer_address, status, created_at, expires_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 5 MINUTE))"
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 30 MINUTE))"
             );
             if ($reqStmt) {
                 foreach ($providers as $p) {
