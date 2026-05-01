@@ -443,7 +443,7 @@ let _chatHistory = {
     {
       from: "bot",
       time: _chatNow(),
-      text: "Hello! How can I help you today?",
+      text: "Kumusta! Ako ang HomeEase AI Assistant. Paano kita matutulungan ngayon?\n\nHello! I'm the HomeEase AI Assistant. How can I help you today?",
     },
   ],
 };
@@ -454,14 +454,14 @@ function _chatNow() {
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
-// _chatAutoReplies removed — using Groq AI for all responses
+// _chatAutoReplies removed — using Gemini AI for all responses
 
 const _chatQuickReplies = {
   support: [
-    "Show my bookings",
-    "Cancel a booking",
-    "Current promos",
-    "How do I book?",
+    "Ipakita ang aking mga booking",
+    "Mag-cancel ng booking",
+    "Mag-book ng serbisyo",
+    "Ano ang mga available na serbisyo?",
   ],
 };
 
@@ -553,7 +553,7 @@ function sendChat() {
     .filter((m) => m.from === "me" || m.from === "bot")
     .map((m) => ({ role: m.from === "me" ? "user" : "model", text: m.text }));
 
-  fetch("api/groq_chat.php", {
+  fetch("api/gemini_chat.php", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message: text, history: history }),
@@ -589,6 +589,26 @@ function sendChat() {
           text: reply,
           html: successHtml,
         });
+      } else if (data.action_result === "booking_created" && data.booking_id) {
+        // Handle successful booking creation
+        const priceStr = data.price ? "₱" + parseFloat(data.price).toLocaleString() : "";
+        const waitUrl  = `clients/waiting_for_provider.php?booking_id=${data.booking_id}`;
+        const bookingHtml = `
+          <div onclick="closeChat();goPage('${waitUrl}')" style="background:#e0f2fe;border-radius:12px;padding:12px;margin-bottom:6px;border:1.5px solid #7dd3fc;cursor:pointer;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(3,105,161,.25)'" onmouseout="this.style.boxShadow='none'">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+              <div style="font-size:13px;font-weight:700;color:#0369a1;">📋 Booking Created!</div>
+              <div style="font-size:11px;color:#0ea5e9;font-weight:600;">Tap to track →</div>
+            </div>
+            <div style="font-size:12px;color:#0369a1;font-weight:600;">Booking #${data.booking_id} — ${data.service || ""} ${priceStr}</div>
+            <div style="font-size:11px;color:#0ea5e9;margin-top:4px;">Naghihintay ng provider… / Waiting for a provider to accept…</div>
+          </div>
+          <div style="font-size:13px;color:#1a1a2e;">${reply}</div>`;
+        _chatHistory[_chatTab].push({
+          from: "bot",
+          time: _chatNow(),
+          text: reply,
+          html: bookingHtml,
+        });
       } else {
         _chatHistory[_chatTab].push({
           from: "bot",
@@ -619,24 +639,33 @@ function _updateSmartQuickReplies(lastReply) {
   let suggestions = [];
 
   if (
-    lower.includes("cancel") &&
-    (lower.includes("yes") || lower.includes("confirm"))
+    (lower.includes("cancel") || lower.includes("kansela")) &&
+    (lower.includes("yes") || lower.includes("confirm") || lower.includes("sigurado"))
   ) {
-    suggestions = ["YES, cancel it", "No, keep it"];
-  } else if (lower.includes("booking") && lower.includes("status")) {
-    suggestions = ["Show all bookings", "Cancel a booking", "Book a service"];
-  } else if (lower.includes("book") || lower.includes("service")) {
+    // Awaiting cancel confirmation
+    suggestions = ["YES, i-cancel na", "Hindi, ituloy pa"];
+  } else if (
+    lower.includes("anong serbisyo") ||
+    lower.includes("what service") ||
+    lower.includes("anong address") ||
+    lower.includes("what address")
+  ) {
+    // Gathering booking info
+    suggestions = ["Cleaner", "Plumber", "Helper", "Appliance Technician"];
+  } else if (lower.includes("booking") && (lower.includes("status") || lower.includes("cancelled") || lower.includes("created"))) {
+    suggestions = ["Ipakita lahat ng booking", "Mag-cancel ng booking", "Mag-book pa"];
+  } else if (lower.includes("book") || lower.includes("service") || lower.includes("serbisyo")) {
     suggestions = [
-      "Show my bookings",
-      "What services do you offer?",
-      "Current promos",
+      "Ipakita ang aking mga booking",
+      "Ano ang mga serbisyo?",
+      "Mag-book ng Cleaner",
     ];
   } else {
     suggestions = [
-      "Show my bookings",
-      "Cancel a booking",
-      "Current promos",
-      "Contact support",
+      "Ipakita ang aking mga booking",
+      "Mag-cancel ng booking",
+      "Mag-book ng serbisyo",
+      "Mga available na serbisyo",
     ];
   }
 
@@ -1221,8 +1250,8 @@ function injectGlobalModals() {
           <div class="chat-av-dot"></div>
         </div>
         <div class="chat-hdr-info">
-          <div class="chat-hdr-nm" id="chatAgentNm">HomeEase Customer Service</div>
-          <div class="chat-hdr-st">● Online</div>
+          <div class="chat-hdr-nm" id="chatAgentNm">HomeEase AI Assistant</div>
+          <div class="chat-hdr-st">● Online · Gemini AI</div>
         </div>
         <button style="background:none;border:none;color:var(--txt-muted);font-size:22px;cursor:pointer;" onclick="closeChat()">
           <i class="bi bi-x-lg"></i>
@@ -1231,7 +1260,7 @@ function injectGlobalModals() {
       <div class="chat-msgs" id="chatMsgs"></div>
       <div class="chat-quick" id="chatQuick"></div>
       <div class="chat-inp-bar">
-        <textarea class="chat-inp" id="chatInp" placeholder="Type your message..." rows="1"
+        <textarea class="chat-inp" id="chatInp" placeholder="Mag-type ng mensahe... / Type your message..." rows="1"
           oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
           onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
         <button class="chat-send" onclick="sendChat()"><i class="bi bi-send-fill"></i></button>
