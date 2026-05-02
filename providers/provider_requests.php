@@ -18,6 +18,8 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link href="../assets/css/main.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/provider_requests.css">
   <style>
@@ -189,10 +191,47 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       padding: 0 16px 12px;
     }
     .hdr-count { font-size: 12px; color: #7A7064; font-weight: 600; }
+    /* ── Map Preview Modal ── */
+    .map-modal-overlay{position:absolute;inset:0;z-index:900;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
+    .map-modal-overlay.open{opacity:1;pointer-events:all}
+    .map-modal-card{width:100%;background:#fff;border-radius:24px 24px 0 0;padding-bottom:32px;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+    .map-modal-overlay.open .map-modal-card{transform:translateY(0)}
+    .map-modal-handle{width:40px;height:4px;background:#E0D8D0;border-radius:2px;margin:12px auto 0}
+    .map-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px}
+    .map-modal-title{font-size:15px;font-weight:800;color:#1A1A2E;font-family:'Poppins',sans-serif}
+    .map-modal-close{width:32px;height:32px;border-radius:50%;background:#F5F0EA;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#7A7064}
+    #mapPreview{height:220px;width:100%;display:block}
+    .btn-map-accept:disabled{opacity:.6;cursor:not-allowed}
+    .map-modal-info{padding:12px 16px 14px;display:flex;align-items:center;gap:10px}
+    .map-modal-addr{flex:1;font-size:12px;color:#5E564D;font-weight:600;line-height:1.4}
+    .map-modal-actions{display:flex;gap:10px;padding:0 16px}
+    .btn-map-accept{flex:1;height:46px;border-radius:13px;background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;border:none;cursor:pointer;font-size:14px;font-weight:800;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(232,130,12,.3)}
+    .btn-map-pass{width:46px;height:46px;border-radius:13px;border:1.5px solid #E8E0D5;background:#fff;color:#7A7064;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+    .map-modal-chip{display:inline-flex;align-items:center;gap:4px;background:#FEF3C7;color:#92400E;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:800;font-family:'Poppins',sans-serif}
   </style>
 </head>
 <body>
   <div class="shell" id="app">
+  <!-- Map Preview Modal (inside shell to stay in mobile frame) -->
+  <div class="map-modal-overlay" id="mapModal" onclick="closeMapModal(event)">
+    <div class="map-modal-card" onclick="event.stopPropagation()">
+      <div class="map-modal-handle"></div>
+      <div class="map-modal-hdr">
+        <div class="map-modal-title">Booking Location</div>
+        <button class="map-modal-close" onclick="dismissMapModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+      <div id="mapPreview"></div>
+      <div class="map-modal-info">
+        <i class="bi bi-geo-alt-fill" style="color:#E8820C;font-size:18px;flex-shrink:0"></i>
+        <div class="map-modal-addr" id="modalAddr">Loading…</div>
+        <span class="map-modal-chip" id="modalDist"></span>
+      </div>
+      <div class="map-modal-actions">
+        <button class="btn-map-accept" id="btnModalAccept" onclick="acceptFromModal()"><i class="bi bi-check2-circle"></i> Accept Job</button>
+        <button class="btn-map-pass" onclick="dismissMapModal()"><i class="bi bi-x-lg"></i></button>
+      </div>
+    </div>
+  </div>
     <div id="ml">
       <div class="ml-wrap">
         <div class="ml-box"><svg viewBox="0 0 54 54" fill="none">
@@ -419,8 +458,8 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           </div>
           ${!hasDeclined ? `
           <div class="live-card-actions">
-            <button class="btn-live-accept" id="btnAccept${bid}" onclick="acceptBooking(${bid}, this)">
-              <i class="bi bi-check2-circle"></i> Accept Job
+            <button class="btn-live-accept" id="btnAccept${bid}" onclick="openMapModal(${bid}, '${addr.replace(/'/g,"\\'")}', ${b.customer_lat || 'null'}, ${b.customer_lng || 'null'})">
+              <i class="bi bi-map"></i> View Map &amp; Accept
             </button>
             <button class="btn-live-pass" onclick="passBooking(${bid}, this)" title="Pass">
               <i class="bi bi-x-lg"></i>
@@ -458,6 +497,122 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
             ${isAccepted ? `<div class="req-footer"><button class="btn-view" onclick="goPage('provider_accepted_booking.php?booking_id=${r.booking_id}')"><i class="bi bi-eye" style="margin-right:5px;"></i>View details</button></div>` : ''}
           </div>`;
       }).join('');
+    }
+
+    /* ===== MAP PREVIEW MODAL ===== */
+    let previewMap = null, previewMarker = null, modalBookingId = null;
+    let providerGpsLat = null, providerGpsLng = null;
+
+    // Sto. Tomas, Batangas — service area center & bounds
+    const ST_CENTER = [14.1053, 121.1390];
+    const ST_BOUNDS = L.latLngBounds(L.latLng(13.9800, 120.9800), L.latLng(14.2500, 121.3200));
+
+    function isValidCoord(lat, lng) {
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
+      return ST_BOUNDS.contains(L.latLng(lat, lng));
+    }
+
+    async function geocodeAddress(address) {
+      // Search across all of Batangas province
+      const q = encodeURIComponent((address || '') + ', Batangas, Philippines');
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1` +
+        `&viewbox=120.65,13.65,121.55,14.35&bounded=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      if (!data || !data[0]) throw new Error('No geocode result for: ' + address);
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+
+    async function openMapModal(bookingId, address, custLat, custLng) {
+      modalBookingId = bookingId;
+      document.getElementById('modalAddr').textContent = address || 'Address not available';
+      document.getElementById('modalDist').textContent = '⏳';
+      document.getElementById('btnModalAccept').disabled = false;
+      document.getElementById('btnModalAccept').innerHTML = '<i class="bi bi-check2-circle"></i> Accept Job';
+      document.getElementById('mapModal').classList.add('open');
+
+      await new Promise(r => setTimeout(r, 80)); // let modal animate in
+
+      if (!previewMap) {
+        previewMap = L.map('mapPreview', {
+          zoomControl: false, tap: false,
+          minZoom: 10, maxZoom: 19,
+          maxBounds: ST_BOUNDS,
+          maxBoundsViscosity: 0.85
+        }).setView(ST_CENTER, 13);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          attribution: '© CARTO', maxZoom: 19, subdomains: 'abcd'
+        }).addTo(previewMap);
+      }
+      setTimeout(() => previewMap.invalidateSize(), 350);
+
+      try {
+        let lat = parseFloat(custLat);
+        let lng = parseFloat(custLng);
+
+        // Validate stored GPS — reject if outside Batangas Province
+        if (!isValidCoord(lat, lng)) {
+          console.warn(`Stored GPS (${lat},${lng}) invalid — geocoding address instead.`);
+          document.getElementById('modalDist').textContent = '📍 Locating…';
+          const geo = await geocodeAddress(address);
+          lat = geo.lat;
+          lng = geo.lng;
+        }
+
+        previewMap.setView([lat, lng], 16);
+        if (previewMarker) previewMap.removeLayer(previewMarker);
+        const icon = L.divIcon({
+          className: '',
+          html: `<div style="
+            width:44px;height:44px;border-radius:50%;
+            background:linear-gradient(135deg,#1A1A2E,#2D2D4E);
+            border:3px solid #fff;
+            box-shadow:0 3px 14px rgba(0,0,0,0.35);
+            display:flex;align-items:center;justify-content:center;
+            font-size:22px;
+          ">🏠</div>`,
+          iconSize: [44, 44], iconAnchor: [22, 22]
+        });
+        previewMarker = L.marker([lat, lng], { icon }).addTo(previewMap);
+        previewMarker.bindPopup('<b>🏠 Client Location</b>').openPopup();
+
+        // Distance from provider's real GPS — use Sto. Tomas center if GPS is unavailable or invalid
+        const fromLat = (providerGpsLat && isValidCoord(providerGpsLat, providerGpsLng))
+                        ? providerGpsLat : ST_CENTER[0];
+        const fromLng = (providerGpsLng && isValidCoord(providerGpsLat, providerGpsLng))
+                        ? providerGpsLng : ST_CENTER[1];
+        const R = 6371;
+        const dLat = (lat - fromLat) * Math.PI / 180;
+        const dLng = (lng - fromLng) * Math.PI / 180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(fromLat*Math.PI/180) * Math.cos(lat*Math.PI/180) * Math.sin(dLng/2)**2;
+        const dist = (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
+        document.getElementById('modalDist').textContent = dist + ' km away';
+
+      } catch(e) {
+        console.warn('Map locate failed:', e);
+        // Fall back to Sto. Tomas center
+        previewMap.setView(ST_CENTER, 13);
+        document.getElementById('modalDist').textContent = '📍 Address not found';
+      }
+    }
+
+    function closeMapModal(e) {
+      // Allow: direct call (no event), or backdrop click
+      if (e && e.target !== document.getElementById('mapModal')) return;
+      document.getElementById('mapModal').classList.remove('open');
+      modalBookingId = null;
+    }
+    function dismissMapModal() {
+      document.getElementById('mapModal').classList.remove('open');
+      modalBookingId = null;
+    }
+
+    async function acceptFromModal() {
+      if (!modalBookingId) return;
+      const btn = document.getElementById('btnModalAccept');
+      await acceptBooking(modalBookingId, btn);
     }
 
     /* ===== ACCEPT / PASS ===== */
@@ -513,13 +668,35 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       }
     }
 
+    /* ===== PROVIDER GPS TRACKING ===== */
+    function startProviderTracking() {
+      if (!navigator.geolocation) return;
+      navigator.geolocation.watchPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const acc = pos.coords.accuracy;
+          // Only store if accurate enough and within Batangas Province
+          if (acc < 500 && ST_BOUNDS.contains(L.latLng(lat, lng))) {
+            providerGpsLat = lat;
+            providerGpsLng = lng;
+          }
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+      );
+    }
+
     /* ===== POLLING ===== */
     function startPolling() {
       loadFeed(true);
       pollTimer = setInterval(() => loadFeed(false), 5000);
     }
 
-    document.addEventListener('DOMContentLoaded', startPolling);
+    document.addEventListener('DOMContentLoaded', () => {
+      startProviderTracking();
+      startPolling();
+    });
   </script>
 </body>
 </html>

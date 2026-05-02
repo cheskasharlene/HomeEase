@@ -1,12 +1,17 @@
 <?php
-session_start();
-header('Content-Type: application/json');
+ob_start(); // Buffer all output to prevent stray errors/warnings from corrupting JSON
 ini_set('display_errors', 0);
 error_reporting(0);
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+header('Content-Type: application/json');
+header('Cache-Control: no-cache, no-store, must-revalidate');
 
 require_once __DIR__ . '/db.php';
 
 if (empty($_SESSION['user_id'])) {
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Not logged in.']);
     exit;
 }
@@ -21,10 +26,12 @@ _seedServices($conn);
 if ($method === 'GET' && $action === 'services') {
     $result = $conn->query("SELECT * FROM services WHERE active = 1 ORDER BY name ASC");
     if (!$result) {
+        ob_end_clean();
         echo json_encode(['success' => true, 'services' => _defaultServices()]);
         exit;
     }
     $rows = $result->fetch_all(MYSQLI_ASSOC);
+    ob_end_clean();
     echo json_encode(['success' => true, 'services' => $rows ?: _defaultServices()]);
     exit;
 }
@@ -41,6 +48,7 @@ if ($method === 'GET' && $action === 'technicians') {
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
+    ob_end_clean();
     echo json_encode(['success' => true, 'technicians' => $rows]);
     exit;
 }
@@ -58,6 +66,7 @@ if ($method === 'GET' && $action === 'offers') {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     $now = date('Y-m-d H:i:s');
     $result = $conn->query("SELECT * FROM special_offers WHERE active=1 AND (max_uses=0 OR used_count<max_uses) AND (expires_at IS NULL OR expires_at>'$now') ORDER BY created_at DESC");
+    ob_end_clean();
     echo json_encode(['success' => true, 'offers' => $result ? $result->fetch_all(MYSQLI_ASSOC) : []]);
     exit;
 }
@@ -110,6 +119,7 @@ if ($method === 'GET' && $action === 'detail') {
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
     }
@@ -119,6 +129,7 @@ if ($method === 'GET' && $action === 'detail') {
     $stmt->close();
 
     if (!$row) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Booking not found.']);
         exit;
     }
@@ -154,6 +165,7 @@ if ($method === 'GET' && $action === 'detail') {
         $price = $row['price'] ?? 0;
     }
 
+    ob_end_clean();
     echo json_encode([
         'success' => true,
         'booking' => [
@@ -221,6 +233,7 @@ if ($method === 'GET' && $action === '') {
     );
 
     if (!$stmt) {
+        ob_end_clean();
         echo json_encode(['success' => true, 'bookings' => []]);
         exit;
     }
@@ -228,6 +241,7 @@ if ($method === 'GET' && $action === '') {
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
+    ob_end_clean();
     echo json_encode(['success' => true, 'bookings' => $rows]);
     exit;
 }
@@ -241,6 +255,8 @@ if ($method === 'POST' && $action === '') {
     $customer_name = trim($_POST['customer_name'] ?? '');
     $customer_phone = trim($_POST['customer_phone'] ?? '');
     $customer_address = trim($_POST['customer_address'] ?? $address);
+    $customer_lat = isset($_POST['customer_lat']) && is_numeric($_POST['customer_lat']) ? (float)$_POST['customer_lat'] : null;
+    $customer_lng = isset($_POST['customer_lng']) && is_numeric($_POST['customer_lng']) ? (float)$_POST['customer_lng'] : null;
     $pricing_type = 'flat';
     $hours = 1;
     $is_realtime = (trim($_POST['realtime'] ?? '0') === '1');
@@ -254,12 +270,14 @@ if ($method === 'POST' && $action === '') {
     }
 
     if (!$service || !$address) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Service and address are required.']);
         exit;
     }
 
     $svcStmt = $conn->prepare("SELECT name, flat_rate, description, min_hours FROM services WHERE active = 1 AND name = ? LIMIT 1");
     if (!$svcStmt) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Could not validate service.']);
         exit;
     }
@@ -269,6 +287,7 @@ if ($method === 'POST' && $action === '') {
     $svcStmt->close();
 
     if (!$serviceRow) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Selected service is unavailable.']);
         exit;
     }
@@ -276,6 +295,7 @@ if ($method === 'POST' && $action === '') {
     $computed = _computeFixedPrice($service, $_POST);
     $price = (float) ($computed['total'] ?? 0);
     if ($price <= 0) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Could not compute fixed price for selected options.']);
         exit;
     }
@@ -349,6 +369,7 @@ if ($method === 'POST' && $action === '') {
 
     $stmt = $conn->prepare("INSERT INTO bookings ($col_list) VALUES ($val_list)");
     if (!$stmt) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
     }
@@ -363,6 +384,18 @@ if ($method === 'POST' && $action === '') {
     if ($stmt->execute()) {
         $bid = $conn->insert_id;
         $stmt->close();
+
+        // Save GPS coordinates if provided (safely add columns if needed)
+        if ($customer_lat !== null && $customer_lng !== null) {
+            _safeAddColumn($conn, 'bookings', 'customer_lat', 'DECIMAL(10,8) NULL');
+            _safeAddColumn($conn, 'bookings', 'customer_lng', 'DECIMAL(10,8) NULL');
+            $gpsStmt = $conn->prepare("UPDATE bookings SET customer_lat=?, customer_lng=? WHERE id=?");
+            if ($gpsStmt) {
+                $gpsStmt->bind_param('ddi', $customer_lat, $customer_lng, $bid);
+                $gpsStmt->execute();
+                $gpsStmt->close();
+            }
+        }
 
         ensureBookingRequestsTable($conn);
 
@@ -428,6 +461,7 @@ if ($method === 'POST' && $action === '') {
             $ns->execute();
             $ns->close();
         }
+        ob_end_clean();
         echo json_encode([
             'success' => true,
             'booking_id' => $bid,
@@ -440,6 +474,7 @@ if ($method === 'POST' && $action === '') {
             'price_breakdown' => $computed['breakdown']
         ]);
     } else {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Insert failed: ' . $conn->error]);
     }
     exit;
@@ -451,11 +486,25 @@ if ($method === 'POST' && $action === 'cancel') {
     $stmt->bind_param("ii", $id, $uid);
     $ok = $stmt->execute() && $stmt->affected_rows > 0;
     $stmt->close();
+    ob_end_clean();
     echo json_encode(['success' => $ok, 'message' => $ok ? 'Cancelled.' : 'Could not cancel.']);
     exit;
 }
 
+ob_end_clean();
 echo json_encode(['success' => false, 'message' => 'Unknown request.']);
+
+/**
+ * Safely add a column to a table only if it doesn't already exist.
+ * Prevents fatal mysqli_sql_exception: Duplicate column name.
+ */
+function _safeAddColumn(mysqli $conn, string $table, string $column, string $definition): void
+{
+    $res = $conn->query("SHOW COLUMNS FROM `{$table}` LIKE '{$column}'");
+    if ($res && $res->num_rows === 0) {
+        $conn->query("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
+    }
+}
 
 function _seedServices(mysqli $conn)
 {

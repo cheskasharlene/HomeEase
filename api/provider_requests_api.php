@@ -1,8 +1,12 @@
 <?php
+ob_start();
+ini_set('display_errors', 0);
+error_reporting(0);
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 if (empty($_SESSION['provider_id'])) {
+    ob_end_clean();
     echo json_encode(['success' => false, 'message' => 'Not logged in.']);
     exit;
 }
@@ -49,8 +53,19 @@ if ($method === 'GET' && $action === 'live_feed') {
     }
 
     // Get all pending bookings of matching service type (last 2 hours)
+    // Build SELECT dynamically based on whether GPS columns exist in bookings table
+    $bCols = [];
+    $bColRes = $conn->query("SHOW COLUMNS FROM bookings");
+    if ($bColRes) { while ($bc = $bColRes->fetch_assoc()) $bCols[] = $bc['Field']; }
+    $hasCustomerLat = in_array('customer_lat', $bCols);
+    $hasCustomerLng = in_array('customer_lng', $bCols);
+
+    $latSelect = $hasCustomerLat ? 'b.customer_lat' : 'NULL AS customer_lat';
+    $lngSelect = $hasCustomerLng ? 'b.customer_lng' : 'NULL AS customer_lng';
+
     $sql = "SELECT b.id AS booking_id, b.service, b.address, b.price, b.created_at,
-                   b.notes, u.name AS customer_name, u.phone AS customer_phone,
+                   b.notes, {$latSelect}, {$lngSelect},
+                   u.name AS customer_name, u.phone AS customer_phone,
                    br.id AS request_id, br.status AS request_status
             FROM bookings b
             LEFT JOIN users u ON u.id = b.user_id
@@ -68,6 +83,7 @@ if ($method === 'GET' && $action === 'live_feed') {
     $like = '%' . $provService . '%';
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
     }
@@ -83,6 +99,7 @@ if ($method === 'GET' && $action === 'live_feed') {
         }));
     }
 
+    ob_end_clean();
     echo json_encode([
         'success' => true,
         'live_bookings' => $rows,
@@ -157,6 +174,7 @@ if ($method === 'GET') {
         $rows = [];
     }
 
+    ob_end_clean();
     echo json_encode(['success' => true, 'requests' => $rows, 'provider_service' => $providerService]);
     exit;
 }
@@ -330,6 +348,76 @@ if ($method === 'POST' && $action === 'decline') {
     exit;
 }
 
+if ($method === 'POST' && $action === 'complete') {
+    $bookingId = (int)($_POST['booking_id'] ?? 0);
+    if ($bookingId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid booking ID.']);
+        exit;
+    }
+
+    // Verify this provider owns the accepted request
+    $chk = $conn->prepare("SELECT id FROM booking_requests WHERE booking_id = ? AND provider_id = ? AND status = 'accepted' LIMIT 1");
+    $chk->bind_param('ii', $bookingId, $providerId);
+    $chk->execute();
+    if (!$chk->get_result()->fetch_assoc()) {
+        echo json_encode(['success' => false, 'message' => 'No accepted booking found.']);
+        exit;
+    }
+    $chk->close();
+
+    $conn->begin_transaction();
+    try {
+        $upd = $conn->prepare("UPDATE bookings SET status = 'done' WHERE id = ?");
+        $upd->bind_param('i', $bookingId);
+        $upd->execute();
+        $upd->close();
+
+        $updR = $conn->prepare("UPDATE booking_requests SET status = 'closed', responded_at = NOW() WHERE booking_id = ? AND provider_id = ? AND status = 'accepted'");
+        $updR->bind_param('ii', $bookingId, $providerId);
+        $updR->execute();
+        $updR->close();
+
+        // Notify the client
+        $bkRow = $conn->query("SELECT user_id, service FROM bookings WHERE id = {$bookingId} LIMIT 1")->fetch_assoc();
+        if ($bkRow) {
+            $uid = (int)$bkRow['user_id'];
+            $svc = $conn->real_escape_string((string)$bkRow['service']);
+            $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at)
+                VALUES ({$uid}, 'Service Complete', 'Your {$svc} service has been completed. Please leave a review!', 'cleaning', 0, NOW())");
+        }
+
+        $conn->commit();
+        ob_end_clean();
+        echo json_encode(['success' => true, 'message' => 'Booking marked as complete.']);
+    } catch (Throwable $e) {
+        $conn->rollback();
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
+if ($method === 'POST' && $action === 'update_location') {
+    $bookingId = (int)($_POST['booking_id'] ?? 0);
+    $lat = (float)($_POST['lat'] ?? 0);
+    $lng = (float)($_POST['lng'] ?? 0);
+
+    // Safely ensure columns exist (no crash if already present)
+    _safeAddColumn($conn, 'bookings', 'provider_lat', 'DECIMAL(10,8) NULL');
+    _safeAddColumn($conn, 'bookings', 'provider_lng', 'DECIMAL(10,8) NULL');
+
+    if ($bookingId > 0 && $lat && $lng) {
+        $stmt = $conn->prepare("UPDATE bookings SET provider_lat = ?, provider_lng = ? WHERE id = ?");
+        $stmt->bind_param('ddi', $lat, $lng, $bookingId);
+        $stmt->execute();
+    }
+    ob_end_clean();
+    echo json_encode(['success' => true]);
+    exit;
+}
+
+// Fallthrough - unknown request
+ob_end_clean();
 echo json_encode(['success' => false, 'message' => 'Unknown request.']);
 
 function ensureBookingRequestsTable(mysqli $conn): void
@@ -355,6 +443,18 @@ function ensureBookingRequestsTable(mysqli $conn): void
       INDEX idx_booking (booking_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $conn->query($sql);
+}
+
+/**
+ * Safely add a column only if it doesn't already exist.
+ * Prevents fatal mysqli_sql_exception: Duplicate column name.
+ */
+function _safeAddColumn(mysqli $conn, string $table, string $column, string $definition): void
+{
+    $res = $conn->query("SHOW COLUMNS FROM `{$table}` LIKE '{$column}'");
+    if ($res && $res->num_rows === 0) {
+        $conn->query("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
+    }
 }
 
 function normalizeServiceKey(string $value): string

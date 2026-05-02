@@ -69,7 +69,22 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
           <div class="fg" style="margin-bottom:0;margin-top:10px;">
             <label class="fl">Address</label>
-            <input class="fi" type="text" id="uAddress" placeholder="House No., Street, Barangay">
+            <div style="position:relative;">
+              <input class="fi" type="text" id="uAddress" placeholder="House No., Street, Barangay" style="padding-right:44px;">
+              <button type="button" id="btnGps" onclick="useMyLocation()"
+                style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#E8820C,#F5A623);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"
+                title="Use my precise GPS location">
+                <i class="bi bi-crosshair2"></i>
+              </button>
+            </div>
+            <!-- Hidden GPS coords -->
+            <input type="hidden" id="customerLat" value="">
+            <input type="hidden" id="customerLng" value="">
+            <!-- Location status banner -->
+            <div id="locationBanner" style="display:none;margin-top:8px;padding:9px 12px;border-radius:11px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:8px;">
+              <i id="locationIcon" class="bi bi-geo-alt-fill" style="font-size:14px;"></i>
+              <span id="locationMsg">Detecting location…</span>
+            </div>
           </div>
         </div>
 
@@ -269,7 +284,91 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       'Appliance Technician': 'Appliance Technician',
     };
 
+    /* ===== GPS LOCATION ===== */
+    function setLocationBanner(type, msg) {
+      const banner = document.getElementById('locationBanner');
+      const icon   = document.getElementById('locationIcon');
+      const text   = document.getElementById('locationMsg');
+      banner.style.display = 'flex';
+      const styles = {
+        loading : { bg:'#FFF8F0', color:'#E8820C', border:'#FFE5B4', ico:'bi-arrow-clockwise' },
+        success : { bg:'#ECFDF5', color:'#059669', border:'#6EE7B7', ico:'bi-geo-alt-fill'    },
+        error   : { bg:'#FFF5F5', color:'#EF4444', border:'#FCA5A5', ico:'bi-exclamation-circle-fill' }
+      };
+      const s = styles[type] || styles.loading;
+      banner.style.background   = s.bg;
+      banner.style.color        = s.color;
+      banner.style.border       = `1.5px solid ${s.border}`;
+      icon.className = `bi ${s.ico}`;
+      text.textContent = msg;
+    }
+
+    async function reverseGeocode(lat, lng) {
+      try {
+        const res  = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
+          { headers: { 'Accept-Language': 'en' } }
+        );
+        const data = await res.json();
+        if (data && data.display_name) {
+          // Strip country, keep street + barangay + city
+          const a = data.address || {};
+          const parts = [
+            a.house_number, a.road || a.pedestrian,
+            a.neighbourhood || a.suburb || a.village,
+            a.city || a.town || a.municipality
+          ].filter(Boolean);
+          return parts.length ? parts.join(', ') : data.display_name;
+        }
+      } catch(e) {}
+      return null;
+    }
+
+    async function requestLocation(silent = false) {
+      if (!navigator.geolocation) {
+        if (!silent) setLocationBanner('error', 'Geolocation not supported by your browser.');
+        return;
+      }
+      setLocationBanner('loading', 'Detecting your precise location…');
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          let lat = pos.coords.latitude;
+          let lng = pos.coords.longitude;
+
+          document.getElementById('customerLat').value = lat;
+          document.getElementById('customerLng').value = lng;
+          setLocationBanner('loading', 'Getting address from coordinates…');
+          const addr = await reverseGeocode(lat, lng);
+          if (addr) {
+            const addrField = document.getElementById('uAddress');
+            if (!addrField.value.trim()) addrField.value = addr;
+            setLocationBanner('success', `📍 ${addr.substring(0,60)}`);
+          } else {
+            setLocationBanner('success', `📍 GPS locked (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
+          }
+        },
+        (err) => {
+          const msgs = {
+            1: 'Location permission denied. Please enable it in your browser settings.',
+            2: 'Location unavailable. Please enter your address manually.',
+            3: 'Location request timed out. Please try again.'
+          };
+          setLocationBanner('error', msgs[err.code] || 'Could not get location.');
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+      );
+    }
+
+    function useMyLocation() {
+      document.getElementById('customerLat').value = '';
+      document.getElementById('customerLng').value = '';
+      requestLocation(false);
+    }
+
     async function initForm() {
+      // Auto-request location silently on load
+      requestLocation(true);
+
       // Populate user info from session with validation
       const nameField = document.getElementById('uName');
       const phoneField = document.getElementById('uPhone');
@@ -300,8 +399,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       try {
         const res = await fetch('../api/bookings_api.php?action=services');
-        const data = await res.json();
-        if (!data.success || !data.services.length) {
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch(parseErr) {
+          console.error('Services API returned non-JSON:', text);
+          document.getElementById('formSvcLabel').textContent = 'Failed to load service';
+          return;
+        }
+        if (!data.success || !data.services || !data.services.length) {
           document.getElementById('formSvcLabel').textContent = 'Service not found';
           return;
         }
@@ -754,6 +859,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('customer_phone', uPhone);
       fd.append('customer_address', addr);
       fd.append('realtime', '1');
+      // GPS coordinates
+      const lat = document.getElementById('customerLat').value;
+      const lng = document.getElementById('customerLng').value;
+      if (lat && lng) {
+        fd.append('customer_lat', lat);
+        fd.append('customer_lng', lng);
+      }
 
       // Add dynamic field data
       const dynamicData = getDynamicFieldsData();
@@ -763,7 +875,17 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       try {
         const res = await fetch('../api/bookings_api.php', { method: 'POST', body: fd });
-        const data = await res.json();
+        const rawText = await res.text();
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (parseErr) {
+          console.error('Server returned non-JSON response:', rawText);
+          toast('Server error: ' + rawText.substring(0, 120), 'e');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-calendar-check"></i> Confirm Booking';
+          return;
+        }
 
         if (data.success) {
           // Redirect to the Angkas-style waiting/tracking screen
@@ -778,8 +900,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           toast(data.message || 'Failed to book. Try again.', 'e');
         }
       } catch (e) {
-        toast('Network error — make sure bookings_api.php exists on your server', 'e');
-        console.error(e);
+        console.error('Fetch error:', e);
+        toast('Connection error: ' + e.message, 'e');
       }
 
       btn.disabled = false;

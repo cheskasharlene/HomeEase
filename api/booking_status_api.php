@@ -21,6 +21,7 @@ if ($bookingId <= 0) {
 
 // Fetch booking + provider info
 $sql = "SELECT b.id, b.service, b.date, b.time_slot, b.address, b.price, b.status, b.created_at,
+               b.provider_lat, b.provider_lng, b.customer_lat, b.customer_lng,
                br.provider_id AS req_provider_id, br.status AS req_status, br.responded_at,
                sp.full_name AS provider_name, sp.contact_number AS provider_phone,
                sp.service_category AS provider_service, sp.rating AS provider_rating,
@@ -60,23 +61,40 @@ if ($pendingStmt) {
     $pendingCount = (int)($pr['cnt'] ?? 0);
 }
 
-// Simulate provider coordinates (in a real app these come from GPS)
-// We use the booking creation time to create a "moving" effect
-$providerLat = null;
-$providerLng = null;
-$customerLat = 14.5995; // Default Manila coordinates
-$customerLng = 120.9842;
+// Use real customer GPS if stored, otherwise default to Sto. Tomas, Batangas
+$customerLat = isset($row['customer_lat']) && $row['customer_lat'] !== null
+    ? (float)$row['customer_lat'] : 14.1053;
+$customerLng = isset($row['customer_lng']) && $row['customer_lng'] !== null
+    ? (float)$row['customer_lng'] : 121.1390;
 
-if ($hasProvider) {
-    // Simulate provider approaching — coordinates drift toward customer over time
+// Sto. Tomas, Batangas — service area bounds
+$STO_TOMAS_MIN_LAT = 13.98; $STO_TOMAS_MAX_LAT = 14.25;
+$STO_TOMAS_MIN_LNG = 120.98; $STO_TOMAS_MAX_LNG = 121.32;
+
+function isInStoTomasServer(float $lat, float $lng): bool {
+    global $STO_TOMAS_MIN_LAT, $STO_TOMAS_MAX_LAT, $STO_TOMAS_MIN_LNG, $STO_TOMAS_MAX_LNG;
+    return $lat >= $STO_TOMAS_MIN_LAT && $lat <= $STO_TOMAS_MAX_LAT
+        && $lng >= $STO_TOMAS_MIN_LNG && $lng <= $STO_TOMAS_MAX_LNG;
+}
+
+$providerLat = $row['provider_lat'] !== null ? (float)$row['provider_lat'] : null;
+$providerLng = $row['provider_lng'] !== null ? (float)$row['provider_lng'] : null;
+
+// Discard stored GPS if outside Sto. Tomas — triggers simulation fallback
+if ($providerLat !== null && !isInStoTomasServer($providerLat, $providerLng)) {
+    $providerLat = null;
+    $providerLng = null;
+}
+
+if ($hasProvider && $providerLat === null) {
+    // Simulate provider approaching — coordinates drift toward customer over time as fallback
     $acceptedAt = strtotime($row['responded_at'] ?? 'now');
     $elapsed = max(0, time() - $acceptedAt);
-    // Provider starts ~2km away and moves closer
-    $startOffset = 0.018; // ~2km
-    $progress = min(1.0, $elapsed / 600); // reaches in ~10 minutes
+    $startOffset = 0.018; 
+    $progress = min(1.0, $elapsed / 600); 
     $providerLat = $customerLat + ($startOffset * (1 - $progress)) + (sin($elapsed * 0.3) * 0.0005);
     $providerLng = $customerLng - ($startOffset * (1 - $progress)) + (cos($elapsed * 0.2) * 0.0005);
-} elseif ($status === 'pending') {
+} elseif ($status === 'pending' && $providerLat === null) {
     // Show "searching" animation coords — provider icon orbits
     $t = time() % 30;
     $angle = ($t / 30) * 2 * M_PI;
