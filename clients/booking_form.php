@@ -136,6 +136,66 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <input class="fi" type="text" id="bNotes" placeholder="Any special instructions?">  
         </div>
 
+        <!-- Payment Method Section -->
+        <div class="fg">
+          <label class="fl">Payment Method <span style="color:#ef4444;">*</span></label>
+          <div class="payment-options">
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="cash" class="payment-input" onchange="handlePaymentMethodChange()">
+              <div class="payment-label">
+                <i class="bi bi-cash-coin"></i>
+                <div>
+                  <div class="payment-name">Cash</div>
+                  <div class="payment-desc">Pay when service is done</div>
+                </div>
+              </div>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="gcash" class="payment-input" onchange="handlePaymentMethodChange()">
+              <div class="payment-label">
+                <i class="bi bi-wallet2"></i>
+                <div>
+                  <div class="payment-name">GCash</div>
+                  <div class="payment-desc">Pay online instantly</div>
+                </div>
+              </div>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="paymentMethod" value="bank" class="payment-input" onchange="handlePaymentMethodChange()">
+              <div class="payment-label">
+                <i class="bi bi-bank2"></i>
+                <div>
+                  <div class="payment-name">Bank Transfer</div>
+                  <div class="payment-desc">Transfer to our account</div>
+                </div>
+              </div>
+            </label>
+          </div>
+          <div class="payment-error" id="paymentError"></div>
+        </div>
+
+        <!-- GCash Payment Section (Hidden by default) -->
+        <div class="fg" id="gcashSection" style="display:none;">
+          <label class="fl">GCash Number <span style="color:#ef4444;">*</span></label>
+          <div class="gcash-input-wrapper">
+            <input type="text" id="gcashNumber" class="fi" placeholder="09xxxxxxxxx" inputmode="numeric" maxlength="11" oninput="validateGCashNumber()">
+            <button type="button" class="btn-pay" id="payButton" onclick="processGCashPayment()" disabled><i class="bi bi-credit-card"></i> Pay</button>
+          </div>
+          <div class="payment-error" id="gcashError"></div>
+          <div class="gcash-status" id="gcashStatus" style="display:none;"></div>
+        </div>
+
+        <!-- Bank Transfer Payment Section (Hidden by default) -->
+        <div class="fg" id="bankSection" style="display:none;">
+          <label class="fl">Account Number <span style="color:#ef4444;">*</span></label>
+          <div class="bank-input-wrapper">
+            <input type="text" id="accountNumber" class="fi" placeholder="Enter your account number" inputmode="numeric" maxlength="16" oninput="validateAccountNumber()">
+            <button type="button" class="btn-pay" id="bankPayButton" onclick="processBankPayment()" disabled><i class="bi bi-credit-card"></i> Pay</button>
+          </div>
+          <div class="payment-error" id="bankError"></div>
+          <div class="bank-status" id="bankStatus" style="display:none;"></div>
+        </div>
+
         <div class="fixed-total-wrap">
           <div class="fixed-total-row">
             <span><i class="bi bi-receipt" style="margin-right:4px;opacity:.6;"></i>Total Price</span>
@@ -818,19 +878,178 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       return lines.join('\n');
     }
 
+    let gcashPaymentCompleted = false;
+    let bankPaymentCompleted = false;
+
+    // Real-time GCash validation
+    function validateGCashNumber() {
+      const gcashInput = document.getElementById('gcashNumber');
+      const payButton = document.getElementById('payButton');
+      const value = gcashInput.value.trim();
+      
+      // Only allow numeric input
+      gcashInput.value = value.replace(/\D/g, '').slice(0, 11);
+      
+      const gcashRegex = /^09\d{9}$/;
+      const isValid = gcashRegex.test(gcashInput.value);
+      payButton.disabled = !isValid;
+    }
+
+    // Real-time Bank Transfer validation
+    function validateAccountNumber() {
+      const accountInput = document.getElementById('accountNumber');
+      const payButton = document.getElementById('bankPayButton');
+      const value = accountInput.value.trim();
+      
+      // Only allow numeric input
+      accountInput.value = value.replace(/\D/g, '').slice(0, 16);
+      
+      const isValid = accountInput.value.length >= 10 && accountInput.value.length <= 16 && /^\d+$/.test(accountInput.value);
+      payButton.disabled = !isValid;
+    }
+
+    function handlePaymentMethodChange() {
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
+      const gcashSection = document.getElementById('gcashSection');
+      const bankSection = document.getElementById('bankSection');
+      gcashPaymentCompleted = false;
+      bankPaymentCompleted = false;
+
+      // Hide all payment sections
+      gcashSection.style.display = 'none';
+      bankSection.style.display = 'none';
+
+      if (paymentMethod === 'gcash') {
+        gcashSection.style.display = 'block';
+        document.getElementById('paymentError').textContent = '';
+        document.getElementById('gcashError').textContent = '';
+        document.getElementById('gcashStatus').style.display = 'none';
+        document.getElementById('payButton').disabled = true;
+        document.getElementById('gcashNumber').value = '';
+        validateGCashNumber();
+      } else if (paymentMethod === 'bank') {
+        bankSection.style.display = 'block';
+        document.getElementById('paymentError').textContent = '';
+        document.getElementById('bankError').textContent = '';
+        document.getElementById('bankStatus').style.display = 'none';
+        document.getElementById('bankPayButton').disabled = true;
+        document.getElementById('accountNumber').value = '';
+        validateAccountNumber();
+      }
+    }
+
+    function processGCashPayment() {
+      const gcashNumber = document.getElementById('gcashNumber').value.trim();
+      const gcashError = document.getElementById('gcashError');
+      const gcashStatus = document.getElementById('gcashStatus');
+      const payButton = document.getElementById('payButton');
+
+      gcashError.textContent = '';
+      gcashStatus.style.display = 'none';
+
+      // Validate GCash number (11 digits, starts with 09, numeric only)
+      const gcashRegex = /^09\d{9}$/;
+      if (!gcashNumber) {
+        gcashError.textContent = 'Please enter a valid GCash number (e.g., 09XXXXXXXXX)';
+        return;
+      }
+      if (!gcashRegex.test(gcashNumber)) {
+        gcashError.textContent = 'Please enter a valid GCash number (e.g., 09XXXXXXXXX)';
+        return;
+      }
+
+      // Simulate payment processing
+      payButton.disabled = true;
+      payButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+      setTimeout(() => {
+        gcashPaymentCompleted = true;
+        payButton.disabled = true;
+        payButton.classList.add('success');
+        payButton.innerHTML = '<i class="bi bi-check-circle-fill"></i> Paid';
+        
+        gcashStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment successful!';
+        gcashStatus.classList.add('success');
+        gcashStatus.style.display = 'flex';
+        
+        toast('✓ GCash payment successful!', 's');
+      }, 1500);
+    }
+
+    function processBankPayment() {
+      const accountNumber = document.getElementById('accountNumber').value.trim();
+      const bankError = document.getElementById('bankError');
+      const bankStatus = document.getElementById('bankStatus');
+      const payButton = document.getElementById('bankPayButton');
+
+      bankError.textContent = '';
+      bankStatus.style.display = 'none';
+
+      // Validate account number (10-16 digits, numeric only)
+      if (!accountNumber) {
+        bankError.textContent = 'Please enter a valid account number';
+        return;
+      }
+      if (accountNumber.length < 10 || accountNumber.length > 16 || !/^\d+$/.test(accountNumber)) {
+        bankError.textContent = 'Please enter a valid account number';
+        return;
+      }
+
+      // Simulate payment processing
+      payButton.disabled = true;
+      payButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+
+      setTimeout(() => {
+        bankPaymentCompleted = true;
+        payButton.disabled = true;
+        payButton.classList.add('success');
+        payButton.innerHTML = '<i class="bi bi-check-circle-fill"></i> Paid';
+        
+        bankStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment successful!';
+        bankStatus.classList.add('success');
+        bankStatus.style.display = 'flex';
+        
+        toast('✓ Bank transfer initiated!', 's');
+      }, 1500);
+    }
+
     async function submitBooking() {
       if (!selectedSvc) { toast('Please select a service first', 'e'); return; }
       const uName = document.getElementById('uName').value.trim();
       const uPhone = document.getElementById('uPhone').value.trim();
       const addr = document.getElementById('uAddress').value.trim();
       const notes = document.getElementById('bNotes').value.trim();
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
       const price = getPrice();
 
       if (!uName) { toast('Please enter your full name', 'e'); return; }
       if (!uPhone) { toast('Please enter your phone number', 'e'); return; }
       if (!addr) { toast('Please enter your address', 'e'); return; }
-
-      // Auto-set date to today, time to now
+      if (!paymentMethod) { 
+        document.getElementById('paymentError').textContent = 'Please select a payment method';
+        toast('Please select a payment method', 'e');
+        return; 
+      }
+      
+      // Validate GCash payment if selected
+      if (paymentMethod === 'gcash') {
+        if (!gcashPaymentCompleted) {
+          document.getElementById('paymentError').textContent = 'Please complete payment first';
+          toast('Please complete payment first', 'e');
+          return;
+        }
+      }
+      
+      // Validate Bank Transfer payment if selected
+      if (paymentMethod === 'bank') {
+        if (!bankPaymentCompleted) {
+          document.getElementById('paymentError').textContent = 'Please complete payment first';
+          toast('Please complete payment first', 'e');
+          return;
+        }
+      }
+      
+      document.getElementById('paymentError').textContent = '';
       const now = new Date();
       const date = now.toISOString().split('T')[0];
       const hrs = now.getHours();
@@ -852,6 +1071,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('time_slot', time);
       fd.append('address', addr);
       fd.append('notes', notes);
+      fd.append('payment_method', paymentMethod);
+      if (paymentMethod === 'gcash') {
+        fd.append('gcash_number', document.getElementById('gcashNumber').value.trim());
+      }
+      if (paymentMethod === 'bank') {
+        fd.append('account_number', document.getElementById('accountNumber').value.trim());
+      }
       fd.append('pricing_type', 'flat');
       fd.append('hours', 1);
       fd.append('computed_price_client', price);

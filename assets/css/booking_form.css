@@ -103,6 +103,241 @@
       background: var(--bg-input) !important;
     }
 
+    /* Payment Method Section */
+    .payment-options {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .payment-option {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .payment-input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      width: 0;
+      height: 0;
+      margin: 0;
+      padding: 0;
+    }
+
+    .payment-label {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+      transition: all 0.3s ease;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .payment-label i {
+      font-size: 24px;
+      color: #F5A623;
+      flex-shrink: 0;
+    }
+
+    .payment-name {
+      font-size: 14px;
+      font-weight: 800;
+      color: #1f2937;
+    }
+
+    .payment-desc {
+      font-size: 12px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .payment-input:checked + .payment-label {
+      border-color: #F5A623;
+      background: #fffbf6;
+      box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1);
+    }
+
+    .payment-input:checked + .payment-label i {
+      color: #E8820C;
+    }
+
+    .payment-option:hover .payment-label {
+      border-color: #F5A623;
+      background: #fffbf6;
+    }
+
+    .payment-error {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 4px;
+      font-weight: 700;
+    }
+
+    /* GCash Payment Section */
+    .gcash-input-wrapper {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .gcash-input-wrapper .fi {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+    }
+
+    .gcash-input-wrapper .fi::placeholder {
+      color: #9ca3af;
+    }
+
+    .btn-pay {
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(232, 130, 12, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .btn-pay i {
+      font-size: 16px;
+    }
+
+    .btn-pay:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(232, 130, 12, 0.3);
+    }
+
+    .btn-pay:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+
+    .btn-pay:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: linear-gradient(135deg, #d1d5db, #e5e7eb) !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .btn-pay.success {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    .gcash-status {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #6ee7b7;
+    }
+
+    .gcash-status i {
+      font-size: 16px;
+    }
+
+    /* Bank Transfer Payment Section */
+    .bank-input-wrapper {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .bank-input-wrapper .fi {
+      flex: 1;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-family: 'Nunito', sans-serif;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+    }
+
+    .bank-input-wrapper .fi::placeholder {
+      color: #9ca3af;
+    }
+
+    .bank-status {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #6ee7b7;
+    }
+
+    .bank-status i {
+      font-size: 16px;
+    }
+
+    /* Dark mode support */
+    body.dark .payment-label {
+      background: var(--bg-input);
+      border-color: var(--border-col);
+      color: var(--txt-col);
+    }
+
+    body.dark .payment-input:checked + .payment-label {
+      background: rgba(245, 166, 35, 0.1);
+      border-color: #F5A623;
+    }
+
+    body.dark .payment-name {
+      color: var(--txt-col);
+    }
+
+    body.dark .payment-desc {
+      color: var(--tm);
+    }
+
+    body.dark .gcash-input-wrapper .fi {
+      background: var(--bg-input);
+      border-color: var(--border-col);
+      color: var(--txt-col);
+    }
+
+    body.dark .gcash-status {
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    body.dark .bank-input-wrapper .fi {
+      background: var(--bg-input);
+      border-color: var(--border-col);
+      color: var(--txt-col);
+    }
+
+    body.dark .bank-status {
+      background: rgba(16, 185, 129, 0.1);
+    }
+
     .bnav {
       position: absolute;
       bottom: 0;
