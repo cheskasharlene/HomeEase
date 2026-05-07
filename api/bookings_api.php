@@ -397,6 +397,28 @@ if ($method === 'POST' && $action === '') {
             }
         }
 
+        // Save payment information
+        $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
+        $paymentReference = null;
+        
+        if ($paymentMethod === 'gcash') {
+            $paymentReference = trim($_POST['gcash_number'] ?? '');
+        } elseif ($paymentMethod === 'bank') {
+            $paymentReference = trim($_POST['account_number'] ?? '');
+        }
+        
+        // Ensure payments table exists
+        ensurePaymentsTable($conn);
+        
+        // Save payment with 'pending' status for cash, 'completed' for online methods
+        $paymentStatus = ($paymentMethod === 'cash') ? 'pending' : 'pending';
+        $paymentResult = savePayment($conn, $bid, $uid, $paymentMethod, $paymentReference, $price, $paymentStatus);
+        
+        if (!$paymentResult['success']) {
+            // Log the error but don't fail the booking - payment saving is secondary
+            error_log("Payment save error for booking $bid: " . $paymentResult['message']);
+        }
+
         ensureBookingRequestsTable($conn);
 
         $providers = [];
