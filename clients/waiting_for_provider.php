@@ -934,7 +934,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         currentStatus = data.status;
 
         // Stop polling if terminal state
-        if (['completed', 'cancelled'].includes(data.status)) {
+        if (['done', 'cancelled'].includes(data.status)) {
           stopPolling();
         }
       } catch (e) {
@@ -993,9 +993,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           provCard.style.display = 'flex';
         }
 
-      } else if (data.status === 'completed') {
+      } else if (data.status === 'done') {
         topBarTitle.textContent = 'Service Complete';
-        banner.className = 'wfp-status-banner completed';
+        banner.className = 'wfp-status-banner done';
         spinner.style.display = 'none';
         statusTxt.innerHTML = `Service completed! <span>✅</span> Please leave a review.`;
         cancelWrap.style.display = 'none';
