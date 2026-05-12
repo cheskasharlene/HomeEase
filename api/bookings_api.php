@@ -269,10 +269,14 @@ if ($method === 'POST' && $action === '') {
         $time_slot = date('g:i A');
     }
 
-    if (!$service || !$address) {
+    if (!$service) {
         ob_end_clean();
-        echo json_encode(['success' => false, 'message' => 'Service and address are required.']);
+        echo json_encode(['success' => false, 'message' => 'Service is required.']);
         exit;
+    }
+    // Address is GPS-detected on the client; fall back gracefully if empty
+    if (!$address) {
+        $address = 'GPS Location';
     }
 
     $svcStmt = $conn->prepare("SELECT name, flat_rate, description, min_hours FROM services WHERE active = 1 AND name = ? LIMIT 1");

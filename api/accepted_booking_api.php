@@ -45,6 +45,7 @@ if ($providerId > 0) {
 
     $select .= ', br.fixed_price, br.details, br.customer_name, br.customer_phone, br.customer_address';
     $select .= ', u.name AS user_name, u.phone AS user_phone, u.address AS user_address';
+    $select .= ', b.customer_lat, b.customer_lng';
 
     $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ? AND br.status = 'accepted'";
     $join .= ' LEFT JOIN users u ON b.user_id = u.id';
@@ -116,9 +117,11 @@ if ($providerId > 0) {
             'details' => (string) ($row['details'] ?? ''),
             'price' => (float) ($price ?? 0),
             'status' => (string) ($row['status'] ?? ''),
-            'client_name' => $clientName,
-            'client_phone' => $clientPhone,
+            'client_name'    => $clientName,
+            'client_phone'   => $clientPhone,
             'client_address' => $clientAddress,
+            'customer_lat'   => isset($row['customer_lat']) && $row['customer_lat'] !== null ? (float)$row['customer_lat'] : null,
+            'customer_lng'   => isset($row['customer_lng']) && $row['customer_lng'] !== null ? (float)$row['customer_lng'] : null,
         ],
     ]);
 }

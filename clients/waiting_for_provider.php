@@ -5,7 +5,7 @@ if (empty($_SESSION['user_id'])) {
   exit;
 }
 
-$bookingId = (int)($_GET['booking_id'] ?? 0);
+$bookingId = (int) ($_GET['booking_id'] ?? 0);
 if ($bookingId <= 0) {
   header('Location: booking_history.php');
   exit;
@@ -15,12 +15,15 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>HomeEase – Finding Your Provider</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <!-- Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -34,29 +37,41 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       bottom: calc(var(--sheet-h, 260px) + 70px);
       right: 16px;
       z-index: 400;
-      width: 44px; height: 44px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.97);
+      background: rgba(255, 255, 255, 0.97);
       border: none;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; color: #E8820C;
-      box-shadow: 0 2px 14px rgba(0,0,0,0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: #E8820C;
+      box-shadow: 0 2px 14px rgba(0, 0, 0, 0.18);
       cursor: pointer;
       transition: transform 0.15s;
     }
-    .wfp-layers-btn:active { transform: scale(0.9); }
+
+    .wfp-layers-btn:active {
+      transform: scale(0.9);
+    }
 
     .wfp-style-overlay {
       position: absolute;
-      inset: 0; z-index: 700;
-      background: rgba(0,0,0,0.45);
+      inset: 0;
+      z-index: 700;
+      background: rgba(0, 0, 0, 0.45);
       backdrop-filter: blur(4px);
-      display: flex; align-items: flex-end;
-      opacity: 0; pointer-events: none;
+      display: flex;
+      align-items: flex-end;
+      opacity: 0;
+      pointer-events: none;
       transition: opacity 0.28s;
     }
+
     .wfp-style-overlay.open {
-      opacity: 1; pointer-events: all;
+      opacity: 1;
+      pointer-events: all;
     }
 
     .wfp-style-drawer {
@@ -65,27 +80,34 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       border-radius: 24px 24px 0 0;
       padding: 18px 18px 36px;
       transform: translateY(100%);
-      transition: transform 0.32s cubic-bezier(0.32,0.72,0,1);
+      transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
     }
+
     .wfp-style-overlay.open .wfp-style-drawer {
       transform: translateY(0);
     }
 
     .wfp-style-handle {
-      width: 40px; height: 4px;
-      background: #E0E0E0; border-radius: 2px;
+      width: 40px;
+      height: 4px;
+      background: #E0E0E0;
+      border-radius: 2px;
       margin: 0 auto 16px;
     }
 
     .wfp-style-title {
-      font-size: 16px; font-weight: 800;
+      font-size: 16px;
+      font-weight: 800;
       color: #1A1A2E;
       font-family: 'Poppins', sans-serif;
       margin-bottom: 4px;
     }
+
     .wfp-style-sub {
-      font-size: 12px; color: #7A7064;
-      font-weight: 600; margin-bottom: 18px;
+      font-size: 12px;
+      color: #7A7064;
+      font-weight: 600;
+      margin-bottom: 18px;
     }
 
     .wfp-style-grid {
@@ -95,188 +117,321 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     .wfp-style-opt {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
       cursor: pointer;
     }
 
     .wfp-style-thumb {
-      width: 100%; aspect-ratio: 1;
+      width: 100%;
+      aspect-ratio: 1;
       border-radius: 14px;
       border: 2.5px solid transparent;
       overflow: hidden;
       position: relative;
       transition: border-color 0.2s, transform 0.15s;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     }
+
     .wfp-style-opt.active .wfp-style-thumb {
       border-color: #E8820C;
-      box-shadow: 0 0 0 3px rgba(232,130,12,0.25);
+      box-shadow: 0 0 0 3px rgba(232, 130, 12, 0.25);
     }
-    .wfp-style-opt:active .wfp-style-thumb { transform: scale(0.94); }
+
+    .wfp-style-opt:active .wfp-style-thumb {
+      transform: scale(0.94);
+    }
 
     .wfp-style-thumb-img {
-      width: 100%; height: 100%;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       display: block;
     }
 
     /* Fallback color blocks for thumbnails */
-    .thumb-standard { background: linear-gradient(135deg,#e8f4e8,#b8d4b8,#88c088,#98b8e0,#d4e8f0); }
-    .thumb-google   { background: linear-gradient(135deg,#f5f0eb,#e8e0d5,#d4c8b8,#c8d8e8,#a8c4d8); }
-    .thumb-dark     { background: linear-gradient(135deg,#1a1a2e,#16213e,#0f3460,#222244,#1a1a2e); }
-    .thumb-minimal  { background: linear-gradient(135deg,#fafafa,#f0f0f0,#e8e8e8,#f5f5f5,#ffffff); }
+    .thumb-standard {
+      background: linear-gradient(135deg, #e8f4e8, #b8d4b8, #88c088, #98b8e0, #d4e8f0);
+    }
+
+    .thumb-google {
+      background: linear-gradient(135deg, #f5f0eb, #e8e0d5, #d4c8b8, #c8d8e8, #a8c4d8);
+    }
+
+    .thumb-dark {
+      background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460, #222244, #1a1a2e);
+    }
+
+    .thumb-minimal {
+      background: linear-gradient(135deg, #fafafa, #f0f0f0, #e8e8e8, #f5f5f5, #ffffff);
+    }
 
     /* Pseudo-map lines on thumbs */
     .wfp-style-thumb::after {
       content: '';
-      position: absolute; inset: 0;
+      position: absolute;
+      inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px);
+        linear-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.3) 1px, transparent 1px);
       background-size: 14px 14px;
       pointer-events: none;
     }
+
     .thumb-dark::after {
       background-image:
-        linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
     }
 
     .wfp-style-label {
-      font-size: 10px; font-weight: 800;
-      color: #5E564D; text-align: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: #5E564D;
+      text-align: center;
       font-family: 'Poppins', sans-serif;
       line-height: 1.2;
     }
-    .wfp-style-opt.active .wfp-style-label { color: #E8820C; }
+
+    .wfp-style-opt.active .wfp-style-label {
+      color: #E8820C;
+    }
 
     .wfp-style-check {
       position: absolute;
-      top: 5px; right: 5px;
-      width: 18px; height: 18px;
+      top: 5px;
+      right: 5px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: #E8820C;
       display: none;
-      align-items: center; justify-content: center;
-      font-size: 10px; color: #fff;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #fff;
     }
-    .wfp-style-opt.active .wfp-style-check { display: flex; }
+
+    .wfp-style-opt.active .wfp-style-check {
+      display: flex;
+    }
 
     /* ===== PROVIDER MARKER PULSE (Grab/Angkas style) ===== */
     @keyframes provPulse {
-      0%   { transform: scale(0.8); opacity: 0.6; }
-      70%  { transform: scale(1.6); opacity: 0;   }
-      100% { transform: scale(0.8); opacity: 0;   }
+      0% {
+        transform: scale(0.8);
+        opacity: 0.6;
+      }
+
+      70% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(0.8);
+        opacity: 0;
+      }
     }
 
     /* Customer marker — home icon with subtle glow */
     .wfp-marker-customer-home {
-      width: 40px; height: 40px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
       background: linear-gradient(135deg, #1A1A2E, #2D2D4E);
       border: 3px solid #fff;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.35);
-      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 20px;
     }
 
     /* Customer marker — pulsing home circle */
     .wfp-marker-customer-home {
-      width: 44px; height: 44px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: linear-gradient(135deg, #1A1A2E, #2D2D4E);
       border: 3px solid #fff;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.4);
-      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 22px;
       animation: custPulse 2.4s ease-in-out infinite;
     }
+
     @keyframes custPulse {
-      0%, 100% { box-shadow: 0 3px 14px rgba(0,0,0,0.4), 0 0 0 0 rgba(26,26,46,0.4); }
-      50%       { box-shadow: 0 3px 14px rgba(0,0,0,0.4), 0 0 0 10px rgba(26,26,46,0); }
+
+      0%,
+      100% {
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4), 0 0 0 0 rgba(26, 26, 46, 0.4);
+      }
+
+      50% {
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4), 0 0 0 10px rgba(26, 26, 46, 0);
+      }
     }
 
     /* GPS Permission Modal */
     #gpsModal {
-      position: absolute; inset: 0; z-index: 900;
-      background: rgba(0,0,0,0.55);
+      position: absolute;
+      inset: 0;
+      z-index: 900;
+      background: rgba(0, 0, 0, 0.55);
       backdrop-filter: blur(6px);
-      display: flex; align-items: flex-end; justify-content: center;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
       transition: opacity .3s;
     }
-    #gpsModal.hidden { opacity: 0; pointer-events: none; }
+
+    #gpsModal.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
     #gpsModalSheet {
-      width: 100%; max-width: 480px;
+      width: 100%;
+      max-width: 480px;
       background: #fff;
       border-radius: 28px 28px 0 0;
       padding: 28px 24px 40px;
       font-family: 'Poppins', sans-serif;
       transform: translateY(0);
-      transition: transform .35s cubic-bezier(.32,.72,0,1);
+      transition: transform .35s cubic-bezier(.32, .72, 0, 1);
     }
-    #gpsModal.hidden #gpsModalSheet { transform: translateY(100%); }
+
+    #gpsModal.hidden #gpsModalSheet {
+      transform: translateY(100%);
+    }
+
     .gps-modal-handle {
-      width: 40px; height: 4px;
-      background: #E0D8D0; border-radius: 2px;
+      width: 40px;
+      height: 4px;
+      background: #E0D8D0;
+      border-radius: 2px;
       margin: 0 auto 20px;
     }
+
     .gps-modal-icon {
-      width: 72px; height: 72px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: linear-gradient(135deg, #E8820C, #F5A623);
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 34px;
       margin: 0 auto 16px;
-      box-shadow: 0 6px 24px rgba(232,130,12,0.35);
+      box-shadow: 0 6px 24px rgba(232, 130, 12, 0.35);
     }
+
     .gps-modal-title {
-      font-size: 20px; font-weight: 800;
-      color: #1A1A2E; text-align: center; margin-bottom: 8px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #1A1A2E;
+      text-align: center;
+      margin-bottom: 8px;
     }
+
     .gps-modal-sub {
-      font-size: 13px; color: #7A7064;
-      text-align: center; line-height: 1.6; margin-bottom: 24px;
-    }
-    .gps-modal-items {
-      display: flex; flex-direction: column; gap: 10px;
+      font-size: 13px;
+      color: #7A7064;
+      text-align: center;
+      line-height: 1.6;
       margin-bottom: 24px;
     }
+
+    .gps-modal-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
     .gps-modal-item {
-      display: flex; align-items: center; gap: 12px;
-      background: #FAF8F5; border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #FAF8F5;
+      border-radius: 14px;
       padding: 12px 14px;
     }
+
     .gps-modal-item-icon {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: linear-gradient(135deg,#E8820C,#F5A623);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; flex-shrink: 0;
-    }
-    .gps-modal-item-text { font-size: 13px; color: #1A1A2E; font-weight: 600; }
-    .gps-modal-item-sub  { font-size: 11px; color: #9E9690; margin-top: 1px; }
-    .gps-btn-allow {
-      width: 100%; height: 52px; border-radius: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
       background: linear-gradient(135deg, #E8820C, #F5A623);
-      color: #fff; border: none; cursor: pointer;
-      font-size: 15px; font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .gps-modal-item-text {
+      font-size: 13px;
+      color: #1A1A2E;
+      font-weight: 600;
+    }
+
+    .gps-modal-item-sub {
+      font-size: 11px;
+      color: #9E9690;
+      margin-top: 1px;
+    }
+
+    .gps-btn-allow {
+      width: 100%;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 800;
       font-family: 'Poppins', sans-serif;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      box-shadow: 0 6px 20px rgba(232,130,12,0.38);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 20px rgba(232, 130, 12, 0.38);
       margin-bottom: 10px;
       transition: transform .15s, box-shadow .15s;
     }
-    .gps-btn-allow:active { transform: scale(0.97); }
+
+    .gps-btn-allow:active {
+      transform: scale(0.97);
+    }
+
     .gps-btn-skip {
-      width: 100%; height: 44px; border-radius: 14px;
-      background: transparent; color: #9E9690;
-      border: none; cursor: pointer;
-      font-size: 13px; font-weight: 600;
+      width: 100%;
+      height: 44px;
+      border-radius: 14px;
+      background: transparent;
+      color: #9E9690;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
       font-family: 'Poppins', sans-serif;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
+
 <body>
   <div class="wfp-shell">
 
@@ -384,8 +539,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
 
     <!-- Bottom Sheet -->
-    <div class="wfp-sheet" id="wfpSheet">
-      <div class="wfp-sheet-handle"></div>
+    <div class="wfp-sheet expanded" id="wfpSheet">
+      <!-- Draggable handle — tap to collapse/expand -->
+      <div class="wfp-sheet-handle" id="sheetHandle" onclick="toggleSheet()">
+        <div class="wfp-sheet-handle-pill"></div>
+      </div>
       <div class="wfp-sheet-body" id="sheetBody">
 
         <!-- Status Banner -->
@@ -446,8 +604,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         <!-- Chat Button (shown when accepted) -->
         <div id="chatBtnWrap" style="display:none;padding:0 16px 8px;">
-          <button onclick="openChat()" style="width:100%;height:46px;border-radius:13px;background:linear-gradient(135deg,#1A1A2E,#2D2D4E);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:800;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
-            <i class="bi bi-chat-fill"></i> Message Provider <span id="chatUnreadBubble" style="background:#EF4444;border-radius:99px;padding:1px 7px;font-size:11px;display:none;"></span>
+          <button onclick="openChat()"
+            style="width:100%;height:46px;border-radius:13px;background:linear-gradient(135deg,#1A1A2E,#2D2D4E);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:800;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="bi bi-chat-fill"></i> Message Provider <span id="chatUnreadBubble"
+              style="background:#EF4444;border-radius:99px;padding:1px 7px;font-size:11px;display:none;"></span>
           </button>
         </div>
 
@@ -466,28 +626,109 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       </div>
     </div>
 
-  <!-- Chat Drawer (inside shell to stay in mobile frame) -->
-  <div id="chatOverlay" style="position:absolute;inset:0;z-index:800;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s" onclick="closeChat(event)">
-    <div id="chatDrawer" style="width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding-bottom:32px;display:flex;flex-direction:column;max-height:72dvh;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)" onclick="event.stopPropagation()">
-      <div style="width:40px;height:4px;background:#E0D8D0;border-radius:2px;margin:12px auto 0"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1.5px solid #F0EAE0">
-        <div style="font-size:15px;font-weight:800;color:#1A1A2E;font-family:'Poppins',sans-serif">💬 Chat with Provider</div>
-        <button onclick="closeChat()" style="width:32px;height:32px;border-radius:50%;background:#F5F0EA;border:none;cursor:pointer;font-size:15px;color:#7A7064;display:flex;align-items:center;justify-content:center"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
-        <div id="chatEmpty" style="text-align:center;color:#9E9690;font-size:13px;padding:24px 0">No messages yet. Say hello!</div>
-      </div>
-      <div style="display:flex;gap:8px;padding:10px 16px 4px;border-top:1.5px solid #F0EAE0">
-        <textarea id="chatInput" rows="1" placeholder="Type a message…" style="flex:1;border:1.5px solid #E8E0D5;border-radius:22px;padding:10px 14px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;resize:none;background:#FAFAF8" onkeydown="handleChatKey(event)"></textarea>
-        <button onclick="sendMessage()" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#E8820C,#F5A623);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex-shrink:0"><i class="bi bi-send-fill"></i></button>
+    <!-- Chat Drawer (inside shell to stay in mobile frame) -->
+    <div id="chatOverlay"
+      style="position:absolute;inset:0;z-index:800;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s"
+      onclick="closeChat(event)">
+      <div id="chatDrawer"
+        style="width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding-bottom:32px;display:flex;flex-direction:column;max-height:72dvh;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)"
+        onclick="event.stopPropagation()">
+        <div style="width:40px;height:4px;background:#E0D8D0;border-radius:2px;margin:12px auto 0"></div>
+        <div
+          style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;border-bottom:1.5px solid #F0EAE0">
+          <div style="font-size:15px;font-weight:800;color:#1A1A2E;font-family:'Poppins',sans-serif">💬 Chat with
+            Provider</div>
+          <button onclick="closeChat()"
+            style="width:32px;height:32px;border-radius:50%;background:#F5F0EA;border:none;cursor:pointer;font-size:15px;color:#7A7064;display:flex;align-items:center;justify-content:center"><i
+              class="bi bi-x-lg"></i></button>
+        </div>
+        <div id="chatMsgs" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px">
+          <div id="chatEmpty" style="text-align:center;color:#9E9690;font-size:13px;padding:24px 0">No messages yet. Say
+            hello!</div>
+        </div>
+        <div style="display:flex;gap:8px;padding:10px 16px 4px;border-top:1.5px solid #F0EAE0">
+          <textarea id="chatInput" rows="1" placeholder="Type a message…"
+            style="flex:1;border:1.5px solid #E8E0D5;border-radius:22px;padding:10px 14px;font-size:13px;font-family:'Nunito',sans-serif;outline:none;resize:none;background:#FAFAF8"
+            onkeydown="handleChatKey(event)"></textarea>
+          <button onclick="sendMessage()"
+            style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#E8820C,#F5A623);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex-shrink:0"><i
+              class="bi bi-send-fill"></i></button>
+        </div>
       </div>
     </div>
-  </div>
   </div><!-- /.wfp-shell -->
 
   <script src="../assets/js/app.js"></script>
   <script>
     if (typeof initTheme === 'function') initTheme();
+
+    /* ═══════════════════════════════════════════════
+       DRAGGABLE BOTTOM SHEET
+       — follows finger, snaps to expanded / collapsed
+    ═══════════════════════════════════════════════ */
+    const PEEK_PX = 72;   // px visible when collapsed (handle + top of banner)
+    let _sheetExpanded = true;
+    let _sheetH = 0;      // measured full height of the sheet
+
+    function _sheetSnap(expanded, animate = true) {
+      const sheet = document.getElementById('wfpSheet');
+      if (!sheet) return;
+      _sheetExpanded = expanded;
+      sheet.style.transition = animate
+        ? 'transform 0.38s cubic-bezier(0.32,0.72,0,1)'
+        : 'none';
+      sheet.style.transform = expanded ? 'translateY(0)' : `translateY(${_sheetH - PEEK_PX}px)`;
+      sheet.classList.toggle('expanded', expanded);
+      sheet.classList.toggle('collapsed', !expanded);
+      /* Update --sheet-h so floating buttons reposition */
+      setTimeout(() => {
+        const vis = expanded ? _sheetH : PEEK_PX;
+        document.documentElement.style.setProperty('--sheet-h', vis + 'px');
+      }, animate ? 380 : 0);
+    }
+
+    function toggleSheet() {
+      /* called by handle onclick (tap) */
+      if (!_sheetH) _sheetH = document.getElementById('wfpSheet').getBoundingClientRect().height;
+      _sheetSnap(!_sheetExpanded);
+    }
+
+    /* Drag logic — finger tracked at document level so it never loses contact */
+    (function () {
+      const handle = document.getElementById('sheetHandle');
+      if (!handle) return;
+      let startY = 0, startTransY = 0, active = false;
+      const sheet = () => document.getElementById('wfpSheet');
+
+      handle.addEventListener('touchstart', e => {
+        const s = sheet();
+        _sheetH = s.getBoundingClientRect().height;
+        startY = e.touches[0].clientY;
+        startTransY = _sheetExpanded ? 0 : (_sheetH - PEEK_PX);
+        active = true;
+        s.style.transition = 'none';
+      }, { passive: true });
+
+      /* Attached to document — works even if finger leaves the handle */
+      document.addEventListener('touchmove', e => {
+        if (!active) return;
+        const dy = e.touches[0].clientY - startY;
+        const newY = Math.max(0, Math.min(_sheetH - PEEK_PX, startTransY + dy));
+        sheet().style.transform = `translateY(${newY}px)`;
+      }, { passive: true });
+
+      document.addEventListener('touchend', e => {
+        if (!active) return;
+        active = false;
+        const dy = e.changedTouches[0].clientY - startY;
+        const moved = Math.abs(dy) > 12;
+        if (!moved) return; // tiny movement = tap, handled by onclick
+        if (dy > 60 && _sheetExpanded) _sheetSnap(false);
+        else if (dy < -60 && !_sheetExpanded) _sheetSnap(true);
+        else _sheetSnap(_sheetExpanded); // snap back
+      }, { passive: true });
+    })();
+
 
     /* =============================================
        CONFIG
@@ -532,18 +773,18 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     };
 
     /* =============================================
-       GEO CONSTANTS — Sto. Tomas, Batangas
+       GEO CONSTANTS — Batangas Province
     ============================================= */
     const STO_TOMAS = {
-      lat:  14.1053,
-      lng:  121.1390,
-      // Bounding box locked to Sto. Tomas municipality
+      lat: 13.7565,
+      lng: 121.0583,
+      // Bounding box covering Batangas province (excludes Cavite)
       bounds: L.latLngBounds(
-        L.latLng(13.9800, 120.9800),   // SW corner
-        L.latLng(14.2500, 121.3200)    // NE corner
+        L.latLng(13.30, 120.55),   // SW corner
+        L.latLng(14.20, 121.55)    // NE corner — stops before Cavite
       ),
-      zoom: 15,
-      minZoom: 12,
+      zoom: 10,
+      minZoom: 9,
       maxZoom: 19
     };
 
@@ -579,6 +820,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     let accuracyCircle = null;
     let gpsWatchId = null;
 
+    /* User manually panned/zoomed — pause auto-fit while true */
+    let _userInteracted = false;
+    let _interactTimer = null;
+
     /* =============================================
        MAP INIT
     ============================================= */
@@ -589,12 +834,22 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         tap: false,
         minZoom: STO_TOMAS.minZoom,
         maxZoom: STO_TOMAS.maxZoom,
-        maxBounds: STO_TOMAS.bounds,      // lock pan to Sto. Tomas
-        maxBoundsViscosity: 1.0           // hard boundary — no rubber-banding outside
-      }).setView([STO_TOMAS.lat, STO_TOMAS.lng], STO_TOMAS.zoom);
+        maxBounds: STO_TOMAS.bounds,
+        maxBoundsViscosity: 1.0
+      });
+      map.fitBounds(STO_TOMAS.bounds);
 
       applyMapStyle(currentStyleKey, false);
       highlightStyleOpt(currentStyleKey);
+
+      /* Detect manual interaction — stop auto-fit for 30s */
+      map.on('movestart', (e) => {
+        if (e.originalEvent) {          // only real user gestures (not programmatic)
+          _userInteracted = true;
+          clearTimeout(_interactTimer);
+          _interactTimer = setTimeout(() => { _userInteracted = false; }, 30000);
+        }
+      });
 
       // Customer marker — will be moved to real GPS
       const custIcon = L.divIcon({
@@ -612,21 +867,18 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     /* ── GPS Precision Engine ── */
     const GPS = {
-      SMOOTH_ALPHA    : 0.25,   // EMA smoothing — lower = smoother
-      MIN_MOVE_M      : 2,      // minimum movement to update marker (metres)
-      REJECT_IP_BASED : 1000,   // anything ≥ 1km accuracy = IP-based, completely ignored
-      ACCEPT_FIRST    : 200,    // first real GPS fix: accept if ≤ 200m
-      ACCEPT_STEADY   : 80,     // once tracking: only accept ≤ 80m
+      SMOOTH_ALPHA: 0.25,
+      MIN_MOVE_M: 2,
     };
     let _gpsSmLat = null, _gpsSmLng = null;
     let _gpsBestAcc = Infinity;
-    let _gpsHasFirst = false;    // true once a real (accurate) fix is applied
+    let _gpsHasFirst = false;
 
     function _gpsDist(lat1, lng1, lat2, lng2) {
       const R = 6371000, r = Math.PI / 180;
-      const a = Math.sin((lat2-lat1)*r/2)**2
-              + Math.cos(lat1*r) * Math.cos(lat2*r) * Math.sin((lng2-lng1)*r/2)**2;
-      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const a = Math.sin((lat2 - lat1) * r / 2) ** 2
+        + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin((lng2 - lng1) * r / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
     function _gpsSmooth(lat, lng) {
@@ -638,50 +890,40 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       return { lat: _gpsSmLat, lng: _gpsSmLng };
     }
 
+    /* Track last saved accuracy to avoid redundant saves */
+    let _lastSavedAcc = Infinity;
+
     function _gpsOnFix(pos) {
       const rawLat = pos.coords.latitude;
       const rawLng = pos.coords.longitude;
-      const acc    = pos.coords.accuracy;
+      const acc = pos.coords.accuracy;
 
-      // ── STEP 1: Reject IP-based (wildly inaccurate) positions completely ──
-      // These are cell-tower or IP lookups — never accurate enough to use
-      if (acc >= GPS.REJECT_IP_BASED) {
-        const km = (acc / 1000).toFixed(0);
-        showGpsBanner('loading', `📡 Waiting for GPS signal… (accuracy: ±${km}km — too low)`);
-        // Customer marker stays at Sto. Tomas default — do NOT move it
-        return;
-      }
+      // Accept ALL fixes — coarse WiFi/IP included
+      if (acc < _gpsBestAcc) _gpsBestAcc = acc;
 
-      // ── STEP 2: Reject if outside Sto. Tomas, Batangas ──
-      if (!isInStoTomas(rawLat, rawLng)) {
-        showGpsBanner('error', '📍 GPS outside Sto. Tomas service area — using default.');
-        return;
-      }
-
-      // ── STEP 3: Accuracy gate (tightens after first fix) ──
-      const threshold = _gpsHasFirst ? GPS.ACCEPT_STEADY : GPS.ACCEPT_FIRST;
-      if (acc > threshold) {
-        showGpsBanner('loading', `⏳ Improving GPS accuracy… ±${Math.round(acc)}m`);
-        return; // Don't update position — wait for better signal
-      }
-
-      // ── STEP 4: Smooth the position ──
       const s = _gpsSmooth(rawLat, rawLng);
+      const moved = !_gpsHasFirst || _gpsDist(clientGpsLat ?? s.lat, clientGpsLng ?? s.lng, s.lat, s.lng) >= GPS.MIN_MOVE_M;
+      if (!moved && _gpsHasFirst) return;
 
-      // ── STEP 5: Distance & accuracy filter ──
-      const moved     = !_gpsHasFirst || _gpsDist(clientGpsLat, clientGpsLng, s.lat, s.lng) >= GPS.MIN_MOVE_M;
-      const betterAcc = acc < _gpsBestAcc * 0.85;
-      if (!moved && !betterAcc) return;
-
-      // ── STEP 6: Accept this fix ──
-      _gpsBestAcc  = Math.min(_gpsBestAcc, acc);
       _gpsHasFirst = true;
       clientGpsLat = s.lat;
       clientGpsLng = s.lng;
-      customerLat  = s.lat;
-      customerLng  = s.lng;
+      customerLat = s.lat;
+      customerLng = s.lng;
 
       customerMarker.setLatLng([s.lat, s.lng]);
+
+      /* Save to server so provider sees accurate client pin.
+         Only save on first fix OR when accuracy improves by >40% */
+      const shouldSave = _lastSavedAcc === Infinity || acc < _lastSavedAcc * 0.6;
+      if (shouldSave && BOOKING_ID) {
+        _lastSavedAcc = acc;
+        const fd = new FormData();
+        fd.append('booking_id', BOOKING_ID);
+        fd.append('lat', s.lat.toFixed(8));
+        fd.append('lng', s.lng.toFixed(8));
+        fetch('../api/update_customer_location.php', { method: 'POST', body: fd }).catch(() => { });
+      }
 
       // Accuracy circle
       if (accuracyCircle) map.removeLayer(accuracyCircle);
@@ -693,19 +935,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         }).addTo(map);
       }
 
-      // Re-centre map only on the very first real fix, and only if we haven't moved
-      if (clientGpsLat === s.lat && !providerMarker) {
-        map.setView([s.lat, s.lng], 17, { animate: true });
-      } else if (providerMarker) {
+      // Centre map on first fix; afterwards let fitMap handle it
+      if (!providerMarker) {
+        const zoom = acc < 100 ? 17 : acc < 1000 ? 15 : 13;
+        map.setView([s.lat, s.lng], zoom, { animate: true });
+      } else {
         fitMap(providerMarker.getLatLng().lat, providerMarker.getLatLng().lng);
       }
 
-      const label = acc < 5  ? `✅ ${Math.round(acc)}m — Excellent`
-                  : acc < 15 ? `✅ ±${Math.round(acc)}m — High`
-                  : acc < 80 ? `📍 ±${Math.round(acc)}m — Good`
-                  :            `⚠️ ±${Math.round(acc)}m — Low`;
-      showGpsBanner('success', label);
-      setTimeout(hideGpsBanner, 5000);
+      const label = acc < 10 ? `✅ ±${Math.round(acc)}m — Excellent`
+        : acc < 50 ? `✅ ±${Math.round(acc)}m — High`
+          : acc < 200 ? `📍 ±${Math.round(acc)}m — Good`
+            : acc < 2000 ? `⚠️ ±${Math.round(acc)}m — Low`
+              : `⚠️ ±${(acc / 1000).toFixed(1)}km — Very low`;
+      showGpsBanner(acc < 200 ? 'success' : 'loading', label);
+      if (acc < 200) setTimeout(hideGpsBanner, 5000);
     }
 
     function _gpsOnError(err) {
@@ -722,17 +966,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         showGpsBanner('loading', '📡 No GPS on this device — using map default.');
         return;
       }
-
       showGpsBanner('loading', '📡 Acquiring GPS signal…');
-
-      const opts = {
-        enableHighAccuracy : true,
-        maximumAge         : 0,
-        timeout            : 25000
-      };
-
-      // Fast initial fix attempt, then continuous watch
-      navigator.geolocation.getCurrentPosition(_gpsOnFix, _gpsOnError, { ...opts, timeout: 8000 });
+      const opts = { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 };
+      /* Fast coarse fix first, then watch for precise */
+      navigator.geolocation.getCurrentPosition(_gpsOnFix, _gpsOnError, {
+        enableHighAccuracy: false, maximumAge: 60000, timeout: 5000
+      });
       gpsWatchId = navigator.geolocation.watchPosition(_gpsOnFix, _gpsOnError, opts);
     }
 
@@ -746,9 +985,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         document.getElementById('wfpMap').parentElement.appendChild(el);
       }
       const styles = {
-        loading : 'background:#FFF8F0;color:#E8820C;border:1.5px solid #FFE5B4;',
-        error   : 'background:#FFF5F5;color:#EF4444;border:1.5px solid #FCA5A5;',
-        success : 'background:#ECFDF5;color:#059669;border:1.5px solid #6EE7B7;'
+        loading: 'background:#FFF8F0;color:#E8820C;border:1.5px solid #FFE5B4;',
+        error: 'background:#FFF5F5;color:#EF4444;border:1.5px solid #FCA5A5;',
+        success: 'background:#ECFDF5;color:#059669;border:1.5px solid #6EE7B7;'
       };
       el.style.cssText += styles[type] || styles.loading;
       el.textContent = msg;
@@ -834,7 +1073,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const start = performance.now();
       function step(ts) {
         const t = Math.min((ts - start) / duration, 1);
-        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // easeInOut
+        const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easeInOut
         const lat = from.lat + (to.lat - from.lat) * ease;
         const lng = from.lng + (to.lng - from.lng) * ease;
         providerMarker.setLatLng([lat, lng]);
@@ -848,7 +1087,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const url = `https://router.project-osrm.org/route/v1/driving/${fLng},${fLat};${tLng},${tLat}?overview=full&geometries=geojson`;
         const res = await fetch(url);
         const data = await res.json();
-        
+
         if (routeLine) map.removeLayer(routeLine);
 
         if (data.routes && data.routes[0]) {
@@ -883,11 +1122,55 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     function recenterMap() {
-      if (providerMarker) {
-        fitMap(providerMarker.getLatLng().lat, providerMarker.getLatLng().lng);
-      } else {
-        map.setView([customerLat, customerLng], 15, { animate: true });
+      _userInteracted = false;
+      clearTimeout(_interactTimer);
+
+      /* ── Animate button into loading state ── */
+      const btn = document.getElementById('btnRecenter');
+      if (btn) {
+        btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin 0.8s linear infinite;display:inline-block"></i>';
+        btn.style.opacity = '0.75';
+        btn.style.pointerEvents = 'none';
       }
+      const _resetBtn = () => {
+        if (btn) {
+          btn.innerHTML = '<i class="bi bi-crosshair2"></i>';
+          btn.style.opacity = '';
+          btn.style.pointerEvents = '';
+        }
+      };
+
+      if (!navigator.geolocation) {
+        _resetBtn();
+        if (providerMarker) fitMap(providerMarker.getLatLng().lat, providerMarker.getLatLng().lng);
+        else map.setView([customerLat, customerLng], 15, { animate: true });
+        return;
+      }
+
+      showGpsBanner('loading', '📡 Getting precise location…');
+
+      /* High-accuracy one-shot fix */
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          _resetBtn();
+          _gpsOnFix(pos);   // updates customerLat/Lng + marker
+          const zoom = pos.coords.accuracy < 50 ? 18 : pos.coords.accuracy < 200 ? 16 : 14;
+          if (providerMarker) {
+            fitMap(providerMarker.getLatLng().lat, providerMarker.getLatLng().lng);
+          } else {
+            map.setView([customerLat, customerLng], zoom, { animate: true });
+          }
+          hideGpsBanner();
+        },
+        (err) => {
+          _resetBtn();
+          const msgs = { 1: '🔒 Location permission denied.', 2: '📡 GPS unavailable.', 3: '⏱ GPS timed out — retrying…' };
+          showGpsBanner('error', msgs[err.code] || 'GPS error.');
+          if (providerMarker) fitMap(providerMarker.getLatLng().lat, providerMarker.getLatLng().lng);
+          else map.setView([customerLat, customerLng], 15, { animate: true });
+        },
+        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+      );
     }
 
     /* =============================================
@@ -916,19 +1199,17 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         customerMarker.setLatLng([customerLat, customerLng]);
 
         if (data.provider_lat && data.provider_lng) {
-          const rawPLat = parseFloat(data.provider_lat);
-          const rawPLng = parseFloat(data.provider_lng);
-          const clampedProvider = clampToStoTomas(rawPLat, rawPLng);
-          const pLat = clampedProvider.lat;
-          const pLng = clampedProvider.lng;
-          const wasVisible = !!providerMarker;
-          ensureProviderMarker(pLat, pLng, data.status === 'progress' || data.has_provider);
-
-          // Auto-fit to show both markers when provider first appears
-          if (!wasVisible) {
-            fitMap(pLat, pLng);
+          const pLat = parseFloat(data.provider_lat);
+          const pLng = parseFloat(data.provider_lng);
+          if (!isNaN(pLat) && !isNaN(pLng)) {
+            const wasVisible = !!providerMarker;
+            ensureProviderMarker(pLat, pLng, data.status === 'progress' || data.has_provider);
+            fetchRouteAndDraw(pLat, pLng, customerLat, customerLng);
+            /* Only auto-fit when provider first appears OR user hasn't interacted */
+            if (!wasVisible || !_userInteracted) {
+              fitMap(pLat, pLng);
+            }
           }
-          fetchRouteAndDraw(pLat, pLng, customerLat, customerLng);
         }
 
         currentStatus = data.status;
@@ -954,7 +1235,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         '₱' + Number(data.price || 0).toLocaleString('en-PH');
 
       // Status states
-      const banner  = document.getElementById('statusBanner');
+      const banner = document.getElementById('statusBanner');
       const spinner = document.getElementById('statusSpinner');
       const statusTxt = document.getElementById('statusText');
       const provCard = document.getElementById('providerCard');
@@ -983,7 +1264,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         if (data.provider) {
           const p = data.provider;
-          document.getElementById('provAvatar').textContent = p.initials || p.name.substring(0,2).toUpperCase();
+          document.getElementById('provAvatar').textContent = p.initials || p.name.substring(0, 2).toUpperCase();
           document.getElementById('provName').textContent = p.name;
           document.getElementById('provMeta').textContent = p.service + ' · ' + p.jobs + ' jobs done';
           const ratingVal = parseFloat(p.rating || 0);
@@ -1156,20 +1437,20 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     async function fetchChatMessages() {
       try {
-        const res  = await fetch('../api/chat_api.php?booking_id=' + BOOKING_ID + '&after_id=' + chatLastId + '&_t=' + Date.now(), { cache:'no-store' });
+        const res = await fetch('../api/chat_api.php?booking_id=' + BOOKING_ID + '&after_id=' + chatLastId + '&_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (!data.success) return;
         myRole = data.my_role || 'client';
         if (data.messages && data.messages.length) {
           appendChatMessages(data.messages);
-          chatLastId = data.messages[data.messages.length-1].id;
+          chatLastId = data.messages[data.messages.length - 1].id;
         }
         if (data.unread > 0 && !chatOpen) {
           const b = document.getElementById('chatUnreadBubble');
           b.textContent = data.unread;
           b.style.display = 'inline';
         }
-      } catch(e) {}
+      } catch (e) { }
     }
 
     function appendChatMessages(msgs) {
@@ -1178,9 +1459,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       if (empty) empty.remove();
       msgs.forEach(m => {
         const mine = m.sender_role === myRole;
-        const div  = document.createElement('div');
+        const div = document.createElement('div');
         div.style.cssText = `max-width:78%;padding:9px 13px;border-radius:18px;font-size:13px;line-height:1.45;word-break:break-word;${mine ? 'background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;' : 'background:#F5F0EA;color:#1A1A2E;align-self:flex-start;border-bottom-left-radius:4px;'}`;
-        const t = new Date(m.created_at).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        const t = new Date(m.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
         div.innerHTML = escHtml(m.message) + `<div style="font-size:10px;opacity:.6;margin-top:3px;text-align:right">${t}</div>`;
         box.appendChild(div);
       });
@@ -1198,16 +1479,16 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       if (!msg) return;
       inp.value = '';
       const fd = new FormData();
-      fd.append('action','send'); fd.append('booking_id',BOOKING_ID); fd.append('message',msg);
+      fd.append('action', 'send'); fd.append('booking_id', BOOKING_ID); fd.append('message', msg);
       try {
-        const res  = await fetch('../api/chat_api.php', { method:'POST', body:fd });
+        const res = await fetch('../api/chat_api.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) fetchChatMessages();
-      } catch(e) {}
+      } catch (e) { }
     }
 
-    function handleChatKey(e) { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
-    function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
+    function escHtml(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
     /* =============================================
        HELPERS
@@ -1243,7 +1524,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             showGpsBanner('error', '🔒 Location blocked — enable it in browser settings.');
             return;
           }
-        } catch(e) { /* permissions API not fully supported */ }
+        } catch (e) { /* permissions API not fully supported */ }
       }
 
       // Show modal to ask for GPS
@@ -1294,4 +1575,5 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     document.addEventListener('DOMContentLoaded', boot);
   </script>
 </body>
+
 </html>

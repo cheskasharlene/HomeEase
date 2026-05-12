@@ -29,15 +29,15 @@ if ($action === 'pros') {
     $pros = [];
     while ($r = $result->fetch_assoc()) {
         $pros[] = [
-            'id'           => (int) $r['id'],
-            'name'         => $r['name'],
-            'specialty'    => $r['specialty'] ?? '',
+            'id' => (int) $r['id'],
+            'name' => $r['name'],
+            'specialty' => $r['specialty'] ?? '',
             'availability' => $r['availability'] ?? 'offline',
-            'jobs_done'    => (int) $r['jobs_done'],
-            'rating'       => (float) $r['rating'],
-            'top'          => (int) $r['jobs_done'] >= 100,
-            'is_verified'  => (bool) $r['is_verified'],
-            'img'          => 'https://ui-avatars.com/api/?name=' . urlencode($r['name']) . '&background=ccfbf1&color=0d9488&size=128'
+            'jobs_done' => (int) $r['jobs_done'],
+            'rating' => (float) $r['rating'],
+            'top' => (int) $r['jobs_done'] >= 100,
+            'is_verified' => (bool) $r['is_verified'],
+            'img' => 'https://ui-avatars.com/api/?name=' . urlencode($r['name']) . '&background=ccfbf1&color=0d9488&size=128'
         ];
     }
 
@@ -48,29 +48,29 @@ if ($action === 'pros') {
 // ── LIST (for workers.php full listing) ───────────────────────────
 if ($action === 'list') {
 
-    $search  = trim($_GET['search'] ?? '');
-    $filter  = trim($_GET['filter'] ?? 'all');
+    $search = trim($_GET['search'] ?? '');
+    $filter = trim($_GET['filter'] ?? 'all');
     $orderBy = 'jobs_done DESC, name ASC';
 
     $conditions = ["t.status = 'active'"];
-    $params     = [];
-    $types      = '';
+    $params = [];
+    $types = '';
 
     if ($filter === 'available') {
         $conditions[] = "t.availability_status = 'available'";
     } elseif ($filter !== 'all') {
         $conditions[] = "(t.service_category = ? OR t.service_category LIKE ?)";
-        $params[]     = $filter;
-        $params[]     = '%' . $filter . '%';
-        $types       .= 'ss';
+        $params[] = $filter;
+        $params[] = '%' . $filter . '%';
+        $types .= 'ss';
     }
 
     if ($search !== '') {
         $like = '%' . $search . '%';
         $conditions[] = "(t.full_name LIKE ? OR t.service_category LIKE ?)";
-        $params[]     = $like;
-        $params[]     = $like;
-        $types       .= 'ss';
+        $params[] = $like;
+        $params[] = $like;
+        $types .= 'ss';
     }
 
     $where = 'WHERE ' . implode(' AND ', $conditions);
@@ -99,18 +99,18 @@ if ($action === 'list') {
 
     $workers = array_map(function ($r) {
         return [
-            'id'       => (int)  $r['id'],
-            'name'     => $r['name']   ?? '',
-            'role'     => $r['role']   ?? '',
-            'skills'   => [],
-            'img'      => '',
-            'status'   => $r['status'] ?? 'offline',
-            'jobs'     => (int) ($r['jobs'] ?? 0),
+            'id' => (int) $r['id'],
+            'name' => $r['name'] ?? '',
+            'role' => $r['role'] ?? '',
+            'skills' => [],
+            'img' => '',
+            'status' => $r['status'] ?? 'offline',
+            'jobs' => (int) ($r['jobs'] ?? 0),
             'location' => '',
-            'top'      => false,
-            'rating'   => (float) ($r['rating'] ?? 0),
-            'phone'    => $r['phone']  ?? '',
-            'is_verified' => (bool)$r['is_verified'],
+            'top' => false,
+            'rating' => (float) ($r['rating'] ?? 0),
+            'phone' => $r['phone'] ?? '',
+            'is_verified' => (bool) $r['is_verified'],
         ];
     }, $rows);
 
@@ -119,30 +119,30 @@ if ($action === 'list') {
 }
 
 if ($action === 'profile') {
-    $id = (int)($_GET['id'] ?? 0);
+    $id = (int) ($_GET['id'] ?? 0);
     if (!$id) {
         echo json_encode(['success' => false, 'message' => 'Provider ID is required']);
         exit;
     }
-    
+
     $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, contact_number AS phone, address, profile_image, created_at, rating, jobs_done, status, is_verified FROM service_providers WHERE provider_id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $provider = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
+
     if (!$provider) {
         echo json_encode(['success' => false, 'message' => 'Provider not found']);
         exit;
     }
-    
+
     // Get recent reviews
     $stmt = $conn->prepare("SELECT r.rating, r.comment, r.created_at, u.name AS user_name FROM provider_reviews r LEFT JOIN users u ON r.user_id = u.id WHERE r.provider_id = ? ORDER BY r.created_at DESC LIMIT 10");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $reviews = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
-    
+
     echo json_encode(['success' => true, 'provider' => $provider, 'reviews' => $reviews]);
     exit;
 }

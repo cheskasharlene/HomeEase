@@ -503,9 +503,9 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     let previewMap = null, previewMarker = null, modalBookingId = null;
     let providerGpsLat = null, providerGpsLng = null;
 
-    // Sto. Tomas, Batangas — service area center & bounds
-    const ST_CENTER = [14.1053, 121.1390];
-    const ST_BOUNDS = L.latLngBounds(L.latLng(13.9800, 120.9800), L.latLng(14.2500, 121.3200));
+    // Batangas Province — service area center & bounds (excludes Cavite)
+    const ST_CENTER = [13.7565, 121.0583];
+    const ST_BOUNDS = L.latLngBounds(L.latLng(13.30, 120.55), L.latLng(14.20, 121.55));
 
     function isValidCoord(lat, lng) {
       if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
@@ -540,8 +540,9 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           zoomControl: false, tap: false,
           minZoom: 10, maxZoom: 19,
           maxBounds: ST_BOUNDS,
-          maxBoundsViscosity: 0.85
-        }).setView(ST_CENTER, 13);
+          maxBoundsViscosity: 1.0
+        });
+        previewMap.fitBounds(ST_BOUNDS);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           attribution: '© CARTO', maxZoom: 19, subdomains: 'abcd'
         }).addTo(previewMap);
@@ -593,7 +594,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       } catch(e) {
         console.warn('Map locate failed:', e);
         // Fall back to Sto. Tomas center
-        previewMap.setView(ST_CENTER, 13);
+        previewMap.fitBounds(ST_BOUNDS);
         document.getElementById('modalDist').textContent = '📍 Address not found';
       }
     }

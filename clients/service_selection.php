@@ -141,7 +141,7 @@ if (empty($_SESSION['user_id'])) {
 
     function selectService(i) {
       const svc = services[i];
-      window.location.href = 'booking_form.php?svc=' + encodeURIComponent(svc.name);
+      window.location.href = 'location_picker.php?svc=' + encodeURIComponent(svc.name);
     }
 
     loadServices();

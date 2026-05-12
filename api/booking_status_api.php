@@ -67,9 +67,9 @@ $customerLat = isset($row['customer_lat']) && $row['customer_lat'] !== null
 $customerLng = isset($row['customer_lng']) && $row['customer_lng'] !== null
     ? (float)$row['customer_lng'] : 121.1390;
 
-// Sto. Tomas, Batangas — service area bounds
-$STO_TOMAS_MIN_LAT = 13.98; $STO_TOMAS_MAX_LAT = 14.25;
-$STO_TOMAS_MIN_LNG = 120.98; $STO_TOMAS_MAX_LNG = 121.32;
+// Batangas Province — service area bounds (excludes Cavite)
+$STO_TOMAS_MIN_LAT = 13.30; $STO_TOMAS_MAX_LAT = 14.20;
+$STO_TOMAS_MIN_LNG = 120.55; $STO_TOMAS_MAX_LNG = 121.55;
 
 function isInStoTomasServer(float $lat, float $lng): bool {
     global $STO_TOMAS_MIN_LAT, $STO_TOMAS_MAX_LAT, $STO_TOMAS_MIN_LNG, $STO_TOMAS_MAX_LNG;
@@ -80,18 +80,13 @@ function isInStoTomasServer(float $lat, float $lng): bool {
 $providerLat = $row['provider_lat'] !== null ? (float)$row['provider_lat'] : null;
 $providerLng = $row['provider_lng'] !== null ? (float)$row['provider_lng'] : null;
 
-// Discard stored GPS if outside Sto. Tomas — triggers simulation fallback
-if ($providerLat !== null && !isInStoTomasServer($providerLat, $providerLng)) {
-    $providerLat = null;
-    $providerLng = null;
-}
-
+/* Simulation fallback — only when provider hasn't sent any GPS yet */
 if ($hasProvider && $providerLat === null) {
     // Simulate provider approaching — coordinates drift toward customer over time as fallback
     $acceptedAt = strtotime($row['responded_at'] ?? 'now');
     $elapsed = max(0, time() - $acceptedAt);
-    $startOffset = 0.018; 
-    $progress = min(1.0, $elapsed / 600); 
+    $startOffset = 0.018;
+    $progress = min(1.0, $elapsed / 600);
     $providerLat = $customerLat + ($startOffset * (1 - $progress)) + (sin($elapsed * 0.3) * 0.0005);
     $providerLng = $customerLng - ($startOffset * (1 - $progress)) + (cos($elapsed * 0.2) * 0.0005);
 } elseif ($status === 'pending' && $providerLat === null) {

@@ -13,6 +13,11 @@ if (!$serviceName) {
   exit;
 }
 
+// Location confirmed by location_picker.php
+$preselectedLat  = isset($_GET['lat'])  ? (float)$_GET['lat']  : '';
+$preselectedLng  = isset($_GET['lng'])  ? (float)$_GET['lng']  : '';
+$preselectedAddr = isset($_GET['addr']) ? trim($_GET['addr'])  : '';
+
 $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 ?>
 <!DOCTYPE html>
@@ -42,7 +47,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="hdr-sub">Hi, <?= $userName ?> 👋</div>
           <div class="hdr-title">Booking Details</div>
         </div>
-        <a href="service_selection.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="location_picker.php?svc=<?= urlencode($serviceName) ?>" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 
@@ -67,24 +72,25 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
               <input class="fi" type="text" id="uPhone" placeholder="09XXXXXXXXX">
             </div>
           </div>
-          <div class="fg" style="margin-bottom:0;margin-top:10px;">
-            <label class="fl">Address</label>
-            <div style="position:relative;">
-              <input class="fi" type="text" id="uAddress" placeholder="House No., Street, Barangay" style="padding-right:44px;">
-              <button type="button" id="btnGps" onclick="useMyLocation()"
-                style="position:absolute;right:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#E8820C,#F5A623);border:none;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;"
-                title="Use my precise GPS location">
-                <i class="bi bi-crosshair2"></i>
-              </button>
+          <!-- Hidden GPS coords + pre-confirmed address from location picker -->
+          <input type="hidden" id="customerLat" value="<?= htmlspecialchars($preselectedLat) ?>">
+          <input type="hidden" id="customerLng" value="<?= htmlspecialchars($preselectedLng) ?>">
+          <input type="hidden" id="detectedAddress" value="<?= htmlspecialchars($preselectedAddr) ?>">
+        </div>
+
+        <!-- GPS Location Display Card -->
+        <div class="fg" style="margin-bottom:14px;">
+          <label class="fl" style="font-family:'Poppins',sans-serif;font-size:13px;">📍 Service Location</label>
+          <div id="gpsCard" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:linear-gradient(135deg,#FFF8F0,#FFF3E0);border:1.5px solid #FFE0B2;border-radius:14px;">
+            <div id="gpsSpinner" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#E8820C,#F5A623);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i class="bi bi-arrow-clockwise" style="color:#fff;font-size:15px;animation:spin .8s linear infinite;"></i>
             </div>
-            <!-- Hidden GPS coords -->
-            <input type="hidden" id="customerLat" value="">
-            <input type="hidden" id="customerLng" value="">
-            <!-- Location status banner -->
-            <div id="locationBanner" style="display:none;margin-top:8px;padding:9px 12px;border-radius:11px;font-size:11px;font-weight:700;display:flex;align-items:center;gap:8px;">
-              <i id="locationIcon" class="bi bi-geo-alt-fill" style="font-size:14px;"></i>
-              <span id="locationMsg">Detecting location…</span>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:11px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Detecting Location…</div>
+              <div id="gpsAddressText" style="font-size:12px;color:#7A7064;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Getting your GPS coordinates…</div>
             </div>
+            <!-- Change location link -->
+            <a href="location_picker.php?svc=<?= urlencode($serviceName) ?>&lat=<?= $preselectedLat ?>&lng=<?= $preselectedLng ?>&addr=<?= urlencode($preselectedAddr) ?>" style="flex-shrink:0;font-size:11px;color:#E8820C;font-weight:700;text-decoration:none;white-space:nowrap;">Change</a>
           </div>
         </div>
 
@@ -345,24 +351,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     };
 
     /* ===== GPS LOCATION ===== */
-    function setLocationBanner(type, msg) {
-      const banner = document.getElementById('locationBanner');
-      const icon   = document.getElementById('locationIcon');
-      const text   = document.getElementById('locationMsg');
-      banner.style.display = 'flex';
-      const styles = {
-        loading : { bg:'#FFF8F0', color:'#E8820C', border:'#FFE5B4', ico:'bi-arrow-clockwise' },
-        success : { bg:'#ECFDF5', color:'#059669', border:'#6EE7B7', ico:'bi-geo-alt-fill'    },
-        error   : { bg:'#FFF5F5', color:'#EF4444', border:'#FCA5A5', ico:'bi-exclamation-circle-fill' }
-      };
-      const s = styles[type] || styles.loading;
-      banner.style.background   = s.bg;
-      banner.style.color        = s.color;
-      banner.style.border       = `1.5px solid ${s.border}`;
-      icon.className = `bi ${s.ico}`;
-      text.textContent = msg;
-    }
-
     async function reverseGeocode(lat, lng) {
       try {
         const res  = await fetch(
@@ -371,7 +359,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         );
         const data = await res.json();
         if (data && data.display_name) {
-          // Strip country, keep street + barangay + city
           const a = data.address || {};
           const parts = [
             a.house_number, a.road || a.pedestrian,
@@ -386,56 +373,85 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     async function requestLocation(silent = false) {
       if (!navigator.geolocation) {
-        if (!silent) setLocationBanner('error', 'Geolocation not supported by your browser.');
+        setGpsCard('error', 'Geolocation not supported by this browser.');
         return;
       }
-      setLocationBanner('loading', 'Detecting your precise location…');
+      setGpsCard('loading', 'Getting your GPS coordinates…');
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
-          let lat = pos.coords.latitude;
-          let lng = pos.coords.longitude;
-
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
           document.getElementById('customerLat').value = lat;
           document.getElementById('customerLng').value = lng;
-          setLocationBanner('loading', 'Getting address from coordinates…');
+          setGpsCard('loading', 'Resolving address from coordinates…');
           const addr = await reverseGeocode(lat, lng);
-          if (addr) {
-            const addrField = document.getElementById('uAddress');
-            if (!addrField.value.trim()) addrField.value = addr;
-            setLocationBanner('success', `📍 ${addr.substring(0,60)}`);
-          } else {
-            setLocationBanner('success', `📍 GPS locked (${lat.toFixed(5)}, ${lng.toFixed(5)})`);
-          }
+          const display = addr || `GPS locked (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+          document.getElementById('detectedAddress').value = display;
+          setGpsCard('success', display);
         },
         (err) => {
           const msgs = {
-            1: 'Location permission denied. Please enable it in your browser settings.',
-            2: 'Location unavailable. Please enter your address manually.',
-            3: 'Location request timed out. Please try again.'
+            1: 'Permission denied — enable location in your browser settings.',
+            2: 'Location unavailable. Check your GPS signal.',
+            3: 'Location timed out. Please try again.'
           };
-          setLocationBanner('error', msgs[err.code] || 'Could not get location.');
+          setGpsCard('error', msgs[err.code] || 'Could not get location.');
         },
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
       );
     }
 
-    function useMyLocation() {
-      document.getElementById('customerLat').value = '';
-      document.getElementById('customerLng').value = '';
-      requestLocation(false);
+    /* ===== GPS LOCATION CARD ===== */
+    function setGpsCard(state, addressText) {
+      const card      = document.getElementById('gpsCard');
+      const spinner   = document.getElementById('gpsSpinner');
+      const addrText  = document.getElementById('gpsAddressText');
+      const iconEl    = spinner.querySelector('i');
+
+      const styles = {
+        loading : { bg:'linear-gradient(135deg,#FFF8F0,#FFF3E0)', border:'#FFE0B2', iconBg:'linear-gradient(135deg,#E8820C,#F5A623)', icon:'bi-arrow-clockwise', spin:true,  label:'Detecting Location…',     labelColor:'#E8820C' },
+        success : { bg:'linear-gradient(135deg,#ECFDF5,#D1FAE5)', border:'#6EE7B7', iconBg:'linear-gradient(135deg,#059669,#10B981)', icon:'bi-geo-alt-fill',     spin:false, label:'Your Location',             labelColor:'#059669' },
+        error   : { bg:'linear-gradient(135deg,#FFF5F5,#FEE2E2)', border:'#FCA5A5', iconBg:'linear-gradient(135deg,#EF4444,#F87171)', icon:'bi-exclamation-circle', spin:false, label:'Location Unavailable',      labelColor:'#EF4444' }
+      };
+      const s = styles[state] || styles.loading;
+
+      card.style.background    = s.bg;
+      card.style.borderColor   = s.border;
+      spinner.style.background = s.iconBg;
+      iconEl.className         = `bi ${s.icon}`;
+      iconEl.style.animation   = s.spin ? 'spin .8s linear infinite' : 'none';
+
+      // Label row above address text
+      let labelEl = card.querySelector('.gps-state-label');
+      if (!labelEl) {
+        labelEl = document.createElement('div');
+        labelEl.className = 'gps-state-label';
+        labelEl.style.cssText = 'font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;';
+        card.querySelector('div:last-child').prepend(labelEl);
+      }
+      labelEl.textContent  = s.label;
+      labelEl.style.color  = s.labelColor;
+      addrText.textContent = addressText || '';
     }
 
     async function initForm() {
-      // Auto-request location silently on load
-      requestLocation(true);
+      // Check if location was pre-confirmed by location_picker.php
+      const preAddr = document.getElementById('detectedAddress').value.trim();
+      const preLat  = document.getElementById('customerLat').value;
+      const preLng  = document.getElementById('customerLng').value;
+
+      if (preAddr && preLat && preLng) {
+        // Location already confirmed — show success card immediately
+        setGpsCard('success', preAddr);
+      } else {
+        // No pre-confirmed location — fall back to silent GPS detection
+        requestLocation(true);
+      }
 
       // Populate user info from session with validation
-      const nameField = document.getElementById('uName');
+      const nameField  = document.getElementById('uName');
       const phoneField = document.getElementById('uPhone');
-      const addressField = document.getElementById('uAddress');
-      const bAddrField = document.getElementById('bAddr');
 
-      // Set values if they exist and are not empty
       if (window.HE.user.name && window.HE.user.name.trim()) {
         nameField.value = window.HE.user.name;
         nameField.setAttribute('data-autofilled', 'true');
@@ -444,17 +460,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         phoneField.value = window.HE.user.phone;
         phoneField.setAttribute('data-autofilled', 'true');
       }
-      if (window.HE.user.address && window.HE.user.address.trim()) {
-        addressField.value = window.HE.user.address;
-        addressField.setAttribute('data-autofilled', 'true');
-        bAddrField.value = window.HE.user.address;
-      }
 
-      // Add event listeners to mark fields as manually edited
-      [nameField, phoneField, addressField].forEach(field => {
-        field.addEventListener('input', function() {
-          this.removeAttribute('data-autofilled');
-        });
+      [nameField, phoneField].forEach(field => {
+        field.addEventListener('input', function() { this.removeAttribute('data-autofilled'); });
       });
 
       try {
@@ -1015,16 +1023,15 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     async function submitBooking() {
       if (!selectedSvc) { toast('Please select a service first', 'e'); return; }
-      const uName = document.getElementById('uName').value.trim();
-      const uPhone = document.getElementById('uPhone').value.trim();
-      const addr = document.getElementById('uAddress').value.trim();
-      const notes = document.getElementById('bNotes').value.trim();
+      const uName   = document.getElementById('uName').value.trim();
+      const uPhone  = document.getElementById('uPhone').value.trim();
+      const addr    = document.getElementById('detectedAddress').value.trim();
+      const notes   = document.getElementById('bNotes').value.trim();
       const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
-      const price = getPrice();
+      const price   = getPrice();
 
-      if (!uName) { toast('Please enter your full name', 'e'); return; }
+      if (!uName)  { toast('Please enter your full name', 'e'); return; }
       if (!uPhone) { toast('Please enter your phone number', 'e'); return; }
-      if (!addr) { toast('Please enter your address', 'e'); return; }
       if (!paymentMethod) { 
         document.getElementById('paymentError').textContent = 'Please select a payment method';
         toast('Please select a payment method', 'e');
@@ -1069,7 +1076,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('service', selectedSvc.name);
       fd.append('date', date);
       fd.append('time_slot', time);
-      fd.append('address', addr);
+      fd.append('address', addr || 'GPS Location');
       fd.append('notes', notes);
       fd.append('payment_method', paymentMethod);
       if (paymentMethod === 'gcash') {
@@ -1083,7 +1090,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('computed_price_client', price);
       fd.append('customer_name', uName);
       fd.append('customer_phone', uPhone);
-      fd.append('customer_address', addr);
+      fd.append('customer_address', addr || 'GPS Location');
       fd.append('realtime', '1');
       // GPS coordinates
       const lat = document.getElementById('customerLat').value;
