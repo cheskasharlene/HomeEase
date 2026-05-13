@@ -13,7 +13,8 @@ body {
   background: #f0f0f0;
   overflow: hidden;
   height: 100dvh;
-  height: 100svh; /* safe viewport — avoids browser chrome overlap */
+  height: 100svh;
+  /* safe viewport — avoids browser chrome overlap */
 }
 
 .wfp-shell {
@@ -33,6 +34,7 @@ body {
   .wfp-shell {
     max-width: 100%;
   }
+
   /* Map gets more vertical space in landscape */
   .wfp-map-wrap {
     min-height: 40vh;

@@ -1,8 +1,15 @@
 <?php
-define("DB_HOST", "localhost");
-define("DB_USER", "root");
-define("DB_PASS", "");
-define("DB_NAME", "homeease_db");
+/* ═══════════════════════════════════════════════════════════════
+   DATABASE CONFIGURATION
+   • Local  (XAMPP)     → set environment vars OR use the local block
+   • Live   (InfinityFree) → update the 4 constants below
+   ═══════════════════════════════════════════════════════════════ */
+
+// ── Local XAMPP Credentials ──
+define("DB_HOST", getenv('DB_HOST') ?: "localhost");
+define("DB_USER", getenv('DB_USER') ?: "root");
+define("DB_PASS", getenv('DB_PASS') ?: "");
+define("DB_NAME", getenv('DB_NAME') ?: "homeease_db");
 
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
@@ -15,7 +22,8 @@ if ($conn->connect_error) {
 
 $conn->set_charset("utf8mb4");
 
-function respond($success, $message = "", $data = []) {
+function respond($success, $message = "", $data = [])
+{
     header("Content-Type: application/json; charset=utf-8");
     echo json_encode(array_merge(["success" => $success, "message" => $message], $data));
     exit;
@@ -26,31 +34,26 @@ function respond($success, $message = "", $data = []) {
  * @param mysqli $conn Database connection
  * @return bool True if table exists or was created
  */
-function ensurePaymentsTable($conn) {
+function ensurePaymentsTable($conn)
+{
     $sql = "CREATE TABLE IF NOT EXISTS payments (
         id INT AUTO_INCREMENT PRIMARY KEY,
         booking_id INT NOT NULL,
         user_id INT NOT NULL,
         payment_method ENUM('cash', 'gcash', 'bank') NOT NULL DEFAULT 'cash',
         payment_status ENUM('pending', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'pending',
-        payment_reference VARCHAR(255) NULL COMMENT 'GCash number or Bank account number',
+        payment_reference VARCHAR(255) NULL,
         amount DECIMAL(10, 2) NOT NULL,
-        transaction_id VARCHAR(100) NULL COMMENT 'Unique transaction identifier',
+        transaction_id VARCHAR(100) NULL,
         notes TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        
         UNIQUE KEY idx_booking_id (booking_id),
         KEY idx_user_id (user_id),
-        KEY idx_payment_method (payment_method),
-        KEY idx_payment_status (payment_status),
-        KEY idx_created_at (created_at),
-        
-        CONSTRAINT fk_payment_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
-        CONSTRAINT fk_payment_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        KEY idx_payment_status (payment_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
-    
-    return $conn->query($sql) === TRUE || $conn->errno == 1050; // 1050 = table already exists
+
+    return $conn->query($sql) === TRUE || $conn->errno == 1050;
 }
 
 /**
@@ -59,17 +62,18 @@ function ensurePaymentsTable($conn) {
  * @param string|null $reference Payment reference (phone/account number)
  * @return array Validation result with 'valid' bool and 'message'
  */
-function validatePaymentData($method, $reference = null) {
+function validatePaymentData($method, $reference = null)
+{
     $method = strtolower($method);
-    
+
     if (!in_array($method, ['cash', 'gcash', 'bank'])) {
         return ['valid' => false, 'message' => 'Invalid payment method'];
     }
-    
+
     if ($method === 'cash') {
         return ['valid' => true, 'message' => 'Cash payment validated'];
     }
-    
+
     if ($method === 'gcash') {
         if (empty($reference)) {
             return ['valid' => false, 'message' => 'GCash number is required'];
@@ -80,7 +84,7 @@ function validatePaymentData($method, $reference = null) {
         }
         return ['valid' => true, 'message' => 'GCash number validated'];
     }
-    
+
     if ($method === 'bank') {
         if (empty($reference)) {
             return ['valid' => false, 'message' => 'Account number is required'];
@@ -91,7 +95,7 @@ function validatePaymentData($method, $reference = null) {
         }
         return ['valid' => true, 'message' => 'Account number validated'];
     }
-    
+
     return ['valid' => false, 'message' => 'Payment validation error'];
 }
 
@@ -106,28 +110,29 @@ function validatePaymentData($method, $reference = null) {
  * @param string $status Payment status
  * @return array Result with 'success' bool and 'payment_id' or 'message'
  */
-function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $status = 'pending') {
+function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $status = 'pending')
+{
     ensurePaymentsTable($conn);
-    
+
     // Validate payment data
     $validation = validatePaymentData($method, $reference);
     if (!$validation['valid']) {
         return ['success' => false, 'message' => $validation['message']];
     }
-    
+
     // Generate unique transaction ID
     $transactionId = 'TXN-' . date('YmdHis') . '-' . $bookingId . '-' . mt_rand(1000, 9999);
-    
+
     $stmt = $conn->prepare(
         "INSERT INTO payments 
         (booking_id, user_id, payment_method, payment_reference, amount, payment_status, transaction_id, created_at) 
         VALUES (?, ?, ?, ?, ?, ?, ?, NOW())"
     );
-    
+
     if (!$stmt) {
         return ['success' => false, 'message' => 'Database error: ' . $conn->error];
     }
-    
+
     $stmt->bind_param(
         'iissdss',
         $bookingId,
@@ -138,12 +143,12 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
         $status,
         $transactionId
     );
-    
+
     if ($stmt->execute()) {
         $paymentId = $conn->insert_id;
         $stmt->close();
         return [
-            'success' => true, 
+            'success' => true,
             'payment_id' => $paymentId,
             'transaction_id' => $transactionId,
             'message' => 'Payment information saved successfully'
@@ -162,9 +167,10 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
  * @param int $bookingId Booking ID
  * @return array Payment data or null if not found/not authorized
  */
-function getPaymentByBooking($conn, $userId, $bookingId) {
+function getPaymentByBooking($conn, $userId, $bookingId)
+{
     ensurePaymentsTable($conn);
-    
+
     $stmt = $conn->prepare(
         "SELECT id, booking_id, user_id, payment_method, payment_status, payment_reference, 
                 amount, transaction_id, created_at, updated_at
@@ -172,15 +178,15 @@ function getPaymentByBooking($conn, $userId, $bookingId) {
          WHERE booking_id = ? AND user_id = ? 
          LIMIT 1"
     );
-    
+
     if (!$stmt) {
         return null;
     }
-    
+
     $stmt->bind_param('ii', $bookingId, $userId);
     $stmt->execute();
     $result = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    
+
     return $result;
 }
