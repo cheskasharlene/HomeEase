@@ -24,7 +24,7 @@ ensureBookingRequestsTable($conn);
 
 if ($method === 'GET' && $action === 'live_feed') {
     // Return ALL live pending bookings matching provider's service category
-    $providerStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+    $providerStmt = $conn->prepare("SELECT service_category, LOWER(COALESCE(availability_status, 'offline')) AS availability_status FROM service_providers WHERE provider_id = ? LIMIT 1");
     if (!$providerStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error.']);
         exit;
@@ -40,6 +40,21 @@ if ($method === 'GET' && $action === 'live_feed') {
     }
 
     $provService = strtolower(trim((string)($providerRow['service_category'] ?? '')));
+    $provAvailability = strtolower(trim((string)($providerRow['availability_status'] ?? 'offline')));
+    $isAvailable = in_array($provAvailability, ['available', 'online'], true);
+
+    if (!$isAvailable) {
+        ob_end_clean();
+        echo json_encode([
+            'success' => true,
+            'live_bookings' => [],
+            'provider_service' => $provService,
+            'has_active_job' => false,
+            'count' => 0,
+            'availability' => 'offline'
+        ]);
+        exit;
+    }
 
     // Check if provider already has an accepted booking active
     $hasActive = false;
@@ -115,7 +130,7 @@ if ($method === 'GET') {
     $filter = strtolower(trim((string) ($_GET['filter'] ?? 'all')));
 
     // First, get the provider's service category
-    $providerStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+    $providerStmt = $conn->prepare("SELECT service_category, LOWER(COALESCE(availability_status, 'offline')) AS availability_status FROM service_providers WHERE provider_id = ? LIMIT 1");
     if (!$providerStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
@@ -131,6 +146,12 @@ if ($method === 'GET') {
     }
 
     $providerService = (string) ($providerRow['service_category'] ?? '');
+    $providerAvailability = strtolower(trim((string) ($providerRow['availability_status'] ?? 'offline')));
+    if (!in_array($providerAvailability, ['available', 'online'], true)) {
+        ob_end_clean();
+        echo json_encode(['success' => true, 'requests' => [], 'provider_service' => $providerService, 'availability' => 'offline']);
+        exit;
+    }
 
     $where = 'br.provider_id = ?';
     $types = 'i';

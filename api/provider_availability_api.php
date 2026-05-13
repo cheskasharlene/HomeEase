@@ -45,21 +45,13 @@ if ($method === 'GET') {
     }
 
     $isVerified = ((int) ($row['is_verified'] ?? 0)) === 1;
-    $normalized = $isVerified ? 'online' : 'offline';
-    $dbValue = $isVerified ? 'available' : 'offline';
-
-    // Keep DB availability in sync with verification rule.
-    $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ? WHERE provider_id = ?');
-    if ($updateStmt) {
-        $updateStmt->bind_param('si', $dbValue, $providerId);
-        $updateStmt->execute();
-        $updateStmt->close();
-    }
+    $rawAvailability = strtolower(trim((string) ($row['availability_status'] ?? 'offline')));
+    $normalized = in_array($rawAvailability, ['available', 'online'], true) ? 'online' : 'offline';
 
     echo json_encode([
         'success' => true,
         'availability' => $normalized,
-        'availability_raw' => $dbValue,
+        'availability_raw' => $rawAvailability,
         'is_verified' => $isVerified,
     ]);
     exit;
@@ -82,8 +74,16 @@ if ($method === 'POST') {
     }
 
     $isVerified = ((int) ($checkRow['is_verified'] ?? 0)) === 1;
-    $requested = $isVerified ? 'online' : 'offline';
-    $dbValue = $isVerified ? 'available' : 'offline';
+    $requested = strtolower(trim((string) ($_POST['availability'] ?? 'offline')));
+    if (!in_array($requested, ['online', 'offline'], true)) {
+        $requested = 'offline';
+    }
+
+    if (!$isVerified) {
+        $requested = 'offline';
+    }
+
+    $dbValue = $requested === 'online' ? 'available' : 'offline';
     $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ? WHERE provider_id = ?');
     if (!$updateStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);

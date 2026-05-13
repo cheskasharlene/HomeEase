@@ -268,6 +268,162 @@ body {
       transform: translateY(0);
     }
 
+    body.privacy-consent-open {
+      overflow: hidden;
+    }
+
+    .privacy-consent-ol {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(15, 23, 42, .56);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s ease;
+    }
+
+    .privacy-consent-ol.on {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .privacy-consent-card {
+      width: min(96vw, 680px);
+      max-height: min(88vh, 840px);
+      background: #fff;
+      border: 1px solid #f2dcc2;
+      border-radius: 20px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, .28);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      transform: translateY(12px) scale(.98);
+      transition: transform .24s ease;
+    }
+
+    .privacy-consent-ol.on .privacy-consent-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .privacy-consent-head {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .privacy-consent-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #fff3e0, #ffe4bf);
+      color: #d97706;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .privacy-consent-head h2 {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      font-size: 20px;
+      color: #1f2937;
+      line-height: 1.25;
+    }
+
+    .privacy-consent-head p {
+      margin: 6px 0 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: #6b7280;
+    }
+
+    .privacy-consent-body {
+      border: 1px solid #eee6db;
+      border-radius: 14px;
+      background: #fffdf9;
+      padding: 12px;
+      overflow-y: auto;
+      max-height: min(54vh, 460px);
+      scrollbar-width: thin;
+      scrollbar-color: #d6b98e #f4ebdd;
+    }
+
+    .privacy-consent-body h3 {
+      margin: 12px 0 5px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #1f2937;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .privacy-consent-body p {
+      margin: 0;
+      font-size: 12.5px;
+      line-height: 1.56;
+      color: #475569;
+      font-weight: 700;
+    }
+
+    .privacy-consent-check {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      border: 1px solid #f4ddbe;
+      background: #fffbf4;
+      border-radius: 12px;
+      padding: 10px 12px;
+      cursor: pointer;
+    }
+
+    .privacy-consent-check input {
+      margin-top: 2px;
+      width: 16px;
+      height: 16px;
+      accent-color: #d97706;
+      flex-shrink: 0;
+    }
+
+    .privacy-consent-check span {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1f2937;
+      line-height: 1.45;
+    }
+
+    .privacy-consent-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .privacy-consent-btn {
+      max-width: 180px;
+      margin-left: auto;
+    }
+
+    @media (max-width: 600px) {
+      .privacy-consent-ol {
+        padding: 10px;
+      }
+
+      .privacy-consent-card {
+        width: 100%;
+        max-height: 92vh;
+        border-radius: 16px;
+        padding: 14px;
+      }
+
+      .privacy-consent-body {
+        max-height: min(60vh, 470px);
+      }
+    }
+
     .verify-intro-handle {
       width: 46px;
       height: 5px;

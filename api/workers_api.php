@@ -16,7 +16,8 @@ $action = $_GET['action'] ?? 'list';
 if ($action === 'pros') {
     $sql = "SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, jobs_done, rating, is_verified
             FROM service_providers
-            WHERE status = 'active'
+                        WHERE status = 'active'
+                            AND LOWER(availability_status) IN ('available', 'online')
             ORDER BY jobs_done DESC
             LIMIT 6";
 

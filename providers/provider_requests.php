@@ -38,7 +38,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     @keyframes livePulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
 
     .feed-tabs {
-      display: flex; gap: 8px; padding: 0 16px 14px; overflow-x: auto;
+      display: flex; gap: 8px; padding: 10px 16px 14px; margin-top: 2px; overflow-x: auto;
       scrollbar-width: none;
     }
     .feed-tabs::-webkit-scrollbar { display: none; }

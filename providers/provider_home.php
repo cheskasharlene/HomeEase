@@ -20,7 +20,18 @@ $providerAddress = htmlspecialchars($_SESSION['provider_address'] ?? '');
 $providerSpecialty = htmlspecialchars($_SESSION['provider_specialty'] ?? 'Service Provider');
 $providerId = (int) ($_SESSION['provider_id'] ?? 0);
 
-$availabilityStatus = $isVerified ? 'online' : 'offline';
+$availabilityStatus = 'offline';
+if ($isVerified) {
+  $availabilityStmt = $conn->prepare('SELECT COALESCE(availability_status, "offline") AS availability_status FROM service_providers WHERE provider_id = ? LIMIT 1');
+  if ($availabilityStmt) {
+    $availabilityStmt->bind_param('i', $providerId);
+    $availabilityStmt->execute();
+    $availabilityRow = $availabilityStmt->get_result()->fetch_assoc();
+    $availabilityStmt->close();
+    $currentAvailability = strtolower(trim((string) ($availabilityRow['availability_status'] ?? 'offline')));
+    $availabilityStatus = in_array($currentAvailability, ['available', 'online'], true) ? 'online' : 'offline';
+  }
+}
 
 require_once __DIR__ . '/provider_dashboard_data.php';
 $dashboardSummary = providerDashboardSummary();
@@ -80,7 +91,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <div class="avail-wrap" id="availWrap" style="<?= $isVerified ? '' : 'display:none;' ?>">
             <div class="avail-lbl">Status:</div>
             <label class="avail-sw">
-              <input type="checkbox" id="availToggle" <?= ($isVerified && $availabilityStatus === 'online') ? 'checked' : '' ?> disabled>
+              <input type="checkbox" id="availToggle" <?= ($isVerified && $availabilityStatus === 'online') ? 'checked' : '' ?> <?= $isVerified ? '' : 'disabled' ?> >
               <span class="avail-slider"></span>
             </label>
             <div class="avail-status" id="availLabel"><?= ($isVerified && $availabilityStatus === 'online') ? 'Online' : 'Offline' ?></div>
@@ -373,6 +384,55 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         <button class="verify-intro-cta" type="button" onclick="goToDashboardFromIntro()">Go to Dashboard</button>
       </div>
     </div>
+
+    <div class="privacy-consent-ol" id="privacyConsentModal" aria-hidden="true">
+      <div class="privacy-consent-card" role="dialog" aria-modal="true" aria-labelledby="privacyConsentTitle" aria-describedby="privacyConsentDesc">
+        <div class="privacy-consent-head">
+          <div class="privacy-consent-icon"><i class="bi bi-shield-check"></i></div>
+          <div>
+            <h2 id="privacyConsentTitle">Data Privacy Consent Agreement</h2>
+            <p id="privacyConsentDesc">Please review and agree before accessing requirements submission.</p>
+          </div>
+        </div>
+
+        <div class="privacy-consent-body">
+          <p>By registering as a Service Provider in HomeEase, you agree to the collection and processing of your personal data under the following terms:</p>
+
+          <h3>1. Consent to Data Collection</h3>
+          <p>You voluntarily provide your personal information, including: Full name, contact details, identification documents, location data, and service-related credentials.</p>
+
+          <h3>2. Purpose of Data Processing</h3>
+          <p>Your data will be used for: account verification, matching with customers, booking management, payment processing, and performance monitoring.</p>
+
+          <h3>3. Data Sharing</h3>
+          <p>You agree that your data may be shared with: customers (limited to necessary booking details), payment processors, and legal authorities when required.</p>
+
+          <h3>4. Data Protection</h3>
+          <p>HomeEase commits to protecting your data through: secure storage systems, controlled access, and data encryption.</p>
+
+          <h3>5. Rights of the Provider</h3>
+          <p>You have the right to: access your personal data, request corrections, withdraw consent, and request account deletion.</p>
+
+          <h3>6. Data Retention</h3>
+          <p>Your data will be stored only as long as necessary for operational and legal purposes.</p>
+
+          <h3>7. Withdrawal of Consent</h3>
+          <p>You may withdraw consent anytime by requesting account deletion. However, this may affect your ability to use the platform.</p>
+
+          <h3>8. Agreement</h3>
+          <p>By clicking "I Agree" or continuing registration, you confirm that you have read and understood this agreement and consent to the collection and use of your data.</p>
+        </div>
+
+        <label class="privacy-consent-check" for="privacyConsentCheckbox">
+          <input type="checkbox" id="privacyConsentCheckbox">
+          <span>I have read and agree to the Data Privacy Consent Agreement</span>
+        </label>
+
+        <div class="privacy-consent-actions">
+          <button type="button" class="verify-primary-btn privacy-consent-btn" id="privacyAgreeBtn">I Agree</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="../assets/js/app.js"></script>
@@ -426,6 +486,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     const localStateKey = 'he_provider_last_state_' + providerId;
     const localOnboardingSeenKey = 'he_provider_verified_seen_' + providerId;
     const localVerifiedNotifKey = 'he_provider_notifs_' + providerId;
+    const localPrivacyConsentKey = 'he_provider_privacy_consent_' + providerId;
 
       // SERVICE_CONFIG and all tools/skills/checkboxes logic removed as not needed anymore
 
@@ -435,6 +496,70 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     const dynamicServiceRequirements = document.getElementById('dynamicServiceRequirements');
     const serviceSpecificSection = document.getElementById('serviceSpecificSection');
     const serviceSpecificNotes = document.getElementById('serviceSpecificNotes');
+    const privacyConsentModal = document.getElementById('privacyConsentModal');
+    const privacyConsentCheckbox = document.getElementById('privacyConsentCheckbox');
+    const privacyAgreeBtn = document.getElementById('privacyAgreeBtn');
+
+    function hasAcceptedPrivacyConsent() {
+      try {
+        return localStorage.getItem(localPrivacyConsentKey) === '1';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function markPrivacyConsentAccepted() {
+      try {
+        localStorage.setItem(localPrivacyConsentKey, '1');
+      } catch (e) {
+        // Ignore storage errors.
+      }
+    }
+
+    function openPrivacyConsentModal() {
+      if (!privacyConsentModal) return;
+      privacyConsentModal.classList.add('on');
+      privacyConsentModal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('privacy-consent-open');
+      if (privacyConsentCheckbox) privacyConsentCheckbox.checked = false;
+      window.requestAnimationFrame(() => {
+        const scrollBox = privacyConsentModal.querySelector('.privacy-consent-body');
+        if (scrollBox) scrollBox.scrollTop = 0;
+      });
+    }
+
+    function closePrivacyConsentModal() {
+      if (!privacyConsentModal) return;
+      privacyConsentModal.classList.remove('on');
+      privacyConsentModal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('privacy-consent-open');
+    }
+
+    function shouldShowPrivacyConsentGate() {
+      const isRequirementsState = backendVerificationState !== 'pending' && backendVerificationState !== 'approval_ready' && backendVerificationState !== 'verified';
+      return isRequirementsState && !hasAcceptedPrivacyConsent();
+    }
+
+    function initPrivacyConsentGate() {
+      if (privacyAgreeBtn) {
+        privacyAgreeBtn.addEventListener('click', function () {
+          if (!privacyConsentCheckbox || !privacyConsentCheckbox.checked) {
+            showNotice('Please confirm the agreement checkbox before continuing.');
+            return;
+          }
+          markPrivacyConsentAccepted();
+          closePrivacyConsentModal();
+          const verifyFlow = document.getElementById('verifyFlow');
+          if (verifyFlow) {
+            verifyFlow.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      }
+
+      if (shouldShowPrivacyConsentGate()) {
+        setTimeout(openPrivacyConsentModal, 120);
+      }
+    }
 
     // Service selection and tools/skills logic removed
 
@@ -563,9 +688,11 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     const toggle = document.getElementById('availToggle');
     const lbl = document.getElementById('availLabel');
     let isSavingAvailability = false;
+    let lastAvailabilityState = backendAvailability;
 
     function applyAvailability(availability) {
       const isOnline = String(availability || '').toLowerCase() === 'online';
+      lastAvailabilityState = isOnline ? 'online' : 'offline';
       if (toggle) toggle.checked = isOnline;
       if (lbl) lbl.textContent = isOnline ? 'Online' : 'Offline';
     }
@@ -594,7 +721,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         }
         isSavingAvailability = true;
         const desired = this.checked ? 'online' : 'offline';
-        const previous = this.checked ? 'offline' : 'online';
+        const previous = lastAvailabilityState;
+        applyAvailability(desired);
         try {
           const fd = new FormData();
           fd.append('availability', desired);
@@ -631,8 +759,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
       if (toggle && lbl) {
         if (state === 'verified') {
-          toggle.disabled = true;
-          applyAvailability('online');
+          toggle.disabled = false;
+          applyAvailability(backendAvailability);
         } else {
           toggle.disabled = true;
           applyAvailability('offline');
@@ -959,6 +1087,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     loadTodaySchedule();
     window.addEventListener('focus', loadTodaySchedule);
     setInterval(loadTodaySchedule, 30000);
+
+    initPrivacyConsentGate();
 
     // Dynamic greeting update
     function updateGreeting() {

@@ -431,7 +431,7 @@ if ($method === 'POST' && $action === '') {
             $providerStmt = $conn->prepare(
                 "SELECT provider_id AS id, full_name AS name, service_category FROM service_providers
                  WHERE status = 'active'
-                   AND LOWER(availability_status) <> 'unavailable'
+                                     AND LOWER(availability_status) IN ('available', 'online')
                    AND LOWER(service_category) LIKE ?
                  ORDER BY rating DESC, jobs_done DESC"
             );
