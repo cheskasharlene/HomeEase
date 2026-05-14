@@ -169,17 +169,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
                 </div>
                 <i class="bi bi-chevron-right p-row-arrow"></i>
               </div>
-              <div class="p-row" onclick="goPage('provider_earnings.php')">
-                <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
-                    <rect x="2" y="7" width="20" height="14" rx="2" stroke="#F5A623" stroke-width="2" />
-                    <path d="M16 7v-2a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M7 11h10M7 15h10" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
-                  </svg></div>
-                <div class="p-row-info">
-                  <div class="p-row-lbl">Earnings</div>
-                  <div class="p-row-sub">Track your income</div>
-                </div>
-                <i class="bi bi-chevron-right p-row-arrow"></i>
-              </div>
+              <!-- Earnings removed: now accessible via bottom navigation -> provider_earnings.php -->
               <div class="p-row" onclick="goPage('provider_reviews.php')">
                 <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
@@ -213,8 +203,8 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             class="nl">Home</span></div>
           <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span
             class="nl">Requests</span></div>
-          <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span
-            class="nl">Calendar</span></div>
+          <div class="ni" onclick="goPage('provider_earnings.php')"><i class="bi bi-cash-stack"></i><span
+            class="nl">Earnings</span></div>
           <div class="ni on"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php else: ?>
           <div class="ni" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span

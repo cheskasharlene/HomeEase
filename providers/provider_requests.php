@@ -302,7 +302,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       <div class="bnav">
         <div class="ni" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni on" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span class="nl">Requests</span></div>
-        <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span class="nl">Calendar</span></div>
+        <div class="ni" onclick="goPage('provider_earnings.php')"><i class="bi bi-cash-stack"></i><span class="nl">Earnings</span></div>
         <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>
     </div>
@@ -338,6 +338,43 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     let pollTimer = null;
     let knownIds = new Set();
     let isAccepting = false;
+    let requestedBookingId = null; // booking_id from URL to auto-open
+
+    function tryOpenRequestedBooking() {
+      if (!requestedBookingId) return;
+      const id = parseInt(requestedBookingId, 10);
+      if (!id) return;
+
+      // First try: find live accept button (opens map modal)
+      const btn = document.getElementById('btnAccept' + id);
+      if (btn) {
+        btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Click after small delay so rendering/scroll settles
+        setTimeout(() => btn.click(), 220);
+        requestedBookingId = null;
+        return;
+      }
+
+      // Second try: find live card and highlight it
+      const card = document.getElementById('liveCard' + id);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // transient highlight
+        const orig = card.style.boxShadow;
+        card.style.boxShadow = '0 6px 30px rgba(232,130,12,0.25)';
+        setTimeout(() => card.style.boxShadow = orig, 1800);
+        requestedBookingId = null;
+        return;
+      }
+
+      // For requests in "my requests" view, attempt to find req-card by data attribute
+      const reqCard = document.querySelector(`.req-card[data-booking-id="${id}"]`);
+      if (reqCard) {
+        reqCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        requestedBookingId = null;
+        return;
+      }
+    }
 
     function goPage(p) { window.location.href = p; }
 
@@ -378,8 +415,14 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           document.getElementById('feedSubtitle').textContent =
             count > 0 ? `${count} booking${count > 1 ? 's' : ''} waiting for a provider` : 'No live bookings right now';
           document.getElementById('feedCount').textContent = count > 0 ? count + ' live' : '';
+
+          // If a booking_id was provided in the URL, try to open it now
+          tryOpenRequestedBooking();
         } else {
           renderMyRequests(data.requests || []);
+
+          // Also attempt in case the booking is in "my requests"
+          tryOpenRequestedBooking();
         }
 
         document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
@@ -696,6 +739,12 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
     document.addEventListener('DOMContentLoaded', () => {
       startProviderTracking();
+
+      // Parse booking_id from URL so we can auto-open details after feed loads
+      const params = new URLSearchParams(window.location.search);
+      const bid = params.get('booking_id');
+      if (bid && /^\d+$/.test(bid)) requestedBookingId = bid;
+
       startPolling();
     });
   </script>

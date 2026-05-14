@@ -278,8 +278,9 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                 if ($initials === '' && $service !== '') { $initials = strtoupper(substr($service, 0, 2)); }
                 $timeLabel = $date !== '' ? $date : 'TBD';
                 if ($time !== '') { $timeLabel .= ', ' . $time; }
+                $bid = (int) ($req['booking_id'] ?? 0);
               ?>
-                <div class="req-card">
+                <div class="req-card" data-booking-id="<?= $bid ?>" onclick="goPage('provider_requests.php?booking_id=<?= $bid ?>')" style="cursor:pointer;">
                   <div class="req-ic"><?= $initials ?></div>
                   <div class="req-body">
                     <div class="req-type"><?= $service ?></div>
@@ -289,8 +290,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
                     <div class="req-price">PHP <?= $price ?></div>
                     <div class="req-btns">
-                      <button class="btn-accept">Accept</button>
-                      <button class="btn-decline">Decline</button>
+                      <button class="btn-accept" onclick="event.stopPropagation();">Accept</button>
+                      <button class="btn-decline" onclick="event.stopPropagation();">Decline</button>
                     </div>
                   </div>
                 </div>
@@ -298,19 +299,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             <?php endif; ?>
           </div>
 
-          <div class="sec-row">
-            <div class="sec-ttl">Today's Schedule</div>
-            <span class="sec-lnk" onclick="goPage('provider_schedule.php')">Full calendar -></span>
-          </div>
-          <div class="sched-list" id="schedList">
-            <div class="sched-card">
-              <div class="sched-dot"></div>
-              <div>
-                <div class="sched-time">Loading...</div>
-                <div class="sched-title">Fetching today's schedule</div>
-              </div>
-            </div>
-          </div>
+
 
           <div class="sec-row">
             <div class="sec-ttl">Earnings This Month</div>
@@ -364,7 +353,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         <?php if ($isVerified): ?>
           <div class="ni on" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
           <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span class="nl">Requests</span></div>
-          <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span class="nl">Calendar</span></div>
+          <div class="ni" onclick="goPage('provider_earnings.php')"><i class="bi bi-cash-stack"></i><span class="nl">Earnings</span></div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php else: ?>
           <div class="ni on" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
@@ -1084,9 +1073,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       openVerifiedIntro();
     }
 
-    loadTodaySchedule();
-    window.addEventListener('focus', loadTodaySchedule);
-    setInterval(loadTodaySchedule, 30000);
+    // Today's Schedule removed from home — no periodic schedule fetch required.
 
     initPrivacyConsentGate();
 

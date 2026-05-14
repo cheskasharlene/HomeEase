@@ -106,8 +106,8 @@ $availableServices = $servicesResult ? $servicesResult->fetch_all(MYSQLI_ASSOC) 
             class="nl">Home</span></div>
         <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span
             class="nl">Requests</span></div>
-        <div class="ni" onclick="goPage('provider_schedule.php')"><i class="bi bi-calendar3"></i><span
-          class="nl">Calendar</span></div>
+        <div class="ni" onclick="goPage('provider_earnings.php')"><i class="bi bi-cash-stack"></i><span
+          class="nl">Earnings</span></div>
         <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span
             class="nl">Profile</span></div>
       </div>
