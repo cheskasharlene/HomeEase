@@ -9,7 +9,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-define('GEMINI_API_KEY', 'AIzaSyC6yIzpIB6NxNfOiPYwp3iEV8IYUjGq2ZMAIzaSyC4ib_kdFNxMVWc18iAtzdME4iIIXShxKY');
+define('GEMINI_API_KEY', 'AIzaSyDr_BDc9uKhokxnm5-Ql-lUMnKr0GtQJWQ');
 // Fallback chain — tried in order; first 200 OK wins
 define('GEMINI_MODELS', [
     'gemini-2.5-flash',       // best quality; may 503 if overloaded
