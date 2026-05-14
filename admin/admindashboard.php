@@ -1009,30 +1009,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
-      <div class="a-scroll" id="analytics-scroll" style="padding-top:14px;padding-bottom:90px;">
-
-        <!-- Growth Metrics -->
-        <div class="an-grid" id="anMetrics">
-          <div class="an-metric flat">
-            <div class="an-metric-lbl">This Month</div>
-            <div class="an-metric-val" id="anThisMonth">–</div>
-            <div class="an-metric-chg flat" id="anGrowth"><i class="bi bi-dash"></i> –</div>
-          </div>
-          <div class="an-metric flat">
-            <div class="an-metric-lbl">Last Month</div>
-            <div class="an-metric-val" id="anLastMonth">–</div>
-            <div class="an-metric-chg flat"><i class="bi bi-calendar3"></i> comparison</div>
-          </div>
-        </div>
-
+      <div class="a-scroll" id="analytics-scroll" style="padding-top:8px;padding-bottom:90px;">
         <div class="an-cards-grid">
-          <!-- Bookings Trend -->
-          <div class="an-chart-card">
-            <div class="an-chart-ttl">Booking Trends</div>
-            <div class="an-chart-sub">Daily bookings over the last 30 days</div>
-            <div class="an-chart-canvas"><canvas id="chartBookingTrend" height="180"></canvas></div>
-          </div>
-
           <!-- Service Distribution -->
           <div class="an-chart-card">
             <div class="an-chart-ttl">Service Distribution</div>
@@ -2602,56 +2580,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           const a = data.analytics;
           const c = chartColors();
 
-          // ── Growth metrics ──
-          const mc = a.monthly_comparison;
-          document.getElementById('anThisMonth').textContent = mc.this_total;
-          document.getElementById('anLastMonth').textContent = mc.last_total;
-          const growthEl = document.getElementById('anGrowth');
-          const metricEl = growthEl.closest('.an-metric');
-          if (mc.growth_pct > 0) {
-            metricEl.className = 'an-metric up';
-            growthEl.className = 'an-metric-chg up';
-            growthEl.innerHTML = `<i class="bi bi-arrow-up-short"></i> ${mc.growth_pct}% growth`;
-          } else if (mc.growth_pct < 0) {
-            metricEl.className = 'an-metric down';
-            growthEl.className = 'an-metric-chg down';
-            growthEl.innerHTML = `<i class="bi bi-arrow-down-short"></i> ${Math.abs(mc.growth_pct)}% decline`;
-          } else {
-            metricEl.className = 'an-metric flat';
-            growthEl.className = 'an-metric-chg flat';
-            growthEl.innerHTML = `<i class="bi bi-dash"></i> No change`;
-          }
-
-          // ── Booking Trend (line) ──
+          // Growth metrics and booking trend were removed from the analytics layout.
+          // Keep only the remaining charts below.
           destroyChart('trend');
-          const trendCtx = document.getElementById('chartBookingTrend').getContext('2d');
-          _chartInstances.trend = new Chart(trendCtx, {
-            type: 'line',
-            data: {
-              labels: a.daily_bookings.map(d => d.day),
-              datasets: [{
-                label: 'Bookings',
-                data: a.daily_bookings.map(d => d.count),
-                borderColor: '#F5A623',
-                backgroundColor: 'rgba(245,166,35,.12)',
-                fill: true,
-                tension: .4,
-                borderWidth: 2.5,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: '#F5A623',
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { grid: { display: false }, ticks: { color: c.text, font: { size: 9, family: 'Nunito' }, maxTicksLimit: 7 } },
-                y: { beginAtZero: true, grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 }, stepSize: 1 } }
-              },
-              interaction: { intersect: false, mode: 'index' }
-            }
-          });
 
           // ── Service Distribution (doughnut) ──
           destroyChart('svcDist');

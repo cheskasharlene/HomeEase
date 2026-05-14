@@ -13,25 +13,8 @@ include __DIR__ . '/includes/sidebar.php';
       <button class="hdr-btn" onclick="loadAnalytics()" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
     </div>
   </div>
-  <div class="a-scroll" id="analytics-scroll" style="padding-top:14px;padding-bottom:90px;">
-    <div class="an-grid" id="anMetrics">
-      <div class="an-metric flat">
-        <div class="an-metric-lbl">This Month</div>
-        <div class="an-metric-val" id="anThisMonth">–</div>
-        <div class="an-metric-chg flat" id="anGrowth"><i class="bi bi-dash"></i> –</div>
-      </div>
-      <div class="an-metric flat">
-        <div class="an-metric-lbl">Last Month</div>
-        <div class="an-metric-val" id="anLastMonth">–</div>
-        <div class="an-metric-chg flat"><i class="bi bi-calendar3"></i> comparison</div>
-      </div>
-    </div>
+  <div class="a-scroll" id="analytics-scroll" style="padding-top:8px;padding-bottom:90px;">
     <div class="an-cards-grid">
-      <div class="an-chart-card">
-        <div class="an-chart-ttl">Booking Trends</div>
-        <div class="an-chart-sub">Daily bookings over the last 30 days</div>
-        <div class="an-chart-canvas"><canvas id="chartBookingTrend" height="180"></canvas></div>
-      </div>
       <div class="an-chart-card">
         <div class="an-chart-ttl">Service Distribution</div>
         <div class="an-chart-sub">Bookings by service category</div>

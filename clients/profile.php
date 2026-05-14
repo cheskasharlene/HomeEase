@@ -78,7 +78,7 @@ if ($appBase === '') {
       flex: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      padding-bottom: 96px;
+      padding-bottom: 80px;
       scrollbar-width: none;
       position: relative;
       z-index: 1;
@@ -541,24 +541,6 @@ if ($appBase === '') {
               <div class="p-row-info">
                 <div class="p-row-lbl">Saved Addresses</div>
                 <div class="p-row-sub" id="addressRowSub">Manage delivery addresses</div>
-              </div>
-              <i class="bi bi-chevron-right p-row-arrow"></i>
-            </div>
-          </div>
-
-          <div class="p-sec">
-            <div class="p-sec-ttl">Support</div>
-            <div class="p-row" onclick="openSettingsScreen('help')">
-              <div class="p-row-ic">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="9" stroke="#F5A623" stroke-width="2" />
-                  <path d="M9 9a3 3 0 015.8 1c0 2-3 3-3 3" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
-                  <circle cx="12" cy="17" r="1" fill="#F5A623" />
-                </svg>
-              </div>
-              <div class="p-row-info">
-                <div class="p-row-lbl">Help Center</div>
-                <div class="p-row-sub">FAQs & support articles</div>
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
