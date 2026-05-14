@@ -15,15 +15,15 @@ include __DIR__ . '/includes/sidebar.php';
   </div>
   <div class="a-scroll" id="analytics-scroll" style="padding-top:8px;padding-bottom:90px;">
     <div class="an-cards-grid">
-      <div class="an-chart-card">
+      <div class="an-chart-card service-dist-card">
         <div class="an-chart-ttl">Service Distribution</div>
         <div class="an-chart-sub">Bookings by service category</div>
-        <div class="an-chart-canvas" style="max-width:280px;margin:0 auto;"><canvas id="chartServiceDist" height="220"></canvas></div>
+        <div class="an-chart-canvas service-dist-canvas"><canvas id="chartServiceDist" height="220"></canvas></div>
       </div>
-      <div class="an-chart-card full-span">
+      <div class="an-chart-card weekly-revenue-card">
         <div class="an-chart-ttl">Weekly Revenue</div>
         <div class="an-chart-sub">Revenue from completed bookings (last 8 weeks)</div>
-        <div class="an-chart-canvas"><canvas id="chartRevenue" height="180"></canvas></div>
+        <div class="an-chart-canvas"><canvas id="chartRevenue" height="220"></canvas></div>
       </div>
       <div class="an-chart-card full-span">
         <div class="an-chart-ttl">Top Performing Workers</div>

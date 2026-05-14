@@ -202,23 +202,57 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
+      padding-left: 12px;
     }
 
     .legend-item {
       display: flex;
       align-items: center;
-      gap: 7px;
-      font-size: 12px;
+      gap: 8px;
+      font-size: 13px;
       font-weight: 600;
       color: var(--txt-primary);
+      transition: transform .15s;
+    }
+    .legend-item:hover {
+      transform: translateX(4px);
     }
 
     .legend-dot {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    }
+
+    /* ── Chart Legend Enhancement ── */
+    .chartjs-legend {
+      padding-top: 16px !important;
+      margin-top: 16px !important;
+      border-top: 1px solid var(--border-col);
+      display: flex !important;
+      gap: 14px !important;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .chartjs-legend li {
+      list-style: none !important;
+      padding: 4px 8px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+    }
+
+    .chartjs-legend li:before {
+      width: 11px !important;
+      height: 11px !important;
+      border-radius: 50% !important;
+      margin-right: 2px !important;
     }
 
     /* ── Booking card ── */
@@ -958,27 +992,38 @@
 
     .an-chart-card {
       background: var(--bg-card);
-      border-radius: 16px;
+      border-radius: 18px;
       border: 1.5px solid var(--border-col);
-      padding: 16px;
-      margin: 0 18px 14px;
+      padding: 22px 18px;
+      margin: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .an-chart-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
     }
     .an-chart-ttl {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 800;
       color: var(--txt-primary);
       font-family: 'Poppins', sans-serif;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
+      letter-spacing: -.3px;
     }
     .an-chart-sub {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--txt-muted);
       font-family: 'Nunito', sans-serif;
-      margin-bottom: 14px;
+      margin-bottom: 18px;
+      font-weight: 500;
     }
     .an-chart-canvas {
       width: 100%;
       position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .an-heatmap {
       display: grid;
@@ -1060,4 +1105,85 @@
       color: var(--teal);
       flex-shrink: 0;
       font-family: 'Poppins', sans-serif;
+    }
+
+    /* ── Analytics Cards Grid ── */
+    .an-cards-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      padding: 0 18px;
+    }
+
+    .an-chart-card.full-span {
+      grid-column: 1 / -1;
+    }
+
+    .an-chart-card {
+      padding: 20px 18px;
+    }
+
+    .an-chart-card.service-dist-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card) 100%);
+    }
+
+    .an-chart-card.weekly-revenue-card {
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card) 100%);
+    }
+
+    .service-dist-canvas {
+      padding: 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+    }
+
+    .service-dist-canvas canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    /* Chart Container Styling */
+    .an-chart-canvas canvas {
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* ── Responsive Analytics Grid ── */
+    @media (max-width: 1024px) {
+      .an-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+
+      .an-chart-card.full-span {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .an-cards-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 0 14px;
+      }
+
+      .an-chart-card {
+        padding: 16px 12px;
+      }
+
+      .an-chart-ttl {
+        font-size: 14px;
+      }
+
+      .an-chart-sub {
+        font-size: 11px;
+        margin-bottom: 12px;
+      }
+
+      .service-dist-canvas {
+        padding: 12px 0;
+        min-height: 240px;
+      }
     }

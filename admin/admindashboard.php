@@ -671,6 +671,38 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .an-chart-ttl { font-size:14px; font-weight:800; color:var(--txt-primary); font-family:'Poppins',sans-serif; margin-bottom:4px; }
     .an-chart-sub { font-size:11px; color:var(--txt-muted); margin-bottom:14px; }
     .an-chart-canvas { width:100%; position:relative; }
+    .service-dist-canvas { min-height:220px; max-width:340px; margin:0 auto 8px; }
+    .service-dist-canvas canvas { width:100% !important; max-width:100%; }
+    .service-legend-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px 12px;
+      margin-top:8px;
+    }
+    .service-legend-item {
+      display:flex;
+      align-items:center;
+      gap:7px;
+      min-width:0;
+      font-size:11px;
+      font-weight:700;
+      color:var(--txt-primary);
+      font-family:'Nunito',sans-serif;
+    }
+    .service-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .service-legend-name {
+      flex:1;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .service-legend-count {
+      color:var(--txt-muted);
+      font-weight:800;
+      font-family:'Poppins',sans-serif;
+      flex-shrink:0;
+    }
     .an-worker-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-col); }
     .an-worker-row:last-child { border-bottom:none; }
     .an-worker-rank { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
@@ -685,8 +717,13 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .an-worker-jobs { font-size:11px; font-weight:700; color:var(--teal); flex-shrink:0; font-family:'Poppins',sans-serif; }
     .an-chart-card.full-span { grid-column:1 / -1; }
 
+    @media (max-width:420px) {
+      .service-legend-grid { grid-template-columns:1fr; }
+    }
+
     @media (min-width:700px) {
       .an-cards-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .an-chart-card.full-span { grid-column:1 / -1; }
     }
 
   </style>
@@ -1012,11 +1049,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       <div class="a-scroll" id="analytics-scroll" style="padding-top:8px;padding-bottom:90px;">
         <div class="an-cards-grid">
           <!-- Service Distribution -->
-          <div class="an-chart-card">
+          <div class="an-chart-card full-span">
             <div class="an-chart-ttl">Service Distribution</div>
             <div class="an-chart-sub">Bookings by service category</div>
-            <div class="an-chart-canvas" style="max-width:280px;margin:0 auto;"><canvas id="chartServiceDist"
+            <div class="an-chart-canvas service-dist-canvas"><canvas id="chartServiceDist"
                 height="220"></canvas></div>
+            <div class="service-legend-grid" id="serviceDistLegend"></div>
           </div>
 
           <!-- Revenue Chart -->
@@ -2571,7 +2609,57 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         };
       }
 
-      const AN_PALETTE = ['#F5A623', '#3b82f6', '#10b981', '#f472b6', '#8b5cf6', '#f59e0b', '#ec4899', '#06b6d4', '#ef4444', '#84cc16'];
+      const HOMEEASE_SERVICES = [
+        { key: 'cleaner', label: 'Cleaner', color: '#F5A623', terms: ['clean', 'cleaner', 'cleaning'] },
+        { key: 'helper', label: 'Helper', color: '#3b82f6', terms: ['helper', 'house helper', 'household helper'] },
+        { key: 'laundry_worker', label: 'Laundry Worker', color: '#10b981', terms: ['laundry', 'washer', 'washing'] },
+        { key: 'plumber', label: 'Plumber', color: '#06b6d4', terms: ['plumb', 'pipe'] },
+        { key: 'carpenter', label: 'Carpenter', color: '#8b5cf6', terms: ['carpenter', 'wood'] },
+        { key: 'appliance_technician', label: 'Appliance Technician', color: '#ef4444', terms: ['appliance', 'technician', 'electric', 'electronics'] }
+      ];
+
+      function toCanonicalServiceKey(name) {
+        const raw = String(name || '').toLowerCase().trim();
+        if (!raw) return null;
+
+        for (const service of HOMEEASE_SERVICES) {
+          if (service.terms.some(term => raw.includes(term))) {
+            return service.key;
+          }
+        }
+        return null;
+      }
+
+      function getServiceDistributionModel(serviceDistribution) {
+        const counts = Object.fromEntries(HOMEEASE_SERVICES.map(s => [s.key, 0]));
+
+        (serviceDistribution || []).forEach(item => {
+          const key = toCanonicalServiceKey(item?.name);
+          const count = Number(item?.count || 0);
+          if (key && Number.isFinite(count)) {
+            counts[key] += count;
+          }
+        });
+
+        return {
+          labels: HOMEEASE_SERVICES.map(s => s.label),
+          data: HOMEEASE_SERVICES.map(s => counts[s.key]),
+          colors: HOMEEASE_SERVICES.map(s => s.color)
+        };
+      }
+
+      function renderServiceLegend(model) {
+        const el = document.getElementById('serviceDistLegend');
+        if (!el) return;
+
+        el.innerHTML = HOMEEASE_SERVICES.map((service, idx) => `
+          <div class="service-legend-item">
+            <span class="service-legend-dot" style="background:${service.color}"></span>
+            <span class="service-legend-name">${service.label}</span>
+            <span class="service-legend-count">${model.data[idx]}</span>
+          </div>
+        `).join('');
+      }
 
       async function loadAnalytics() {
         try {
@@ -2586,14 +2674,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
           // ── Service Distribution (doughnut) ──
           destroyChart('svcDist');
+          const serviceModel = getServiceDistributionModel(a.service_distribution);
+          renderServiceLegend(serviceModel);
           const distCtx = document.getElementById('chartServiceDist').getContext('2d');
           _chartInstances.svcDist = new Chart(distCtx, {
             type: 'doughnut',
             data: {
-              labels: a.service_distribution.map(s => s.name),
+              labels: serviceModel.labels,
               datasets: [{
-                data: a.service_distribution.map(s => s.count),
-                backgroundColor: AN_PALETTE.slice(0, a.service_distribution.length),
+                data: serviceModel.data,
+                backgroundColor: serviceModel.colors,
                 borderWidth: 2,
                 borderColor: c.bg,
                 hoverOffset: 8,
@@ -2601,11 +2691,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             },
             options: {
               responsive: true,
+              maintainAspectRatio: false,
               cutout: '62%',
               plugins: {
                 legend: {
-                  position: 'bottom',
-                  labels: { color: c.text, font: { size: 11, family: 'Nunito', weight: '700' }, padding: 12, usePointStyle: true, pointStyleWidth: 10 }
+                  display: false
                 }
               }
             }
