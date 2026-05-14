@@ -147,10 +147,10 @@ if (empty($_SESSION['user_id'])) {
         el.innerHTML = `<div class="w-empty"><i class="bi bi-person-x"></i><div class="w-empty-ttl">No workers found</div><p>Try a different filter or search term.</p></div>`;
         return;
       }
-      el.innerHTML = workers.map(w => {
+        el.innerHTML = workers.map(w => {
         const safeRole = (w.role || '').replace(/'/g, "\\'");
         const imgSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=FDECC8&color=F5A623&size=128`;
-        const isOffline = w.status === 'offline';
+        // Status is display-only; bookings allowed regardless of online/offline
         return `
           <div class="w-card" onclick="goPage('worker_profile.php?id=${w.id}')">
             <div class="w-avatar-wrap">
@@ -168,9 +168,8 @@ if (empty($_SESSION['user_id'])) {
             </div>
             <div class="w-right">
               <span class="w-badge-avail badge-${w.status}">${statusLabel(w.status)}</span>
-              <button class="w-book-btn" ${isOffline ? 'disabled' : ''}
-                onclick="event.stopPropagation();bookWorker(${w.id},'${safeRole}')">
-                ${isOffline ? 'Unavailable' : 'Book Now'}
+              <button class="w-book-btn" onclick="event.stopPropagation();bookWorker(${w.id},'${safeRole}')">
+                Book Now
               </button>
             </div>
           </div>`;

@@ -755,7 +755,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         return `
     <div class="tech-card ${t.availability === 'unavailable' ? 'unavailable' : ''} ${selectedTechId == t.id ? 'selected' : ''}"
          id="techCard${t.id}"
-         onclick="${t.availability !== 'unavailable' ? `selectTech(${t.id}, this)` : ''}">
+         onclick="selectTech(${t.id}, this)">
       <div class="tech-av">${t.name[0]}</div>
       <div style="flex:1;min-width:0;">
         <div class="tech-name">${t.name}</div>
@@ -765,7 +765,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           &nbsp;·&nbsp; ${t.jobs_done} jobs
         </div>
       </div>
-      <div class="tech-info-btn ${t.availability === 'unavailable' ? 'unavailable' : ''}" onclick="event.stopPropagation(); showTechInfo(${t.id})">
+      <div class="tech-info-btn" onclick="event.stopPropagation(); showTechInfo(${t.id})">
         <i class="bi bi-info-circle"></i>
       </div>
     </div>
@@ -788,16 +788,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       document.getElementById('tmAvail').innerHTML = `<span class="avail-dot ${t.availability}"></span> ${t.availability}`;
 
       const btn = document.getElementById('tmSelectBtn');
-      if (t.availability === 'unavailable') {
-        btn.style.display = 'none';
-      } else {
-        btn.style.display = 'block';
-        btn.onclick = () => {
-          const card = document.getElementById('techCard' + t.id);
-          if (card) selectTech(t.id, card);
-          closeTechInfo();
-        };
-      }
+      btn.style.display = 'block';
+      btn.onclick = () => {
+        const card = document.getElementById('techCard' + t.id);
+        if (card) selectTech(t.id, card);
+        closeTechInfo();
+      };
 
       document.getElementById('tmReviewsContainer').innerHTML = '<div style="font-size:12px; color:#7A7064; text-align:center; padding:10px;"><i class="bi bi-arrow-clockwise"></i> Loading reviews...</div>';
       document.getElementById('techModalOverlay').classList.add('show');

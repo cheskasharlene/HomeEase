@@ -427,14 +427,14 @@ if ($method === 'POST' && $action === '') {
 
         $providers = [];
         {
-            // Broadcast to ALL available providers matching the service (no cap)
-            $providerStmt = $conn->prepare(
-                "SELECT provider_id AS id, full_name AS name, service_category FROM service_providers
-                 WHERE status = 'active'
-                                     AND LOWER(availability_status) IN ('available', 'online')
-                   AND LOWER(service_category) LIKE ?
-                 ORDER BY rating DESC, jobs_done DESC"
-            );
+                        // Broadcast to ALL providers matching the service (no cap).
+                        // NOTE: availability (online/offline) is treated as display-only and must not filter matching.
+                        $providerStmt = $conn->prepare(
+                                "SELECT provider_id AS id, full_name AS name, service_category FROM service_providers
+                                 WHERE status = 'active'
+                                     AND LOWER(service_category) LIKE ?
+                                 ORDER BY rating DESC, jobs_done DESC"
+                        );
             $specialtyLike = '%' . strtolower($service) . '%';
             if ($providerStmt) {
                 $providerStmt->bind_param('s', $specialtyLike);

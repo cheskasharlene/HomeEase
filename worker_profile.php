@@ -63,7 +63,8 @@ if (!$worker_id) {
             const isVerified = p.is_verified == 1;
             const imgSrc = p.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=FDECC8&color=F5A623&size=128`;
             
-            const isAvailable = p.availability === 'available' && p.status === 'active';
+            // Treat availability as display-only; only account 'status' controls booking ability
+            const isAvailable = p.status === 'active';
             
             let html = `
                 <div class="w-hdr">
@@ -124,7 +125,7 @@ if (!$worker_id) {
             html += `
             <div class="wp-book-footer">
                 <button class="wp-book-btn" ${!isAvailable ? 'disabled' : ''} onclick="goPage('clients/booking_form.php?svc=${encodeURIComponent(p.specialty)}&newbooking=1')">
-                    <i class="bi bi-calendar-check"></i> ${isAvailable ? 'Book ' + p.name : 'Currently Unavailable'}
+                    <i class="bi bi-calendar-check"></i> Book ${p.name}
                 </button>
             </div>
             `;
