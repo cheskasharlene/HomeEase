@@ -9,7 +9,7 @@
 define("DB_HOST", getenv('DB_HOST') ?: "localhost");
 define("DB_USER", getenv('DB_USER') ?: "root");
 define("DB_PASS", getenv('DB_PASS') ?: "");
-define("DB_NAME", getenv('DB_NAME') ?: "homease_db");
+define("DB_NAME", getenv('DB_NAME') ?: "homeease_db");
 
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
@@ -45,6 +45,7 @@ function ensurePaymentsTable($conn)
         payment_reference VARCHAR(255) NULL,
         amount DECIMAL(10, 2) NOT NULL,
         transaction_id VARCHAR(100) NULL,
+        payment_proof_path VARCHAR(512) NULL,
         notes TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -53,7 +54,15 @@ function ensurePaymentsTable($conn)
         KEY idx_payment_status (payment_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
-    return $conn->query($sql) === TRUE || $conn->errno == 1050;
+    $created = ($conn->query($sql) === TRUE || $conn->errno == 1050);
+
+    // Safely add proof column to pre-existing tables
+    $check = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'payment_proof_path'");
+    if ($check && $check->num_rows === 0) {
+        $conn->query("ALTER TABLE `payments` ADD COLUMN `payment_proof_path` VARCHAR(512) NULL AFTER `transaction_id`");
+    }
+
+    return $created;
 }
 
 /**
@@ -108,9 +117,10 @@ function validatePaymentData($method, $reference = null)
  * @param string|null $reference Payment reference
  * @param float $amount Payment amount
  * @param string $status Payment status
+ * @param string|null $proofPath Path to the uploaded proof of payment image
  * @return array Result with 'success' bool and 'payment_id' or 'message'
  */
-function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $status = 'pending')
+function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $status = 'pending', $proofPath = null)
 {
     ensurePaymentsTable($conn);
 
@@ -125,8 +135,8 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
 
     $stmt = $conn->prepare(
         "INSERT INTO payments 
-        (booking_id, user_id, payment_method, payment_reference, amount, payment_status, transaction_id, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())"
+        (booking_id, user_id, payment_method, payment_reference, amount, payment_status, transaction_id, payment_proof_path, created_at) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())"
     );
 
     if (!$stmt) {
@@ -134,14 +144,15 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
     }
 
     $stmt->bind_param(
-        'iissdss',
+        'iissdsss',
         $bookingId,
         $userId,
         $method,
         $reference,
         $amount,
         $status,
-        $transactionId
+        $transactionId,
+        $proofPath
     );
 
     if ($stmt->execute()) {

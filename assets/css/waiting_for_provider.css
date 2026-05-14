@@ -29,17 +29,7 @@ body {
   margin: 0 auto;
 }
 
-/* Landscape: full width, no max-width cap */
-@media (orientation: landscape) {
-  .wfp-shell {
-    max-width: 100%;
-  }
 
-  /* Map gets more vertical space in landscape */
-  .wfp-map-wrap {
-    min-height: 40vh;
-  }
-}
 
 /* ---- TOP BAR ---- */
 .wfp-topbar {

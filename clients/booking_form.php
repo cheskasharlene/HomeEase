@@ -185,10 +185,22 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <label class="fl">GCash Number <span style="color:#ef4444;">*</span></label>
           <div class="gcash-input-wrapper">
             <input type="text" id="gcashNumber" class="fi" placeholder="09xxxxxxxxx" inputmode="numeric" maxlength="11" oninput="validateGCashNumber()">
-            <button type="button" class="btn-pay" id="payButton" onclick="processGCashPayment()" disabled><i class="bi bi-credit-card"></i> Pay</button>
           </div>
           <div class="payment-error" id="gcashError"></div>
-          <div class="gcash-status" id="gcashStatus" style="display:none;"></div>
+          
+          <div class="proof-upload-wrapper" id="gcashProofWrapper">
+            <span class="proof-upload-label">Upload Proof of Payment <span style="color:#ef4444;">*</span></span>
+            <div class="proof-upload-box" id="gcashUploadBox">
+              <i class="bi bi-cloud-arrow-up"></i>
+              <div class="proof-upload-text">Tap to upload receipt</div>
+              <div class="proof-upload-subtext">JPG, PNG, WEBP allowed</div>
+              <input type="file" id="gcashProofInput" class="proof-upload-input" accept="image/jpeg,image/png,image/webp" onchange="handleProofUpload(this, 'gcash')">
+            </div>
+            <div class="proof-preview-container" id="gcashPreviewContainer">
+              <img id="gcashPreviewImg" class="proof-preview-img" alt="Proof preview">
+              <button type="button" class="proof-remove-btn" onclick="removeProof('gcash')"><i class="bi bi-x"></i></button>
+            </div>
+          </div>
         </div>
 
         <!-- Bank Transfer Payment Section (Hidden by default) -->
@@ -196,10 +208,22 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <label class="fl">Account Number <span style="color:#ef4444;">*</span></label>
           <div class="bank-input-wrapper">
             <input type="text" id="accountNumber" class="fi" placeholder="Enter your account number" inputmode="numeric" maxlength="16" oninput="validateAccountNumber()">
-            <button type="button" class="btn-pay" id="bankPayButton" onclick="processBankPayment()" disabled><i class="bi bi-credit-card"></i> Pay</button>
           </div>
           <div class="payment-error" id="bankError"></div>
-          <div class="bank-status" id="bankStatus" style="display:none;"></div>
+          
+          <div class="proof-upload-wrapper" id="bankProofWrapper">
+            <span class="proof-upload-label">Upload Proof of Payment <span style="color:#ef4444;">*</span></span>
+            <div class="proof-upload-box" id="bankUploadBox">
+              <i class="bi bi-cloud-arrow-up"></i>
+              <div class="proof-upload-text">Tap to upload receipt</div>
+              <div class="proof-upload-subtext">JPG, PNG, WEBP allowed</div>
+              <input type="file" id="bankProofInput" class="proof-upload-input" accept="image/jpeg,image/png,image/webp" onchange="handleProofUpload(this, 'bank')">
+            </div>
+            <div class="proof-preview-container" id="bankPreviewContainer">
+              <img id="bankPreviewImg" class="proof-preview-img" alt="Proof preview">
+              <button type="button" class="proof-remove-btn" onclick="removeProof('bank')"><i class="bi bi-x"></i></button>
+            </div>
+          </div>
         </div>
 
         <div class="fixed-total-wrap">
@@ -884,11 +908,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     let gcashPaymentCompleted = false;
     let bankPaymentCompleted = false;
+    let currentPaymentProof = null;
 
     // Real-time GCash validation
     function validateGCashNumber() {
       const gcashInput = document.getElementById('gcashNumber');
-      const payButton = document.getElementById('payButton');
       const value = gcashInput.value.trim();
       
       // Only allow numeric input
@@ -896,125 +920,116 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       
       const gcashRegex = /^09\d{9}$/;
       const isValid = gcashRegex.test(gcashInput.value);
-      payButton.disabled = !isValid;
+      
+      if (isValid) {
+        document.getElementById('gcashProofWrapper').style.display = 'block';
+      } else {
+        document.getElementById('gcashProofWrapper').style.display = 'none';
+        removeProof('gcash');
+      }
     }
 
     // Real-time Bank Transfer validation
     function validateAccountNumber() {
       const accountInput = document.getElementById('accountNumber');
-      const payButton = document.getElementById('bankPayButton');
       const value = accountInput.value.trim();
       
       // Only allow numeric input
       accountInput.value = value.replace(/\D/g, '').slice(0, 16);
       
       const isValid = accountInput.value.length >= 10 && accountInput.value.length <= 16 && /^\d+$/.test(accountInput.value);
-      payButton.disabled = !isValid;
+      
+      if (isValid) {
+        document.getElementById('bankProofWrapper').style.display = 'block';
+      } else {
+        document.getElementById('bankProofWrapper').style.display = 'none';
+        removeProof('bank');
+      }
     }
 
     function handlePaymentMethodChange() {
       const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
       const gcashSection = document.getElementById('gcashSection');
       const bankSection = document.getElementById('bankSection');
-      gcashPaymentCompleted = false;
-      bankPaymentCompleted = false;
+      
+      // Reset proof state
+      currentPaymentProof = null;
 
       // Hide all payment sections
       gcashSection.style.display = 'none';
       bankSection.style.display = 'none';
+      
+      document.getElementById('gcashProofWrapper').style.display = 'none';
+      document.getElementById('bankProofWrapper').style.display = 'none';
+      
+      removeProof('gcash');
+      removeProof('bank');
 
       if (paymentMethod === 'gcash') {
         gcashSection.style.display = 'block';
         document.getElementById('paymentError').textContent = '';
         document.getElementById('gcashError').textContent = '';
-        document.getElementById('gcashStatus').style.display = 'none';
-        document.getElementById('payButton').disabled = true;
         document.getElementById('gcashNumber').value = '';
         validateGCashNumber();
       } else if (paymentMethod === 'bank') {
         bankSection.style.display = 'block';
         document.getElementById('paymentError').textContent = '';
         document.getElementById('bankError').textContent = '';
-        document.getElementById('bankStatus').style.display = 'none';
-        document.getElementById('bankPayButton').disabled = true;
         document.getElementById('accountNumber').value = '';
         validateAccountNumber();
       }
     }
-
-    function processGCashPayment() {
-      const gcashNumber = document.getElementById('gcashNumber').value.trim();
-      const gcashError = document.getElementById('gcashError');
-      const gcashStatus = document.getElementById('gcashStatus');
-      const payButton = document.getElementById('payButton');
-
-      gcashError.textContent = '';
-      gcashStatus.style.display = 'none';
-
-      // Validate GCash number (11 digits, starts with 09, numeric only)
-      const gcashRegex = /^09\d{9}$/;
-      if (!gcashNumber) {
-        gcashError.textContent = 'Please enter a valid GCash number (e.g., 09XXXXXXXXX)';
+    
+    function handleProofUpload(input, type) {
+      if (!input.files || !input.files[0]) return;
+      
+      const file = input.files[0];
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+      
+      if (!validTypes.includes(file.type)) {
+        toast('Only JPG, PNG and WEBP images are allowed.', 'e');
+        input.value = '';
         return;
       }
-      if (!gcashRegex.test(gcashNumber)) {
-        gcashError.textContent = 'Please enter a valid GCash number (e.g., 09XXXXXXXXX)';
+      
+      // Max 5MB
+      if (file.size > 5 * 1024 * 1024) {
+        toast('File size must be less than 5MB.', 'e');
+        input.value = '';
         return;
       }
-
-      // Simulate payment processing
-      payButton.disabled = true;
-      payButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
-
-      setTimeout(() => {
-        gcashPaymentCompleted = true;
-        payButton.disabled = true;
-        payButton.classList.add('success');
-        payButton.innerHTML = '<i class="bi bi-check-circle-fill"></i> Paid';
+      
+      currentPaymentProof = file;
+      if (type === 'gcash') gcashPaymentCompleted = true;
+      if (type === 'bank') bankPaymentCompleted = true;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const uploadBox = document.getElementById(type + 'UploadBox');
+        const previewContainer = document.getElementById(type + 'PreviewContainer');
+        const previewImg = document.getElementById(type + 'PreviewImg');
         
-        gcashStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment successful!';
-        gcashStatus.classList.add('success');
-        gcashStatus.style.display = 'flex';
-        
-        toast('✓ GCash payment successful!', 's');
-      }, 1500);
+        uploadBox.style.display = 'none';
+        previewImg.src = e.target.result;
+        previewContainer.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
     }
-
-    function processBankPayment() {
-      const accountNumber = document.getElementById('accountNumber').value.trim();
-      const bankError = document.getElementById('bankError');
-      const bankStatus = document.getElementById('bankStatus');
-      const payButton = document.getElementById('bankPayButton');
-
-      bankError.textContent = '';
-      bankStatus.style.display = 'none';
-
-      // Validate account number (10-16 digits, numeric only)
-      if (!accountNumber) {
-        bankError.textContent = 'Please enter a valid account number';
-        return;
-      }
-      if (accountNumber.length < 10 || accountNumber.length > 16 || !/^\d+$/.test(accountNumber)) {
-        bankError.textContent = 'Please enter a valid account number';
-        return;
-      }
-
-      // Simulate payment processing
-      payButton.disabled = true;
-      payButton.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
-
-      setTimeout(() => {
-        bankPaymentCompleted = true;
-        payButton.disabled = true;
-        payButton.classList.add('success');
-        payButton.innerHTML = '<i class="bi bi-check-circle-fill"></i> Paid';
-        
-        bankStatus.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment successful!';
-        bankStatus.classList.add('success');
-        bankStatus.style.display = 'flex';
-        
-        toast('✓ Bank transfer initiated!', 's');
-      }, 1500);
+    
+    function removeProof(type) {
+      currentPaymentProof = null;
+      if (type === 'gcash') gcashPaymentCompleted = false;
+      if (type === 'bank') bankPaymentCompleted = false;
+      
+      const input = document.getElementById(type + 'ProofInput');
+      const uploadBox = document.getElementById(type + 'UploadBox');
+      const previewContainer = document.getElementById(type + 'PreviewContainer');
+      const previewImg = document.getElementById(type + 'PreviewImg');
+      
+      if (input) input.value = '';
+      if (previewImg) previewImg.src = '';
+      if (previewContainer) previewContainer.style.display = 'none';
+      if (uploadBox) uploadBox.style.display = 'block';
     }
 
     async function submitBooking() {
@@ -1036,18 +1051,31 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       
       // Validate GCash payment if selected
       if (paymentMethod === 'gcash') {
-        if (!gcashPaymentCompleted) {
-          document.getElementById('paymentError').textContent = 'Please complete payment first';
-          toast('Please complete payment first', 'e');
+        const gcashNumber = document.getElementById('gcashNumber').value.trim();
+        const gcashRegex = /^09\d{9}$/;
+        if (!gcashRegex.test(gcashNumber)) {
+          document.getElementById('gcashError').textContent = 'Please enter a valid GCash number (e.g., 09XXXXXXXXX)';
+          toast('Please enter a valid GCash number', 'e');
+          return;
+        }
+        if (!currentPaymentProof) {
+          document.getElementById('paymentError').textContent = 'Please upload proof of payment for GCash';
+          toast('Please upload proof of payment for GCash', 'e');
           return;
         }
       }
       
       // Validate Bank Transfer payment if selected
       if (paymentMethod === 'bank') {
-        if (!bankPaymentCompleted) {
-          document.getElementById('paymentError').textContent = 'Please complete payment first';
-          toast('Please complete payment first', 'e');
+        const accountNumber = document.getElementById('accountNumber').value.trim();
+        if (accountNumber.length < 10 || accountNumber.length > 16 || !/^\d+$/.test(accountNumber)) {
+          document.getElementById('bankError').textContent = 'Please enter a valid account number';
+          toast('Please enter a valid account number', 'e');
+          return;
+        }
+        if (!currentPaymentProof) {
+          document.getElementById('paymentError').textContent = 'Please upload proof of payment for Bank Transfer';
+          toast('Please upload proof of payment for Bank Transfer', 'e');
           return;
         }
       }
@@ -1080,6 +1108,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }
       if (paymentMethod === 'bank') {
         fd.append('account_number', document.getElementById('accountNumber').value.trim());
+      }
+      if (currentPaymentProof) {
+        fd.append('payment_proof', currentPaymentProof);
       }
       fd.append('pricing_type', 'flat');
       fd.append('hours', 1);

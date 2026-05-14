@@ -338,6 +338,130 @@
       background: rgba(16, 185, 129, 0.1);
     }
 
+    /* Proof of Payment Upload Styling */
+    .proof-upload-wrapper {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed #EEDBC0;
+      display: none;
+    }
+    
+    body.dark .proof-upload-wrapper {
+      border-top-color: var(--border-col);
+    }
+    
+    .proof-upload-label {
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #5E564D;
+      margin-bottom: 8px;
+      display: block;
+    }
+    
+    body.dark .proof-upload-label {
+      color: var(--txt-col);
+    }
+    
+    .proof-upload-box {
+      border: 2px dashed #EEDBC0;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      background: #FFF8F0;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    
+    body.dark .proof-upload-box {
+      background: var(--bg-input);
+      border-color: var(--border-col);
+    }
+    
+    .proof-upload-box:hover {
+      border-color: #E8820C;
+      background: #FFF3E0;
+    }
+    
+    body.dark .proof-upload-box:hover {
+      border-color: #E8820C;
+      background: rgba(232, 130, 12, 0.1);
+    }
+    
+    .proof-upload-box i {
+      font-size: 32px;
+      color: #F5A623;
+      margin-bottom: 8px;
+    }
+    
+    .proof-upload-text {
+      font-size: 13px;
+      color: #7A7064;
+      font-weight: 600;
+    }
+    
+    body.dark .proof-upload-text {
+      color: var(--tm);
+    }
+    
+    .proof-upload-subtext {
+      font-size: 11px;
+      color: #999;
+      margin-top: 4px;
+    }
+    
+    .proof-upload-input {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .proof-preview-container {
+      display: none;
+      margin-top: 10px;
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #EEDBC0;
+    }
+    
+    body.dark .proof-preview-container {
+      border-color: var(--border-col);
+    }
+    
+    .proof-preview-img {
+      width: 100%;
+      max-height: 200px;
+      object-fit: cover;
+      display: block;
+    }
+    
+    .proof-remove-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    
+    .proof-remove-btn:hover {
+      background: rgba(239, 68, 68, 0.9);
+    }
+
     .bnav {
       position: absolute;
       bottom: 0;
