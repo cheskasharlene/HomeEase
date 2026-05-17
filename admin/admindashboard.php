@@ -1983,17 +1983,56 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('wkStatus').innerHTML = workerStateBadge('status', getWorkerVerificationBadgeState(w));
         document.getElementById('wkRating').textContent = parseFloat(w.rating || 0).toFixed(1);
         document.getElementById('wkJobs').textContent = w.jobs_done || 0;
-        let docHtml = '';
-        if (w.valid_id) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.valid_id}', 'Valid ID')"><i class="bi bi-card-list"></i>View Valid ID</button>`;
-        if (w.selfie_verification) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.selfie_verification}', 'Selfie Verification')"><i class="bi bi-person-circle"></i>View Selfie Verification</button>`;
-        if (w.proof_of_address) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.proof_of_address}', 'Proof of Address')"><i class="bi bi-geo-alt"></i>View Proof of Address</button>`;
-        if (w.barangay_clearance) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w.barangay_clearance}', 'Barangay Clearance')"><i class="bi bi-shield-check"></i>View Barangay Clearance</button>`;
-        if (w['tools_&_kits']) docHtml += `<button class="doc-view-btn" onclick="openImagePreview('${w['tools_&_kits']}', 'Tools & Kits')"><i class="bi bi-hammer"></i>View Tools & Kits</button>`;
-        if (!docHtml) docHtml = '<span style="color:var(--txt-muted);">No documents uploaded.</span>';
-        document.getElementById('wkVdocs').innerHTML = docHtml;
+        const wkVdocs = document.getElementById('wkVdocs');
+        if (wkVdocs) {
+          wkVdocs.innerHTML = '<span style="color:var(--txt-muted);">Loading documents...</span>';
+        }
+
+        const docOrder = ['valid_id', 'selfie', 'proof_of_address', 'barangay_clearance', 'tools_kits', 'gcash_qr', 'bank_qr'];
+        const docMeta = {
+          valid_id: { title: 'Valid ID', icon: 'bi-card-list' },
+          selfie: { title: 'Selfie Verification', icon: 'bi-person-circle' },
+          proof_of_address: { title: 'Proof of Address', icon: 'bi-geo-alt' },
+          barangay_clearance: { title: 'Barangay Clearance', icon: 'bi-shield-check' },
+          tools_kits: { title: 'Tools & Kits', icon: 'bi-hammer' },
+          gcash_qr: { title: 'GCash QR', icon: 'bi-qr-code' },
+          bank_qr: { title: 'Bank QR', icon: 'bi-qr-code-scan' }
+        };
+
+        const renderWorkerDocuments = (documents) => {
+          if (!wkVdocs || currentWorkerDetailId !== w.id) return;
+          const html = docOrder.flatMap(type => {
+            const items = Array.isArray(documents?.[type]) ? documents[type] : [];
+            const first = items[0];
+            if (!first || !first.file_path) return [];
+            const meta = docMeta[type];
+            return [`<button class="doc-view-btn" onclick="openImagePreview('${first.file_path}', '${meta.title}')"><i class="bi ${meta.icon}"></i>View ${meta.title}</button>`];
+          }).join('');
+          wkVdocs.innerHTML = html || '<span style="color:var(--txt-muted);">No documents uploaded.</span>';
+        };
+
+        const fallbackDocs = {};
+        if (w.valid_id) fallbackDocs.valid_id = [{ file_path: w.valid_id }];
+        if (w.selfie_verification) fallbackDocs.selfie = [{ file_path: w.selfie_verification }];
+        if (w.proof_of_address) fallbackDocs.proof_of_address = [{ file_path: w.proof_of_address }];
+        if (w.barangay_clearance) fallbackDocs.barangay_clearance = [{ file_path: w.barangay_clearance }];
+        if (w['tools_&_kits']) fallbackDocs.tools_kits = [{ file_path: w['tools_&_kits'] }];
+        if (w.gcash_qr) fallbackDocs.gcash_qr = [{ file_path: w.gcash_qr }];
+        if (w.bank_qr) fallbackDocs.bank_qr = [{ file_path: w.bank_qr }];
+        renderWorkerDocuments(fallbackDocs);
+
+        fetch(`../api/admin_documents_api.php?action=provider_documents&provider_id=${encodeURIComponent(w.id)}`, { cache: 'no-store' })
+          .then(r => r.json())
+          .then(data => {
+            if (!data || !data.success || !data.documents) return;
+            renderWorkerDocuments(data.documents);
+          })
+          .catch(() => {
+            // Keep the fallback documents already rendered.
+          });
         
         // Show action buttons for workers that have docs and are still awaiting review
-        const hasDocuments = !!(w.valid_id || w.selfie_verification || w.proof_of_address || w.barangay_clearance || w['tools_&_kits']);
+        const hasDocuments = !!(w.valid_id || w.selfie_verification || w.proof_of_address || w.barangay_clearance || w['tools_&_kits'] || w.gcash_qr || w.bank_qr);
         const verificationStatus = String(w.verification_status || '').toLowerCase().trim();
         const reviewableStatuses = ['pending', 'pending_review', 'submitted', 'partial', 'approval_ready', 'not_verified', 'not_submitted'];
         const isReviewable = reviewableStatuses.includes(verificationStatus);

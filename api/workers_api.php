@@ -77,7 +77,9 @@ if ($action === 'list') {
     $where = 'WHERE ' . implode(' AND ', $conditions);
 
     $sql = "SELECT t.provider_id AS id, t.full_name AS name, t.service_category AS role, t.availability_status AS status,
-                   t.jobs_done AS jobs, t.contact_number AS phone, t.rating, t.is_verified
+                   t.jobs_done AS jobs, t.contact_number AS phone, t.rating, t.is_verified,
+                   t.valid_id, t.barangay_clearance, t.selfie_verification, t.proof_of_address, t.`tools_&_kits`,
+                   t.gcash_qr, t.bank_qr, t.qr_gcash, t.qr_bank, t.verification_status
             FROM service_providers t $where ORDER BY $orderBy";
 
     $stmt = $conn->prepare($sql);
@@ -112,6 +114,14 @@ if ($action === 'list') {
             'rating' => (float) ($r['rating'] ?? 0),
             'phone' => $r['phone'] ?? '',
             'is_verified' => (bool) $r['is_verified'],
+            'valid_id' => $r['valid_id'] ?? '',
+            'barangay_clearance' => $r['barangay_clearance'] ?? '',
+            'selfie_verification' => $r['selfie_verification'] ?? '',
+            'proof_of_address' => $r['proof_of_address'] ?? '',
+            'tools_&_kits' => $r['tools_&_kits'] ?? '',
+            'gcash_qr' => $r['gcash_qr'] ?? ($r['qr_gcash'] ?? ''),
+            'bank_qr' => $r['bank_qr'] ?? ($r['qr_bank'] ?? ''),
+            'verification_status' => $r['verification_status'] ?? '',
         ];
     }, $rows);
 
@@ -126,7 +136,9 @@ if ($action === 'profile') {
         exit;
     }
 
-    $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, contact_number AS phone, address, profile_image, created_at, rating, jobs_done, status, is_verified FROM service_providers WHERE provider_id = ?");
+    $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, contact_number AS phone, address, profile_image, created_at, rating, jobs_done, status, is_verified,
+                                   valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits`, gcash_qr, bank_qr, qr_gcash, qr_bank, verification_status
+                            FROM service_providers WHERE provider_id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $provider = $stmt->get_result()->fetch_assoc();

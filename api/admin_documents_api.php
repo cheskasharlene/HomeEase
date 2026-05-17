@@ -32,6 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications')
             sp.selfie_verification,
             sp.proof_of_address,
             sp.`tools_&_kits`,
+            COALESCE(sp.qr_gcash, sp.gcash_qr) AS gcash_qr,
+            COALESCE(sp.qr_bank, sp.bank_qr) AS bank_qr,
             sp.verification_status
         FROM service_providers sp
         WHERE sp.verification_status IN ('submitted', 'partial')
@@ -81,6 +83,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications')
                 'label' => 'Tools & Kits'
             ];
         }
+        if ($row['gcash_qr']) {
+            $documents[] = [
+                'type' => 'gcash_qr',
+                'file_path' => $row['gcash_qr'],
+                'label' => 'GCash QR Code'
+            ];
+        }
+        if ($row['bank_qr']) {
+            $documents[] = [
+                'type' => 'bank_qr',
+                'file_path' => $row['bank_qr'],
+                'label' => 'Bank QR Code'
+            ];
+        }
         
         if (!empty($documents)) {
             $providers[$row['provider_id']] = [
@@ -115,6 +131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
             selfie_verification,
             proof_of_address,
             `tools_&_kits`,
+            COALESCE(qr_gcash, gcash_qr) AS gcash_qr,
+            COALESCE(qr_bank, bank_qr) AS bank_qr,
             verification_status
         FROM service_providers
         WHERE provider_id = ?"
@@ -162,6 +180,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
             'file_path' => $result['tools_&_kits'],
             'type' => 'tools_kits',
             'label' => 'Tools & Kits'
+        ];
+    }
+    if ($result['gcash_qr']) {
+        $documents['gcash_qr'][] = [
+            'file_path' => $result['gcash_qr'],
+            'type' => 'gcash_qr',
+            'label' => 'GCash QR Code'
+        ];
+    }
+    if ($result['bank_qr']) {
+        $documents['bank_qr'][] = [
+            'file_path' => $result['bank_qr'],
+            'type' => 'bank_qr',
+            'label' => 'Bank QR Code'
         ];
     }
 
@@ -349,7 +381,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'statistics') {
     $approved_stmt->close();
 
     $total_docs_stmt = $conn->prepare(
-        "SELECT COUNT(*) as count FROM service_providers WHERE (valid_id IS NOT NULL OR barangay_clearance IS NOT NULL OR selfie_verification IS NOT NULL OR proof_of_address IS NOT NULL OR `tools_&_kits` IS NOT NULL)"
+        "SELECT COUNT(*) as count FROM service_providers WHERE (valid_id IS NOT NULL OR barangay_clearance IS NOT NULL OR selfie_verification IS NOT NULL OR proof_of_address IS NOT NULL OR `tools_&_kits` IS NOT NULL OR COALESCE(qr_gcash, gcash_qr) IS NOT NULL OR COALESCE(qr_bank, bank_qr) IS NOT NULL)"
     );
     $total_docs_stmt->execute();
     $total_docs_result = $total_docs_stmt->get_result()->fetch_assoc();
