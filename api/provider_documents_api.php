@@ -49,6 +49,18 @@ $DOCUMENT_TYPES = [
         'allowed_types' => ['image/jpeg', 'image/png', 'image/webp'],
         'max_size' => 5242880, // 5MB
         'label' => 'Tools & Kits'
+    ],
+    'gcash_qr' => [
+        'folder' => 'payment',
+        'allowed_types' => ['image/jpeg', 'image/png'],
+        'max_size' => 3145728, // 3MB
+        'label' => 'GCash QR Code'
+    ],
+    'bank_qr' => [
+        'folder' => 'payment',
+        'allowed_types' => ['image/jpeg', 'image/png'],
+        'max_size' => 3145728, // 3MB
+        'label' => 'Bank QR Code'
     ]
 ];
 
@@ -92,6 +104,12 @@ function initializeTables($conn) {
     if (!in_array('tools_&_kits', $columns)) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN `tools_&_kits` VARCHAR(500)");
     }
+    if (!in_array('gcash_qr', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN gcash_qr VARCHAR(500)");
+    }
+    if (!in_array('bank_qr', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN bank_qr VARCHAR(500)");
+    }
 }
 
 /**
@@ -99,7 +117,7 @@ function initializeTables($conn) {
  */
 function ensureUploadDirectories() {
     $base_dir = __DIR__ . '/../assets/images/registration';
-    $subdirs = ['id', 'brgy', 'selfie', 'address', 'tools'];
+    $subdirs = ['id', 'brgy', 'selfie', 'address', 'tools', 'payment'];
     
     if (!is_dir($base_dir)) {
         mkdir($base_dir, 0755, true);
@@ -249,7 +267,9 @@ function getColumnNameForDocType($doc_type) {
         'barangay_clearance' => 'barangay_clearance',
         'selfie' => 'selfie_verification',
         'proof_of_address' => 'proof_of_address',
-        'tools_kits' => 'tools_&_kits'
+        'tools_kits' => 'tools_&_kits',
+        'gcash_qr' => 'gcash_qr',
+        'bank_qr' => 'bank_qr'
     ];
     return $mapping[$doc_type] ?? null;
 }
@@ -288,7 +308,7 @@ function storeDocumentInfo($conn, $provider_id, $document_type, $file_path, $ori
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     initializeTables($conn);
 
-    $required_docs = ['valid_id', 'selfie', 'proof_of_address', 'tools_kits'];
+    $required_docs = ['valid_id', 'selfie', 'proof_of_address', 'tools_kits', 'gcash_qr', 'bank_qr'];
     $optional_docs = ['barangay_clearance'];
     
     $uploaded_docs = [];
@@ -413,7 +433,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
 
     $stmt = $conn->prepare(
         "SELECT valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits`, 
-                verification_status, verification_submitted_at, verification_approved_at
+                gcash_qr, bank_qr, verification_status, verification_submitted_at, verification_approved_at
          FROM service_providers 
          WHERE provider_id = ?"
     );
@@ -433,6 +453,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
     if ($result['selfie_verification']) $documents['selfie'] = ['file_path' => $result['selfie_verification'], 'type' => 'selfie'];
     if ($result['proof_of_address']) $documents['proof_of_address'] = ['file_path' => $result['proof_of_address'], 'type' => 'proof_of_address'];
     if ($result['tools_&_kits']) $documents['tools_kits'] = ['file_path' => $result['tools_&_kits'], 'type' => 'tools_kits'];
+    if ($result['gcash_qr']) $documents['gcash_qr'] = ['file_path' => $result['gcash_qr'], 'type' => 'gcash_qr'];
+    if ($result['bank_qr']) $documents['bank_qr'] = ['file_path' => $result['bank_qr'], 'type' => 'bank_qr'];
 
     respond(true, '', ['documents' => $documents]);
 }
@@ -496,7 +518,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check_status') {
                 IF(barangay_clearance IS NOT NULL, 1, 0) as has_barangay_clearance,
                 IF(selfie_verification IS NOT NULL, 1, 0) as has_selfie,
                 IF(proof_of_address IS NOT NULL, 1, 0) as has_proof_of_address,
-                IF(`tools_&_kits` IS NOT NULL, 1, 0) as has_tools_kits
+                IF(`tools_&_kits` IS NOT NULL, 1, 0) as has_tools_kits,
+                IF(gcash_qr IS NOT NULL, 1, 0) as has_gcash_qr,
+                IF(bank_qr IS NOT NULL, 1, 0) as has_bank_qr
          FROM service_providers WHERE provider_id = ?"
     );
     $stmt->bind_param('i', $provider_id);
@@ -511,6 +535,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check_status') {
     if ($result['has_selfie']) $document_count++;
     if ($result['has_proof_of_address']) $document_count++;
     if ($result['has_tools_kits']) $document_count++;
+    if ($result['has_gcash_qr']) $document_count++;
+    if ($result['has_bank_qr']) $document_count++;
 
     respond(true, '', [
         'status' => $result['verification_status'] ?? 'not_submitted',

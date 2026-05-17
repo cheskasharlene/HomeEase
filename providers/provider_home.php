@@ -226,6 +226,42 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             </div>
 
             <div class="verify-card">
+              <div class="verify-subttl">Payment Method Requirements <span class="req-asterisk">*</span></div>
+              <div class="section-divider"></div>
+              <p style="font-size: 13px; color: #6b7280; margin-bottom: 14px; line-height: 1.45;">Please provide your payment method QR codes for receiving payments from customers.</p>
+              
+              <div class="upload-grid">
+                <!-- GCash QR Code (Required) -->
+                <div class="upload-wrapper" id="wrapUploadGCashQr">
+                  <label class="upload-slot" for="uploadGCashQr">
+                    <input type="file" id="uploadGCashQr" accept="image/*" />
+                    <i class="bi bi-qr-code"></i>
+                    <div>
+                      <span>GCash QR Code <span class="req-asterisk">*</span></span>
+                      <small id="fileNameUploadGCashQr">Tap to upload</small>
+                    </div>
+                  </label>
+                  <div class="upload-feedback" id="feedbackUploadGCashQr"></div>
+                  <div class="upload-preview" id="previewUploadGCashQr"></div>
+                </div>
+
+                <!-- Bank QR Code (Required) -->
+                <div class="upload-wrapper" id="wrapUploadBankQr">
+                  <label class="upload-slot" for="uploadBankQr">
+                    <input type="file" id="uploadBankQr" accept="image/*" />
+                    <i class="bi bi-credit-card-2-front"></i>
+                    <div>
+                      <span>Bank QR Code <span class="req-asterisk">*</span></span>
+                      <small id="fileNameUploadBankQr">Tap to upload</small>
+                    </div>
+                  </label>
+                  <div class="upload-feedback" id="feedbackUploadBankQr"></div>
+                  <div class="upload-preview" id="previewUploadBankQr"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="verify-card">
               <div class="verify-subttl">Submit Section</div>
               <div class="section-divider"></div>
               <div id="dynamicServiceRequirements" class="dynamic-reqs"></div>
@@ -562,7 +598,9 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         { inputId: 'uploadSelfieDoc', isRequired: true },
         { inputId: 'uploadAddressDoc', isRequired: true },
         { inputId: 'uploadCertification', isRequired: false },
-        { inputId: 'uploadServiceProof', isRequired: true }
+        { inputId: 'uploadServiceProof', isRequired: true },
+        { inputId: 'uploadGCashQr', isRequired: true },
+        { inputId: 'uploadBankQr', isRequired: true }
       ];
 
       uploadFields.forEach(field => {
@@ -904,6 +942,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       const selfieDoc = document.getElementById('uploadSelfieDoc').files[0];
       const addressDoc = document.getElementById('uploadAddressDoc').files[0];
       const serviceProof = document.getElementById('uploadServiceProof').files[0];
+      const gcashQr = document.getElementById('uploadGCashQr').files[0];
+      const bankQr = document.getElementById('uploadBankQr').files[0];
 
       if (!idDoc) {
         errors.push('Valid Government ID is required');
@@ -919,6 +959,14 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       }
       if (!serviceProof) {
         errors.push('Tools & Kits image is required');
+        isValid = false;
+      }
+      if (!gcashQr) {
+        errors.push('GCash QR Code is required');
+        isValid = false;
+      }
+      if (!bankQr) {
+        errors.push('Bank QR Code is required');
         isValid = false;
       }
 
@@ -980,6 +1028,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       const addressDoc = document.getElementById('uploadAddressDoc').files[0];
       const certDoc = document.getElementById('uploadCertification').files[0] || null;
       const serviceProof = document.getElementById('uploadServiceProof').files[0];
+      const gcashQr = document.getElementById('uploadGCashQr').files[0];
+      const bankQr = document.getElementById('uploadBankQr').files[0];
 
       const fd = new FormData();
       fd.append('action', 'upload_documents');
@@ -995,6 +1045,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       fd.append('selfie', selfieDoc);
       fd.append('proof_of_address', addressDoc);
       if (serviceProof) fd.append('tools_kits', serviceProof);  // Tools & kits was proof_of_experience
+      fd.append('gcash_qr', gcashQr);
+      fd.append('bank_qr', bankQr);
 
       try {
         const res = await fetch('../api/provider_documents_api.php', { method: 'POST', body: fd });
