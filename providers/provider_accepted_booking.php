@@ -141,6 +141,8 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
           <div class="eta-badge" id="etaText">Calc ETA...</div>
         </div>
 
+        <div id="paymentGateBanner" style="display:none;margin:0 14px 10px;padding:12px 14px;border-radius:14px;font-size:13px;font-weight:700;line-height:1.5;"></div>
+
         <!-- Client Card -->
         <div class="wfp-provider-card" id="clientCard">
           <div class="wfp-prov-av" id="clientAvatar">?</div>
@@ -163,9 +165,13 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
         </div>
 
         <div style="padding: 0 14px 14px;">
-          <button class="mark-done-btn" onclick="markDone()">
+          <button class="mark-done-btn" id="btnMarkDone" onclick="markDone()">
             <i class="bi bi-check2-circle"></i> Mark Job as Done
           </button>
+          <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="btnConfirmPayment" class="mark-done-btn" style="background:linear-gradient(135deg,#059669,#10B981);display:none;flex:1;" onclick="confirmPayment()">Confirm Payment Received</button>
+            <button id="btnRejectPayment" class="mark-done-btn" style="background:#ef4444;display:none;flex:1;" onclick="rejectPayment()">Report Payment Problem</button>
+          </div>
         </div>
 
       </div>
@@ -249,6 +255,92 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       if (!_sheetH) _sheetH = document.getElementById('wfpSheet').getBoundingClientRect().height;
       _sheetSnap(!_sheetExpanded);
     }
+
+    async function loadProviderPayment() {
+      const params = new URLSearchParams(window.location.search);
+      const bookingId = params.get('booking_id');
+      if (!bookingId) return;
+      try {
+        const res = await fetch('../api/provider_requests_api.php?action=payment&booking_id=' + encodeURIComponent(bookingId));
+        const d = await res.json();
+        if (!d.success || !d.payment) return;
+        const p = d.payment;
+        const method = String(p.payment_method || '').toLowerCase();
+        const status = String(p.payment_status || '').toLowerCase();
+        const banner = document.getElementById('paymentGateBanner');
+        const markDoneBtn = document.getElementById('btnMarkDone');
+        const statusText = document.getElementById('statusText');
+
+        document.getElementById('btnConfirmPayment').style.display = 'none';
+        document.getElementById('btnRejectPayment').style.display = 'none';
+        banner.style.display = 'none';
+        markDoneBtn.disabled = false;
+        markDoneBtn.style.opacity = '';
+
+        if (method === 'cash') {
+          statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+          return;
+        }
+
+        if (status === 'pending') {
+          banner.style.display = 'block';
+          banner.style.background = '#FFFBEB';
+          banner.style.border = '1.5px solid #FDE68A';
+          banner.style.color = '#92400E';
+          banner.innerHTML = '<i class="bi bi-hourglass-split"></i> Waiting for the client to pay via ' + (method === 'gcash' ? 'GCash' : 'Bank Transfer') + ' and upload a receipt.';
+          statusText.innerHTML = 'Waiting for client payment <span>💳</span>';
+          markDoneBtn.disabled = true;
+          markDoneBtn.style.opacity = '0.55';
+          return;
+        }
+
+        if (status === 'submitted') {
+          banner.style.display = 'block';
+          banner.style.background = '#EFF6FF';
+          banner.style.border = '1.5px solid #BFDBFE';
+          banner.style.color = '#1D4ED8';
+          banner.innerHTML = '<i class="bi bi-receipt"></i> Client uploaded a payment receipt. Please review and confirm.';
+          statusText.innerHTML = 'Review client payment <span>🧾</span>';
+          document.getElementById('btnConfirmPayment').style.display = 'inline-flex';
+          document.getElementById('btnRejectPayment').style.display = 'inline-flex';
+          window.__current_payment_id = p.id;
+          markDoneBtn.disabled = true;
+          markDoneBtn.style.opacity = '0.55';
+          return;
+        }
+
+        if (status === 'completed') {
+          banner.style.display = 'block';
+          banner.style.background = '#ECFDF5';
+          banner.style.border = '1.5px solid #6EE7B7';
+          banner.style.color = '#065F46';
+          banner.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment confirmed. You can proceed with the service.';
+          statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+        }
+      } catch (e) { }
+    }
+
+    async function confirmPayment() {
+      if (!window.__current_payment_id) return alert('No payment selected');
+      const fd = new FormData(); fd.append('payment_id', window.__current_payment_id);
+      const res = await fetch('../api/payments_api.php?action=provider_confirm', { method: 'POST', body: fd });
+      const j = await res.json(); if (j.success) { alert(j.message || 'Confirmed'); location.reload(); } else { alert(j.message || 'Failed'); }
+    }
+
+    async function rejectPayment() {
+      if (!window.__current_payment_id) return alert('No payment selected');
+      const reason = prompt('Please provide reason for rejection');
+      if (reason === null) return;
+      const fd = new FormData(); fd.append('payment_id', window.__current_payment_id); fd.append('reason', reason);
+      const res = await fetch('../api/payments_api.php?action=provider_reject', { method: 'POST', body: fd });
+      const j = await res.json(); if (j.success) { alert(j.message || 'Reported'); location.reload(); } else { alert(j.message || 'Failed'); }
+    }
+
+    // Load payment state when page opens and poll while waiting
+    window.addEventListener('load', () => {
+      loadProviderPayment();
+      setInterval(loadProviderPayment, 8000);
+    });
 
     /* Drag logic — finger tracked at document level so it never loses contact */
     (function () {

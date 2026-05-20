@@ -97,6 +97,52 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
   <script>
     window.HE = window.HE || {};
     window.HE.notifications = <?= json_encode($notifications) ?>;
+      window.HE.unreadCount = <?= (int) $unreadCount ?>;
+      const clientNotifKey = 'he_client_notifs';
+
+      function getStoredClientNotifIds() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(clientNotifKey) || '[]');
+          return Array.isArray(raw) ? raw : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function setStoredClientNotifIds(ids) {
+        try {
+          localStorage.setItem(clientNotifKey, JSON.stringify(ids));
+        } catch (e) {
+          // ignore storage issues
+        }
+      }
+
+      function showToast(message, success = false) {
+        const old = document.getElementById('notifToast');
+        if (old) old.remove();
+        const toast = document.createElement('div');
+        toast.id = 'notifToast';
+        toast.textContent = message;
+        toast.style.position = 'fixed';
+        toast.style.left = '50%';
+        toast.style.bottom = '96px';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.zIndex = '9999';
+        toast.style.padding = '12px 14px';
+        toast.style.borderRadius = '12px';
+        toast.style.fontSize = '13px';
+        toast.style.fontWeight = '800';
+        toast.style.boxShadow = '0 10px 26px rgba(0,0,0,.16)';
+        toast.style.border = success ? '1px solid #86efac' : '1px solid #bfdbfe';
+        toast.style.background = success ? '#dcfce7' : '#eff6ff';
+        toast.style.color = success ? '#166534' : '#1d4ed8';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.style.transition = 'opacity .25s ease';
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 260);
+        }, 2200);
+      }
 
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
@@ -171,7 +217,42 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
       fetch('../api/notifications_api.php', { method: 'POST', body: form }).catch(() => { });
     }
 
+    async function refreshClientNotifications(showNewToast = false) {
+      try {
+        const res = await fetch('../api/notifications_api.php', { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.notifications)) return;
+
+        const next = data.notifications.map(n => ({
+          id: Number(n.id),
+          title: n.title,
+          msg: n.message || n.msg,
+          time: n.time,
+          read: !!n.read,
+          icon: n.icon || 'cleaning'
+        }));
+
+        const beforeIds = getStoredClientNotifIds();
+        const nextIds = next.map(n => String(n.id));
+        const newItems = next.filter(n => !beforeIds.includes(String(n.id)));
+
+        window.HE.notifications = next;
+        renderNotifs();
+        setStoredClientNotifIds(nextIds);
+
+        if (showNewToast && newItems.length) {
+          const latest = newItems[0];
+          showToast(latest.title || 'New notification', true);
+        }
+      } catch (e) {
+        // keep existing data if refresh fails
+      }
+    }
+
     renderNotifs();
+    setStoredClientNotifIds(window.HE.notifications.map(n => String(n.id)));
+    refreshClientNotifications(false);
+    setInterval(() => refreshClientNotifications(true), 8000);
   </script>
 </body>
 

@@ -10,12 +10,36 @@ $access = enforceProviderSectionAccess('notifications', $conn);
 $isVerified = $access['is_verified'];
 $verificationState = $access['state'];
 $providerId = (int) ($_SESSION['provider_id'] ?? 0);
-$notifs = [
-  ['id' => 1, 'title' => 'New service request', 'msg' => 'You have a new plumbing request waiting.', 'time' => 'Just now', 'read' => false, 'icon' => 'plumbing'],
-  ['id' => 2, 'title' => 'Job reminder', 'msg' => 'Upcoming job with Jane Smith starts in 2 hours.', 'time' => '2h ago', 'read' => false, 'icon' => 'cleaning'],
-  ['id' => 3, 'title' => 'New review posted', 'msg' => 'A customer rated your latest service 5 stars!', 'time' => 'Yesterday', 'read' => true, 'icon' => 'electrical'],
-];
-$unread = count(array_filter($notifs, fn($n) => !$n['read']));
+$notifs = [];
+$unread = 0;
+
+function providerTimeAgo($ts)
+{
+  $diff = time() - strtotime($ts);
+  if ($diff < 60) return 'Just now';
+  if ($diff < 3600) return floor($diff / 60) . 'm ago';
+  if ($diff < 86400) return floor($diff / 3600) . 'h ago';
+  return floor($diff / 86400) . 'd ago';
+}
+
+$stmt = $conn->prepare("SELECT id, title, message, icon, is_read, created_at FROM provider_notifications WHERE provider_id = ? ORDER BY created_at DESC LIMIT 50");
+if ($stmt) {
+  $stmt->bind_param('i', $providerId);
+  $stmt->execute();
+  $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+  $stmt->close();
+  $notifs = array_map(function ($n) {
+    return [
+      'id' => (int) $n['id'],
+      'title' => $n['title'],
+      'msg' => $n['message'],
+      'time' => providerTimeAgo($n['created_at']),
+      'read' => (bool) $n['is_read'],
+      'icon' => $n['icon'] ?? 'cleaning',
+    ];
+  }, $rows);
+  $unread = count(array_filter($notifs, fn($n) => !$n['read']));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -149,6 +173,34 @@ $unread = count(array_filter($notifs, fn($n) => !$n['read']));
       }
     }
 
+    function showToast(message, type = 'success') {
+      const old = document.getElementById('notifToast');
+      if (old) old.remove();
+      const toast = document.createElement('div');
+      toast.id = 'notifToast';
+      toast.textContent = message;
+      toast.style.position = 'fixed';
+      toast.style.left = '50%';
+      toast.style.bottom = '96px';
+      toast.style.transform = 'translateX(-50%)';
+      toast.style.zIndex = '9999';
+      toast.style.padding = '12px 14px';
+      toast.style.borderRadius = '12px';
+      toast.style.fontSize = '13px';
+      toast.style.fontWeight = '800';
+      toast.style.boxShadow = '0 10px 26px rgba(0,0,0,.16)';
+      toast.style.border = type === 'success' ? '1px solid #86efac' : '1px solid #fecaca';
+      toast.style.background = type === 'success' ? '#dcfce7' : '#fef2f2';
+      toast.style.color = type === 'success' ? '#166534' : '#991b1b';
+      toast.style.textAlign = 'center';
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        toast.style.transition = 'opacity .25s ease';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 260);
+      }, 2200);
+    }
+
     function mergeNotifications() {
       const localList = readLocalNotifs().map(item => {
         if (!item.time && item.createdAt) item.time = getTimestampLabel(item.createdAt);
@@ -163,6 +215,35 @@ $unread = count(array_filter($notifs, fn($n) => !$n['read']));
       });
 
       window.HE.notifications = Array.from(byId.values());
+    }
+
+    async function refreshProviderNotifications(showNewToast = false) {
+      try {
+        const res = await fetch('../api/provider_notifications_api.php', { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.notifications)) return;
+
+        const next = data.notifications.map(n => ({
+          id: Number(n.id),
+          title: n.title,
+          msg: n.message,
+          time: providerTimeAgo(n.created_at),
+          read: !!n.is_read,
+          icon: n.icon || 'cleaning'
+        }));
+
+        const previousIds = new Set(window.HE.notifications.map(n => String(n.id)));
+        const newItems = next.filter(n => !previousIds.has(String(n.id)));
+        window.HE.notifications = next;
+        writeLocalNotifs(next);
+        renderNotifs();
+
+        if (showNewToast && newItems.length) {
+          showToast(newItems[0].title || 'New notification');
+        }
+      } catch (e) {
+        // keep existing state if refresh fails
+      }
     }
 
     function renderNotifs() {
@@ -227,6 +308,8 @@ $unread = count(array_filter($notifs, fn($n) => !$n['read']));
     }
     mergeNotifications();
     renderNotifs();
+    refreshProviderNotifications(false);
+    setInterval(() => refreshProviderNotifications(true), 8000);
   </script>
 </body>
 

@@ -162,7 +162,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                 <i class="bi bi-wallet2"></i>
                 <div>
                   <div class="payment-name">GCash</div>
-                  <div class="payment-desc">Pay online instantly</div>
+                  <div class="payment-desc">Pay after provider accepts</div>
                 </div>
               </div>
             </label>
@@ -172,7 +172,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                 <i class="bi bi-bank2"></i>
                 <div>
                   <div class="payment-name">Bank Transfer</div>
-                  <div class="payment-desc">Transfer to our account</div>
+                  <div class="payment-desc">Pay after provider accepts</div>
                 </div>
               </div>
             </label>
@@ -955,7 +955,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       // Reset proof state
       currentPaymentProof = null;
 
-      // Hide all payment sections
+      // Hide all payment sections (nothing will show up during booking for GCash or Bank)
       gcashSection.style.display = 'none';
       bankSection.style.display = 'none';
       
@@ -965,19 +965,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       removeProof('gcash');
       removeProof('bank');
 
-      if (paymentMethod === 'gcash') {
-        gcashSection.style.display = 'block';
-        document.getElementById('paymentError').textContent = '';
-        document.getElementById('gcashError').textContent = '';
-        document.getElementById('gcashNumber').value = '';
-        validateGCashNumber();
-      } else if (paymentMethod === 'bank') {
-        bankSection.style.display = 'block';
-        document.getElementById('paymentError').textContent = '';
-        document.getElementById('bankError').textContent = '';
-        document.getElementById('accountNumber').value = '';
-        validateAccountNumber();
-      }
+      document.getElementById('paymentError').textContent = '';
     }
     
     function handleProofUpload(input, type) {
@@ -1047,37 +1035,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         document.getElementById('paymentError').textContent = 'Please select a payment method';
         toast('Please select a payment method', 'e');
         return; 
-      }
-      
-      // Validate GCash payment if selected
-      if (paymentMethod === 'gcash') {
-        const gcashNumber = document.getElementById('gcashNumber').value.trim();
-        const gcashRegex = /^09\d{9}$/;
-        if (!gcashRegex.test(gcashNumber)) {
-          document.getElementById('gcashError').textContent = 'Please enter a valid GCash number (e.g., 09XXXXXXXXX)';
-          toast('Please enter a valid GCash number', 'e');
-          return;
-        }
-        if (!currentPaymentProof) {
-          document.getElementById('paymentError').textContent = 'Please upload proof of payment for GCash';
-          toast('Please upload proof of payment for GCash', 'e');
-          return;
-        }
-      }
-      
-      // Validate Bank Transfer payment if selected
-      if (paymentMethod === 'bank') {
-        const accountNumber = document.getElementById('accountNumber').value.trim();
-        if (accountNumber.length < 10 || accountNumber.length > 16 || !/^\d+$/.test(accountNumber)) {
-          document.getElementById('bankError').textContent = 'Please enter a valid account number';
-          toast('Please enter a valid account number', 'e');
-          return;
-        }
-        if (!currentPaymentProof) {
-          document.getElementById('paymentError').textContent = 'Please upload proof of payment for Bank Transfer';
-          toast('Please upload proof of payment for Bank Transfer', 'e');
-          return;
-        }
       }
       
       document.getElementById('paymentError').textContent = '';

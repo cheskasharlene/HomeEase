@@ -71,7 +71,7 @@ if ($method === 'GET' && $action === 'offers') {
     exit;
 }
 
-if ($method === 'GET' && $action === 'detail') {
+if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')) {
     $bookingId = (int) ($_GET['booking_id'] ?? 0);
     if ($bookingId <= 0) {
         echo json_encode(['success' => false, 'message' => 'Invalid booking id.']);
@@ -402,51 +402,13 @@ if ($method === 'POST' && $action === '') {
         }
 
         // Save payment information
+        ensurePaymentsTable($conn);
         $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
         $paymentReference = null;
         $proofPath = null;
         
-        if ($paymentMethod === 'gcash') {
-            $paymentReference = trim($_POST['gcash_number'] ?? '');
-        } elseif ($paymentMethod === 'bank') {
-            $paymentReference = trim($_POST['account_number'] ?? '');
-        }
-
-        // Handle proof of payment upload if online payment
-        if (in_array($paymentMethod, ['gcash', 'bank'])) {
-            if (!isset($_FILES['payment_proof']) || $_FILES['payment_proof']['error'] !== UPLOAD_ERR_OK) {
-                // We should theoretically roll back the booking here, or at least mark payment failed,
-                // but since it's already inserted, we'll proceed but log the missing proof.
-                // The client side MUST ensure this is provided.
-                error_log("Missing payment proof for online payment on booking $bid");
-            } else {
-                $uploadDir = __DIR__ . '/../uploads/payments/';
-                if (!is_dir($uploadDir)) {
-                    mkdir($uploadDir, 0755, true);
-                }
-                
-                $fileTmpPath = $_FILES['payment_proof']['tmp_name'];
-                $fileName = $_FILES['payment_proof']['name'];
-                $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                
-                // Allow only images
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
-                if (in_array($fileExtension, $allowedExtensions)) {
-                    $newFileName = 'proof_' . $bid . '_' . time() . '.' . $fileExtension;
-                    $destPath = $uploadDir . $newFileName;
-                    
-                    if (move_uploaded_file($fileTmpPath, $destPath)) {
-                        $proofPath = 'uploads/payments/' . $newFileName;
-                    }
-                }
-            }
-        }
-        
-        // Ensure payments table exists
-        ensurePaymentsTable($conn);
-        
-        // Save payment with 'pending' status for cash, 'completed' for online methods
-        $paymentStatus = ($paymentMethod === 'cash') ? 'pending' : 'pending';
+        // Save payment with 'pending' status
+        $paymentStatus = 'pending';
         $paymentResult = savePayment($conn, $bid, $uid, $paymentMethod, $paymentReference, $price, $paymentStatus, $proofPath);
         
         if (!$paymentResult['success']) {

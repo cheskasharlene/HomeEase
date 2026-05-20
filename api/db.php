@@ -41,7 +41,7 @@ function ensurePaymentsTable($conn)
         booking_id INT NOT NULL,
         user_id INT NOT NULL,
         payment_method ENUM('cash', 'gcash', 'bank') NOT NULL DEFAULT 'cash',
-        payment_status ENUM('pending', 'completed', 'failed', 'cancelled') NOT NULL DEFAULT 'pending',
+        payment_status ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted') NOT NULL DEFAULT 'pending',
         payment_reference VARCHAR(255) NULL,
         amount DECIMAL(10, 2) NOT NULL,
         transaction_id VARCHAR(100) NULL,
@@ -50,11 +50,17 @@ function ensurePaymentsTable($conn)
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         UNIQUE KEY idx_booking_id (booking_id),
+        receiver_provider_id INT NULL,
+        expected_until DATETIME NULL,
+        UNIQUE KEY idx_payment_reference (payment_reference(190)),
         KEY idx_user_id (user_id),
         KEY idx_payment_status (payment_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
 
     $created = ($conn->query($sql) === TRUE || $conn->errno == 1050);
+
+    // Ensure payment_status supports 'submitted'
+    @$conn->query("ALTER TABLE `payments` MODIFY COLUMN `payment_status` ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted') NOT NULL DEFAULT 'pending'");
 
     // Safely add proof column to pre-existing tables
     $check = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'payment_proof_path'");
@@ -62,7 +68,40 @@ function ensurePaymentsTable($conn)
         $conn->query("ALTER TABLE `payments` ADD COLUMN `payment_proof_path` VARCHAR(512) NULL AFTER `transaction_id`");
     }
 
+    // Ensure receiver_provider_id exists
+    $chk = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'receiver_provider_id'");
+    if ($chk && $chk->num_rows === 0) {
+        $conn->query("ALTER TABLE `payments` ADD COLUMN `receiver_provider_id` INT NULL AFTER `transaction_id`");
+    }
+
+    // Ensure expected_until exists
+    $chk2 = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'expected_until'");
+    if ($chk2 && $chk2->num_rows === 0) {
+        $conn->query("ALTER TABLE `payments` ADD COLUMN `expected_until` DATETIME NULL AFTER `receiver_provider_id`");
+    }
+
+    // Ensure payment_reference unique index exists (prefixed for older MySQL utf8 issues)
+    $idx = $conn->query("SHOW INDEX FROM `payments` WHERE Key_name = 'idx_payment_reference'");
+    if ($idx && $idx->num_rows === 0) {
+        @ $conn->query("ALTER TABLE `payments` ADD UNIQUE INDEX `idx_payment_reference` (`payment_reference`(190))");
+    }
+
     return $created;
+}
+
+/**
+ * Ensure bookings.status supports awaiting_payment for online payment flow
+ */
+function ensureBookingStatusEnum($conn)
+{
+    $res = $conn->query("SHOW COLUMNS FROM bookings LIKE 'status'");
+    if (!$res || !($col = $res->fetch_assoc())) {
+        return;
+    }
+    $type = (string) ($col['Type'] ?? '');
+    if (stripos($type, 'awaiting_payment') === false) {
+        @$conn->query("ALTER TABLE bookings MODIFY COLUMN status ENUM('pending','awaiting_payment','progress','done','cancelled') NOT NULL DEFAULT 'pending'");
+    }
 }
 
 /**
@@ -83,10 +122,12 @@ function validatePaymentData($method, $reference = null)
         return ['valid' => true, 'message' => 'Cash payment validated'];
     }
 
+    // Allow empty reference during initial booking creation
+    if (empty($reference)) {
+        return ['valid' => true, 'message' => 'Pending payment reference'];
+    }
+
     if ($method === 'gcash') {
-        if (empty($reference)) {
-            return ['valid' => false, 'message' => 'GCash number is required'];
-        }
         // Validate GCash number format (11 digits for PH numbers)
         if (!preg_match('/^09\d{9}$/', $reference)) {
             return ['valid' => false, 'message' => 'Invalid GCash number format (must be 09XXXXXXXXX)'];
@@ -95,9 +136,6 @@ function validatePaymentData($method, $reference = null)
     }
 
     if ($method === 'bank') {
-        if (empty($reference)) {
-            return ['valid' => false, 'message' => 'Account number is required'];
-        }
         // Validate account number (numeric, 8-20 digits)
         if (!preg_match('/^\d{8,20}$/', $reference)) {
             return ['valid' => false, 'message' => 'Invalid account number format'];
@@ -183,10 +221,11 @@ function getPaymentByBooking($conn, $userId, $bookingId)
     ensurePaymentsTable($conn);
 
     $stmt = $conn->prepare(
-        "SELECT id, booking_id, user_id, payment_method, payment_status, payment_reference, 
-                amount, transaction_id, created_at, updated_at
-         FROM payments 
-         WHERE booking_id = ? AND user_id = ? 
+        "SELECT id, booking_id, user_id, payment_method, payment_status, payment_reference,
+                amount, transaction_id, payment_proof_path, receiver_provider_id, expected_until,
+                notes, created_at, updated_at
+         FROM payments
+         WHERE booking_id = ? AND user_id = ?
          LIMIT 1"
     );
 

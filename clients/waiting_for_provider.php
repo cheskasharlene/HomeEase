@@ -1203,7 +1203,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           const pLng = parseFloat(data.provider_lng);
           if (!isNaN(pLat) && !isNaN(pLng)) {
             const wasVisible = !!providerMarker;
-            ensureProviderMarker(pLat, pLng, data.status === 'progress' || data.has_provider);
+            ensureProviderMarker(pLat, pLng, data.status === 'progress' || data.status === 'accepted' || data.has_provider);
             fetchRouteAndDraw(pLat, pLng, customerLat, customerLng);
             /* Only auto-fit when provider first appears OR user hasn't interacted */
             if (!wasVisible || !_userInteracted) {
@@ -1213,6 +1213,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         }
 
         currentStatus = data.status;
+
+        // Online payment still pending → payment page
+        if (data.status === 'awaiting_payment') {
+          window.location.href = 'booking_accepted.php?booking_id=' + BOOKING_ID;
+          return;
+        }
 
         // Stop polling if terminal state
         if (['done', 'cancelled'].includes(data.status)) {
@@ -1253,7 +1259,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         cancelWrap.style.display = 'block';
         tipsSection.style.display = 'block';
 
-      } else if (data.status === 'accepted' || data.has_provider) {
+      } else if (data.status === 'accepted' || data.has_provider || data.status === 'progress') {
         topBarTitle.textContent = 'Provider On the Way';
         banner.className = 'wfp-status-banner accepted';
         spinner.style.display = 'none';

@@ -113,6 +113,24 @@ if ($method === 'GET' && $action === 'live_feed') {
     exit;
 }
 
+// Provider: get payment info for a booking
+if ($method === 'GET' && $action === 'payment') {
+    $bookingId = (int)($_GET['booking_id'] ?? 0);
+    if ($bookingId <= 0) { echo json_encode(['success' => false, 'message' => 'Invalid booking id']); exit; }
+
+    $stmt = $conn->prepare("SELECT p.* FROM payments p WHERE p.booking_id = ? AND p.receiver_provider_id = ? LIMIT 1");
+    if (!$stmt) { echo json_encode(['success' => false, 'message' => 'DB error']); exit; }
+    $stmt->bind_param('ii', $bookingId, $providerId);
+    $stmt->execute();
+    $pay = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$pay) { echo json_encode(['success' => false, 'message' => 'No payment record found']); exit; }
+
+    echo json_encode(['success' => true, 'payment' => $pay]);
+    exit;
+}
+
 if ($method === 'GET') {
 
     $filter = strtolower(trim((string) ($_GET['filter'] ?? 'all')));
@@ -224,9 +242,23 @@ if ($method === 'POST' && $action === 'accept_booking') {
             SELECT id, {$providerId}, service, price, date, time_slot, address, notes, 'pending', NOW()
             FROM bookings WHERE id = {$bookingId}");
 
-        // Accept the booking
-        $stmt = $conn->prepare("UPDATE bookings SET status = 'progress' WHERE id = ? AND status = 'pending'");
-        $stmt->bind_param('i', $bookingId);
+        // Accept the booking — online payments wait for client proof first
+        $payMethod = 'cash';
+        $pmStmt = $conn->prepare("SELECT payment_method FROM payments WHERE booking_id = ? LIMIT 1");
+        if ($pmStmt) {
+            $pmStmt->bind_param('i', $bookingId);
+            $pmStmt->execute();
+            $pmRow = $pmStmt->get_result()->fetch_assoc();
+            $pmStmt->close();
+            if ($pmRow) {
+                $payMethod = strtolower((string) ($pmRow['payment_method'] ?? 'cash'));
+            }
+        }
+        $nextStatus = in_array($payMethod, ['gcash', 'bank'], true) ? 'awaiting_payment' : 'progress';
+        ensureBookingStatusEnum($conn);
+
+        $stmt = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ? AND status = 'pending'");
+        $stmt->bind_param('si', $nextStatus, $bookingId);
         $stmt->execute();
         if ($stmt->affected_rows <= 0) {
             $stmt->close();
@@ -242,7 +274,12 @@ if ($method === 'POST' && $action === 'accept_booking') {
         $conn->query("UPDATE booking_requests SET status='closed', responded_at=NOW() WHERE booking_id={$bookingId} AND provider_id<>{$providerId} AND status='pending'");
 
         notifyHomeownerAccepted($conn, $bookingId, $providerId);
-
+        // Create expected payment record for this booking (unique fractional amount)
+        try {
+            createExpectedPayment($conn, $bookingId, $providerId);
+        } catch (Throwable $ee) {
+            // non-fatal: log silently
+        }
         $conn->commit();
         echo json_encode(['success' => true, 'message' => 'Booking accepted!', 'booking_id' => $bookingId]);
     } catch (Throwable $e) {
@@ -297,8 +334,22 @@ if ($method === 'POST' && $action === 'accept') {
 
         $bookingId = (int) $row['booking_id'];
 
-        $stmt = $conn->prepare("UPDATE bookings SET status = 'progress' WHERE id = ? AND LOWER(status) = 'pending'");
-        $stmt->bind_param('i', $bookingId);
+        $payMethod = 'cash';
+        $pmStmt = $conn->prepare("SELECT payment_method FROM payments WHERE booking_id = ? LIMIT 1");
+        if ($pmStmt) {
+            $pmStmt->bind_param('i', $bookingId);
+            $pmStmt->execute();
+            $pmRow = $pmStmt->get_result()->fetch_assoc();
+            $pmStmt->close();
+            if ($pmRow) {
+                $payMethod = strtolower((string) ($pmRow['payment_method'] ?? 'cash'));
+            }
+        }
+        $nextStatus = in_array($payMethod, ['gcash', 'bank'], true) ? 'awaiting_payment' : 'progress';
+        ensureBookingStatusEnum($conn);
+
+        $stmt = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ? AND LOWER(status) = 'pending'");
+        $stmt->bind_param('si', $nextStatus, $bookingId);
         $stmt->execute();
         $bookingUpdated = $stmt->affected_rows > 0;
         $stmt->close();
@@ -326,7 +377,11 @@ if ($method === 'POST' && $action === 'accept') {
         $stmt->close();
 
         notifyHomeownerAccepted($conn, $bookingId, $providerId);
-
+        try {
+            createExpectedPayment($conn, $bookingId, $providerId);
+        } catch (Throwable $ee) {
+            // ignore
+        }
         $conn->commit();
         echo json_encode(['success' => true, 'message' => 'Booking accepted successfully.', 'booking_id' => $bookingId]);
     } catch (Throwable $e) {
@@ -369,6 +424,24 @@ if ($method === 'POST' && $action === 'complete') {
         exit;
     }
     $chk->close();
+
+    // Block completion until online payment is confirmed
+    $payStmt = $conn->prepare("SELECT payment_method, payment_status FROM payments WHERE booking_id = ? LIMIT 1");
+    if ($payStmt) {
+        $payStmt->bind_param('i', $bookingId);
+        $payStmt->execute();
+        $payRow = $payStmt->get_result()->fetch_assoc();
+        $payStmt->close();
+        if ($payRow) {
+            $pm = strtolower((string)($payRow['payment_method'] ?? ''));
+            $ps = strtolower((string)($payRow['payment_status'] ?? ''));
+            if (in_array($pm, ['gcash', 'bank'], true) && $ps !== 'completed') {
+                ob_end_clean();
+                echo json_encode(['success' => false, 'message' => 'Cannot complete job until client payment is confirmed.']);
+                exit;
+            }
+        }
+    }
 
     $conn->begin_transaction();
     try {
@@ -540,6 +613,18 @@ function notifyHomeownerAccepted(mysqli $conn, int $bookingId, int $providerId):
         }
     }
 
+    $payMethod = 'cash';
+    $pmStmt = $conn->prepare("SELECT payment_method FROM payments WHERE booking_id = ? LIMIT 1");
+    if ($pmStmt) {
+        $pmStmt->bind_param('i', $bookingId);
+        $pmStmt->execute();
+        $pmRow = $pmStmt->get_result()->fetch_assoc();
+        $pmStmt->close();
+        if ($pmRow) {
+            $payMethod = strtolower((string) ($pmRow['payment_method'] ?? 'cash'));
+        }
+    }
+
     $msg = sprintf(
         '%s accepted your booking for %s on %s %s. Fixed price: ₱%s',
         $providerName,
@@ -548,6 +633,10 @@ function notifyHomeownerAccepted(mysqli $conn, int $bookingId, int $providerId):
         (string) ($booking['time_slot'] ?? ''),
         number_format((float) ($booking['price'] ?? 0), 2)
     );
+    if (in_array($payMethod, ['gcash', 'bank'], true)) {
+        $label = $payMethod === 'gcash' ? 'GCash' : 'Bank Transfer';
+        $msg .= " Please complete your {$label} payment and upload your receipt.";
+    }
 
     $uid = (int) ($booking['user_id'] ?? 0);
     if ($uid <= 0) {
@@ -559,5 +648,60 @@ function notifyHomeownerAccepted(mysqli $conn, int $bookingId, int $providerId):
         $ins->bind_param('is', $uid, $msg);
         $ins->execute();
         $ins->close();
+    }
+}
+
+/**
+ * Create an expected payment row with a unique fractional amount and expiry
+ */
+function createExpectedPayment(mysqli $conn, int $bookingId, int $providerId): void
+{
+    require_once __DIR__ . '/db.php';
+    ensurePaymentsTable($conn);
+
+    // Check if payment row already exists
+    $chk = $conn->prepare("SELECT id, payment_method FROM payments WHERE booking_id = ? LIMIT 1");
+    $existing = null;
+    if ($chk) {
+        $chk->bind_param('i', $bookingId);
+        $chk->execute();
+        $existing = $chk->get_result()->fetch_assoc();
+        $chk->close();
+    }
+
+    // Get base price and user_id
+    $pstmt = $conn->prepare("SELECT price, user_id FROM bookings WHERE id = ? LIMIT 1");
+    $pstmt->bind_param('i', $bookingId);
+    $pstmt->execute();
+    $prow = $pstmt->get_result()->fetch_assoc();
+    $pstmt->close();
+    $base = (float)($prow['price'] ?? 0);
+    $userId = (int)($prow['user_id'] ?? 0);
+
+    // Generate unique fractional cents between 1 and 99
+    $fraction = mt_rand(1, 99) / 100.0;
+    $expected = round($base + $fraction, 2);
+
+    $expires = date('Y-m-d H:i:s', strtotime('+30 minutes'));
+
+    if ($existing) {
+        // If payment method is not 'cash', update the existing payment record with provider_id, fractional amount and expiry!
+        if (strtolower($existing['payment_method']) !== 'cash') {
+            $upd = $conn->prepare("UPDATE payments SET amount = ?, receiver_provider_id = ?, expected_until = ?, updated_at = NOW() WHERE id = ?");
+            if ($upd) {
+                $pid = (int)$existing['id'];
+                $upd->bind_param('disi', $expected, $providerId, $expires, $pid);
+                $upd->execute();
+                $upd->close();
+            }
+        }
+    } else {
+        // Create new
+        $ins = $conn->prepare("INSERT INTO payments (booking_id, user_id, amount, payment_status, receiver_provider_id, expected_until, created_at) VALUES (?, ?, ?, 'pending', ?, ?, NOW())");
+        if ($ins) {
+            $ins->bind_param('iidis', $bookingId, $userId, $expected, $providerId, $expires);
+            $ins->execute();
+            $ins->close();
+        }
     }
 }
