@@ -502,6 +502,144 @@ body {
   display: none;
 }
 
+body.modal-open {
+  overflow: hidden;
+}
+
+.payment-expired-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(26, 20, 8, 0.58);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.payment-expired-overlay.show {
+  display: flex;
+  animation: paymentExpiredFadeIn 0.22s ease;
+}
+
+.payment-expired-card {
+  width: min(460px, 100%);
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid #F3DFC2;
+  box-shadow: 0 24px 54px rgba(26, 20, 8, 0.28);
+  padding: 22px;
+  transform: translateY(14px) scale(0.98);
+  opacity: 0;
+  animation: paymentExpiredPop 0.28s cubic-bezier(.22,1,.36,1) forwards;
+}
+
+.payment-expired-head {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.payment-expired-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  background: linear-gradient(135deg, #E8820C, #F5A623);
+  box-shadow: 0 8px 20px rgba(232, 130, 12, 0.35);
+}
+
+.payment-expired-head h3 {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.25;
+  color: #1A1A2E;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 800;
+}
+
+.payment-expired-head p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #7A7064;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.payment-expired-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8A4C06;
+  background: #FFF9E8;
+  border: 1px solid #F9D47E;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.payment-expired-note i {
+  font-size: 14px;
+}
+
+.payment-expired-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.payment-expired-btn {
+  border: none;
+  border-radius: 14px;
+  height: 44px;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.payment-expired-btn:hover {
+  transform: translateY(-1px);
+}
+
+.payment-expired-btn.secondary {
+  color: #7A7064;
+  background: #F7F3EC;
+  border: 1px solid #E6DCCB;
+}
+
+.payment-expired-btn.primary {
+  color: #fff;
+  background: linear-gradient(135deg, #E8820C, #F5A623);
+  box-shadow: 0 8px 20px rgba(232, 130, 12, .35);
+}
+
+.payment-expired-btn:focus-visible {
+  outline: 2px solid #E8820C;
+  outline-offset: 2px;
+}
+
+@keyframes paymentExpiredFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes paymentExpiredPop {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 .bnav {
   border-top-left-radius: 18px;
   border-top-right-radius: 18px;
@@ -558,5 +696,23 @@ body {
     left: 50%;
     transform: translateX(-50%);
     bottom: 10px;
+  }
+
+  .payment-expired-overlay {
+    padding: 12px;
+  }
+
+  .payment-expired-card {
+    width: 100%;
+    border-radius: 20px;
+    padding: 18px;
+  }
+
+  .payment-expired-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .payment-expired-btn {
+    height: 46px;
   }
 }

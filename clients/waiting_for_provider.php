@@ -429,6 +429,164 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         transform: rotate(360deg);
       }
     }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    .wfp-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1250;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(26, 20, 8, 0.58);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+
+    .wfp-confirm-overlay.show {
+      display: flex;
+      animation: wfpConfirmFadeIn 0.22s ease;
+    }
+
+    .wfp-confirm-card {
+      width: min(460px, 100%);
+      background: #fff;
+      border-radius: 24px;
+      border: 1px solid #F3DFC2;
+      box-shadow: 0 24px 54px rgba(26, 20, 8, 0.28);
+      padding: 22px;
+      transform: translateY(14px) scale(0.98);
+      opacity: 0;
+      animation: wfpConfirmPop 0.28s cubic-bezier(.22,1,.36,1) forwards;
+    }
+
+    .wfp-confirm-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .wfp-confirm-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      background: linear-gradient(135deg, #EF4444, #F87171);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
+    }
+
+    .wfp-confirm-head h3 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.25;
+      color: #1A1A2E;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+    }
+
+    .wfp-confirm-head p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: #7A7064;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    .wfp-confirm-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #92400E;
+      background: #FFF9E8;
+      border: 1px solid #F9D47E;
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+
+    .wfp-confirm-note i {
+      font-size: 14px;
+    }
+
+    .wfp-confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .wfp-confirm-btn {
+      border: none;
+      border-radius: 14px;
+      height: 44px;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+
+    .wfp-confirm-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .wfp-confirm-btn.secondary {
+      color: #7A7064;
+      background: #F7F3EC;
+      border: 1px solid #E6DCCB;
+    }
+
+    .wfp-confirm-btn.primary {
+      color: #fff;
+      background: linear-gradient(135deg, #EF4444, #F87171);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
+    }
+
+    .wfp-confirm-btn:focus-visible {
+      outline: 2px solid #EF4444;
+      outline-offset: 2px;
+    }
+
+    @keyframes wfpConfirmFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes wfpConfirmPop {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 480px) {
+      .wfp-confirm-overlay {
+        padding: 12px;
+      }
+
+      .wfp-confirm-card {
+        width: 100%;
+        border-radius: 20px;
+        padding: 18px;
+      }
+
+      .wfp-confirm-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .wfp-confirm-btn {
+        height: 46px;
+      }
+    }
   </style>
 </head>
 
@@ -653,6 +811,26 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <button onclick="sendMessage()"
             style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#E8820C,#F5A623);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:17px;flex-shrink:0"><i
               class="bi bi-send-fill"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wfp-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" onclick="closeCancelModal(event)">
+      <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" onclick="event.stopPropagation()">
+        <div class="wfp-confirm-head">
+          <div class="wfp-confirm-icon"><i class="bi bi-x-circle-fill"></i></div>
+          <div>
+            <h3 id="cancelConfirmTitle">Confirm Cancellation</h3>
+            <p>Cancel Booking?</p>
+          </div>
+        </div>
+        <div class="wfp-confirm-note">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          Cancelling this booking may affect your request and cannot be undone.
+        </div>
+        <div class="wfp-confirm-actions">
+          <button type="button" class="wfp-confirm-btn secondary" id="btnCancelDismiss">No, Keep Booking</button>
+          <button type="button" class="wfp-confirm-btn primary" id="btnCancelConfirm">Yes, Cancel Booking</button>
         </div>
       </div>
     </div>
@@ -1369,12 +1547,23 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       window.location.href = 'booking_history.php';
     }
 
-    function shareBooking() {
-      openStylePicker();
+    function openCancelModal() {
+      const overlay = document.getElementById('cancelConfirmOverlay');
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
     }
 
-    async function cancelBooking() {
-      if (!confirm('Are you sure you want to cancel this booking?')) return;
+    function closeCancelModal(event) {
+      if (event && event.target && event.target !== document.getElementById('cancelConfirmOverlay')) return;
+      const overlay = document.getElementById('cancelConfirmOverlay');
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+    }
+
+    async function confirmCancelBooking() {
+      closeCancelModal();
       const btn = document.getElementById('btnCancel');
       btn.disabled = true;
       btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cancelling…';
@@ -1399,6 +1588,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-x-circle-fill"></i> Cancel Booking';
       }
+    }
+
+    function shareBooking() {
+      openStylePicker();
+    }
+
+    async function cancelBooking() {
+      openCancelModal();
     }
 
     function contactProvider(event, type) {
@@ -1459,6 +1656,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       } catch (e) { }
     }
 
+
+    document.getElementById('btnCancelDismiss').addEventListener('click', closeCancelModal);
+    document.getElementById('btnCancelConfirm').addEventListener('click', confirmCancelBooking);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeCancelModal();
+    });
     function appendChatMessages(msgs) {
       const box = document.getElementById('chatMsgs');
       const empty = document.getElementById('chatEmpty');

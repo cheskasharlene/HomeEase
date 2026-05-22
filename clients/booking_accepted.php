@@ -202,6 +202,26 @@ if (empty($_SESSION['user_id'])) {
           <span class="nl">Profile</span>
         </button>
       </div>
+
+      <div class="payment-expired-overlay" id="paymentExpiredOverlay" aria-hidden="true">
+        <div class="payment-expired-card" role="dialog" aria-modal="true" aria-labelledby="paymentExpiredTitle">
+          <div class="payment-expired-head">
+            <div class="payment-expired-icon"><i class="bi bi-clock-history"></i></div>
+            <div>
+              <h3 id="paymentExpiredTitle">Payment Time Expired</h3>
+              <p>Your payment session has expired. Please try again or go back to your bookings to rebook.</p>
+            </div>
+          </div>
+          <div class="payment-expired-note">
+            <i class="bi bi-info-circle"></i>
+            The payment window has closed for this booking.
+          </div>
+          <div class="payment-expired-actions">
+            <button type="button" class="payment-expired-btn primary" id="paymentExpiredPrimary">Back to Bookings</button>
+            <button type="button" class="payment-expired-btn secondary" id="paymentExpiredSecondary">Close</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -209,6 +229,8 @@ if (empty($_SESSION['user_id'])) {
   <script>
     let currentProviderPayment = null;
     let currentPaymentData = null;
+    let paymentExpiryTimer = null;
+    let paymentExpiryModalShown = false;
 
     function goPage(page) {
       window.location.href = page;
@@ -250,6 +272,71 @@ if (empty($_SESSION['user_id'])) {
       return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
     }
 
+    function getExpiryTimestamp(value) {
+      if (!value) return null;
+      const d = new Date(String(value).replace(' ', 'T'));
+      return Number.isNaN(d.getTime()) ? null : d.getTime();
+    }
+
+    function setPaymentModalOpen(open) {
+      document.body.classList.toggle('modal-open', !!open);
+      document.getElementById('paymentExpiredOverlay').classList.toggle('show', !!open);
+      document.getElementById('paymentExpiredOverlay').setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    function goBackToBookings() {
+      goPage('booking_history.php');
+    }
+
+    function closePaymentExpiredModal() {
+      setPaymentModalOpen(false);
+    }
+
+    function showPaymentExpiredModal(message) {
+      if (paymentExpiryModalShown) return;
+      paymentExpiryModalShown = true;
+      const overlay = document.getElementById('paymentExpiredOverlay');
+      const title = overlay.querySelector('h3');
+      const subtitle = overlay.querySelector('p');
+      const note = overlay.querySelector('.payment-expired-note');
+
+      title.textContent = 'Payment Time Expired';
+      subtitle.textContent = message || 'Your payment session has expired. Please try again or go back to your bookings to rebook.';
+      note.innerHTML = '<i class="bi bi-info-circle"></i>The payment window has closed for this booking.';
+      setPaymentModalOpen(true);
+    }
+
+    function stopPaymentExpiryTimer() {
+      if (paymentExpiryTimer) {
+        clearInterval(paymentExpiryTimer);
+        paymentExpiryTimer = null;
+      }
+    }
+
+    function startPaymentExpiryTimer(expiryValue) {
+      stopPaymentExpiryTimer();
+      paymentExpiryModalShown = false;
+      const expiryTs = getExpiryTimestamp(expiryValue);
+      if (!expiryTs) return;
+
+      const tick = () => {
+        if (!currentPaymentData) return;
+        const status = String(currentPaymentData.payment_status || '').toLowerCase();
+        if (status !== 'pending') {
+          stopPaymentExpiryTimer();
+          return;
+        }
+
+        if (Date.now() >= expiryTs) {
+          stopPaymentExpiryTimer();
+          showPaymentExpiredModal('The payment session has expired. Please retry or rebook from your booking history.');
+        }
+      };
+
+      tick();
+      paymentExpiryTimer = window.setInterval(tick, 1000);
+    }
+
     function formatSchedule(dateStr, timeStr) {
       if (!dateStr) return '-';
       const d = new Date(dateStr);
@@ -273,6 +360,7 @@ if (empty($_SESSION['user_id'])) {
     }
 
     function showEmptyState() {
+      stopPaymentExpiryTimer();
       document.getElementById('providerCard').classList.add('ab-hide');
       document.getElementById('summaryCard').classList.add('ab-hide');
       document.getElementById('paymentCard').classList.add('ab-hide');
@@ -364,22 +452,26 @@ if (empty($_SESSION['user_id'])) {
       document.getElementById('cashPaymentNote').classList.add('ab-hide');
       document.getElementById('paymentWaitingNote').classList.add('ab-hide');
       document.getElementById('paymentCompletedNote').classList.add('ab-hide');
+      closePaymentExpiredModal();
 
       if (method === 'cash') {
         document.getElementById('cashPaymentNote').classList.remove('ab-hide');
         if (status === 'completed' || status === 'pending') {
           document.getElementById('paymentCompletedNote').classList.remove('ab-hide');
         }
+        stopPaymentExpiryTimer();
         return;
       }
 
       if (status === 'completed') {
         document.getElementById('paymentCompletedNote').classList.remove('ab-hide');
+        stopPaymentExpiryTimer();
         return;
       }
 
       if (status === 'submitted') {
         document.getElementById('paymentWaitingNote').classList.remove('ab-hide');
+        stopPaymentExpiryTimer();
         return;
       }
 
@@ -387,6 +479,7 @@ if (empty($_SESSION['user_id'])) {
         document.getElementById('paymentMethod').value = method;
         document.getElementById('paymentForm').classList.remove('ab-hide');
         toggleQRDisplay(method);
+        startPaymentExpiryTimer(p.expected_until);
       }
     }
 
@@ -399,6 +492,9 @@ if (empty($_SESSION['user_id'])) {
         const res = await fetch('../api/payments_api.php?action=detail&booking_id=' + encodeURIComponent(bookingId));
         const d = await res.json();
         if (!d.success || !d.payment) {
+          if ((d.message || '').toLowerCase().includes('payment time window expired')) {
+            showPaymentExpiredModal('The payment session has expired. Please retry or rebook from your booking history.');
+          }
           return;
         }
 
@@ -431,7 +527,11 @@ if (empty($_SESSION['user_id'])) {
           alert(j.message || 'Payment submitted');
           await loadPaymentDetails();
         } else {
-          alert(j.message || 'Submit failed');
+          if ((j.message || '').toLowerCase().includes('payment time window expired')) {
+            showPaymentExpiredModal('The payment session has expired. Please retry or rebook from your booking history.');
+          } else {
+            alert(j.message || 'Submit failed');
+          }
         }
       } catch (err) {
         alert('Error submitting payment');
@@ -443,6 +543,12 @@ if (empty($_SESSION['user_id'])) {
     document.getElementById('paymentProof').addEventListener('change', function (e) {
       const name = e.target.files && e.target.files.length ? e.target.files[0].name : 'No file selected';
       document.getElementById('paymentProofName').textContent = name;
+    });
+
+    document.getElementById('paymentExpiredPrimary').addEventListener('click', goBackToBookings);
+    document.getElementById('paymentExpiredSecondary').addEventListener('click', closePaymentExpiredModal);
+    document.getElementById('paymentExpiredOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closePaymentExpiredModal();
     });
 
     loadAcceptedBooking().then(loadPaymentDetails);

@@ -60,7 +60,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       border-radius: 18px;
       border: 1.5px solid #F0EAE0;
       padding: 16px;
-      margin: 0 16px 12px;
+      margin: 0 16px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
       transition: transform 0.15s, box-shadow 0.15s;
       position: relative;
@@ -159,8 +159,15 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     }
     .empty-feed-sub { font-size: 13px; line-height: 1.5; }
 
+    #feedList {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
     .active-job-banner {
       margin: 0 16px 12px;
+       margin-top: 10px;
       padding: 14px 16px;
       background: linear-gradient(135deg,#059669,#10b981);
       border-radius: 16px;
