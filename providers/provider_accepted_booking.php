@@ -25,6 +25,7 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link href="../assets/css/main.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/waiting_for_provider.css">
+  <link rel="stylesheet" href="../assets/css/booking_form.css">
   <style>
     /* Add any provider-specific overrides here */
     .wfp-status-banner.accepted {
@@ -779,15 +780,49 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
     }
 
     /* ── ACTIONS ── */
-    async function markDone() {
-      if (!confirm('Mark this job as completed?')) return;
+    function markDone() {
+      // Open branded confirmation modal instead of native confirm()
+      showMarkCompleteConfirm();
+    }
+
+    function showMarkCompleteConfirm() {
+      const ov = document.getElementById('markCompleteConfirm');
+      ov.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeMarkCompleteConfirm() {
+      const ov = document.getElementById('markCompleteConfirm');
+      ov.classList.remove('show');
+      document.body.classList.remove('modal-open');
+    }
+
+    async function confirmMarkDone(btn) {
+      if (!BID) return;
+      // disable buttons
+      btn.disabled = true;
+      const cancelBtn = document.getElementById('markCompleteCancelBtn');
+      if (cancelBtn) cancelBtn.disabled = true;
       const fd = new FormData();
       fd.append('action', 'complete'); fd.append('booking_id', BID);
       try {
         const d = await (await fetch(API + 'provider_requests_api.php', { method: 'POST', body: fd })).json();
-        if (d.success) { alert('Job marked complete!'); goPage('provider_requests.php'); }
-        else alert(d.message || 'Error.');
+        closeMarkCompleteConfirm();
+        if (d.success) { showJobCompleteModal(); }
+        else {
+          const msg = d.message || 'Error.';
+          // If server blocked completion due to payment, show blocking modal
+          if (msg.toLowerCase().includes('cannot complete job') || msg.toLowerCase().includes('payment')) {
+            showCannotCompleteModal(msg);
+          } else {
+            alert(msg);
+          }
+        }
       } catch (e) { alert('Network error.'); }
+      finally {
+        btn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+      }
     }
 
     function contactClient(event, type) {
@@ -817,6 +852,35 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       const dr = document.getElementById('chatDrawer');
       ov.style.opacity = '0'; ov.style.pointerEvents = 'none';
       dr.style.transform = 'translateY(100%)';
+    }
+
+    /* ===== JOB COMPLETION MODAL ===== */
+    function showJobCompleteModal() {
+      const ov = document.getElementById('jobCompleteOverlay');
+      ov.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeJobCompleteModal(navigate) {
+      const ov = document.getElementById('jobCompleteOverlay');
+      ov.classList.remove('show');
+      document.body.classList.remove('modal-open');
+      if (navigate) goPage('provider_requests.php');
+    }
+
+    /* ===== CANNOT COMPLETE INFO MODAL ===== */
+    function showCannotCompleteModal(message) {
+      const el = document.getElementById('cannotCompleteMessage');
+      if (el) el.textContent = message || 'The job cannot be completed at this time.';
+      const ov = document.getElementById('cannotCompleteOverlay');
+      ov.classList.add('show');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeCannotCompleteModal() {
+      const ov = document.getElementById('cannotCompleteOverlay');
+      ov.classList.remove('show');
+      document.body.classList.remove('modal-open');
     }
 
     function startChat() { fetchChat(); chatTimer = setInterval(fetchChat, 3000); }
@@ -872,6 +936,54 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       window.addEventListener('resize', syncSheetHeight);
     });
   </script>
+  <!-- Job Completed Modal -->
+  <div class="booking-confirm-overlay" id="jobCompleteOverlay" aria-hidden="true">
+    <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="jobCompleteTitle" onclick="event.stopPropagation()">
+      <div class="booking-confirm-head">
+        <div class="booking-confirm-icon"><i class="bi bi-check2-circle"></i></div>
+        <div>
+          <h3 id="jobCompleteTitle">Job Completed</h3>
+          <div class="booking-confirm-sub">The job has been marked as complete.</div>
+        </div>
+      </div>
+      <div class="booking-confirm-actions">
+        <button class="booking-confirm-btn cancel" type="button" onclick="closeJobCompleteModal(false)">View Details</button>
+        <button class="booking-confirm-btn ok" type="button" onclick="closeJobCompleteModal(true)">OK</button>
+      </div>
+    </div>
+  </div>
+  <!-- Mark Complete Confirmation Modal -->
+  <div class="booking-confirm-overlay" id="markCompleteConfirm" aria-hidden="true" onclick="closeMarkCompleteConfirm()">
+    <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="markCompleteTitle" onclick="event.stopPropagation()">
+      <div class="booking-confirm-head">
+        <div class="booking-confirm-icon"><i class="bi bi-check2-square"></i></div>
+        <div>
+          <h3 id="markCompleteTitle">Mark Job as Completed?</h3>
+          <div class="booking-confirm-sub">This will mark the job as finished and notify the homeowner. This action may be irreversible.</div>
+        </div>
+      </div>
+      <div class="booking-confirm-actions">
+        <button id="markCompleteCancelBtn" class="booking-confirm-btn cancel" type="button" onclick="closeMarkCompleteConfirm()">Cancel</button>
+        <button id="markCompleteConfirmBtn" class="booking-confirm-btn ok" type="button" onclick="confirmMarkDone(this)">Yes, Mark as Completed</button>
+      </div>
+    </div>
+  </div>
+  <!-- Cannot Complete (Blocking) Modal -->
+  <div class="booking-confirm-overlay" id="cannotCompleteOverlay" aria-hidden="true" style="pointer-events:all;">
+    <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cannotCompleteTitle" onclick="event.stopPropagation()">
+      <div class="booking-confirm-head">
+        <div class="booking-confirm-icon" style="background:linear-gradient(135deg,#1F2937,#111827);"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div>
+          <h3 id="cannotCompleteTitle">Action Not Allowed</h3>
+          <div class="booking-confirm-sub" id="cannotCompleteMessage">The job cannot be marked as completed until client payment is confirmed.</div>
+        </div>
+      </div>
+      <div class="booking-confirm-actions">
+        <button class="booking-confirm-btn cancel" type="button" onclick="(function(){closeCannotCompleteModal(); document.getElementById('paymentGateBanner')?.scrollIntoView({behavior:'smooth'});})();">View Payment Status</button>
+        <button class="booking-confirm-btn ok" type="button" onclick="closeCannotCompleteModal()">OK</button>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
