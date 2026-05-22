@@ -593,3 +593,203 @@
       background: linear-gradient(to right, #2A2216 0%, #332A1C 100%);
       border-color: #4A3E28;
     }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    .booking-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(26, 20, 8, 0.56);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+
+    .booking-confirm-overlay.show {
+      display: flex;
+      animation: bookingConfirmFadeIn 0.24s ease;
+    }
+
+    .booking-confirm-card {
+      width: min(460px, 100%);
+      background: #fff;
+      border-radius: 24px;
+      border: 1px solid #F3DFC2;
+      box-shadow: 0 24px 54px rgba(26, 20, 8, 0.28);
+      padding: 22px;
+      transform: translateY(14px) scale(0.98);
+      opacity: 0;
+      animation: bookingConfirmPop 0.28s cubic-bezier(.22,1,.36,1) forwards;
+    }
+
+    .booking-confirm-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .booking-confirm-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      box-shadow: 0 8px 20px rgba(232, 130, 12, 0.35);
+    }
+
+    .booking-confirm-head h3 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.25;
+      color: #1A1A2E;
+      font-family: "Poppins", sans-serif;
+      font-weight: 800;
+    }
+
+    .booking-confirm-head p {
+      margin: 4px 0 0;
+      font-size: 12px;
+      color: #7A7064;
+      font-weight: 600;
+      line-height: 1.45;
+    }
+
+    .booking-confirm-summary {
+      border-radius: 16px;
+      border: 1px solid #EEDBC0;
+      background: linear-gradient(180deg, #FFFDF9, #FFF8EE);
+      padding: 8px 12px;
+      max-height: min(42vh, 340px);
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .booking-confirm-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 9px 2px;
+      border-bottom: 1px dashed #EEDBC0;
+    }
+
+    .booking-confirm-row:last-child {
+      border-bottom: none;
+      padding-bottom: 4px;
+    }
+
+    .booking-confirm-row span {
+      color: #7A7064;
+      font-size: 12px;
+      text-transform: capitalize;
+      font-weight: 700;
+    }
+
+    .booking-confirm-row strong {
+      text-align: right;
+      font-size: 13px;
+      color: #2C261F;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .booking-confirm-row.is-price span,
+    .booking-confirm-row.is-price strong {
+      color: #B45309;
+      font-size: 15px;
+    }
+
+    .booking-confirm-note {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #2F855A;
+      background: #ECFDF5;
+      border: 1px solid #86EFAC;
+      border-radius: 12px;
+      padding: 9px 10px;
+    }
+
+    .booking-confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .booking-confirm-btn {
+      border: none;
+      border-radius: 14px;
+      height: 44px;
+      font-size: 14px;
+      font-weight: 800;
+      font-family: "Poppins", sans-serif;
+      cursor: pointer;
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+
+    .booking-confirm-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .booking-confirm-btn.cancel {
+      color: #7A7064;
+      background: #F7F3EC;
+      border: 1px solid #E6DCCB;
+    }
+
+    .booking-confirm-btn.ok {
+      color: #fff;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      box-shadow: 0 8px 20px rgba(232, 130, 12, .35);
+    }
+
+    .booking-confirm-btn:focus-visible {
+      outline: 2px solid #E8820C;
+      outline-offset: 2px;
+    }
+
+    @keyframes bookingConfirmFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes bookingConfirmPop {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 480px) {
+      .booking-confirm-overlay {
+        align-items: center;
+        padding: 12px;
+      }
+
+      .booking-confirm-card {
+        width: 100%;
+        border-radius: 20px;
+        padding: 18px;
+      }
+
+      .booking-confirm-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .booking-confirm-btn {
+        height: 46px;
+      }
+    }

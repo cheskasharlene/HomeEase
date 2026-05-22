@@ -1,5 +1,5 @@
 body {
-  background: #fff;
+  background: #fff7ee;
 }
 
 .screen {
@@ -11,7 +11,7 @@ body {
   width: 100%;
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 96px;
+  padding-bottom: 108px;
 }
 
 .ab-scroll::-webkit-scrollbar {
@@ -20,7 +20,7 @@ body {
 
 .ab-hero {
   width: 100%;
-  padding: 48px 22px 24px;
+  padding: 50px 22px 26px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -43,7 +43,7 @@ body {
 
 .ab-title {
   font-family: 'Poppins', sans-serif;
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 800;
   color: var(--td);
   position: relative;
@@ -53,10 +53,12 @@ body {
 .ab-sub {
   font-size: 12px;
   font-weight: 600;
-  color: #6B7280;
+  color: #4B5563;
   margin-top: 4px;
   position: relative;
   z-index: 1;
+  max-width: 255px;
+  line-height: 1.45;
 }
 
 .ab-back {
@@ -80,19 +82,25 @@ body {
 
 .ab-card {
   background: #fff;
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 16px;
-  margin: 14px 18px 0;
-  border: 1.5px solid var(--border-col);
-  box-shadow: 0 3px 14px rgba(232, 130, 12, 0.08);
+  margin: 14px 16px 0;
+  border: 1px solid #f3dec4;
+  box-shadow: 0 10px 24px rgba(232, 130, 12, 0.1);
+}
+
+.ab-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .ab-card-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.7px;
+  letter-spacing: 0.75px;
   text-transform: uppercase;
-  color: var(--teal-dark);
+  color: #d6760a;
 }
 
 .ab-list {
@@ -110,6 +118,10 @@ body {
 .ab-col {
   flex: 1;
   min-width: 0;
+  background: #fffdf9;
+  border: 1px solid #f2e3d0;
+  border-radius: 14px;
+  padding: 10px 12px;
 }
 
 .ab-col.ab-wide {
@@ -121,15 +133,16 @@ body {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--tm);
+  color: #8a97a8;
 }
 
 .ab-value {
   font-size: 14px;
   font-weight: 700;
   color: var(--td);
-  margin-top: 4px;
+  margin-top: 5px;
   word-break: break-word;
+  line-height: 1.35;
 }
 
 .ab-notes {
@@ -176,15 +189,27 @@ body {
 .ab-btn {
   flex: 1;
   border: none;
-  border-radius: 50px;
-  height: 44px;
+  border-radius: 14px;
+  height: 46px;
   font-family: 'Poppins', sans-serif;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   background: linear-gradient(135deg, #E8820C, #F5A623);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(232, 130, 12, 0.28);
+  box-shadow: 0 8px 18px rgba(232, 130, 12, 0.28);
+  transition: transform 0.16s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.ab-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(232, 130, 12, 0.32);
+}
+
+.ab-btn:disabled {
+  opacity: 0.78;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .ab-btn.secondary {
@@ -220,12 +245,318 @@ body {
   margin-top: 14px;
 }
 
+.ab-note {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid transparent;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.ab-note-success {
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+.ab-note-warning {
+  background: #fff9e8;
+  border-color: #f9d47e;
+  color: #8a4c06;
+}
+
+.ab-note-actions {
+  margin-top: 10px;
+}
+
+#paymentInfo .ab-row {
+  margin-bottom: 10px;
+}
+
+#paymentInfo .ab-row:last-child {
+  margin-bottom: 0;
+}
+
+.ab-qr-box {
+  margin: 4px 0 8px;
+  padding: 14px;
+  border: 1px solid #f2d4ad;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fffdf8 0%, #fff7ea 100%);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+.ab-qr-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.65px;
+  text-transform: uppercase;
+  color: #b86709;
+}
+
+.ab-qr-image-wrap {
+  width: 100%;
+  min-height: 140px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ab-qr-image-wrap img {
+  max-width: 210px;
+  width: 100%;
+  border-radius: 12px;
+  border: 1.5px solid #f3bf84;
+  background: #fff;
+  box-shadow: 0 10px 20px rgba(38, 36, 33, 0.12);
+  object-fit: contain;
+}
+
+.ab-qr-placeholder {
+  width: 116px;
+  height: 116px;
+  border-radius: 14px;
+  border: 1.5px dashed #d5c2a7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a2a9b3;
+  font-size: 36px;
+  background: #fff;
+}
+
+.ab-qr-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4b5563;
+  line-height: 1.45;
+}
+
+.ab-qr-text-error {
+  color: #d43838;
+}
+
+#paymentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#paymentForm input[type="text"] {
+  width: 100%;
+  margin-top: 7px;
+  border: 1.5px solid #ead7bf;
+  background: #fffdfb;
+  border-radius: 12px;
+  height: 42px;
+  padding: 0 12px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+#paymentForm input[type="text"]:focus {
+  outline: none;
+  border-color: #eda74d;
+  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.15);
+}
+
+.ab-upload-card {
+  border: 1px solid #f2dec3;
+  background: #fffdf9;
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.ab-upload-row {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ab-upload-btn {
+  border-radius: 11px;
+  border: 1px solid #f1cf9f;
+  background: #fff3df;
+  color: #bb690a;
+  height: 40px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ab-upload-file {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  color: #556274;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+#paymentProof {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.ab-submit-wrap {
+  margin-top: 4px;
+}
+
+/* Centered submit button for payment section */
+.ab-submit-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 12px;
+  padding-bottom: 8px;
+}
+.ab-submit-wrap .ab-btn {
+  width: 172px;
+  min-width: 140px;
+  border-radius: 22px;
+  height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+/* Bottom navigation: centered pill with shadows to match HomeEase style */
+.bnav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 12px;
+  width: 420px;
+  max-width: calc(100% - 32px);
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9));
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(243,222,204,0.7);
+  border-radius: 28px;
+  box-shadow: 0 16px 40px rgba(232,130,12,0.10), 0 4px 8px rgba(0,0,0,0.06);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  z-index: 120;
+}
+
+.bnav .ni {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 6px;
+  color: var(--ni-idle);
+  background: transparent;
+  border-radius: 12px;
+}
+
+.bnav .ni i {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.bnav .ni .nl {
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.bnav .ni.on {
+  color: var(--ni-on);
+}
+
+.bnav .ni.on i {
+  filter: drop-shadow(0 6px 14px rgba(245,166,35,0.32));
+}
+
+.bnav .ni.on::after {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: linear-gradient(90deg, #E8820C, #F5A623);
+  border-radius: 4px;
+  margin-top: 6px;
+}
+
 .ab-hide {
   display: none;
 }
 
+.bnav {
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
+  overflow: hidden;
+}
+
+.bnav .ni {
+  border: none;
+  background: transparent;
+}
+
 @media (max-width: 420px) {
+  .ab-hero {
+    padding: 46px 16px 22px;
+  }
+
+  .ab-title {
+    font-size: 21px;
+  }
+
+  .ab-card {
+    margin: 12px 12px 0;
+    border-radius: 18px;
+    padding: 14px;
+  }
+
   .ab-row {
     flex-direction: column;
+    gap: 10px;
+  }
+
+  .ab-col {
+    padding: 10px;
+  }
+
+  .ab-upload-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ab-upload-btn {
+    justify-content: center;
+  }
+
+  .ab-btn {
+    height: 44px;
+  }
+
+  .ab-qr-image-wrap img {
+    max-width: 180px;
+  }
+  .bnav {
+    width: calc(100% - 24px);
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 10px;
   }
 }

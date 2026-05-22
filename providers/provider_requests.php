@@ -194,20 +194,34 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     /* ── Map Preview Modal ── */
     .map-modal-overlay{position:absolute;inset:0;z-index:900;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
     .map-modal-overlay.open{opacity:1;pointer-events:all}
-    .map-modal-card{width:100%;background:#fff;border-radius:24px 24px 0 0;padding-bottom:32px;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1)}
+    .map-modal-card{width:100%;max-height:92%;background:#fff;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;overflow:hidden}
     .map-modal-overlay.open .map-modal-card{transform:translateY(0)}
     .map-modal-handle{width:40px;height:4px;background:#E0D8D0;border-radius:2px;margin:12px auto 0}
     .map-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px}
     .map-modal-title{font-size:15px;font-weight:800;color:#1A1A2E;font-family:'Poppins',sans-serif}
     .map-modal-close{width:32px;height:32px;border-radius:50%;background:#F5F0EA;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;color:#7A7064}
-    #mapPreview{height:220px;width:100%;display:block}
+    .map-modal-content{padding:0 0 10px;overflow-y:auto;flex:1}
+    #mapPreview{height:200px;width:100%;display:block}
     .btn-map-accept:disabled{opacity:.6;cursor:not-allowed}
-    .map-modal-info{padding:12px 16px 14px;display:flex;align-items:center;gap:10px}
+    .map-modal-info{padding:10px 16px 12px;display:flex;align-items:flex-start;gap:10px}
     .map-modal-addr{flex:1;font-size:12px;color:#5E564D;font-weight:600;line-height:1.4}
-    .map-modal-actions{display:flex;gap:10px;padding:0 16px}
+    .map-modal-details{margin:0 16px 10px;background:#FFFDF9;border:1.5px solid #EFE3D4;border-radius:16px;padding:12px 12px 4px}
+    .map-modal-details-title{font-size:12px;font-weight:800;color:#1A1A2E;font-family:'Poppins',sans-serif;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .map-modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+    .map-modal-item{background:#fff;border:1px solid #EFE3D4;border-radius:12px;padding:8px 10px}
+    .map-modal-item.full{grid-column:1/-1}
+    .map-item-label{font-size:10px;font-weight:800;color:#9A8F83;text-transform:uppercase;letter-spacing:.35px;margin-bottom:4px;font-family:'Poppins',sans-serif}
+    .map-item-value{font-size:12px;font-weight:700;color:#2F2A24;line-height:1.35;word-break:break-word}
+    .map-item-value.price{font-size:15px;color:#C2410C;font-family:'Poppins',sans-serif;font-weight:800}
+    .map-item-value.chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:99px;background:#FFF7E8;color:#B45309;font-family:'Poppins',sans-serif;font-size:11px;font-weight:800}
+    .map-modal-actions{display:flex;gap:10px;padding:10px 16px 16px;border-top:1px solid #F0E8DC;background:#fff;position:sticky;bottom:0;z-index:2}
     .btn-map-accept{flex:1;height:46px;border-radius:13px;background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;border:none;cursor:pointer;font-size:14px;font-weight:800;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 14px rgba(232,130,12,.3)}
     .btn-map-pass{width:46px;height:46px;border-radius:13px;border:1.5px solid #E8E0D5;background:#fff;color:#7A7064;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
     .map-modal-chip{display:inline-flex;align-items:center;gap:4px;background:#FEF3C7;color:#92400E;padding:4px 10px;border-radius:99px;font-size:10px;font-weight:800;font-family:'Poppins',sans-serif}
+
+    @media (max-width: 420px) {
+      .map-modal-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
@@ -220,11 +234,55 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         <div class="map-modal-title">Booking Location</div>
         <button class="map-modal-close" onclick="dismissMapModal()"><i class="bi bi-x-lg"></i></button>
       </div>
-      <div id="mapPreview"></div>
-      <div class="map-modal-info">
-        <i class="bi bi-geo-alt-fill" style="color:#E8820C;font-size:18px;flex-shrink:0"></i>
-        <div class="map-modal-addr" id="modalAddr">Loading…</div>
-        <span class="map-modal-chip" id="modalDist"></span>
+      <div class="map-modal-content">
+        <div id="mapPreview"></div>
+        <div class="map-modal-info">
+          <i class="bi bi-geo-alt-fill" style="color:#E8820C;font-size:18px;flex-shrink:0"></i>
+          <div class="map-modal-addr" id="modalAddr">Loading…</div>
+          <span class="map-modal-chip" id="modalDist"></span>
+        </div>
+
+        <div class="map-modal-details">
+          <div class="map-modal-details-title"><i class="bi bi-card-checklist"></i> Booking Details</div>
+          <div class="map-modal-grid">
+            <div class="map-modal-item">
+              <div class="map-item-label">Client/Homeowner</div>
+              <div class="map-item-value" id="modalClientName">—</div>
+            </div>
+            <div class="map-modal-item">
+              <div class="map-item-label">Contact Number</div>
+              <div class="map-item-value" id="modalClientPhone">—</div>
+            </div>
+            <div class="map-modal-item full">
+              <div class="map-item-label">Full Address/Location</div>
+              <div class="map-item-value" id="modalFullAddress">—</div>
+            </div>
+            <div class="map-modal-item">
+              <div class="map-item-label">Service Type</div>
+              <div class="map-item-value" id="modalServiceType">—</div>
+            </div>
+            <div class="map-modal-item">
+              <div class="map-item-label">Date & Time</div>
+              <div class="map-item-value" id="modalDateTime">—</div>
+            </div>
+            <div class="map-modal-item">
+              <div class="map-item-label">Payment Method</div>
+              <div class="map-item-value chip" id="modalPaymentMethod">Cash</div>
+            </div>
+            <div class="map-modal-item">
+              <div class="map-item-label">Total Price</div>
+              <div class="map-item-value price" id="modalTotalPrice">₱0</div>
+            </div>
+            <div class="map-modal-item full">
+              <div class="map-item-label">Selected Options/Tasks</div>
+              <div class="map-item-value" id="modalOptions">Not specified.</div>
+            </div>
+            <div class="map-modal-item full">
+              <div class="map-item-label">Additional Notes</div>
+              <div class="map-item-value" id="modalNotes">No additional notes.</div>
+            </div>
+          </div>
+        </div>
       </div>
       <div class="map-modal-actions">
         <button class="btn-map-accept" id="btnModalAccept" onclick="acceptFromModal()"><i class="bi bi-check2-circle"></i> Accept Job</button>
@@ -338,6 +396,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     let pollTimer = null;
     let knownIds = new Set();
     let isAccepting = false;
+    let liveBookingLookup = new Map();
     let requestedBookingId = null; // booking_id from URL to auto-open
 
     function tryOpenRequestedBooking() {
@@ -433,6 +492,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
     function renderLiveFeed(bookings, forceReset) {
       const el = document.getElementById('feedList');
+      liveBookingLookup = new Map(bookings.map(b => [Number(b.booking_id), b]));
 
       if (!bookings.length) {
         el.innerHTML = `
@@ -501,7 +561,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           </div>
           ${!hasDeclined ? `
           <div class="live-card-actions">
-            <button class="btn-live-accept" id="btnAccept${bid}" onclick="openMapModal(${bid}, '${addr.replace(/'/g,"\\'")}', ${b.customer_lat || 'null'}, ${b.customer_lng || 'null'})">
+            <button class="btn-live-accept" id="btnAccept${bid}" onclick="openMapModal(${bid})">
               <i class="bi bi-map"></i> View Map &amp; Accept
             </button>
             <button class="btn-live-pass" onclick="passBooking(${bid}, this)" title="Pass">
@@ -568,9 +628,88 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
     }
 
-    async function openMapModal(bookingId, address, custLat, custLng) {
+    function setText(id, value, fallback = '—') {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const txt = String(value || '').trim();
+      el.textContent = txt !== '' ? txt : fallback;
+    }
+
+    function formatPaymentMethod(method) {
+      const m = String(method || 'cash').toLowerCase();
+      if (m === 'gcash') return 'GCash';
+      if (m === 'bank') return 'Bank Transfer';
+      return 'Cash';
+    }
+
+    function formatDateTime(date, timeSlot) {
+      const d = String(date || '').trim();
+      const t = String(timeSlot || '').trim();
+      if (d && t) return `${d} • ${t}`;
+      if (d) return d;
+      if (t) return t;
+      return 'Not specified';
+    }
+
+    function parseDetailText(rawText) {
+      const raw = String(rawText || '').replace(/\r/g, '').trim();
+      if (!raw) {
+        return {
+          selectedOptions: 'Not specified.',
+          notes: 'No additional notes.'
+        };
+      }
+
+      const markerMatch = raw.match(/Selected Options:\s*/i);
+      if (!markerMatch) {
+        return {
+          selectedOptions: 'Not specified.',
+          notes: raw
+        };
+      }
+
+      const markerIndex = markerMatch.index || 0;
+      const before = raw.slice(0, markerIndex).trim();
+      const after = raw.slice(markerIndex + markerMatch[0].length).trim();
+
+      const options = after
+        .split('\n')
+        .map(line => line.replace(/^[-•]\s*/, '').trim())
+        .filter(Boolean)
+        .join(' • ');
+
+      return {
+        selectedOptions: options || 'Not specified.',
+        notes: before || 'No additional notes.'
+      };
+    }
+
+    function fillMapModalDetails(booking) {
+      const fullAddress = booking.customer_address || booking.request_address || booking.address || '';
+      const detailsText = booking.details || booking.notes || '';
+      const parsed = parseDetailText(detailsText);
+
+      setText('modalClientName', booking.customer_name, 'Homeowner');
+      setText('modalClientPhone', booking.customer_phone, 'Not provided');
+      setText('modalFullAddress', fullAddress, 'Address not available');
+      setText('modalServiceType', booking.service, 'Service');
+      setText('modalDateTime', formatDateTime(booking.date, booking.time_slot), 'Not specified');
+      setText('modalPaymentMethod', formatPaymentMethod(booking.payment_method), 'Cash');
+      setText('modalTotalPrice', '₱' + Number(booking.fixed_price || booking.price || 0).toLocaleString('en-PH'), '₱0');
+      setText('modalOptions', parsed.selectedOptions, 'Not specified.');
+      setText('modalNotes', parsed.notes, 'No additional notes.');
+      setText('modalAddr', fullAddress, 'Address not available');
+    }
+
+    async function openMapModal(bookingId) {
+      const booking = liveBookingLookup.get(Number(bookingId));
+      if (!booking) {
+        alert('Booking details not available. Please refresh live feed.');
+        return;
+      }
+
       modalBookingId = bookingId;
-      document.getElementById('modalAddr').textContent = address || 'Address not available';
+      fillMapModalDetails(booking);
       document.getElementById('modalDist').textContent = '⏳';
       document.getElementById('btnModalAccept').disabled = false;
       document.getElementById('btnModalAccept').innerHTML = '<i class="bi bi-check2-circle"></i> Accept Job';
@@ -593,14 +732,15 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       setTimeout(() => previewMap.invalidateSize(), 350);
 
       try {
-        let lat = parseFloat(custLat);
-        let lng = parseFloat(custLng);
+        const fullAddress = booking.customer_address || booking.request_address || booking.address || '';
+        let lat = parseFloat(booking.customer_lat);
+        let lng = parseFloat(booking.customer_lng);
 
         // Validate stored GPS — reject if outside Batangas Province
         if (!isValidCoord(lat, lng)) {
           console.warn(`Stored GPS (${lat},${lng}) invalid — geocoding address instead.`);
           document.getElementById('modalDist').textContent = '📍 Locating…';
-          const geo = await geocodeAddress(address);
+          const geo = await geocodeAddress(fullAddress);
           lat = geo.lat;
           lng = geo.lng;
         }

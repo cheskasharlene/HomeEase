@@ -66,13 +66,20 @@ if ($method === 'GET' && $action === 'live_feed') {
     $latSelect = $hasCustomerLat ? 'b.customer_lat' : 'NULL AS customer_lat';
     $lngSelect = $hasCustomerLng ? 'b.customer_lng' : 'NULL AS customer_lng';
 
-    $sql = "SELECT b.id AS booking_id, b.service, b.address, b.price, b.created_at,
-                   b.notes, {$latSelect}, {$lngSelect},
-                   u.name AS customer_name, u.phone AS customer_phone,
-                   br.id AS request_id, br.status AS request_status
+        $sql = "SELECT b.id AS booking_id, b.service, b.address, b.price, b.created_at,
+                 b.date, b.time_slot, b.notes, {$latSelect}, {$lngSelect},
+                 COALESCE(br.fixed_price, b.price) AS fixed_price,
+                 COALESCE(br.address, b.address) AS request_address,
+                 COALESCE(br.customer_address, b.address) AS customer_address,
+                 COALESCE(br.details, b.notes) AS details,
+                 COALESCE(br.customer_name, u.name) AS customer_name,
+                 COALESCE(br.customer_phone, u.phone) AS customer_phone,
+                 COALESCE(p.payment_method, 'cash') AS payment_method,
+                 br.id AS request_id, br.status AS request_status
             FROM bookings b
             LEFT JOIN users u ON u.id = b.user_id
             LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ?
+             LEFT JOIN payments p ON p.booking_id = b.id
             WHERE b.status = 'pending'
               AND LOWER(b.service) LIKE ?
               AND b.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)

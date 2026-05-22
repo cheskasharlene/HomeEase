@@ -309,6 +309,30 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
   </div>
 
+  <div class="booking-confirm-overlay" id="bookingConfirmOverlay" onclick="closeBookingConfirmModal(false)">
+    <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="bookingConfirmTitle" onclick="event.stopPropagation()">
+      <div class="booking-confirm-head">
+        <div class="booking-confirm-icon"><i class="bi bi-receipt-cutoff"></i></div>
+        <div>
+          <h3 id="bookingConfirmTitle">Confirm Booking Details</h3>
+          <p>Please review your booking summary before continuing.</p>
+        </div>
+      </div>
+
+      <div class="booking-confirm-summary" id="bookingConfirmSummary"></div>
+
+      <div class="booking-confirm-note">
+        <i class="bi bi-shield-check"></i>
+        This is a fixed system-generated price (no additional charges).
+      </div>
+
+      <div class="booking-confirm-actions">
+        <button type="button" class="booking-confirm-btn cancel" id="bookingConfirmCancel" onclick="closeBookingConfirmModal(false)">Cancel</button>
+        <button type="button" class="booking-confirm-btn ok" id="bookingConfirmOk" onclick="closeBookingConfirmModal(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
@@ -888,22 +912,75 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       return data;
     }
 
-    function buildConfirmationMessage(price) {
+    function buildConfirmationRows(price) {
       const selections = collectSelections();
-      const lines = [`Service: ${selectedSvc.name}`];
+      const rows = [{ label: 'Service', value: selectedSvc.name }];
 
       Object.keys(selections).forEach(key => {
         const val = selections[key];
+        const label = key.replaceAll('_', ' ');
         if (Array.isArray(val)) {
-          lines.push(`${key.replaceAll('_', ' ')}: ${val.join(', ') || 'None'}`);
+          rows.push({ label, value: val.join(', ') || 'None' });
         } else if (String(val).trim() !== '') {
-          lines.push(`${key.replaceAll('_', ' ')}: ${val}`);
+          rows.push({ label, value: val });
         }
       });
 
-      lines.push(`Final Price: ₱${price.toLocaleString('en-PH')}`);
-      lines.push('This is a fixed system-generated price (no additional charges).');
-      return lines.join('\n');
+      rows.push({ label: 'Final Price', value: `₱${price.toLocaleString('en-PH')}`, isPrice: true });
+      return rows;
+    }
+
+    let bookingConfirmResolver = null;
+    let bookingConfirmEscHandler = null;
+
+    function closeBookingConfirmModal(confirmed) {
+      const overlay = document.getElementById('bookingConfirmOverlay');
+      if (!overlay) return;
+
+      if (bookingConfirmEscHandler) {
+        document.removeEventListener('keydown', bookingConfirmEscHandler);
+        bookingConfirmEscHandler = null;
+      }
+
+      overlay.classList.remove('show');
+      document.body.classList.remove('modal-open');
+
+      const resolver = bookingConfirmResolver;
+      bookingConfirmResolver = null;
+      if (resolver) resolver(Boolean(confirmed));
+    }
+
+    function showBookingConfirmModal(price) {
+      return new Promise(resolve => {
+        const overlay = document.getElementById('bookingConfirmOverlay');
+        const summary = document.getElementById('bookingConfirmSummary');
+        const okBtn = document.getElementById('bookingConfirmOk');
+
+        if (!overlay || !summary || !okBtn) {
+          resolve(true);
+          return;
+        }
+
+        if (bookingConfirmResolver) bookingConfirmResolver(false);
+        bookingConfirmResolver = resolve;
+
+        const rows = buildConfirmationRows(price);
+        summary.innerHTML = rows.map(row => `
+          <div class="booking-confirm-row ${row.isPrice ? 'is-price' : ''}">
+            <span>${row.label}</span>
+            <strong>${row.value}</strong>
+          </div>
+        `).join('');
+
+        bookingConfirmEscHandler = (event) => {
+          if (event.key === 'Escape') closeBookingConfirmModal(false);
+        };
+        document.addEventListener('keydown', bookingConfirmEscHandler);
+
+        overlay.classList.add('show');
+        document.body.classList.add('modal-open');
+        requestAnimationFrame(() => okBtn.focus());
+      });
     }
 
     let gcashPaymentCompleted = false;
@@ -1046,7 +1123,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const h12 = ((hrs % 12) || 12);
       const time = `${h12}:${String(mins).padStart(2,'0')} ${ampm}`;
 
-      const ok = window.confirm(buildConfirmationMessage(price));
+      const ok = await showBookingConfirmModal(price);
       if (!ok) return;
 
       const btn = document.getElementById('btnSubmit');

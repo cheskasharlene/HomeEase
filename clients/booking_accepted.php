@@ -66,7 +66,9 @@ if (empty($_SESSION['user_id'])) {
         </div>
 
         <div class="ab-card" id="summaryCard">
-          <div class="ab-card-title">Booking Summary</div>
+          <div class="ab-card-head">
+            <div class="ab-card-title">Booking Summary</div>
+          </div>
           <div class="ab-list">
             <div class="ab-row">
               <div class="ab-col">
@@ -98,7 +100,9 @@ if (empty($_SESSION['user_id'])) {
         </div>
 
         <div class="ab-card" id="paymentCard">
-          <div class="ab-card-title">Payment Details</div>
+          <div class="ab-card-head">
+            <div class="ab-card-title">Payment Details</div>
+          </div>
           <div class="ab-list">
             <div id="paymentInfo">
               <div class="ab-row">
@@ -123,17 +127,17 @@ if (empty($_SESSION['user_id'])) {
               </div>
             </div>
 
-            <div id="cashPaymentNote" class="ab-hide" style="margin-top:12px;padding:12px 14px;background:#ECFDF5;border-radius:12px;border:1.5px solid #6EE7B7;font-size:13px;color:#065F46;font-weight:600;">
+            <div id="cashPaymentNote" class="ab-note ab-note-success ab-hide">
               Cash payment — pay your provider when the service is completed.
             </div>
 
-            <div id="paymentWaitingNote" class="ab-hide" style="margin-top:12px;padding:12px 14px;background:#FFFBEB;border-radius:12px;border:1.5px solid #FDE68A;font-size:13px;color:#92400E;font-weight:600;">
+            <div id="paymentWaitingNote" class="ab-note ab-note-warning ab-hide">
               Receipt submitted. Waiting for your provider to confirm payment.
             </div>
 
-            <div id="paymentCompletedNote" class="ab-hide" style="margin-top:12px;padding:12px 14px;background:#ECFDF5;border-radius:12px;border:1.5px solid #6EE7B7;font-size:13px;color:#065F46;font-weight:600;">
+            <div id="paymentCompletedNote" class="ab-note ab-note-success ab-hide">
               Payment confirmed! Your provider will proceed with the service.
-              <div style="margin-top:10px;">
+              <div class="ab-note-actions">
                 <button class="ab-btn" type="button" onclick="goToTracking()">Track Provider</button>
               </div>
             </div>
@@ -141,30 +145,36 @@ if (empty($_SESSION['user_id'])) {
             <form id="paymentForm" class="ab-hide" onsubmit="submitPayment(event)" enctype="multipart/form-data">
               <input type="hidden" id="paymentMethod" name="payment_method" value="">
 
-              <!-- Dynamic QR code display container -->
-              <div class="qr-container-wrapper" id="qrContainerWrapper" style="display:none; justify-content: center; align-items: center; margin: 15px 0; padding: 15px; border: 1.5px solid #FFE5B4; border-radius: 12px; background-color: #FFFDF9; flex-direction: column; text-align: center;">
-                <div class="ab-label" style="margin-bottom: 8px; color: var(--teal-dark); font-weight: 800;">Scan Provider's QR Code to Pay</div>
-                <div id="qrImageDiv"></div>
-                <div id="qrTextFallback" style="font-size: 13px; font-weight: 700; color: #4B5563; margin-top: 8px; line-height: 1.4;"></div>
+              <div class="ab-qr-box" id="qrContainerWrapper">
+                <div class="ab-qr-title">Scan Provider QR to Pay</div>
+                <div id="qrImageDiv" class="ab-qr-image-wrap"></div>
+                <div id="qrTextFallback" class="ab-qr-text"></div>
               </div>
 
               <div class="ab-row">
                 <div class="ab-col">
                   <label class="ab-label">Transaction/Reference No.</label>
-                  <input type="text" id="txnRef" name="payment_reference" required />
+                  <input type="text" id="txnRef" name="payment_reference" required placeholder="Enter reference number" />
                 </div>
                 <div class="ab-col">
                   <label class="ab-label">Sender Name</label>
-                  <input type="text" id="senderName" name="sender_name" required />
+                  <input type="text" id="senderName" name="sender_name" required placeholder="Enter sender name" />
                 </div>
               </div>
-              <div class="ab-row">
-                <div class="ab-col ab-wide">
-                  <label class="ab-label">Proof of Payment Image</label>
-                  <input type="file" id="paymentProof" name="payment_proof" accept="image/jpeg,image/png,image/webp" required />
+
+              <div class="ab-upload-card">
+                <label class="ab-label" for="paymentProof">Proof of Payment Image</label>
+                <div class="ab-upload-row">
+                  <label for="paymentProof" class="ab-upload-btn">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <span>Upload Receipt</span>
+                  </label>
+                  <div class="ab-upload-file" id="paymentProofName">No file selected</div>
                 </div>
+                <input type="file" id="paymentProof" name="payment_proof" accept="image/jpeg,image/png,image/webp" required />
               </div>
-              <div style="margin-top:8px;">
+
+              <div class="ab-submit-wrap">
                 <button class="ab-btn" type="submit" id="btnSubmitPayment">Submit Payment</button>
               </div>
             </form>
@@ -179,17 +189,17 @@ if (empty($_SESSION['user_id'])) {
       </div>
 
       <div class="bnav">
-        <button class="bnav-item" onclick="goPage('home.php')">
+        <button class="ni" type="button" onclick="goPage('home.php')">
           <i class="bi bi-house"></i>
-          <span>Home</span>
+          <span class="nl">Home</span>
         </button>
-        <button class="bnav-item active" onclick="goPage('booking_history.php')">
+        <button class="ni on" type="button" onclick="goPage('booking_history.php')">
           <i class="bi bi-calendar-event"></i>
-          <span>Bookings</span>
+          <span class="nl">Bookings</span>
         </button>
-        <button class="bnav-item" onclick="goPage('profile.php')">
+        <button class="ni" type="button" onclick="goPage('profile.php')">
           <i class="bi bi-person"></i>
-          <span>Profile</span>
+          <span class="nl">Profile</span>
         </button>
       </div>
     </div>
@@ -317,20 +327,20 @@ if (empty($_SESSION['user_id'])) {
 
         if (method === 'gcash') {
           if (currentProviderPayment && currentProviderPayment.gcash_qr) {
-            qrImgDiv.innerHTML = '<img src="../' + currentProviderPayment.gcash_qr + '" alt="GCash QR" style="max-width:220px;border-radius:8px;border:2px solid #E8820C;box-shadow:0 4px 10px rgba(0,0,0,0.15);">';
+            qrImgDiv.innerHTML = '<img src="../' + currentProviderPayment.gcash_qr + '" alt="GCash QR">';
             qrText.innerHTML = currentProviderPayment.contact_number ? ('GCash No: <b>' + currentProviderPayment.contact_number + '</b>') : '';
           } else {
-            qrImgDiv.innerHTML = '<div style="font-size:40px;color:#9CA3AF;"><i class="bi bi-qr-code"></i></div>';
-            qrText.innerHTML = '<span style="color:#ef4444;font-weight:700;">No GCash QR uploaded by provider.</span>' +
+            qrImgDiv.innerHTML = '<div class="ab-qr-placeholder"><i class="bi bi-qr-code"></i></div>';
+            qrText.innerHTML = '<span class="ab-qr-text-error">No GCash QR uploaded by provider.</span>' +
               (currentProviderPayment && currentProviderPayment.contact_number ? '<br>Send payment to: <b>' + currentProviderPayment.contact_number + '</b>' : '');
           }
         } else {
           if (currentProviderPayment && currentProviderPayment.bank_qr) {
-            qrImgDiv.innerHTML = '<img src="../' + currentProviderPayment.bank_qr + '" alt="Bank QR" style="max-width:220px;border-radius:8px;border:2px solid #E8820C;box-shadow:0 4px 10px rgba(0,0,0,0.15);">';
+            qrImgDiv.innerHTML = '<img src="../' + currentProviderPayment.bank_qr + '" alt="Bank QR">';
             qrText.innerHTML = '';
           } else {
-            qrImgDiv.innerHTML = '<div style="font-size:40px;color:#9CA3AF;"><i class="bi bi-qr-code"></i></div>';
-            qrText.innerHTML = '<span style="color:#ef4444;font-weight:700;">No Bank QR uploaded by provider.</span>';
+            qrImgDiv.innerHTML = '<div class="ab-qr-placeholder"><i class="bi bi-qr-code"></i></div>';
+            qrText.innerHTML = '<span class="ab-qr-text-error">No Bank QR uploaded by provider.</span>';
           }
         }
       } else {
@@ -429,6 +439,11 @@ if (empty($_SESSION['user_id'])) {
       btn.disabled = false;
       btn.textContent = 'Submit Payment';
     }
+
+    document.getElementById('paymentProof').addEventListener('change', function (e) {
+      const name = e.target.files && e.target.files.length ? e.target.files[0].name : 'No file selected';
+      document.getElementById('paymentProofName').textContent = name;
+    });
 
     loadAcceptedBooking().then(loadPaymentDetails);
   </script>

@@ -11,6 +11,9 @@ define("DB_USER", getenv('DB_USER') ?: "root");
 define("DB_PASS", getenv('DB_PASS') ?: "");
 define("DB_NAME", getenv('DB_NAME') ?: "homease_db");
 
+// Prevent uncaught mysqli_sql_exception from breaking JSON API responses.
+mysqli_report(MYSQLI_REPORT_OFF);
+
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 
 if ($conn->connect_error) {
@@ -214,7 +217,7 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
  * @param mysqli $conn Database connection
  * @param int $userId User ID
  * @param int $bookingId Booking ID
- * @return array Payment data or null if not found/not authorized
+ * @return array|null Payment data or null if not found/not authorized
  */
 function getPaymentByBooking($conn, $userId, $bookingId)
 {
