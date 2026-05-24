@@ -847,7 +847,7 @@ if ($appBase === '') {
               </div>
               <div class="faq-answer"
                 style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Services include
-                cleaning, plumbing, electrical work, and other household tasks.</div>
+                House Cleaner, plumbing, electrical work, and other household tasks.</div>
             </div>
             <div class="faq-item"
               style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;"

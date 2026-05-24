@@ -35,7 +35,7 @@ $notifications = array_map(function ($n) {
     'msg' => $n['message'],
     'time' => timeAgo($n['created_at']),
     'read' => (bool) $n['is_read'],
-    'icon' => $n['icon'] ?? 'cleaning',
+    'icon' => $n['icon'] ?? 'house_cleaner',
   ];
 }, $rows);
 
@@ -180,7 +180,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
     }
 
     function notifCard(n) {
-      const imgSrc = SVC_IMGS[n.icon] || SVC_IMGS.cleaning;
+      const imgSrc = SVC_IMGS[n.icon] || SVC_IMGS.house_cleaner;
       return `<div class="n-card${n.read ? '' : ' unread'}" onclick="markRead(${n.id})">
         ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
         <div class="n-ic"><img src="${imgSrc}" alt=""></div>
@@ -229,7 +229,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
           msg: n.message || n.msg,
           time: n.time,
           read: !!n.read,
-          icon: n.icon || 'cleaning'
+          icon: n.icon || 'house_cleaner'
         }));
 
         const beforeIds = getStoredClientNotifIds();

@@ -918,7 +918,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     /* Service emoji map */
     const SVC_ICONS = {
-      'Cleaner': '🧹', 'Helper': '🧑‍🤝‍🧑', 'Laundry Worker': '🧺',
+      'House Cleaner': '🧹', 'Helper': '🧑‍🤝‍🧑', 'Laundry Worker': '🧺',
       'Plumber': '🔧', 'Carpenter': '🔨', 'Appliance Technician': '🔩'
     };
 

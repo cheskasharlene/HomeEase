@@ -311,7 +311,7 @@ if (!empty($_SESSION['provider_id'])) {
           <div class="fi-wrap">
             <select class="fi" id="regSpecialty">
               <option value="">Select your specialty…</option>
-              <option>Cleaner</option>
+              <option>House Cleaner</option>
               <option>Helper</option>
               <option>Laundry Worker</option>
               <option>Plumber</option>

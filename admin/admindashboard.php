@@ -931,7 +931,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </select>
         <select class="wk-dd" id="wkServiceFilter" onchange="loadWorkers()">
           <option value="all">Service: All</option>
-          <option value="cleaner">Cleaner</option>
+          <option value="house_cleaner">House Cleaner</option>
           <option value="helper">Helper</option>
           <option value="laundry">Laundry</option>
           <option value="plumber">Plumber</option>
@@ -1229,7 +1229,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="fg-row">
             <div class="fg"><label class="fl">Icon (emoji)</label><input class="fi" id="svcIcon" placeholder="🔧"
                 maxlength="5"></div>
-            <div class="fg"><label class="fl">Name *</label><input class="fi" id="svcName" placeholder="e.g. Cleaning">
+            <div class="fg"><label class="fl">Name *</label><input class="fi" id="svcName" placeholder="e.g. House Cleaner">
             </div>
           </div>
           <div class="fg"><label class="fl">Description</label><input class="fi" id="svcDesc"
@@ -1868,7 +1868,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       function getWorkerServiceKey(worker) {
         const svc = String(worker?.specialty || '').toLowerCase().trim();
-        if (svc.includes('clean')) return 'cleaner';
+        if (svc.includes('clean')) return 'house_cleaner';
         if (svc.includes('helper')) return 'helper';
         if (svc.includes('laundry')) return 'laundry';
         if (svc.includes('plumb')) return 'plumber';
@@ -2342,7 +2342,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
 
       function svcEmoji(svc) {
-        const m = { Cleaning: '🧹', Plumbing: '🔧', Electrical: '⚡', Painting: '🖌️', 'Appliance Repair': '🔩' };
+        const m = { 'House Cleaner': '🧹', Plumbing: '🔧', Electrical: '⚡', Painting: '🖌️', 'Appliance Repair': '🔩' };
         return m[svc] || '🏠';
       }
 
@@ -2649,7 +2649,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       const HOMEEASE_SERVICES = [
-        { key: 'cleaner', label: 'Cleaner', color: '#F5A623', terms: ['clean', 'cleaner', 'cleaning'] },
+        { key: 'house_cleaner', label: 'House Cleaner', color: '#F5A623', terms: ['clean', 'cleaner', 'cleaning'] },
         { key: 'helper', label: 'Helper', color: '#3b82f6', terms: ['helper', 'house helper', 'household helper'] },
         { key: 'laundry_worker', label: 'Laundry Worker', color: '#10b981', terms: ['laundry', 'washer', 'washing'] },
         { key: 'plumber', label: 'Plumber', color: '#06b6d4', terms: ['plumb', 'pipe'] },

@@ -34,7 +34,7 @@ function providerDashboardEarnings(): array
 {
   return [
     [
-      'service' => 'Bathroom Cleaning',
+      'service' => 'Bathroom House Cleaner',
       'date_label' => 'Completed on Mar 20, 2026',
       'status' => 'completed',
       'amount' => 1500

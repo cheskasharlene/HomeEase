@@ -468,7 +468,7 @@ if ($method === 'POST' && $action === 'complete') {
             $uid = (int)$bkRow['user_id'];
             $svc = $conn->real_escape_string((string)$bkRow['service']);
             $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at)
-                VALUES ({$uid}, 'Service Complete', 'Your {$svc} service has been completed. Please leave a review!', 'cleaning', 0, NOW())");
+                VALUES ({$uid}, 'Service Complete', 'Your {$svc} service has been completed. Please leave a review!', 'house_cleaner', 0, NOW())");
         }
 
         $conn->commit();
@@ -650,7 +650,7 @@ function notifyHomeownerAccepted(mysqli $conn, int $bookingId, int $providerId):
         return;
     }
 
-    $ins = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Booking Confirmed', ?, 'cleaning', 0, NOW())");
+    $ins = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Booking Confirmed', ?, 'house_cleaner', 0, NOW())");
     if ($ins) {
         $ins->bind_param('is', $uid, $msg);
         $ins->execute();

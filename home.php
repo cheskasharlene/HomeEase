@@ -125,7 +125,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     // Services grid – unique icon & color per service
     const svcThemeMap = {
-      'Cleaning': { icon: 'bi-stars', css: 'svc-cleaning', price: 400 },
+      'House Cleaner': { icon: 'bi-stars', css: 'svc-house_cleaner', price: 400 },
       'Plumbing': { icon: 'bi-wrench-adjustable-circle', css: 'svc-plumbing', price: 400 },
       'Helper': { icon: 'bi-person-arms-up', css: 'svc-helper', price: 350 },
       'Appliance Technician': { icon: 'bi-tools', css: 'svc-technician', price: 400 },
@@ -162,7 +162,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
 
     const popData = [
-      { svc: 'Cleaning', title: 'Deep Home Cleaning', desc: 'Complete home and office cleaning', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80', price: '₱800' },
+      { svc: 'House Cleaner', title: 'Deep Home House Cleaner', desc: 'Complete home and office House Cleaner', img: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80', price: '₱800' },
       { svc: 'Plumbing', title: 'Pipe Leak Repair', desc: 'Fix leaks, clogs, and pipe issues', img: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80', price: '₱800' },
       { svc: 'Helper', title: 'Household Helper', desc: 'Errands, moving, and general assistance', img: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=300&q=80', price: '₱700' },
       { svc: 'Appliance Technician', title: 'Appliance Diagnosis', desc: 'Repair and diagnostics for appliances', img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80', price: '₱800' },

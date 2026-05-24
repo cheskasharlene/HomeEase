@@ -542,7 +542,7 @@ function _seedServices(mysqli $conn)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     
     // Check if we already have the new services
-    $checkStmt = $conn->query("SELECT COUNT(*) as cnt FROM services WHERE name = 'Cleaner' AND active = 1");
+    $checkStmt = $conn->query("SELECT COUNT(*) as cnt FROM services WHERE name = 'House Cleaner' AND active = 1");
     if ($checkStmt) {
         $row = $checkStmt->fetch_assoc();
         if ($row && $row['cnt'] > 0) {
@@ -555,7 +555,7 @@ function _seedServices(mysqli $conn)
     $conn->query("ALTER TABLE services AUTO_INCREMENT = 1");
     
     $services = [
-        ['Cleaner', '🧹', 'Complete home & office cleaning', 400, 500, 1, 'flat'],
+        ['House Cleaner', '🧹', 'Complete home & office House Cleaner', 400, 500, 1, 'flat'],
         ['Helper', '🧑‍🤝‍🧑', 'All-around household helping', 400, 400, 1, 'flat'],
         ['Laundry Worker', '🧺', 'Washing, drying & folding', 300, 300, 1, 'flat'],
         ['Plumber', '🔧', 'Pipe repair, clogs & installs', 400, 500, 1, 'flat'],
@@ -585,20 +585,20 @@ function _seedServices(mysqli $conn)
 function _svcIcon($s)
 {
     $m = [
-        'Cleaner' => 'cleaner',
+        'House Cleaner' => 'house_cleaner',
         'Helper' => 'helper',
         'Laundry Worker' => 'laundry',
         'Plumber' => 'plumber',
         'Carpenter' => 'carpenter',
         'Appliance Technician' => 'appliance'
     ];
-    return $m[$s] ?? 'cleaner';
+    return $m[$s] ?? 'house_cleaner';
 }
 
 function _defaultServices()
 {
     return [
-        ['id' => 1, 'name' => 'Cleaner', 'icon' => '🧹', 'description' => 'Complete home & office cleaning', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 1, 'name' => 'House Cleaner', 'icon' => '🧹', 'description' => 'Complete home & office House Cleaner', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
         ['id' => 2, 'name' => 'Helper', 'icon' => '🧑‍🤝‍🧑', 'description' => 'All-around household helping', 'hourly_rate' => 400, 'flat_rate' => 400, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
         ['id' => 3, 'name' => 'Laundry Worker', 'icon' => '🧺', 'description' => 'Washing, drying & folding', 'hourly_rate' => 300, 'flat_rate' => 300, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
         ['id' => 4, 'name' => 'Plumber', 'icon' => '🔧', 'description' => 'Pipe repair, clogs & installs', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
@@ -675,11 +675,11 @@ function _computeFixedPrice($service, $data)
     $total = 0;
     $breakdown = [];
 
-    if ($service === 'Cleaner') {
+    if ($service === 'House Cleaner') {
         $total = 500;
         $breakdown[] = 'Base: 500';
 
-        $typeAdd = ['General' => 0, 'Deep Cleaning' => 500, 'Move-in/out' => 700];
+        $typeAdd = ['General' => 0, 'Deep House Cleaner' => 500, 'Move-in/out' => 700];
         $propertyAdd = ['Condo/Apartment' => 0, 'House' => 200];
 
         $cleanType = (string) ($data['cleaning_type'] ?? 'General');
@@ -700,7 +700,7 @@ function _computeFixedPrice($service, $data)
 
         $taskAdd = 0;
         foreach($tasks as $t) {
-            $taskAdd += (['Cleaning' => 100, 'Cooking' => 150, 'Childcare' => 200, 'General Errands' => 100][$t] ?? 0);
+            $taskAdd += ((['House Cleaner' => 100, 'Cooking' => 150, 'Childcare' => 200, 'General Errands' => 100][$t]) ?? 0);
         }
         $total += $taskAdd;
         $total += ($hours > 4) ? (($hours-4)*100) : 0; // extra hours over 4
@@ -761,8 +761,8 @@ function _summarizeSelectedOptions($service, $data)
 {
     $pairs = [];
 
-    if ($service === 'Cleaner') {
-        $pairs[] = 'Cleaning Type: ' . ((string) ($data['cleaning_type'] ?? 'General'));
+    if ($service === 'House Cleaner') {
+        $pairs[] = 'House Cleaner Type: ' . ((string) ($data['cleaning_type'] ?? 'General'));
         $pairs[] = 'Property Type: ' . ((string) ($data['property_type'] ?? 'Condo/Apartment'));
         $pairs[] = 'Rooms: ' . max(0, _asInt($data['num_rooms'] ?? 1, 1));
         $pairs[] = 'Bathrooms: ' . max(0, _asInt($data['num_bathrooms'] ?? 1, 1));

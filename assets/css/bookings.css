@@ -659,6 +659,7 @@ select.fi {
 
 /* Service-specific accent colors */
 .bk-card[data-svc="Cleaning"]         { --bk-accent: #0EA5E9; }
+.bk-card[data-svc="House Cleaner"]    { --bk-accent: #0EA5E9; }
 .bk-card[data-svc="Plumbing"]         { --bk-accent: #6366F1; }
 .bk-card[data-svc="Electrical"]       { --bk-accent: #F59E0B; }
 .bk-card[data-svc="Painting"]         { --bk-accent: #EC4899; }
@@ -688,6 +689,7 @@ select.fi {
 
 /* Service-specific icon backgrounds */
 .bk-ic.ic-cleaning    { background: linear-gradient(135deg, #E0F2FE, #BAE6FD); }
+.bk-ic.ic-house_cleaner { background: linear-gradient(135deg, #E0F2FE, #BAE6FD); }
 .bk-ic.ic-plumbing    { background: linear-gradient(135deg, #EEF2FF, #C7D2FE); }
 .bk-ic.ic-electrical  { background: linear-gradient(135deg, #FEF9C3, #FDE68A); }
 .bk-ic.ic-painting    { background: linear-gradient(135deg, #FCE7F3, #FBCFE8); }

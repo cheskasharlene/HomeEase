@@ -62,7 +62,7 @@ if (empty($_SESSION['user_id'])) {
         <div class="w-filters" id="filterPills">
           <div class="w-pill active" data-filter="all">All</div>
           <div class="w-pill" data-filter="available">Available Now</div>
-          <div class="w-pill" data-filter="Cleaning">Cleaning</div>
+          <div class="w-pill" data-filter="House Cleaner">House Cleaner</div>
           <div class="w-pill" data-filter="Plumbing">Plumbing</div>
           <div class="w-pill" data-filter="Electrical">Electrical</div>
           <div class="w-pill" data-filter="Painting">Painting</div>

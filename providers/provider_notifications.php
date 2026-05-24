@@ -35,7 +35,7 @@ if ($stmt) {
       'msg' => $n['message'],
       'time' => providerTimeAgo($n['created_at']),
       'read' => (bool) $n['is_read'],
-      'icon' => $n['icon'] ?? 'cleaning',
+      'icon' => $n['icon'] ?? 'house_cleaner',
     ];
   }, $rows);
   $unread = count(array_filter($notifs, fn($n) => !$n['read']));
@@ -229,7 +229,7 @@ if ($stmt) {
           msg: n.message,
           time: providerTimeAgo(n.created_at),
           read: !!n.is_read,
-          icon: n.icon || 'cleaning'
+          icon: n.icon || 'house_cleaner'
         }));
 
         const previousIds = new Set(window.HE.notifications.map(n => String(n.id)));
@@ -259,7 +259,7 @@ if ($stmt) {
       if (n.type === 'account_verified') {
         return `<div class="n-card${n.read ? '' : ' unread'}" onclick="markRead('${String(n.id)}')">${!n.read ? '<div class="n-unread-bar"></div>' : ''}<div class="n-ic" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#059669;font-size:20px;display:flex;align-items:center;justify-content:center;">✔</div><div class="n-content"><div class="n-title">${n.title}</div><div class="n-msg">${n.msg}</div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;"><span style="font-size:11px;font-weight:800;color:#059669;background:#dcfce7;border:1px solid #86efac;padding:3px 10px;border-radius:999px;">Verified</span><button onclick="activateAndGoDashboard(event)" style="border:none;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;cursor:pointer;">Go to Dashboard</button></div><div class="n-time" style="margin-top:7px;">${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all" style="color:var(--teal);font-size:12px;"></i>'}${n.time || 'Now'}</div></div></div>`;
       }
-      const img = SVC_IMGS[n.icon] || SVC_IMGS.cleaning;
+      const img = SVC_IMGS[n.icon] || SVC_IMGS.house_cleaner;
       return `<div class="n-card${n.read ? '' : ' unread'}" onclick="markRead(${n.id})">${!n.read ? '<div class="n-unread-bar"></div>' : ''}<div class="n-ic"><img src="${img}" alt=""></div><div class="n-content"><div class="n-title">${n.title}</div><div class="n-msg">${n.msg}</div><div class="n-time">${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all" style="color:var(--teal);font-size:12px;"></i>'}${n.time}</div></div></div>`;
     }
 

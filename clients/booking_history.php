@@ -191,12 +191,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }
 
       const svcIcon = {
-        'Cleaning': '🧹', 'Plumbing': '🔧', 'Electrical': '⚡',
+        'House Cleaner': '🧹', 'Plumbing': '🔧', 'Electrical': '⚡',
         'Painting': '🖌️', 'Appliance Repair': '🔩'
       };
 
       const svcIcClass = {
-        'Cleaning': 'ic-cleaning', 'Plumbing': 'ic-plumbing', 'Electrical': 'ic-electrical',
+        'House Cleaner': 'ic-house_cleaner', 'Plumbing': 'ic-plumbing', 'Electrical': 'ic-electrical',
         'Painting': 'ic-painting', 'Appliance Repair': 'ic-appliance'
       };
 

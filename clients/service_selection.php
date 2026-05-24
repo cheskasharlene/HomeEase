@@ -46,13 +46,13 @@ if (empty($_SESSION['user_id'])) {
     let services = [];
 
     const serviceConfig = {
-      'Cleaner': {
+      'House Cleaner': {
         icon: 'bi-stars',
         bg: 'linear-gradient(135deg, #E0F2FE, #BAE6FD)',
         color: '#0284C7',
         accent: '#0EA5E9',
         shadow: 'rgba(14,165,233,.18)',
-        desc: 'Home & office cleaning'
+        desc: 'Home & office House Cleaner'
       },
       'Plumber': {
         icon: 'bi-wrench-adjustable-circle',

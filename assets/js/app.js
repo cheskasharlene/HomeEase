@@ -259,9 +259,9 @@ function renderSearch(q) {
   const qLow = q.toLowerCase().trim();
   const allSvcs = [
     {
-      name: "Cleaning",
-      desc: "Home & office cleaning",
-      key: "cleaning",
+      name: "House Cleaner",
+      desc: "Home & office House Cleaner",
+      key: "house_cleaner",
       flat: 800,
       hr: 400,
     },
@@ -651,14 +651,14 @@ function _updateSmartQuickReplies(lastReply) {
     lower.includes("what address")
   ) {
     // Gathering booking info
-    suggestions = ["Cleaner", "Plumber", "Helper", "Appliance Technician"];
+    suggestions = ["House Cleaner", "Plumber", "Helper", "Appliance Technician"];
   } else if (lower.includes("booking") && (lower.includes("status") || lower.includes("cancelled") || lower.includes("created"))) {
     suggestions = ["Ipakita lahat ng booking", "Mag-cancel ng booking", "Mag-book pa"];
   } else if (lower.includes("book") || lower.includes("service") || lower.includes("serbisyo")) {
     suggestions = [
       "Ipakita ang aking mga booking",
       "Ano ang mga serbisyo?",
-      "Mag-book ng Cleaner",
+      "Mag-book ng House Cleaner",
     ];
   } else {
     suggestions = [
@@ -705,14 +705,14 @@ const ALL_OFFERS = [
     cat: "flash",
     badge: "Flash Sale",
     badgeType: "flash",
-    name: "Deep Home Cleaning Bundle",
-    desc: "Full house cleaning including kitchen, bathrooms & living areas. Professional-grade equipment.",
+    name: "Deep Home House Cleaner Bundle",
+    desc: "Full house House Cleaner including kitchen, bathrooms & living areas. Professional-grade equipment.",
     img: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=400&q=80",
     oldPrice: 1200,
     price: 599,
-    tag: "🧹 Cleaning",
+    tag: "🧹 House Cleaner",
     exp: "Ends tonight",
-    svc: "Cleaning",
+    svc: "House Cleaner",
   },
   {
     id: 2,
@@ -726,7 +726,7 @@ const ALL_OFFERS = [
     price: 800,
     tag: "🎉 All Services",
     exp: "New customers only",
-    svc: "Cleaning",
+    svc: "House Cleaner",
   },
   {
     id: 3,
@@ -817,14 +817,14 @@ const ALL_OFFERS = [
     cat: "new",
     badge: "New",
     badgeType: "new",
-    name: "Move-in Cleaning Special",
-    desc: "Deep clean your new home before moving in. Includes disinfection & odor removal.",
+    name: "Move-in House Cleaner Special",
+    desc: "Deep House Cleaner of your new home before moving in. Includes disinfection & odor removal.",
     img: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=400&q=80",
     oldPrice: 2000,
     price: 1299,
-    tag: "🏠 Cleaning",
+    tag: "🏠 House Cleaner",
     exp: "New offer!",
-    svc: "Cleaning",
+    svc: "House Cleaner",
   },
   {
     id: 12,
@@ -901,8 +901,8 @@ function loadAndRenderOffers() {
 
   const doRender = (offers) => {
     _cachedOffers = offers;
-    const SVC_IMGS_MAP = {
-      Cleaning:
+      const SVC_IMGS_MAP = {
+      "House Cleaner":
         "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80",
       Plumbing:
         "https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80",
@@ -929,7 +929,7 @@ function loadAndRenderOffers() {
           parseFloat(o.min_booking_price) > 0
             ? `Min. ₱${parseFloat(o.min_booking_price).toLocaleString()} booking`
             : "No minimum";
-        const img = SVC_IMGS_MAP["Cleaning"];
+        const img = SVC_IMGS_MAP["House Cleaner"];
         return `
         <div class="offer-card" style="background:var(--bg-card,#fff);border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);">
           <div style="background:linear-gradient(135deg,#F5A623,#FDECC8);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;">
@@ -1154,8 +1154,8 @@ function injectGlobalModals() {
   };
   const popAll = [
     {
-      svc: "Cleaning",
-      title: "Deep Home Cleaning",
+      svc: "House Cleaner",
+      title: "Deep Home House Cleaner",
       img: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80",
       price: "₱599",
     },
@@ -1337,7 +1337,7 @@ const AP_SVG = `<svg viewBox="0 0 24 24" fill="#000"><path d="M18.71 19.5c-.83 1
 
 // Global service constants for home.php
 const SVCS = {
-  'Cleaning': { key: 'cleaning', hr: 400 },
+  'House Cleaner': { key: 'house_cleaner', hr: 400 },
   'Plumbing': { key: 'plumbing', hr: 400 },
   'Helper': { key: 'helper', hr: 350 },
   'Appliance Technician': { key: 'technician', hr: 400 },
@@ -1346,7 +1346,7 @@ const SVCS = {
 };
 
 const SVC_IMGS = {
-  'cleaning': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80',
+  'house_cleaner': 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=300&q=80',
   'plumbing': 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=300&q=80',
   'helper': 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=300&q=80',
   'technician': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&q=80',

@@ -439,6 +439,7 @@
 
     /* Per-service color themes */
     .svc-card[data-svc="cleaning"]    { --svc-accent: linear-gradient(135deg, #38BDF8, #0EA5E9); --svc-border: #BAE6FD; }
+    .svc-card[data-svc="House Cleaner"]    { --svc-accent: linear-gradient(135deg, #38BDF8, #0EA5E9); --svc-border: #BAE6FD; }
     .svc-card[data-svc="plumbing"]    { --svc-accent: linear-gradient(135deg, #818CF8, #6366F1); --svc-border: #C7D2FE; }
     .svc-card[data-svc="helper"]      { --svc-accent: linear-gradient(135deg, #4ADE80, #22C55E); --svc-border: #BBF7D0; }
     .svc-card[data-svc="technician"]  { --svc-accent: linear-gradient(135deg, #FB923C, #F97316); --svc-border: #FED7AA; }
@@ -447,6 +448,8 @@
 
     .svc-ic.svc-cleaning    { background: linear-gradient(135deg, #E0F2FE, #BAE6FD); box-shadow: 0 3px 10px rgba(14,165,233,.18); border: none; }
     .svc-ic.svc-cleaning i  { color: #0284C7; }
+    .svc-ic.svc-house_cleaner    { background: linear-gradient(135deg, #E0F2FE, #BAE6FD); box-shadow: 0 3px 10px rgba(14,165,233,.18); border: none; }
+    .svc-ic.svc-house_cleaner i  { color: #0284C7; }
     .svc-ic.svc-plumbing    { background: linear-gradient(135deg, #EEF2FF, #C7D2FE); box-shadow: 0 3px 10px rgba(99,102,241,.18); border: none; }
     .svc-ic.svc-plumbing i  { color: #4F46E5; }
     .svc-ic.svc-helper      { background: linear-gradient(135deg, #DCFCE7, #BBF7D0); box-shadow: 0 3px 10px rgba(34,197,94,.18); border: none; }

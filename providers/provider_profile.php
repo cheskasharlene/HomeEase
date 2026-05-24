@@ -586,7 +586,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     };
     const providerServicesCatalog = [
       'General Services',
-      'Home Cleaning',
+      'Home House Cleaner',
       'Plumbing',
       'Electrical Repair',
       'Carpentry',

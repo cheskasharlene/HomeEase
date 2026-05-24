@@ -130,7 +130,7 @@ if (empty($bookings)) {
 
 if (empty($services)) {
     // fallback hardcoded services
-    $serviceLines = "- Cleaner: ₱500 flat\n- Helper: ₱400 flat\n- Laundry Worker: ₱300 flat\n- Plumber: ₱500 flat\n- Carpenter: ₱600 flat\n- Appliance Technician: ₱500 flat";
+    $serviceLines = "- House Cleaner: ₱500 flat\n- Helper: ₱400 flat\n- Laundry Worker: ₱300 flat\n- Plumber: ₱500 flat\n- Carpenter: ₱600 flat\n- Appliance Technician: ₱500 flat";
 } else {
     $serviceLines = implode("\n", array_map(
         fn($s) => "- {$s['name']}: ₱" . number_format((float) ($s['flat_rate'] ?? 0), 0) . " flat — {$s['description']}",
@@ -198,7 +198,7 @@ PARA SA CANCELLATION (pagkatapos ng YES):
 {"reply": "iyong confirmation message", "action": {"type": "cancel_booking", "booking_id": 123}}
 
 PARA SA BAGONG BOOKING (kapag kumpleto na ang info):
-{"reply": "iyong confirmation message", "action": {"type": "create_booking", "service": "Cleaner", "address": "123 Main St"}}
+{"reply": "iyong confirmation message", "action": {"type": "create_booking", "service": "House Cleaner", "address": "123 Main St"}}
 
 Huwag mag-return ng plain text. JSON object lang palagi.
 PROMPT;
@@ -314,7 +314,7 @@ if ($action && ($action['type'] ?? '') === 'cancel_booking' && !empty($action['b
         // Insert cancellation notification
         try {
             $notifMsg = "Ang iyong booking #{$bid} ay na-cancel sa pamamagitan ng chat. / Your booking #{$bid} has been cancelled via chat.";
-            $nIns = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Booking Cancelled', ?, 'cleaner', 0, NOW())");
+            $nIns = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Booking Cancelled', ?, 'house_cleaner', 0, NOW())");
             if ($nIns) {
                 $nIns->bind_param("is", $uid, $notifMsg);
                 $nIns->execute();

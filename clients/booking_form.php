@@ -347,8 +347,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     // Service-specific dynamic fields and pricing rules
     const serviceFields = {
-      'Cleaner': [
-        { name: 'cleaning_type', label: 'Cleaning Type', type: 'select', options: ['General', 'Deep Cleaning', 'Move-in/out'] },
+      'House Cleaner': [
+        { name: 'cleaning_type', label: 'House Cleaner Type', type: 'select', options: ['General', 'Deep House Cleaner', 'Move-in/out'] },
         { name: 'property_type', label: 'Property Type', type: 'select', options: ['Condo/Apartment', 'House'] },
         { name: 'num_rooms', label: 'Number of Rooms', type: 'number', min: 1, max: 10 },
         { name: 'num_bathrooms', label: 'Number of Bathrooms', type: 'number', min: 1, max: 5 },
@@ -390,7 +390,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     // Map display names (used in home.php/app.js) to actual DB service names
     const svcNameAliases = {
-      'Cleaning': 'Cleaner',
+      'House Cleaner': 'House Cleaner',
       'Plumbing': 'Plumber',
       'Laundry': 'Laundry Worker',
       'Carpentry': 'Carpenter',
@@ -679,11 +679,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       let total = 0;
       const lines = [];
 
-      if (selectedSvc.name === 'Cleaner') {
+      if (selectedSvc.name === 'House Cleaner') {
         total = 500;
-        lines.push('Base cleaning: ₱500');
+        lines.push('Base House Cleaner: ₱500');
 
-        const cleanTypeAdd = { 'General': 0, 'Deep Cleaning': 500, 'Move-in/out': 700 };
+        const cleanTypeAdd = { 'General': 0, 'Deep House Cleaner': 500, 'Move-in/out': 700 };
         const propertyAdd = { 'Condo/Apartment': 0, 'House': 200 };
         const rooms = Math.max(0, normalizeNumber(v.num_rooms, 1));
         const baths = Math.max(0, normalizeNumber(v.num_bathrooms, 1));
@@ -694,7 +694,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const bAdd = baths * 150;
 
         total += cAdd + pAdd + rAdd + bAdd;
-        lines.push(`Cleaning type: +₱${cAdd}`);
+        lines.push(`House Cleaner type: +₱${cAdd}`);
         lines.push(`Property: +₱${pAdd}`);
         lines.push(`Rooms (${rooms}): +₱${rAdd}`);
         lines.push(`Bathrooms (${baths}): +₱${bAdd}`);
