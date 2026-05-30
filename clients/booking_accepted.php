@@ -142,42 +142,62 @@ if (empty($_SESSION['user_id'])) {
               </div>
             </div>
 
-            <form id="paymentForm" class="ab-hide" onsubmit="submitPayment(event)" enctype="multipart/form-data">
-              <input type="hidden" id="paymentMethod" name="payment_method" value="">
+            <!-- Pay Now Button (shows if modal is closed but payment is pending) -->
+            <div id="payNowContainer" class="ab-hide" style="text-align: center; padding: 20px 0;">
+              <button class="ab-btn" type="button" onclick="openUserPaymentModal()">Pay Now / Upload Receipt</button>
+            </div>
 
-              <div class="ab-qr-box" id="qrContainerWrapper">
-                <div class="ab-qr-title">Scan Provider QR to Pay</div>
-                <div id="qrImageDiv" class="ab-qr-image-wrap"></div>
-                <div id="qrTextFallback" class="ab-qr-text"></div>
-              </div>
-
-              <div class="ab-row">
-                <div class="ab-col">
-                  <label class="ab-label">Transaction/Reference No.</label>
-                  <input type="text" id="txnRef" name="payment_reference" required placeholder="Enter reference number" />
+            <!-- User Payment Modal -->
+            <div class="payment-expired-overlay" id="userPaymentModal" onclick="closeUserPaymentModal(event)" aria-hidden="true" style="z-index: 1000; display: none;">
+              <div class="payment-expired-card" role="dialog" aria-modal="true" style="max-height: 90vh; overflow-y: auto; text-align: left; padding: 20px;" onclick="event.stopPropagation()">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                  <h3 style="margin:0;font-size:18px;">Submit Payment</h3>
+                  <button type="button" onclick="closeUserPaymentModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#7A7064;"><i class="bi bi-x-lg"></i></button>
                 </div>
-                <div class="ab-col">
-                  <label class="ab-label">Sender Name</label>
-                  <input type="text" id="senderName" name="sender_name" required placeholder="Enter sender name" />
-                </div>
-              </div>
+                <p style="font-size: 13px; color: #5E564D; margin-bottom: 16px;">Please submit your payment proof to proceed with the service.</p>
+                <form id="paymentForm" onsubmit="submitPayment(event)" enctype="multipart/form-data">
+                  <input type="hidden" id="paymentMethod" name="payment_method" value="">
 
-              <div class="ab-upload-card">
-                <label class="ab-label" for="paymentProof">Proof of Payment Image</label>
-                <div class="ab-upload-row">
-                  <label for="paymentProof" class="ab-upload-btn">
-                    <i class="bi bi-cloud-arrow-up"></i>
-                    <span>Upload Receipt</span>
-                  </label>
-                  <div class="ab-upload-file" id="paymentProofName">No file selected</div>
-                </div>
-                <input type="file" id="paymentProof" name="payment_proof" accept="image/jpeg,image/png,image/webp" required />
-              </div>
+                  <div class="ab-qr-box" id="qrContainerWrapper">
+                    <div class="ab-qr-title">Scan Provider QR to Pay</div>
+                    <div id="qrImageDiv" class="ab-qr-image-wrap"></div>
+                    <div id="qrTextFallback" class="ab-qr-text"></div>
+                  </div>
 
-              <div class="ab-submit-wrap">
-                <button class="ab-btn" type="submit" id="btnSubmitPayment">Submit Payment</button>
+                  <div class="ab-row">
+                    <div class="ab-col">
+                      <label class="ab-label">Transaction/Reference No.</label>
+                      <input type="text" id="txnRef" name="payment_reference" required placeholder="Enter reference number" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
+                    </div>
+                    <div class="ab-col">
+                      <label class="ab-label">Sender Name</label>
+                      <input type="text" id="senderName" name="sender_name" required placeholder="Enter sender name" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
+                    </div>
+                  </div>
+
+                  <div class="ab-upload-card" style="margin-top: 16px;">
+                    <label class="ab-label" for="paymentProof">Proof of Payment Image</label>
+                    <div class="ab-upload-row">
+                      <label for="paymentProof" class="ab-upload-btn">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        <span>Upload Receipt</span>
+                      </label>
+                      <div class="ab-upload-file" id="paymentProofName">No file selected</div>
+                    </div>
+                    <input type="file" id="paymentProof" name="payment_proof" accept="image/jpeg,image/png,image/webp" required style="display: none;" onchange="document.getElementById('paymentProofName').textContent = this.files[0] ? this.files[0].name : 'No file selected';" />
+                  </div>
+
+                  <div class="ab-submit-wrap" style="margin-top: 20px;">
+                    <button class="ab-btn" type="submit" id="btnSubmitPayment" style="width: 100%;">Submit Payment</button>
+                  </div>
+                </form>
               </div>
-            </form>
+            </div>
+
+            <div class="ab-card-actions" style="display: flex; gap: 10px; margin-top: 16px;">
+              <button class="ab-btn ab-btn-outline" style="flex: 1;" onclick="goBackToBookings()">Back to bookings</button>
+              <button class="ab-btn" style="flex: 1; background: #ef4444; border: none; color: white;" onclick="cancelBooking()">Cancel Booking</button>
+            </div>
           </div>
         </div>
 
@@ -186,21 +206,6 @@ if (empty($_SESSION['user_id'])) {
           <div class="ab-empty-sub">Once a provider accepts your request, details will appear here.</div>
           <button class="ab-btn" onclick="goPage('booking_history.php')">Back to bookings</button>
         </div>
-      </div>
-
-      <div class="bnav">
-        <button class="ni" type="button" onclick="goPage('home.php')">
-          <i class="bi bi-house"></i>
-          <span class="nl">Home</span>
-        </button>
-        <button class="ni on" type="button" onclick="goPage('booking_history.php')">
-          <i class="bi bi-calendar-event"></i>
-          <span class="nl">Bookings</span>
-        </button>
-        <button class="ni" type="button" onclick="goPage('profile.php')">
-          <i class="bi bi-person"></i>
-          <span class="nl">Profile</span>
-        </button>
       </div>
 
       <div class="payment-expired-overlay" id="paymentExpiredOverlay" aria-hidden="true">
@@ -289,7 +294,34 @@ if (empty($_SESSION['user_id'])) {
     }
 
     function closePaymentExpiredModal() {
-      setPaymentModalOpen(false);
+      const modal = document.getElementById('paymentExpiredOverlay');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 300);
+      document.body.classList.remove('modal-open');
+    }
+
+    async function cancelBooking() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('booking_id');
+      if (!id) return;
+
+      if (!confirm('Are you sure you want to cancel this booking?')) return;
+      try {
+        const fd = new FormData();
+        fd.append('action', 'cancel');
+        fd.append('id', id);
+        const res = await fetch('../api/bookings_api.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          alert('Booking cancelled successfully.');
+          window.location.href = 'booking_history.php';
+        } else {
+          alert(data.message || 'Could not cancel booking.');
+        }
+      } catch (err) {
+        alert('An error occurred. Please try again.');
+      }
     }
 
     function showPaymentExpiredModal(message) {
@@ -477,10 +509,30 @@ if (empty($_SESSION['user_id'])) {
 
       if (status === 'pending') {
         document.getElementById('paymentMethod').value = method;
-        document.getElementById('paymentForm').classList.remove('ab-hide');
+        document.getElementById('payNowContainer').classList.remove('ab-hide');
         toggleQRDisplay(method);
         startPaymentExpiryTimer(p.expected_until);
+        openUserPaymentModal();
       }
+    }
+
+    function openUserPaymentModal() {
+      const modal = document.getElementById('userPaymentModal');
+      modal.style.display = 'flex';
+      setTimeout(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      }, 10);
+      document.body.classList.add('modal-open');
+    }
+
+    function closeUserPaymentModal(e) {
+      if (e && e.target !== document.getElementById('userPaymentModal')) return;
+      const modal = document.getElementById('userPaymentModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 300);
+      document.body.classList.remove('modal-open');
     }
 
     async function loadPaymentDetails() {
@@ -539,11 +591,6 @@ if (empty($_SESSION['user_id'])) {
       btn.disabled = false;
       btn.textContent = 'Submit Payment';
     }
-
-    document.getElementById('paymentProof').addEventListener('change', function (e) {
-      const name = e.target.files && e.target.files.length ? e.target.files[0].name : 'No file selected';
-      document.getElementById('paymentProofName').textContent = name;
-    });
 
     document.getElementById('paymentExpiredPrimary').addEventListener('click', goBackToBookings);
     document.getElementById('paymentExpiredSecondary').addEventListener('click', closePaymentExpiredModal);

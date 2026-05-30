@@ -251,7 +251,6 @@ if ($method === 'POST' && $action === 'accept_booking') {
             SELECT id, {$providerId}, service, price, date, time_slot, address, notes, 'pending', NOW()
             FROM bookings WHERE id = {$bookingId}");
 
-        // Accept the booking — online payments wait for client proof first
         $payMethod = 'cash';
         $pmStmt = $conn->prepare("SELECT payment_method FROM payments WHERE booking_id = ? LIMIT 1");
         if ($pmStmt) {
@@ -263,6 +262,25 @@ if ($method === 'POST' && $action === 'accept_booking') {
                 $payMethod = strtolower((string) ($pmRow['payment_method'] ?? 'cash'));
             }
         }
+        
+        if (in_array($payMethod, ['gcash', 'bank'], true)) {
+            if (isset($_FILES['qr_file']) && $_FILES['qr_file']['error'] === UPLOAD_ERR_OK) {
+                $uploadDir = __DIR__ . '/../uploads/provider_documents/';
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                
+                $ext = strtolower(pathinfo($_FILES['qr_file']['name'], PATHINFO_EXTENSION));
+                if (in_array($ext, ['jpg','jpeg','png','webp'])) {
+                    $newFile = 'qr_' . $providerId . '_' . time() . '.' . $ext;
+                    if (move_uploaded_file($_FILES['qr_file']['tmp_name'], $uploadDir . $newFile)) {
+                        $qrPath = 'uploads/provider_documents/' . $newFile;
+                        $col = $payMethod === 'gcash' ? 'qr_gcash' : 'qr_bank';
+                        _safeAddColumn($conn, 'service_providers', $col, 'VARCHAR(255) NULL');
+                        $conn->query("UPDATE service_providers SET {$col} = '{$qrPath}' WHERE provider_id = {$providerId}");
+                    }
+                }
+            }
+        }
+
         $nextStatus = in_array($payMethod, ['gcash', 'bank'], true) ? 'awaiting_payment' : 'progress';
         ensureBookingStatusEnum($conn);
 

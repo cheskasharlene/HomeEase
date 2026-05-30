@@ -617,12 +617,20 @@ if ($method === 'POST' && $action === 'cancel') {
             $oldStatus = $sr['status'] ?? null;
         }
     }
-    $stmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND user_id=? AND status='pending'");
+    $stmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND user_id=? AND status NOT IN ('done', 'completed', 'cancelled')");
     $stmt->bind_param("ii", $id, $uid);
     $ok = $stmt->execute() && $stmt->affected_rows > 0;
     $stmt->close();
     if ($ok) {
         logBookingStatusChange($conn, $id, $oldStatus, 'cancelled', 'user', $uid, 'Cancelled by client');
+
+        // Close any associated provider requests
+        $reqStmt = $conn->prepare("UPDATE booking_requests SET status='closed' WHERE booking_id = ? AND status IN ('pending', 'accepted')");
+        if ($reqStmt) {
+            $reqStmt->bind_param("i", $id);
+            $reqStmt->execute();
+            $reqStmt->close();
+        }
     }
     ob_end_clean();
     echo json_encode(['success' => $ok, 'message' => $ok ? 'Cancelled.' : 'Could not cancel.']);

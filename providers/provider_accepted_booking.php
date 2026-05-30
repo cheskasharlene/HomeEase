@@ -27,10 +27,26 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
   <link rel="stylesheet" href="../assets/css/waiting_for_provider.css">
   <link rel="stylesheet" href="../assets/css/booking_form.css">
   <style>
+    /* ── Clip modal/overlays inside the shell ── */
+    .wfp-shell {
+      overflow: hidden;
+    }
+
+    /* ── Desktop: show as centred phone frame ── */
+    @media (min-width: 500px) {
+      html { background: #18140C; }
+      body { background: #18140C; padding: 20px; }
+      .wfp-shell {
+        height: min(900px, calc(100dvh - 40px));
+        border-radius: 40px;
+        box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+        overflow: hidden;
+      }
+    }
+
     /* Add any provider-specific overrides here */
     .wfp-status-banner.accepted {
       background: linear-gradient(135deg, #1A1A2E, #2D2D4E);
-      /* Dark theme for provider en route */
     }
 
     .mark-done-btn {
@@ -156,6 +172,10 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
               style="color:#7A7064;font-weight:600;white-space:normal;word-break:break-word;">–</div>
           </div>
           <div class="wfp-prov-actions">
+            <a class="wfp-prov-btn outline" id="btnViewReceipt" href="#" onclick="openProviderPaymentModal(); return false;" style="display:none; position:relative; background:#EFF6FF; color:#1D4ED8; border-color:#BFDBFE;" title="View Payment Receipt">
+              <i class="bi bi-receipt"></i>
+              <span id="receiptUnreadDot" style="display:none; position:absolute; top:-2px; right:-2px; width:12px; height:12px; background:#ef4444; border-radius:50%; border:2px solid #fff;"></span>
+            </a>
             <a class="wfp-prov-btn outline" id="btnChat" href="#" onclick="contactClient(event,'chat')">
               <i class="bi bi-chat-fill"></i>
             </a>
@@ -220,6 +240,40 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       </div>
     </div>
   </div>
+
+  <!-- Provider Payment Review Modal -->
+  <div id="providerPaymentReviewModal" onclick="closeProviderPaymentModal(event)" style="position:absolute;inset:0;z-index:900;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .22s;padding:20px;">
+    <div id="paymentReviewCard" onclick="event.stopPropagation()" style="width:100%;max-width:340px;max-height:82%;background:#fff;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.35);transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);">
+
+      <!-- Header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;background:linear-gradient(135deg,#EFF6FF,#BFDBFE);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+            <i class="bi bi-receipt" style="color:#1D4ED8;font-size:14px;"></i>
+          </div>
+          <span style="font-family:'Poppins',sans-serif;font-size:14px;font-weight:800;color:#1A1A2E;">Review Receipt</span>
+        </div>
+        <button onclick="closeProviderPaymentModal()" style="width:28px;height:28px;border-radius:50%;border:none;background:#F5F0EA;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#7A7064;font-size:13px;">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div style="flex:1;overflow-y:auto;padding:14px 16px;">
+        <div style="background:#FAFAF8;border:1.5px solid #E8E0D5;border-radius:12px;padding:10px;margin-bottom:12px;text-align:center;">
+          <img id="paymentProofImage" src="" style="max-width:100%;border-radius:8px;max-height:260px;object-fit:contain;" alt="Payment Proof">
+          <div id="paymentProofRef" style="font-size:11px;font-weight:700;margin-top:8px;color:#5E564D;"></div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div style="display:flex;gap:8px;padding:0 16px 16px;">
+        <button class="mark-done-btn" style="background:linear-gradient(135deg,#059669,#10B981);flex:1;margin-top:0;font-size:12px;height:40px;" onclick="confirmPayment()"><i class="bi bi-check-lg"></i> Confirm</button>
+        <button class="mark-done-btn" style="background:#ef4444;flex:1;margin-top:0;font-size:12px;height:40px;" onclick="rejectPayment()"><i class="bi bi-x-lg"></i> Reject</button>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /.wfp-shell -->
 
   <script src="../assets/js/app.js"></script>
@@ -259,8 +313,10 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
 
     async function loadProviderPayment() {
       const params = new URLSearchParams(window.location.search);
-      const bookingId = params.get('booking_id');
-      if (!bookingId) return;
+      let bookingId = params.get('booking_id');
+      if (!bookingId) bookingId = BID; // Fallback to global BID resolved by loadBooking
+      if (!bookingId) return; // Wait until it's resolved
+
       try {
         const res = await fetch('../api/provider_requests_api.php?action=payment&booking_id=' + encodeURIComponent(bookingId));
         const d = await res.json();
@@ -300,13 +356,28 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
           banner.style.background = '#EFF6FF';
           banner.style.border = '1.5px solid #BFDBFE';
           banner.style.color = '#1D4ED8';
-          banner.innerHTML = '<i class="bi bi-receipt"></i> Client uploaded a payment receipt. Please review and confirm.';
+          banner.innerHTML = '<div style="display:flex;align-items:center;justify-content:space-between;width:100%;"><div style="flex:1"><i class="bi bi-receipt"></i> Client uploaded a payment receipt.</div></div>';
           statusText.innerHTML = 'Review client payment <span>🧾</span>';
           document.getElementById('btnConfirmPayment').style.display = 'inline-flex';
           document.getElementById('btnRejectPayment').style.display = 'inline-flex';
+          
+          const viewBtn = document.getElementById('btnViewReceipt');
+          if (viewBtn) viewBtn.style.display = 'flex';
+          
           window.__current_payment_id = p.id;
           markDoneBtn.disabled = true;
           markDoneBtn.style.opacity = '0.55';
+          
+          if (!window._paymentModalShown) {
+             window._paymentModalShown = true;
+             document.getElementById('paymentProofImage').src = '../' + (p.payment_proof_path || '');
+             document.getElementById('paymentProofRef').textContent = 'Ref: ' + (p.payment_reference || 'N/A') + ' | ' + (p.notes || '');
+             
+             const dot = document.getElementById('receiptUnreadDot');
+             if (dot) dot.style.display = 'block';
+             
+             openProviderPaymentModal();
+          }
           return;
         }
 
@@ -317,8 +388,38 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
           banner.style.color = '#065F46';
           banner.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment confirmed. You can proceed with the service.';
           statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+
+          // Always show receipt button so provider can re-review anytime
+          const viewBtn = document.getElementById('btnViewReceipt');
+          if (viewBtn) viewBtn.style.display = 'flex';
+
+          // Pre-load proof image/ref for when they tap the button
+          window.__current_payment_id = p.id;
+          document.getElementById('paymentProofImage').src = '../' + (p.payment_proof_path || '');
+          document.getElementById('paymentProofRef').textContent = 'Ref: ' + (p.payment_reference || 'N/A') + ' | ' + (p.notes || '');
         }
       } catch (e) { }
+    }
+
+    function openProviderPaymentModal() {
+      const modal = document.getElementById('providerPaymentReviewModal');
+      const card = document.getElementById('paymentReviewCard');
+      const dot = document.getElementById('receiptUnreadDot');
+      if (dot) dot.style.display = 'none';
+
+      modal.style.display = 'flex';
+      void modal.offsetWidth;
+      modal.style.opacity = '1';
+      if (card) card.style.transform = 'scale(1)';
+    }
+
+    function closeProviderPaymentModal(e) {
+      if (e && e.target !== document.getElementById('providerPaymentReviewModal')) return;
+      const modal = document.getElementById('providerPaymentReviewModal');
+      const card = document.getElementById('paymentReviewCard');
+      modal.style.opacity = '0';
+      if (card) card.style.transform = 'scale(0.88)';
+      setTimeout(() => { modal.style.display = 'none'; }, 220);
     }
 
     async function confirmPayment() {
