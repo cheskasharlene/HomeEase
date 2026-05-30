@@ -43,6 +43,7 @@ function ensurePaymentsTable($conn)
         id INT AUTO_INCREMENT PRIMARY KEY,
         booking_id INT NOT NULL,
         user_id INT NOT NULL,
+        payment_method_id INT NULL,
         payment_method ENUM('cash', 'gcash', 'bank') NOT NULL DEFAULT 'cash',
         payment_status ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted') NOT NULL DEFAULT 'pending',
         payment_reference VARCHAR(255) NULL,
@@ -56,6 +57,7 @@ function ensurePaymentsTable($conn)
         receiver_provider_id INT NULL,
         expected_until DATETIME NULL,
         UNIQUE KEY idx_payment_reference (payment_reference(190)),
+        KEY idx_payment_method_id (payment_method_id),
         KEY idx_user_id (user_id),
         KEY idx_payment_status (payment_status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
@@ -81,6 +83,18 @@ function ensurePaymentsTable($conn)
     $chk2 = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'expected_until'");
     if ($chk2 && $chk2->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `expected_until` DATETIME NULL AFTER `receiver_provider_id`");
+    }
+
+    // Ensure payment_method_id exists for normalized method relation
+    $chk3 = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'payment_method_id'");
+    if ($chk3 && $chk3->num_rows === 0) {
+        $conn->query("ALTER TABLE `payments` ADD COLUMN `payment_method_id` INT NULL AFTER `user_id`");
+    }
+
+    // Ensure payment_method_id index exists
+    $idx2 = $conn->query("SHOW INDEX FROM `payments` WHERE Key_name = 'idx_payment_method_id'");
+    if ($idx2 && $idx2->num_rows === 0) {
+        @$conn->query("ALTER TABLE `payments` ADD INDEX `idx_payment_method_id` (`payment_method_id`)");
     }
 
     // Ensure payment_reference unique index exists (prefixed for older MySQL utf8 issues)
@@ -242,4 +256,155 @@ function getPaymentByBooking($conn, $userId, $bookingId)
     $stmt->close();
 
     return $result;
+}
+
+/**
+ * Ensure normalization-related tables and columns exist.
+ */
+function ensureNormalizationSchema($conn)
+{
+    $conn->query("CREATE TABLE IF NOT EXISTS payment_methods (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        code VARCHAR(32) NOT NULL UNIQUE,
+        name VARCHAR(64) NOT NULL,
+        is_active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $conn->query("INSERT INTO payment_methods (code, name, is_active)
+        VALUES
+            ('cash', 'Cash', 1),
+            ('gcash', 'GCash', 1),
+            ('bank', 'Bank Transfer', 1)
+        ON DUPLICATE KEY UPDATE name = VALUES(name), is_active = VALUES(is_active)");
+
+    $conn->query("CREATE TABLE IF NOT EXISTS booking_details (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        booking_id INT NOT NULL,
+        field_name VARCHAR(120) NOT NULL,
+        field_value TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_booking_field (booking_id, field_name),
+        INDEX idx_booking_details_booking (booking_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $conn->query("CREATE TABLE IF NOT EXISTS service_provider_services (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        provider_id INT NOT NULL,
+        service_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_provider_service (provider_id, service_id),
+        INDEX idx_sps_provider (provider_id),
+        INDEX idx_sps_service (service_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $conn->query("CREATE TABLE IF NOT EXISTS provider_documents (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        provider_id INT NOT NULL,
+        document_type VARCHAR(50) NOT NULL,
+        file_path VARCHAR(512) NOT NULL,
+        uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        verified_status ENUM('submitted','approved','rejected') NOT NULL DEFAULT 'submitted',
+        verified_at TIMESTAMP NULL,
+        verification_notes TEXT NULL,
+        UNIQUE KEY uq_provider_doc_type (provider_id, document_type),
+        INDEX idx_provider_docs_provider (provider_id),
+        INDEX idx_provider_docs_status (verified_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    ensureBookingStatusLogsTable($conn);
+
+    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS service_id INT NULL AFTER user_id");
+    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS provider_id INT NULL AFTER service_id");
+    @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_service_id (service_id)");
+    @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_provider_id (provider_id)");
+
+    // Backfill service_id from existing text labels.
+    @$conn->query("UPDATE bookings b
+        JOIN services s ON LOWER(TRIM(s.name)) = LOWER(TRIM(COALESCE(b.service, '')))
+        SET b.service_id = s.id
+        WHERE b.service_id IS NULL");
+
+    // Backfill payment method relation.
+    @$conn->query("UPDATE payments p
+        JOIN payment_methods pm ON pm.code = LOWER(COALESCE(p.payment_method, 'cash'))
+        SET p.payment_method_id = pm.id
+        WHERE p.payment_method_id IS NULL");
+
+    // Seed pivot from existing single-service column.
+    @$conn->query("INSERT IGNORE INTO service_provider_services (provider_id, service_id)
+        SELECT sp.provider_id, s.id
+        FROM service_providers sp
+        JOIN services s ON LOWER(TRIM(s.name)) = LOWER(TRIM(COALESCE(sp.service_category, '')))");
+}
+
+function ensureBookingStatusLogsTable($conn)
+{
+    $conn->query("CREATE TABLE IF NOT EXISTS booking_status_logs (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        booking_id INT NOT NULL,
+        old_status VARCHAR(40) NULL,
+        new_status VARCHAR(40) NOT NULL,
+        changed_by_role ENUM('user','provider','admin','system') NOT NULL DEFAULT 'system',
+        changed_by_id INT NULL,
+        notes VARCHAR(255) NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_booking_status_logs_booking (booking_id),
+        INDEX idx_booking_status_logs_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+function logBookingStatusChange($conn, $bookingId, $oldStatus, $newStatus, $changedByRole = 'system', $changedById = null, $notes = null)
+{
+    ensureBookingStatusLogsTable($conn);
+    $stmt = $conn->prepare("INSERT INTO booking_status_logs (booking_id, old_status, new_status, changed_by_role, changed_by_id, notes, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, NOW())");
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('isssis', $bookingId, $oldStatus, $newStatus, $changedByRole, $changedById, $notes);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+
+function resolveServiceIdByName($conn, $serviceName)
+{
+    $name = trim((string) $serviceName);
+    if ($name === '') {
+        return null;
+    }
+
+    $stmt = $conn->prepare("SELECT id FROM services WHERE LOWER(name) = LOWER(?) LIMIT 1");
+    if (!$stmt) {
+        return null;
+    }
+    $stmt->bind_param('s', $name);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$row) {
+        return null;
+    }
+    return (int) $row['id'];
+}
+
+function upsertBookingDetail($conn, $bookingId, $fieldName, $fieldValue)
+{
+    ensureNormalizationSchema($conn);
+    $fieldName = trim((string) $fieldName);
+    if ($bookingId <= 0 || $fieldName === '') {
+        return false;
+    }
+
+    $stmt = $conn->prepare("INSERT INTO booking_details (booking_id, field_name, field_value, created_at)
+        VALUES (?, ?, ?, NOW())
+        ON DUPLICATE KEY UPDATE field_value = VALUES(field_value)");
+    if (!$stmt) {
+        return false;
+    }
+    $stmt->bind_param('iss', $bookingId, $fieldName, $fieldValue);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
 }

@@ -7,6 +7,7 @@
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 require_once __DIR__ . '/db.php';
+ensureNormalizationSchema($conn);
 
 // Check if user is admin
 if (empty($_SESSION['admin_id']) && empty($_SESSION['is_admin'])) {
@@ -27,18 +28,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications')
             sp.service_category,
             sp.contact_number,
             sp.email,
-            sp.valid_id,
-            sp.barangay_clearance,
-            sp.selfie_verification,
-            sp.proof_of_address,
-            sp.`tools_&_kits`,
-            COALESCE(sp.qr_gcash, sp.gcash_qr) AS gcash_qr,
-            COALESCE(sp.qr_bank, sp.bank_qr) AS bank_qr,
-            sp.verification_status
+            sp.verification_status,
+            pd.document_type,
+            pd.file_path,
+            pd.verified_status
         FROM service_providers sp
+        LEFT JOIN provider_documents pd ON pd.provider_id = sp.provider_id
         WHERE sp.verification_status IN ('submitted', 'partial')
         ORDER BY sp.provider_id DESC
-        LIMIT 100"
+        LIMIT 500"
     );
     $stmt->execute();
     $result = $stmt->get_result();
@@ -46,66 +44,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications')
     $providers = [];
     
     while ($row = $result->fetch_assoc()) {
-        // Get all documents for this provider
-        $documents = [];
-        if ($row['valid_id']) {
-            $documents[] = [
-                'type' => 'valid_id',
-                'file_path' => $row['valid_id'],
-                'label' => 'Valid Government ID'
-            ];
+        $pid = (int)($row['provider_id'] ?? 0);
+        if ($pid <= 0) {
+            continue;
         }
-        if ($row['barangay_clearance']) {
-            $documents[] = [
-                'type' => 'barangay_clearance',
-                'file_path' => $row['barangay_clearance'],
-                'label' => 'Barangay Clearance'
-            ];
-        }
-        if ($row['selfie_verification']) {
-            $documents[] = [
-                'type' => 'selfie',
-                'file_path' => $row['selfie_verification'],
-                'label' => 'Selfie Verification'
-            ];
-        }
-        if ($row['proof_of_address']) {
-            $documents[] = [
-                'type' => 'proof_of_address',
-                'file_path' => $row['proof_of_address'],
-                'label' => 'Proof of Address'
-            ];
-        }
-        if ($row['tools_&_kits']) {
-            $documents[] = [
-                'type' => 'tools_kits',
-                'file_path' => $row['tools_&_kits'],
-                'label' => 'Tools & Kits'
-            ];
-        }
-        if ($row['gcash_qr']) {
-            $documents[] = [
-                'type' => 'gcash_qr',
-                'file_path' => $row['gcash_qr'],
-                'label' => 'GCash QR Code'
-            ];
-        }
-        if ($row['bank_qr']) {
-            $documents[] = [
-                'type' => 'bank_qr',
-                'file_path' => $row['bank_qr'],
-                'label' => 'Bank QR Code'
-            ];
-        }
-        
-        if (!empty($documents)) {
-            $providers[$row['provider_id']] = [
-                'id' => $row['provider_id'],
+
+        if (!isset($providers[$pid])) {
+            $providers[$pid] = [
+                'id' => $pid,
                 'name' => $row['full_name'],
                 'service_category' => $row['service_category'],
                 'contact_number' => $row['contact_number'],
                 'email' => $row['email'],
-                'documents' => $documents
+                'documents' => []
+            ];
+        }
+
+        if (!empty($row['document_type']) && !empty($row['file_path'])) {
+            $providers[$pid]['documents'][] = [
+                'type' => $row['document_type'],
+                'file_path' => $row['file_path'],
+                'verified_status' => $row['verified_status'] ?: 'submitted',
+                'label' => ucwords(str_replace('_', ' ', (string)$row['document_type']))
             ];
         }
     }
@@ -125,75 +85,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
     }
 
     $stmt = $conn->prepare(
-        "SELECT 
-            valid_id,
-            barangay_clearance,
-            selfie_verification,
-            proof_of_address,
-            `tools_&_kits`,
-            COALESCE(qr_gcash, gcash_qr) AS gcash_qr,
-            COALESCE(qr_bank, bank_qr) AS bank_qr,
-            verification_status
-        FROM service_providers
-        WHERE provider_id = ?"
+        "SELECT document_type, file_path, verified_status, uploaded_at, verified_at, verification_notes
+         FROM provider_documents
+         WHERE provider_id = ?"
     );
     $stmt->bind_param('i', $provider_id);
     $stmt->execute();
-    $result = $stmt->get_result()->fetch_assoc();
+    $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    if (!$result) {
+    $existsStmt = $conn->prepare("SELECT provider_id FROM service_providers WHERE provider_id = ? LIMIT 1");
+    $existsStmt->bind_param('i', $provider_id);
+    $existsStmt->execute();
+    $providerExists = $existsStmt->get_result()->fetch_assoc();
+    $existsStmt->close();
+    if (!$providerExists) {
         respond(false, 'Provider not found');
     }
 
     $documents = [];
-    if ($result['valid_id']) {
-        $documents['valid_id'][] = [
-            'file_path' => $result['valid_id'],
-            'type' => 'valid_id',
-            'label' => 'Valid Government ID'
-        ];
-    }
-    if ($result['barangay_clearance']) {
-        $documents['barangay_clearance'][] = [
-            'file_path' => $result['barangay_clearance'],
-            'type' => 'barangay_clearance',
-            'label' => 'Barangay Clearance'
-        ];
-    }
-    if ($result['selfie_verification']) {
-        $documents['selfie'][] = [
-            'file_path' => $result['selfie_verification'],
-            'type' => 'selfie',
-            'label' => 'Selfie Verification'
-        ];
-    }
-    if ($result['proof_of_address']) {
-        $documents['proof_of_address'][] = [
-            'file_path' => $result['proof_of_address'],
-            'type' => 'proof_of_address',
-            'label' => 'Proof of Address'
-        ];
-    }
-    if ($result['tools_&_kits']) {
-        $documents['tools_kits'][] = [
-            'file_path' => $result['tools_&_kits'],
-            'type' => 'tools_kits',
-            'label' => 'Tools & Kits'
-        ];
-    }
-    if ($result['gcash_qr']) {
-        $documents['gcash_qr'][] = [
-            'file_path' => $result['gcash_qr'],
-            'type' => 'gcash_qr',
-            'label' => 'GCash QR Code'
-        ];
-    }
-    if ($result['bank_qr']) {
-        $documents['bank_qr'][] = [
-            'file_path' => $result['bank_qr'],
-            'type' => 'bank_qr',
-            'label' => 'Bank QR Code'
+    foreach ($result as $doc) {
+        $dtype = (string)($doc['document_type'] ?? '');
+        if ($dtype === '') {
+            continue;
+        }
+        if (!isset($documents[$dtype])) {
+            $documents[$dtype] = [];
+        }
+        $documents[$dtype][] = [
+            'file_path' => $doc['file_path'],
+            'type' => $dtype,
+            'label' => ucwords(str_replace('_', ' ', $dtype)),
+            'verified_status' => $doc['verified_status'],
+            'uploaded_at' => $doc['uploaded_at'],
+            'verified_at' => $doc['verified_at'],
+            'verification_notes' => $doc['verification_notes']
         ];
     }
 
@@ -212,15 +138,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_document') {
         respond(false, 'Provider ID and document type required');
     }
 
-    // Document has been approved - update provider status if all required docs are now approved
+    $normalizedType = ($doc_type === 'selfie') ? 'selfie_verification' : $doc_type;
     $stmt = $conn->prepare(
-        "UPDATE service_providers 
-         SET verification_status = 'approved'
-         WHERE provider_id = ? AND verification_status IN ('submitted', 'partial')"
+        "UPDATE provider_documents
+         SET verified_status = 'approved', verified_at = NOW(), verification_notes = ?
+         WHERE provider_id = ? AND document_type = ?"
     );
-    $stmt->bind_param('i', $provider_id);
+    $stmt->bind_param('sis', $notes, $provider_id, $normalizedType);
     $stmt->execute();
     $stmt->close();
+
+    $statusStmt = $conn->prepare("UPDATE service_providers SET verification_status = 'approved', verification_approved_at = NOW(), is_verified = 1 WHERE provider_id = ?");
+    $statusStmt->bind_param('i', $provider_id);
+    $statusStmt->execute();
+    $statusStmt->close();
 
     respond(true, 'Document approved');
 }
@@ -243,7 +174,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
         'barangay_clearance' => 'barangay_clearance',
         'selfie' => 'selfie_verification',
         'proof_of_address' => 'proof_of_address',
-        'tools_kits' => 'tools_&_kits'
+        'tools_kits' => 'tools_&_kits',
+        'gcash_qr' => 'qr_gcash',
+        'bank_qr' => 'qr_bank'
     ];
 
     $db_column = $column_map[$doc_type] ?? null;
@@ -277,6 +210,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
     $del_stmt->bind_param('i', $provider_id);
     $del_stmt->execute();
     $del_stmt->close();
+
+    // Update normalized document status to rejected
+    $normalizedType = ($doc_type === 'selfie') ? 'selfie_verification' : $doc_type;
+    $docUpdate = $conn->prepare("UPDATE provider_documents SET verified_status='rejected', verified_at=NOW(), verification_notes=? WHERE provider_id=? AND document_type=?");
+    if ($docUpdate) {
+        $docUpdate->bind_param('sis', $reason, $provider_id, $normalizedType);
+        $docUpdate->execute();
+        $docUpdate->close();
+    }
 
     // Update status to rejected
     $status_stmt = $conn->prepare("UPDATE service_providers SET verification_status = 'rejected' WHERE provider_id = ?");
@@ -381,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'statistics') {
     $approved_stmt->close();
 
     $total_docs_stmt = $conn->prepare(
-        "SELECT COUNT(*) as count FROM service_providers WHERE (valid_id IS NOT NULL OR barangay_clearance IS NOT NULL OR selfie_verification IS NOT NULL OR proof_of_address IS NOT NULL OR `tools_&_kits` IS NOT NULL OR COALESCE(qr_gcash, gcash_qr) IS NOT NULL OR COALESCE(qr_bank, bank_qr) IS NOT NULL)"
+        "SELECT COUNT(*) as count FROM provider_documents"
     );
     $total_docs_stmt->execute();
     $total_docs_result = $total_docs_stmt->get_result()->fetch_assoc();

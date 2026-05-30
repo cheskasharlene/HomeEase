@@ -5,6 +5,7 @@ ini_set('display_errors', 0);
 error_reporting(0);
 
 require_once __DIR__ . '/db.php';
+ensureNormalizationSchema($conn);
 
 $section = $_GET['section'] ?? $_POST['section'] ?? '';
 $action  = $_GET['action']  ?? $_POST['action']  ?? 'list';
@@ -83,14 +84,20 @@ if ($section === 'stats') {
     $stats['breakdown'] = $breakdown;
 
     $topSvc = [];
-    $res = $conn->query("SELECT service, COUNT(*) AS cnt FROM bookings GROUP BY service ORDER BY cnt DESC LIMIT 5");
+    $res = $conn->query("SELECT COALESCE(s.name, b.service) AS service, COUNT(*) AS cnt
+        FROM bookings b
+        LEFT JOIN services s ON s.id = b.service_id
+        GROUP BY COALESCE(s.name, b.service)
+        ORDER BY cnt DESC LIMIT 5");
     if ($res) while ($rr = $res->fetch_assoc()) $topSvc[] = $rr;
     $stats['top_services'] = $topSvc;
 
     // Recent bookings (last 5)
     $recent = [];
-    $res = $conn->query("SELECT b.id, b.service, b.status, b.price, b.date, u.name AS user_name
-        FROM bookings b LEFT JOIN users u ON b.user_id=u.id
+    $res = $conn->query("SELECT b.id, COALESCE(s.name, b.service) AS service, b.status, b.price, b.date, u.name AS user_name
+        FROM bookings b
+        LEFT JOIN users u ON b.user_id=u.id
+        LEFT JOIN services s ON s.id = b.service_id
         ORDER BY b.created_at DESC LIMIT 5");
     if ($res) while ($rr = $res->fetch_assoc()) $recent[] = $rr;
     $stats['recent_bookings'] = $recent;
@@ -366,7 +373,9 @@ if ($section === 'offers') {
         if (!$title || !$code) respond(false, 'Title and code required.');
         if (!in_array($dtype, ['percent','flat'])) $dtype = 'percent';
 
-        $esc = fn($v) => mysqli_real_escape_string($conn, $v);
+        $esc = function ($v) use ($conn) {
+            return mysqli_real_escape_string($conn, $v);
+        };
         $expVal = $expires ? "'".mysqli_real_escape_string($conn,$expires)."'" : "NULL";
 
         if ($action === 'add') {
@@ -416,23 +425,24 @@ if ($section === 'bookings') {
         }
         if ($search) {
             $like = "%$search%";
-            $where[] = '(u.name LIKE ? OR u.email LIKE ? OR b.service LIKE ? OR b.address LIKE ?)';
+            $where[] = '(u.name LIKE ? OR u.email LIKE ? OR COALESCE(s.name, b.service) LIKE ? OR b.address LIKE ?)';
             $params = array_merge($params, [$like,$like,$like,$like]); $types .= 'ssss';
         }
         if ($dateFrom) { $where[] = 'b.date >= ?'; $params[] = $dateFrom; $types .= 's'; }
         if ($dateTo)   { $where[] = 'b.date <= ?'; $params[] = $dateTo;   $types .= 's'; }
-        if ($service)  { $where[] = 'b.service = ?'; $params[] = $service; $types .= 's'; }
+        if ($service)  { $where[] = 'COALESCE(s.name, b.service) = ?'; $params[] = $service; $types .= 's'; }
         if ($workerId) { $where[] = 'b.provider_id = ?'; $params[] = $workerId; $types .= 'i'; }
 
         $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        $sql = "SELECT b.id, b.service, b.date, b.time_slot, b.address, b.price, b.status,
+        $sql = "SELECT b.id, COALESCE(s.name, b.service) AS service, b.date, b.time_slot, b.address, b.price, b.status,
                        b.notes, b.provider_id, b.created_at,
                        u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
                        t.full_name AS technician_name, t.contact_number AS tech_phone,
                        t.service_category AS tech_specialty, t.rating AS tech_rating
                 FROM bookings b
                 LEFT JOIN users u ON b.user_id = u.id
+            LEFT JOIN services s ON s.id = b.service_id
                 LEFT JOIN service_providers t ON b.provider_id = t.provider_id
                 $whereClause
                 ORDER BY b.created_at DESC LIMIT 200";
@@ -449,9 +459,18 @@ if ($section === 'bookings') {
     if ($method === 'POST' && $action === 'update_status') {
         $id     = (int)($_POST['id'] ?? 0);
         $status = trim($_POST['status'] ?? '');
-        $valid  = ['pending','progress','done','cancelled'];
+        $valid  = ['pending','awaiting_payment','progress','done','cancelled'];
         if (!$id || !in_array($status, $valid)) respond(false, 'Invalid data.');
+        $oldStatus = null;
+        $oldRes = $conn->query("SELECT status FROM bookings WHERE id=$id LIMIT 1");
+        if ($oldRes) {
+            $oldRow = $oldRes->fetch_assoc();
+            $oldStatus = $oldRow['status'] ?? null;
+        }
         $conn->query("UPDATE bookings SET status='$status' WHERE id=$id");
+        if ($oldStatus !== null && $oldStatus !== $status) {
+            logBookingStatusChange($conn, $id, $oldStatus, $status, 'admin', (int)($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0), 'Status changed by admin panel');
+        }
         respond(true, 'Status updated.');
     }
 
@@ -477,7 +496,16 @@ if ($section === 'bookings') {
     if ($method === 'POST' && $action === 'cancel') {
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) respond(false, 'Invalid booking ID.');
+        $oldStatus = null;
+        $oldRes = $conn->query("SELECT status FROM bookings WHERE id=$id LIMIT 1");
+        if ($oldRes) {
+            $oldRow = $oldRes->fetch_assoc();
+            $oldStatus = $oldRow['status'] ?? null;
+        }
         $conn->query("UPDATE bookings SET status='cancelled' WHERE id=$id");
+        if ($oldStatus !== null && $oldStatus !== 'cancelled') {
+            logBookingStatusChange($conn, $id, $oldStatus, 'cancelled', 'admin', (int)($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0), 'Cancelled by admin panel');
+        }
         respond(true, 'Booking cancelled.');
     }
 
@@ -573,7 +601,11 @@ if ($section === 'analytics') {
 
     // 2. Service distribution (pie/doughnut)
     $svcDist = [];
-    $res = $conn->query("SELECT service, COUNT(*) AS cnt FROM bookings GROUP BY service ORDER BY cnt DESC");
+    $res = $conn->query("SELECT COALESCE(s.name, b.service) AS service, COUNT(*) AS cnt
+        FROM bookings b
+        LEFT JOIN services s ON s.id = b.service_id
+        GROUP BY COALESCE(s.name, b.service)
+        ORDER BY cnt DESC");
     if ($res) while ($r = $res->fetch_assoc()) $svcDist[] = ['name' => $r['service'], 'count' => (int)$r['cnt']];
     $data['service_distribution'] = $svcDist;
 

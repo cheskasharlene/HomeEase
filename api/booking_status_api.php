@@ -5,6 +5,7 @@ ini_set('display_errors', 0);
 error_reporting(0);
 
 require_once __DIR__ . '/db.php';
+ensureNormalizationSchema($conn);
 
 if (empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Not logged in.']);
@@ -20,15 +21,16 @@ if ($bookingId <= 0) {
 }
 
 // Fetch booking + provider info
-$sql = "SELECT b.id, b.service, b.date, b.time_slot, b.address, b.price, b.status, b.created_at,
+$sql = "SELECT b.id, COALESCE(sv.name, b.service) AS service, b.date, b.time_slot, b.address, b.price, b.status, b.created_at,
                b.provider_lat, b.provider_lng, b.customer_lat, b.customer_lng,
                br.provider_id AS req_provider_id, br.status AS req_status, br.responded_at,
                sp.full_name AS provider_name, sp.contact_number AS provider_phone,
                sp.service_category AS provider_service, sp.rating AS provider_rating,
                sp.address AS provider_address, sp.jobs_done
         FROM bookings b
+    LEFT JOIN services sv ON sv.id = b.service_id
         LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'
-        LEFT JOIN service_providers sp ON sp.provider_id = br.provider_id
+    LEFT JOIN service_providers sp ON sp.provider_id = COALESCE(b.provider_id, br.provider_id)
         WHERE b.id = ? AND b.user_id = ?
         LIMIT 1";
 

@@ -9,6 +9,7 @@ header('Content-Type: application/json');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 
 require_once __DIR__ . '/db.php';
+ensureNormalizationSchema($conn);
 
 if (empty($_SESSION['user_id'])) {
     ob_end_clean();
@@ -40,10 +41,36 @@ if ($method === 'GET' && $action === 'technicians') {
     $specialty = trim($_GET['specialty'] ?? '');
     if ($specialty) {
         $like = "%$specialty%";
-        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, address, availability_status AS availability, rating, jobs_done, status FROM service_providers WHERE status='active' AND service_category LIKE ? ORDER BY full_name ASC");
-        $stmt->bind_param("s", $like);
+        $stmt = $conn->prepare("SELECT DISTINCT sp.provider_id AS id,
+                    sp.full_name AS name,
+                    COALESCE(s.name, sp.service_category) AS specialty,
+                    sp.contact_number AS phone,
+                    sp.address,
+                    sp.availability_status AS availability,
+                    sp.rating,
+                    sp.jobs_done,
+                    sp.status
+                FROM service_providers sp
+                LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
+                LEFT JOIN services s ON s.id = sps.service_id
+                WHERE sp.status='active' AND (s.name LIKE ? OR sp.service_category LIKE ?)
+                ORDER BY sp.full_name ASC");
+        $stmt->bind_param("ss", $like, $like);
     } else {
-        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, address, availability_status AS availability, rating, jobs_done, status FROM service_providers WHERE status='active' ORDER BY full_name ASC");
+        $stmt = $conn->prepare("SELECT DISTINCT sp.provider_id AS id,
+                    sp.full_name AS name,
+                    COALESCE(s.name, sp.service_category) AS specialty,
+                    sp.contact_number AS phone,
+                    sp.address,
+                    sp.availability_status AS availability,
+                    sp.rating,
+                    sp.jobs_done,
+                    sp.status
+                FROM service_providers sp
+                LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
+                LEFT JOIN services s ON s.id = sps.service_id
+                WHERE sp.status='active'
+                ORDER BY sp.full_name ASC");
     }
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -87,14 +114,18 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
     }
 
     $hasProviderId = in_array('provider_id', $cols, true);
+    $hasServiceId = in_array('service_id', $cols, true);
     $hasTimeSlot = in_array('time_slot', $cols, true);
     $hasNotes = in_array('notes', $cols, true);
     $hasPrice = in_array('price', $cols, true);
+    $hasSupplyOption = in_array('supply_option', $cols, true);
+    $hasSupplyFee = in_array('supply_fee', $cols, true);
 
     ensureBookingRequestsTable($conn);
     ensureProviderReviewsTable($conn);
 
-    $select = 'b.id, b.service, b.date, b.address, b.status, b.created_at';
+    $serviceSelect = $hasServiceId ? 'COALESCE(sv.name, b.service)' : 'b.service';
+    $select = "b.id, {$serviceSelect} AS service, b.date, b.address, b.status, b.created_at";
     if ($hasTimeSlot) {
         $select .= ', b.time_slot';
     }
@@ -104,14 +135,22 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
     if ($hasPrice) {
         $select .= ', b.price';
     }
+    if ($hasSupplyOption) {
+        $select .= ', b.supply_option';
+    }
+    if ($hasSupplyFee) {
+        $select .= ', b.supply_fee';
+    }
     $select .= ', br.details, br.fixed_price, br.provider_id AS request_provider_id';
 
     $providerJoinExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id)' : 'br.provider_id';
     $select .= ', sp.provider_id AS provider_id, sp.full_name AS provider_name, sp.contact_number AS provider_phone,';
     $select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, sp.service_category AS provider_service';
 
-    $sql = "SELECT $select
+        $serviceJoin = $hasServiceId ? 'LEFT JOIN services sv ON sv.id = b.service_id' : '';
+        $sql = "SELECT $select
             FROM bookings b
+            $serviceJoin
             LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'
             LEFT JOIN service_providers sp ON sp.provider_id = $providerJoinExpr
             WHERE b.user_id = ? AND b.id = ?
@@ -177,6 +216,8 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             'notes' => (string) ($row['notes'] ?? ''),
             'details' => (string) ($row['details'] ?? ''),
             'price' => (float) ($price ?? 0),
+            'supply_option' => (string) ($row['supply_option'] ?? ''),
+            'supply_fee' => (float) ($row['supply_fee'] ?? 0),
             'status' => (string) ($row['status'] ?? ''),
             'provider_id' => $providerIdResolved,
             'provider_name' => (string) ($row['provider_name'] ?? ''),
@@ -209,6 +250,11 @@ if ($method === 'GET' && $action === '') {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     $select = 'b.*';
+    if (in_array('service_id', $cols, true)) {
+        $select .= ', COALESCE(sv.name, b.service) AS normalized_service';
+    } else {
+        $select .= ', b.service AS normalized_service';
+    }
     $select .= ', COALESCE(sp.full_name, sp2.full_name) AS technician_name';
     $select .= ', COALESCE(sp.contact_number, sp2.contact_number) AS tech_phone';
     $providerIdExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id, 0)' : 'COALESCE(br.provider_id, 0)';
@@ -216,6 +262,9 @@ if ($method === 'GET' && $action === '') {
     $select .= ', IF(pr.id IS NULL, 0, 1) AS has_reviewed';
 
     $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'";
+    if (in_array('service_id', $cols, true)) {
+        $join .= ' LEFT JOIN services sv ON sv.id = b.service_id';
+    }
     $join .= ' LEFT JOIN service_providers sp ON sp.provider_id = br.provider_id';
     if ($hasProviderId) {
         $join .= ' LEFT JOIN service_providers sp2 ON sp2.provider_id = b.provider_id';
@@ -279,7 +328,7 @@ if ($method === 'POST' && $action === '') {
         $address = 'GPS Location';
     }
 
-    $svcStmt = $conn->prepare("SELECT name, flat_rate, description, min_hours FROM services WHERE active = 1 AND name = ? LIMIT 1");
+    $svcStmt = $conn->prepare("SELECT id, name, flat_rate, description, min_hours FROM services WHERE active = 1 AND name = ? LIMIT 1");
     if (!$svcStmt) {
         ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Could not validate service.']);
@@ -302,6 +351,13 @@ if ($method === 'POST' && $action === '') {
         ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Could not compute fixed price for selected options.']);
         exit;
+    }
+
+    $supplyOption = strtolower(trim((string) ($_POST['supply_option'] ?? $_POST['service_supply_option'] ?? 'client')));
+    $supplyFee = 0.0;
+    $scopeMeta = _serviceScopeMeta($service);
+    if ($supplyOption === 'provider' && $scopeMeta) {
+        $supplyFee = (float) ($scopeMeta['provider_supply_fee'] ?? 0);
     }
 
     $optionSummary = _summarizeSelectedOptions($service, $_POST);
@@ -340,10 +396,19 @@ if ($method === 'POST' && $action === '') {
             $bcols[] = $c['Field'];
     }
 
+    $serviceId = (int) ($serviceRow['id'] ?? 0);
+
     $col_list = "user_id, service, date, address, price, status, created_at";
     $val_list = "?, ?, ?, ?, ?, 'pending', NOW()";
     $types = "isssd";
     $params = [$uid, $service, $date, $address, $price];
+
+    if (in_array('service_id', $bcols, true) && $serviceId > 0) {
+        $col_list .= ", service_id";
+        $val_list .= ", ?";
+        $types .= "i";
+        $params[] = $serviceId;
+    }
 
     if (in_array('time_slot', $bcols)) {
         $col_list .= ", time_slot";
@@ -370,6 +435,9 @@ if ($method === 'POST' && $action === '') {
         $params[] = $hours;
     }
 
+    _safeAddColumn($conn, 'bookings', 'supply_option', 'VARCHAR(20) NULL');
+    _safeAddColumn($conn, 'bookings', 'supply_fee', 'DECIMAL(10,2) NULL');
+
 
     $stmt = $conn->prepare("INSERT INTO bookings ($col_list) VALUES ($val_list)");
     if (!$stmt) {
@@ -389,6 +457,8 @@ if ($method === 'POST' && $action === '') {
         $bid = $conn->insert_id;
         $stmt->close();
 
+        logBookingStatusChange($conn, $bid, null, 'pending', 'user', $uid, 'Booking created');
+
         // Save GPS coordinates if provided (safely add columns if needed)
         if ($customer_lat !== null && $customer_lng !== null) {
             _safeAddColumn($conn, 'bookings', 'customer_lat', 'DECIMAL(10,8) NULL');
@@ -399,6 +469,36 @@ if ($method === 'POST' && $action === '') {
                 $gpsStmt->execute();
                 $gpsStmt->close();
             }
+        }
+
+        $scopeStmt = $conn->prepare("UPDATE bookings SET supply_option=?, supply_fee=? WHERE id=?");
+        if ($scopeStmt) {
+            $supplyOptionParam = $supplyOption === 'provider' ? 'provider' : 'client';
+            $scopeStmt->bind_param('sdi', $supplyOptionParam, $supplyFee, $bid);
+            $scopeStmt->execute();
+            $scopeStmt->close();
+        }
+
+        // Save dynamic booking form values to normalized key-value table.
+        $ignoreFields = [
+            'service', 'date', 'time_slot', 'address', 'notes',
+            'customer_name', 'customer_phone', 'customer_address',
+            'customer_lat', 'customer_lng', 'pricing_type', 'hours',
+            'payment_method', 'action', 'realtime',
+            'supply_option', 'service_supply_option'
+        ];
+        foreach ($_POST as $fieldName => $fieldValue) {
+            if (in_array($fieldName, $ignoreFields, true)) {
+                continue;
+            }
+            if (is_array($fieldValue)) {
+                $fieldValue = implode(', ', array_map('strval', $fieldValue));
+            }
+            $fieldValue = trim((string) $fieldValue);
+            if ($fieldValue === '') {
+                continue;
+            }
+            upsertBookingDetail($conn, $bid, (string) $fieldName, $fieldValue);
         }
 
         // Save payment information
@@ -423,14 +523,19 @@ if ($method === 'POST' && $action === '') {
                         // Broadcast to ALL providers matching the service (no cap).
                         // NOTE: availability (online/offline) is treated as display-only and must not filter matching.
                         $providerStmt = $conn->prepare(
-                                "SELECT provider_id AS id, full_name AS name, service_category FROM service_providers
-                                 WHERE status = 'active'
-                                     AND LOWER(service_category) LIKE ?
-                                 ORDER BY rating DESC, jobs_done DESC"
+                                "SELECT DISTINCT sp.provider_id AS id,
+                                        sp.full_name AS name,
+                                        COALESCE(sv.name, sp.service_category) AS service_category
+                                 FROM service_providers sp
+                                 LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
+                                 LEFT JOIN services sv ON sv.id = sps.service_id
+                                 WHERE sp.status = 'active'
+                                   AND (LOWER(COALESCE(sv.name, '')) = LOWER(?) OR LOWER(sp.service_category) LIKE ?)
+                                 ORDER BY sp.rating DESC, sp.jobs_done DESC"
                         );
             $specialtyLike = '%' . strtolower($service) . '%';
             if ($providerStmt) {
-                $providerStmt->bind_param('s', $specialtyLike);
+                $providerStmt->bind_param('ss', $service, $specialtyLike);
                 $providerStmt->execute();
                 $providers = $providerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 $providerStmt->close();
@@ -501,10 +606,24 @@ if ($method === 'POST' && $action === '') {
 
 if ($method === 'POST' && $action === 'cancel') {
     $id = intval($_POST['id'] ?? 0);
+    $oldStatus = null;
+    if ($id > 0) {
+        $st = $conn->prepare("SELECT status FROM bookings WHERE id = ? AND user_id = ? LIMIT 1");
+        if ($st) {
+            $st->bind_param('ii', $id, $uid);
+            $st->execute();
+            $sr = $st->get_result()->fetch_assoc();
+            $st->close();
+            $oldStatus = $sr['status'] ?? null;
+        }
+    }
     $stmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND user_id=? AND status='pending'");
     $stmt->bind_param("ii", $id, $uid);
     $ok = $stmt->execute() && $stmt->affected_rows > 0;
     $stmt->close();
+    if ($ok) {
+        logBookingStatusChange($conn, $id, $oldStatus, 'cancelled', 'user', $uid, 'Cancelled by client');
+    }
     ob_end_clean();
     echo json_encode(['success' => $ok, 'message' => $ok ? 'Cancelled.' : 'Could not cancel.']);
     exit;
@@ -670,6 +789,71 @@ function _parseCsvValues($value)
     }));
 }
 
+function _serviceScopeMeta($service)
+{
+    $scopes = [
+        'House Cleaner' => [
+            'base_fee' => 500,
+            'included' => [
+                'Basic room cleaning and tidying',
+                'Sweeping, mopping, dusting, and wiping surfaces',
+                'Bathroom and kitchen surface cleanup'
+            ],
+            'excluded' => [
+                'Cleaning materials and supplies',
+                'Heavy stain removal or deep restoration',
+                'Special equipment rentals or disposal fees'
+            ],
+            'provider_supply_fee' => 450,
+        ],
+        'Plumber' => [
+            'base_fee' => 500,
+            'included' => [
+                'Inspection, diagnosis, and labor for the requested repair',
+                'Minor troubleshooting and standard installation labor'
+            ],
+            'excluded' => [
+                'Replacement pipes, valves, fixtures, and other parts',
+                'Special materials or specialty fittings',
+                'Major demolition or rebuilding work'
+            ],
+            'provider_supply_fee' => 300,
+        ],
+        'Carpenter' => [
+            'base_fee' => 600,
+            'included' => [
+                'Labor for repairs, assembly, or installation',
+                'Basic carpentry assessment and measurement'
+            ],
+            'excluded' => [
+                'Wood, hardware, paint, varnish, and other materials',
+                'Custom fabrication beyond the agreed scope'
+            ],
+            'provider_supply_fee' => 350,
+        ],
+        'Appliance Technician' => [
+            'base_fee' => 500,
+            'included' => [
+                'Diagnosis and labor for the selected appliance issue',
+                'Basic cleaning of accessible parts during service'
+            ],
+            'excluded' => [
+                'Replacement parts, refrigerant, or specialty components',
+                'Major repairs that require manufacturer-only parts'
+            ],
+            'provider_supply_fee' => 250,
+        ],
+    ];
+
+    return $scopes[$service] ?? null;
+}
+
+function _serviceSupplyFee($service)
+{
+    $scope = _serviceScopeMeta($service);
+    return (float) ($scope['provider_supply_fee'] ?? 0);
+}
+
 function _computeFixedPrice($service, $data)
 {
     $total = 0;
@@ -751,6 +935,15 @@ function _computeFixedPrice($service, $data)
         $total += ($urgency === 'Urgent') ? 300 : 0;
     }
 
+    $supplyOption = strtolower(trim((string) ($data['supply_option'] ?? $data['service_supply_option'] ?? 'client')));
+    if ($supplyOption === 'provider') {
+        $supplyFee = _serviceSupplyFee($service);
+        if ($supplyFee > 0) {
+            $total += $supplyFee;
+            $breakdown[] = 'Provider supplies: ' . $supplyFee;
+        }
+    }
+
     return [
         'total' => max(0, (float) $total),
         'breakdown' => $breakdown
@@ -785,6 +978,16 @@ function _summarizeSelectedOptions($service, $data)
         $pairs[] = 'Appliance: ' . ((string) ($data['appliance_type'] ?? 'TV'));
         $pairs[] = 'Severity: ' . ((string) ($data['problem_severity'] ?? 'Minor'));
         $pairs[] = 'Urgency: ' . ((string) ($data['urgency_level'] ?? 'Normal'));
+    }
+
+    $scope = _serviceScopeMeta($service);
+    if ($scope) {
+        $supplyOption = strtolower(trim((string) ($data['supply_option'] ?? $data['service_supply_option'] ?? 'client')));
+        if ($supplyOption === 'provider') {
+            $pairs[] = 'Materials / Supplies: Service Provider will bring the supplies (+₱' . number_format((float) ($scope['provider_supply_fee'] ?? 0), 0) . ')';
+        } else {
+            $pairs[] = 'Materials / Supplies: Client will provide the materials/supplies';
+        }
     }
 
     if (empty($pairs)) {

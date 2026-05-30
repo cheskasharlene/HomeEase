@@ -18,6 +18,7 @@ define('GEMINI_MODELS', [
 ]);
 
 require_once __DIR__ . '/db.php';
+ensureNormalizationSchema($conn);
 
 $uid = (int) $_SESSION['user_id'];
 $input = json_decode(file_get_contents('php://input'), true);
@@ -56,7 +57,7 @@ if ($uStmt) {
 $bookings = [];
 try {
     $bCols = getColumns($conn, 'bookings');
-    $select = ['b.id', 'b.service', 'b.date', 'b.status', 'b.address'];
+    $select = ['b.id', 'COALESCE(sv.name, b.service) AS service', 'b.date', 'b.status', 'b.address'];
     if (in_array('price', $bCols))
         $select[] = 'b.price';
     if (in_array('time_slot', $bCols))
@@ -69,7 +70,8 @@ try {
         $select[] = 'b.created_at';
 
     // Join accepted provider name if available
-    $joinSql = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'
+    $joinSql = "LEFT JOIN services sv ON sv.id = b.service_id
+                LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'
                 LEFT JOIN service_providers sp ON sp.provider_id = br.provider_id";
     $select[] = "COALESCE(sp.full_name, 'No provider yet') AS provider_name";
 
@@ -109,7 +111,15 @@ try {
 /* ─── fetch active providers (for booking command) ───────────────── */
 $availableProviders = [];
 try {
-    $pRes = $conn->query("SELECT provider_id, full_name, service_category, availability_status FROM service_providers WHERE status='active' AND LOWER(availability_status) <> 'unavailable' ORDER BY rating DESC LIMIT 30");
+    $pRes = $conn->query("SELECT sp.provider_id, sp.full_name,
+                COALESCE(GROUP_CONCAT(DISTINCT s.name ORDER BY s.name SEPARATOR ', '), sp.service_category) AS service_category,
+                sp.availability_status
+            FROM service_providers sp
+            LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
+            LEFT JOIN services s ON s.id = sps.service_id
+            WHERE sp.status='active' AND LOWER(sp.availability_status) <> 'unavailable'
+            GROUP BY sp.provider_id, sp.full_name, sp.service_category, sp.availability_status
+            ORDER BY sp.rating DESC LIMIT 30");
     if ($pRes)
         $availableProviders = $pRes->fetch_all(MYSQLI_ASSOC);
 } catch (Exception $e) {
@@ -344,7 +354,7 @@ if ($action && ($action['type'] ?? '') === 'create_booking' && !empty($action['s
     }
 
     // Get service details
-    $svcStmt = $conn->prepare("SELECT name, flat_rate, description FROM services WHERE active=1 AND name=? LIMIT 1");
+    $svcStmt = $conn->prepare("SELECT id, name, flat_rate, description FROM services WHERE active=1 AND name=? LIMIT 1");
     $svcStmt->bind_param("s", $service);
     $svcStmt->execute();
     $svcRow = $svcStmt->get_result()->fetch_assoc();
@@ -365,10 +375,18 @@ if ($action && ($action['type'] ?? '') === 'create_booking' && !empty($action['s
 
     // Insert booking
     $bCols = getColumns($conn, 'bookings');
+    $serviceId = (int)($svcRow['id'] ?? 0);
     $colList = "user_id, service, date, address, price, status, created_at";
     $valList = "?, ?, ?, ?, ?, 'pending', NOW()";
     $types = "isssd";
     $params = [$uid, $service, $date, $address, $price];
+
+    if (in_array('service_id', $bCols, true) && $serviceId > 0) {
+        $colList .= ", service_id";
+        $valList .= ", ?";
+        $types .= "i";
+        $params[] = $serviceId;
+    }
 
     if (in_array('time_slot', $bCols)) {
         $colList .= ", time_slot";
@@ -416,13 +434,18 @@ if ($action && ($action['type'] ?? '') === 'create_booking' && !empty($action['s
 
     // Broadcast to matching providers
     try {
-        $providerStmt = $conn->prepare(
-            "SELECT provider_id AS id, full_name, service_category FROM service_providers
-             WHERE status='active' AND LOWER(availability_status) <> 'unavailable'
-               AND LOWER(service_category) LIKE ? ORDER BY rating DESC"
-        );
+                $providerStmt = $conn->prepare(
+                        "SELECT DISTINCT sp.provider_id AS id, sp.full_name,
+                                        COALESCE(s.name, sp.service_category) AS service_category
+                         FROM service_providers sp
+                         LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
+                         LEFT JOIN services s ON s.id = sps.service_id
+                         WHERE sp.status='active' AND LOWER(sp.availability_status) <> 'unavailable'
+                             AND (LOWER(COALESCE(s.name, '')) = LOWER(?) OR LOWER(sp.service_category) LIKE ?)
+                         ORDER BY sp.rating DESC"
+                );
         $like = '%' . strtolower($service) . '%';
-        $providerStmt->bind_param('s', $like);
+                $providerStmt->bind_param('ss', $service, $like);
         $providerStmt->execute();
         $matchedProviders = $providerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $providerStmt->close();

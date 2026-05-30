@@ -57,7 +57,131 @@
   padding: 10px 12px;
 }
 
+.service-scope-card {
+  display: block;
+}
+
+.service-scope-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.service-scope-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--tm);
+  margin-bottom: 4px;
+}
+
+.service-scope-sub {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--tm);
+  opacity: .85;
+  font-weight: 600;
+}
+
+.service-scope-badge {
+  flex-shrink: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(245, 166, 35, 0.12);
+  color: #B45309;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.service-scope-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.service-scope-panel,
+.service-scope-supply {
+  background: var(--bg-input);
+  border: 1px solid var(--border-col);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.service-scope-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--tm);
+  margin-bottom: 8px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.service-scope-panel-title i {
+  color: #E8820C;
+}
+
+.service-scope-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--txt);
+  font-size: 12px;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+.service-scope-list li + li {
+  margin-top: 6px;
+}
+
+.service-scope-supply {
+  margin-top: 12px;
+}
+
+.service-scope-choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid #EEDBC0;
+  background: #FFF8F0;
+}
+
+.service-scope-choice-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--txt);
+  line-height: 1.35;
+}
+
+.service-scope-choice-note {
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--tm);
+  line-height: 1.45;
+}
+
 body.dark .bd-pill.pending { border-color: #7c5b1e; color: #fbbf24; background: #2a2216; }
 body.dark .bd-pill.progress { border-color: #1e3a8a; color: #93c5fd; background: #1f2937; }
 body.dark .bd-pill.done { border-color: #065f46; color: #6ee7b7; background: #1f2c24; }
 body.dark .bd-pill.cancelled { border-color: #7f1d1d; color: #fca5a5; background: #2a1d1d; }
+body.dark .service-scope-card,
+body.dark .service-scope-panel,
+body.dark .service-scope-supply {
+  background: var(--bg-input);
+  border-color: var(--border-col);
+}
+body.dark .service-scope-badge {
+  background: rgba(245, 166, 35, 0.16);
+  color: #FBBF24;
+}
+body.dark .service-scope-choice {
+  background: #231B12;
+  border-color: #4A3E28;
+}

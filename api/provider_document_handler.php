@@ -62,7 +62,23 @@ function getProviderDocumentStatus($conn, $provider_id) {
         'tools_kits' => 'tools_&_kits'
     ];
 
-    // Get provider data
+    // Get normalized provider documents first.
+    $docMap = [];
+    $docStmt = $conn->prepare("SELECT document_type FROM provider_documents WHERE provider_id = ?");
+    if ($docStmt) {
+        $docStmt->bind_param('i', $provider_id);
+        $docStmt->execute();
+        $docRows = $docStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $docStmt->close();
+        foreach ($docRows as $dr) {
+            $dtype = (string)($dr['document_type'] ?? '');
+            if ($dtype !== '') {
+                $docMap[$dtype] = true;
+            }
+        }
+    }
+
+    // Legacy fallback columns remain supported.
     $stmt = $conn->prepare("SELECT valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits` FROM service_providers WHERE provider_id = ?");
     $stmt->bind_param('i', $provider_id);
     $stmt->execute();
@@ -75,14 +91,14 @@ function getProviderDocumentStatus($conn, $provider_id) {
 
     foreach ($reqs['required'] as $doc_type => $info) {
         $db_column = $column_map[$doc_type] ?? null;
-        $is_submitted = $db_column && !empty($provider_data[$db_column]);
+        $is_submitted = isset($docMap[$doc_type]) || ($doc_type === 'selfie' && isset($docMap['selfie_verification'])) || ($db_column && !empty($provider_data[$db_column]));
         $status['required'][$doc_type] = $is_submitted;
         if ($is_submitted) $status['total_submitted']++;
     }
 
     foreach ($reqs['optional'] as $doc_type => $info) {
         $db_column = $column_map[$doc_type] ?? null;
-        $is_submitted = $db_column && !empty($provider_data[$db_column]);
+        $is_submitted = isset($docMap[$doc_type]) || ($db_column && !empty($provider_data[$db_column]));
         $status['optional'][$doc_type] = $is_submitted;
         if ($is_submitted) $status['total_submitted']++;
     }
@@ -115,7 +131,13 @@ function formatFileSize($bytes) {
     if ($bytes == 0) return '0 B';
     $k = 1024;
     $sizes = array('B', 'KB', 'MB');
-    $i = floor(log($bytes, $k));
+    $i = (int) floor(log($bytes, $k));
+    if ($i < 0) {
+        $i = 0;
+    }
+    if ($i > 2) {
+        $i = 2;
+    }
     return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
 }
 

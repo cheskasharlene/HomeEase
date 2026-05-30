@@ -52,6 +52,152 @@
       gap: 4px;
     }
 
+    .service-scope-card {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 18px;
+      border: 1.5px solid #F3DFC2;
+      background: linear-gradient(135deg, #FFFDF9, #FFF4E6);
+      box-shadow: 0 4px 16px rgba(232, 130, 12, 0.08);
+    }
+
+    .service-scope-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .service-scope-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
+      font-weight: 800;
+      color: #1A1A2E;
+      margin-bottom: 4px;
+    }
+
+    .service-scope-sub {
+      font-size: 12px;
+      line-height: 1.45;
+      color: #7A7064;
+      font-weight: 600;
+    }
+
+    .service-scope-badge {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(245, 166, 35, 0.12);
+      color: #B45309;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .service-scope-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .service-scope-panel,
+    .service-scope-supply {
+      background: #fff;
+      border: 1px solid #F3DFC2;
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .service-scope-panel.included { box-shadow: inset 0 0 0 1px rgba(16, 185, 129, 0.08); }
+    .service-scope-panel.excluded { box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.06); }
+
+    .service-scope-panel-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #1F2937;
+      margin-bottom: 8px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .service-scope-panel-title i {
+      color: #E8820C;
+    }
+
+    .service-scope-list {
+      margin: 0;
+      padding-left: 18px;
+      color: #5E564D;
+      font-size: 12px;
+      line-height: 1.55;
+      font-weight: 600;
+    }
+
+    .service-scope-list li + li {
+      margin-top: 6px;
+    }
+
+    .service-scope-supply {
+      margin-top: 12px;
+    }
+
+    .service-scope-choice-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .service-scope-choice {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #EEDBC0;
+      background: #FFF8F0;
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .service-scope-choice:hover {
+      border-color: #F5A623;
+      box-shadow: 0 4px 14px rgba(245, 166, 35, 0.08);
+    }
+
+    .service-scope-choice input {
+      margin-top: 2px;
+      accent-color: #E8820C;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .service-scope-choice-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #1F2937;
+      line-height: 1.35;
+    }
+
+    .service-scope-choice-note {
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #7A7064;
+      line-height: 1.45;
+    }
+
+    .service-scope-choice-static {
+      cursor: default;
+    }
+
+    .service-scope-choice-static:hover {
+      border-color: #EEDBC0;
+      box-shadow: none;
+    }
+
     .opt-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -96,6 +242,29 @@
     }
     body.dark .fixed-total-row { color: #FFF3DC; }
     body.dark .fixed-total-note { color: #B8A882; }
+    body.dark .service-scope-card {
+      background: linear-gradient(135deg, #20190F, #2D2316);
+      border-color: #4A3E28;
+    }
+    body.dark .service-scope-panel,
+    body.dark .service-scope-supply {
+      background: #1B150D;
+      border-color: #4A3E28;
+    }
+    body.dark .service-scope-title,
+    body.dark .service-scope-panel-title,
+    body.dark .service-scope-choice-name { color: #FFF3DC; }
+    body.dark .service-scope-sub,
+    body.dark .service-scope-list,
+    body.dark .service-scope-choice-note { color: #C8B99A; }
+    body.dark .service-scope-badge {
+      background: rgba(245, 166, 35, 0.16);
+      color: #FBBF24;
+    }
+    body.dark .service-scope-choice {
+      background: #241C12;
+      border-color: #4A3E28;
+    }
     body.dark .tech-modal-card {
       background: var(--bg-card);
     }

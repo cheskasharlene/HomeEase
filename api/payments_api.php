@@ -24,6 +24,7 @@ $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
 // Ensure payments table exists
 ensurePaymentsTable($conn);
 ensureBookingStatusEnum($conn);
+ensureNormalizationSchema($conn);
 
 // Provider actions: confirm or reject payment (provider session, not client user_id)
 if ($method === 'POST' && in_array($action, ['provider_confirm', 'provider_reject'], true)) {
@@ -62,11 +63,25 @@ if ($method === 'POST' && in_array($action, ['provider_confirm', 'provider_rejec
         ensureBookingStatusEnum($conn);
         $conn->begin_transaction();
         try {
+            $oldStatus = null;
+            $oldStmt = $conn->prepare("SELECT status FROM bookings WHERE id = ? LIMIT 1");
+            if ($oldStmt) {
+                $bookingIdInt = (int)$prow['booking_id'];
+                $oldStmt->bind_param('i', $bookingIdInt);
+                $oldStmt->execute();
+                $oldRow = $oldStmt->get_result()->fetch_assoc();
+                $oldStmt->close();
+                $oldStatus = $oldRow['status'] ?? null;
+            }
+
             $u1 = $conn->prepare("UPDATE payments SET payment_status='completed', updated_at=NOW() WHERE id = ?");
             $u1->bind_param('i', $paymentId);
             $u1->execute();
             $u1->close();
             $conn->query("UPDATE bookings SET status='progress' WHERE id = " . intval($prow['booking_id']));
+            if ($oldStatus !== null && $oldStatus !== 'progress') {
+                logBookingStatusChange($conn, (int)$prow['booking_id'], $oldStatus, 'progress', 'provider', $providerId, 'Payment confirmed by provider');
+            }
             $uid2 = (int) $prow['user_id'];
             $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES ({$uid2}, 'Payment Verified', 'Your payment has been confirmed by the worker.', 'wallet', 0, NOW())");
             $conn->commit();
@@ -162,7 +177,16 @@ if ($method === 'GET' && $action === 'detail') {
 
         $provider = null;
         if ($provId > 0) {
-            $pstmt = $conn->prepare("SELECT provider_id, full_name, contact_number, COALESCE(qr_gcash, gcash_qr) AS gcash_qr, COALESCE(qr_bank, bank_qr) AS bank_qr FROM service_providers WHERE provider_id = ? LIMIT 1");
+            $pstmt = $conn->prepare("SELECT sp.provider_id,
+                        sp.full_name,
+                        sp.contact_number,
+                        COALESCE(MAX(CASE WHEN pd.document_type = 'gcash_qr' THEN pd.file_path END), COALESCE(sp.qr_gcash, sp.gcash_qr)) AS gcash_qr,
+                        COALESCE(MAX(CASE WHEN pd.document_type = 'bank_qr' THEN pd.file_path END), COALESCE(sp.qr_bank, sp.bank_qr)) AS bank_qr
+                    FROM service_providers sp
+                    LEFT JOIN provider_documents pd ON pd.provider_id = sp.provider_id
+                    WHERE sp.provider_id = ?
+                    GROUP BY sp.provider_id, sp.full_name, sp.contact_number, sp.qr_gcash, sp.gcash_qr, sp.qr_bank, sp.bank_qr
+                    LIMIT 1");
             if ($pstmt) {
                 $pstmt->bind_param('i', $provId);
                 $pstmt->execute();
@@ -285,7 +309,11 @@ if ($method === 'POST' && $action === 'submit') {
     if ($upd->execute()) {
         $upd->close();
         // Keep booking awaiting provider confirmation
+        $oldStatus = (string)($brow['status'] ?? 'pending');
         $conn->query("UPDATE bookings SET status = 'awaiting_payment' WHERE id = " . intval($bookingId));
+        if ($oldStatus !== 'awaiting_payment') {
+            logBookingStatusChange($conn, $bookingId, $oldStatus, 'awaiting_payment', 'user', $uid, 'Client submitted payment proof');
+        }
 
         // Notify assigned provider that payment was submitted
         if ($providerId > 0) {
@@ -340,9 +368,16 @@ if ($method === 'GET' && $action === 'list') {
     if ($offset < 0) $offset = 0;
     
     $stmt = $conn->prepare(
-        "SELECT p.*, b.service, b.date, b.address, b.status as booking_status
+        "SELECT p.*, COALESCE(pm.code, p.payment_method) AS payment_method_code,
+            COALESCE(pm.name, UPPER(p.payment_method)) AS payment_method_name,
+            COALESCE(s.name, b.service) AS service,
+            b.date,
+            b.address,
+            b.status as booking_status
          FROM payments p
          INNER JOIN bookings b ON p.booking_id = b.id
+         LEFT JOIN services s ON s.id = b.service_id
+         LEFT JOIN payment_methods pm ON pm.id = p.payment_method_id
          WHERE p.user_id = ?
          ORDER BY p.created_at DESC
          LIMIT ? OFFSET ?"
@@ -389,12 +424,13 @@ if ($method === 'GET' && $action === 'list') {
 if ($method === 'GET' && $action === 'stats') {
     $stmt = $conn->prepare(
         "SELECT 
-            payment_method,
+                COALESCE(pm.code, p.payment_method) AS payment_method,
             payment_status,
             COUNT(*) as count,
             SUM(amount) as total_amount
-         FROM payments
-         WHERE user_id = ?
+            FROM payments p
+            LEFT JOIN payment_methods pm ON pm.id = p.payment_method_id
+            WHERE p.user_id = ?
          GROUP BY payment_method, payment_status
          ORDER BY payment_method, payment_status"
     );

@@ -13,6 +13,7 @@ if (empty($_SESSION['provider_id'])) {
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/../providers/provider_access.php';
+ensureNormalizationSchema($conn);
 
 providerRequireVerifiedApi($conn);
 
@@ -66,7 +67,7 @@ if ($method === 'GET' && $action === 'live_feed') {
     $latSelect = $hasCustomerLat ? 'b.customer_lat' : 'NULL AS customer_lat';
     $lngSelect = $hasCustomerLng ? 'b.customer_lng' : 'NULL AS customer_lng';
 
-        $sql = "SELECT b.id AS booking_id, b.service, b.address, b.price, b.created_at,
+        $sql = "SELECT b.id AS booking_id, COALESCE(sv.name, b.service) AS service, b.address, b.price, b.created_at,
                  b.date, b.time_slot, b.notes, {$latSelect}, {$lngSelect},
                  COALESCE(br.fixed_price, b.price) AS fixed_price,
                  COALESCE(br.address, b.address) AS request_address,
@@ -77,6 +78,7 @@ if ($method === 'GET' && $action === 'live_feed') {
                  COALESCE(p.payment_method, 'cash') AS payment_method,
                  br.id AS request_id, br.status AS request_status
             FROM bookings b
+            LEFT JOIN services sv ON sv.id = b.service_id
             LEFT JOIN users u ON u.id = b.user_id
             LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ?
              LEFT JOIN payments p ON p.booking_id = b.id
@@ -273,6 +275,8 @@ if ($method === 'POST' && $action === 'accept_booking') {
         }
         $stmt->close();
 
+        logBookingStatusChange($conn, $bookingId, (string) ($booking['status'] ?? 'pending'), $nextStatus, 'provider', $providerId, 'Accepted by provider');
+
         updateAssignedProvider($conn, $bookingId, $providerId);
 
         // Mark this provider's request as accepted
@@ -371,6 +375,8 @@ if ($method === 'POST' && $action === 'accept') {
             exit;
         }
 
+        logBookingStatusChange($conn, $bookingId, 'pending', $nextStatus, 'provider', $providerId, 'Accepted by provider');
+
         updateAssignedProvider($conn, $bookingId, $providerId);
 
         $stmt = $conn->prepare("UPDATE booking_requests SET status = 'accepted', responded_at = NOW() WHERE booking_id = ? AND provider_id = ? AND status = 'pending'");
@@ -452,10 +458,24 @@ if ($method === 'POST' && $action === 'complete') {
 
     $conn->begin_transaction();
     try {
+        $oldStatus = null;
+        $stOld = $conn->prepare("SELECT status FROM bookings WHERE id = ? LIMIT 1");
+        if ($stOld) {
+            $stOld->bind_param('i', $bookingId);
+            $stOld->execute();
+            $oldRow = $stOld->get_result()->fetch_assoc();
+            $stOld->close();
+            $oldStatus = $oldRow['status'] ?? null;
+        }
+
         $upd = $conn->prepare("UPDATE bookings SET status = 'done' WHERE id = ?");
         $upd->bind_param('i', $bookingId);
         $upd->execute();
         $upd->close();
+
+        if ($oldStatus !== null && $oldStatus !== 'done') {
+            logBookingStatusChange($conn, $bookingId, $oldStatus, 'done', 'provider', $providerId, 'Marked complete by provider');
+        }
 
         $updR = $conn->prepare("UPDATE booking_requests SET status = 'closed', responded_at = NOW() WHERE booking_id = ? AND provider_id = ? AND status = 'accepted'");
         $updR->bind_param('ii', $bookingId, $providerId);
