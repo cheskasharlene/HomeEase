@@ -45,9 +45,16 @@ if ($method === 'GET' && $action === 'live_feed') {
     // Note: do NOT block offline providers from receiving live booking requests.
     // Availability is display-only; proceed to return matching pending bookings regardless of availability.
 
-    // Check if provider already has an accepted booking active
+    // Check if provider has a truly active booking (not done/completed/cancelled)
     $hasActive = false;
-    $activeStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM booking_requests WHERE provider_id = ? AND status = 'accepted'");
+    $activeStmt = $conn->prepare(
+        "SELECT COUNT(*) AS cnt
+         FROM booking_requests br
+         JOIN bookings b ON b.id = br.booking_id
+         WHERE br.provider_id = ?
+           AND br.status = 'accepted'
+           AND b.status NOT IN ('done','completed','cancelled')"
+    );
     if ($activeStmt) {
         $activeStmt->bind_param('i', $providerId);
         $activeStmt->execute();

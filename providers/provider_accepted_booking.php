@@ -267,7 +267,7 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       </div>
 
       <!-- Actions -->
-      <div style="display:flex;gap:8px;padding:0 16px 16px;">
+      <div class="receipt-actions" style="display:flex;gap:8px;padding:0 16px 16px;">
         <button class="mark-done-btn" style="background:linear-gradient(135deg,#059669,#10B981);flex:1;margin-top:0;font-size:12px;height:40px;" onclick="confirmPayment()"><i class="bi bi-check-lg"></i> Confirm</button>
         <button class="mark-done-btn" style="background:#ef4444;flex:1;margin-top:0;font-size:12px;height:40px;" onclick="rejectPayment()"><i class="bi bi-x-lg"></i> Reject</button>
       </div>
@@ -365,6 +365,7 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
           if (viewBtn) viewBtn.style.display = 'flex';
           
           window.__current_payment_id = p.id;
+          window.__payment_status = 'submitted'; // track for popup buttons
           markDoneBtn.disabled = true;
           markDoneBtn.style.opacity = '0.55';
           
@@ -389,12 +390,12 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
           banner.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment confirmed. You can proceed with the service.';
           statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
 
-          // Always show receipt button so provider can re-review anytime
+          // Show receipt button for view-only access
           const viewBtn = document.getElementById('btnViewReceipt');
           if (viewBtn) viewBtn.style.display = 'flex';
 
-          // Pre-load proof image/ref for when they tap the button
           window.__current_payment_id = p.id;
+          window.__payment_status = 'completed'; // view-only mode
           document.getElementById('paymentProofImage').src = '../' + (p.payment_proof_path || '');
           document.getElementById('paymentProofRef').textContent = 'Ref: ' + (p.payment_reference || 'N/A') + ' | ' + (p.notes || '');
         }
@@ -406,6 +407,12 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       const card = document.getElementById('paymentReviewCard');
       const dot = document.getElementById('receiptUnreadDot');
       if (dot) dot.style.display = 'none';
+
+      // Show action buttons only when payment still needs review
+      const actionsRow = card ? card.querySelector('.receipt-actions') : null;
+      if (actionsRow) {
+        actionsRow.style.display = (window.__payment_status === 'completed') ? 'none' : 'flex';
+      }
 
       modal.style.display = 'flex';
       void modal.offsetWidth;
