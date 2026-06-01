@@ -1234,23 +1234,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
           <div class="fg"><label class="fl">Description</label><input class="fi" id="svcDesc"
               placeholder="Short description"></div>
-          <div class="fg-row">
-            <div class="fg"><label class="fl">Hourly Rate (₱)</label><input class="fi" id="svcHourly" type="number"
-                min="0" value="0"></div>
-            <div class="fg"><label class="fl">Flat Rate (₱)</label><input class="fi" id="svcFlat" type="number" min="0"
-                value="0"></div>
-          </div>
-          <div class="fg-row">
-            <div class="fg"><label class="fl">Min Hours</label><input class="fi" id="svcMinH" type="number" min="1"
-                value="1"></div>
-            <div class="fg"><label class="fl">Pricing Type</label>
-              <select class="fi" id="svcPtype">
-                <option value="both">Both</option>
-                <option value="hourly">Hourly Only</option>
-                <option value="flat">Flat Only</option>
-              </select>
-            </div>
-          </div>
+          <div style="font-size:11px;color:var(--txt-muted);margin:4px 0 12px;">Pricing is computed at booking based on selected options.</div>
           <div class="modal-btns">
             <button class="btn-p" onclick="saveSvc()">Save Service</button>
             <button class="btn-danger" id="svcDelBtn" style="display:none;" onclick="deleteSvc()">Delete</button>
@@ -2219,7 +2203,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       <div class="svc-ic-sm">${s.icon || '🔧'}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;color:var(--txt-primary);">${s.name}</div>
-        <div style="font-size:11px;color:var(--txt-muted);">${php(s.hourly_rate)}/hr · ${php(s.flat_rate)} flat</div>
+        <div style="font-size:11px;color:var(--txt-muted);">Pricing computed at booking</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
         <div class="toggle-sw ${s.active ? 'on' : 'off'}" onclick="toggleSvc(${s.id},this)" title="${s.active ? 'Disable' : 'Enable'}"></div>
@@ -2233,10 +2217,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('svcIcon').value = s ? (s.icon || '') : '';
         document.getElementById('svcName').value = s ? s.name : '';
         document.getElementById('svcDesc').value = s ? (s.description || '') : '';
-        document.getElementById('svcHourly').value = s ? parseFloat(s.hourly_rate || 0) : 0;
-        document.getElementById('svcFlat').value = s ? parseFloat(s.flat_rate || 0) : 0;
-        document.getElementById('svcMinH').value = s ? (s.min_hours || 1) : 1;
-        document.getElementById('svcPtype').value = s ? (s.pricing_type || 'both') : 'both';
         document.getElementById('svcSheetTtl').textContent = s ? 'Edit Service' : 'Add Service';
         document.getElementById('svcDelBtn').style.display = s ? 'block' : 'none';
         openSheet('svcSheetOl');
@@ -2246,7 +2226,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const id = document.getElementById('svcId').value;
         const name = document.getElementById('svcName').value.trim();
         if (!name) { toast('Service name required', 'e'); return; }
-        const body = fd({ id: id || '', name, icon: document.getElementById('svcIcon').value, description: document.getElementById('svcDesc').value, hourly_rate: document.getElementById('svcHourly').value, flat_rate: document.getElementById('svcFlat').value, min_hours: document.getElementById('svcMinH').value, pricing_type: document.getElementById('svcPtype').value, active: 1 });
+        const body = fd({ id: id || '', name, icon: document.getElementById('svcIcon').value, description: document.getElementById('svcDesc').value, active: 1 });
         const data = await api('services', id ? 'edit' : 'add', body);
         if (data.success) { toast(id ? 'Service updated' : 'Service added'); closeSheet('svcSheetOl'); loadServices(); }
         else toast(data.message || 'Failed', 'e');

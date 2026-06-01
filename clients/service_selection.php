@@ -96,6 +96,15 @@ if (empty($_SESSION['user_id'])) {
       }
     };
 
+    const serviceBaseFees = {
+      'House Cleaner': 500,
+      'Helper': 400,
+      'Laundry Worker': 300,
+      'Plumber': 500,
+      'Carpenter': 600,
+      'Appliance Technician': 500
+    };
+
     function brandIcon(name, fallback) {
       const cfg = serviceConfig[name];
       if (cfg) {
@@ -129,12 +138,16 @@ if (empty($_SESSION['user_id'])) {
         const cfg = serviceConfig[s.name] || {};
         const accent = cfg.accent || '#F5A623';
         const desc = cfg.desc || s.description || '';
+        const baseFee = serviceBaseFees[s.name];
+        const priceHtml = baseFee
+          ? `from <span class="price-val">₱${baseFee.toLocaleString()}</span>`
+          : 'Price set on booking';
         return `
     <div class="svc-card" id="svcCard${i}" onclick="selectService(${i})" style="--svc-accent:${accent};">
       <div class="svc-icon">${brandIcon(s.name, s.icon)}</div>
       <div class="svc-name">${s.name}</div>
       ${desc ? `<div class="svc-desc">${desc}</div>` : ''}
-      <div class="svc-price">from <span class="price-val">₱${parseFloat(s.flat_rate || 0).toLocaleString()}</span></div>
+      <div class="svc-price">${priceHtml}</div>
     </div>
   `}).join('');
     }

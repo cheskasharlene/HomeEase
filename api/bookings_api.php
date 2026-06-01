@@ -328,7 +328,7 @@ if ($method === 'POST' && $action === '') {
         $address = 'GPS Location';
     }
 
-    $svcStmt = $conn->prepare("SELECT id, name, flat_rate, description, min_hours FROM services WHERE active = 1 AND name = ? LIMIT 1");
+    $svcStmt = $conn->prepare("SELECT id, name, description FROM services WHERE active = 1 AND name = ? LIMIT 1");
     if (!$svcStmt) {
         ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'Could not validate service.']);
@@ -368,7 +368,7 @@ if ($method === 'POST' && $action === '') {
     }
 
     $serviceInclusions = trim((string) ($serviceRow['description'] ?? ''));
-    $estimatedDuration = max(1, (int) ($serviceRow['min_hours'] ?? 1));
+    $estimatedDuration = 1;
 
     if ($customer_name === '' || $customer_phone === '') {
         $uStmt = $conn->prepare("SELECT name, phone, address FROM users WHERE id = ? LIMIT 1");
@@ -660,10 +660,6 @@ function _seedServices(mysqli $conn)
         name VARCHAR(120) NOT NULL UNIQUE,
         icon VARCHAR(10),
         description TEXT,
-        hourly_rate DECIMAL(10,2),
-        flat_rate DECIMAL(10,2),
-        min_hours INT,
-        pricing_type VARCHAR(20),
         active TINYINT(1) DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -682,25 +678,21 @@ function _seedServices(mysqli $conn)
     $conn->query("ALTER TABLE services AUTO_INCREMENT = 1");
     
     $services = [
-        ['House Cleaner', '🧹', 'Complete home & office House Cleaner', 400, 500, 1, 'flat'],
-        ['Helper', '🧑‍🤝‍🧑', 'All-around household helping', 400, 400, 1, 'flat'],
-        ['Laundry Worker', '🧺', 'Washing, drying & folding', 300, 300, 1, 'flat'],
-        ['Plumber', '🔧', 'Pipe repair, clogs & installs', 400, 500, 1, 'flat'],
-        ['Carpenter', '🔨', 'Furniture making & wood repairs', 600, 600, 1, 'flat'],
-        ['Appliance Technician', '🔩', 'Appliance repairs & diagnostics', 400, 500, 1, 'flat'],
+        ['House Cleaner', '🧹', 'Complete home & office House Cleaner'],
+        ['Helper', '🧑‍🤝‍🧑', 'All-around household helping'],
+        ['Laundry Worker', '🧺', 'Washing, drying & folding'],
+        ['Plumber', '🔧', 'Pipe repair, clogs & installs'],
+        ['Carpenter', '🔨', 'Furniture making & wood repairs'],
+        ['Appliance Technician', '🔩', 'Appliance repairs & diagnostics'],
     ];
     
-    $stmt = $conn->prepare("INSERT INTO services (name, icon, description, hourly_rate, flat_rate, min_hours, pricing_type, active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
+    $stmt = $conn->prepare("INSERT INTO services (name, icon, description, active) VALUES (?, ?, ?, 1)");
     if ($stmt) {
         foreach ($services as $svc) {
             $name = $svc[0];
             $icon = $svc[1];
             $desc = $svc[2];
-            $hrate = $svc[3];
-            $frate = $svc[4];
-            $mhours = $svc[5];
-            $ptype = $svc[6];
-            $stmt->bind_param("sssddis", $name, $icon, $desc, $hrate, $frate, $mhours, $ptype);
+            $stmt->bind_param("sss", $name, $icon, $desc);
             if (!$stmt->execute()) {
                 error_log("Failed to insert service $name: " . $stmt->error);
             }
@@ -725,12 +717,12 @@ function _svcIcon($s)
 function _defaultServices()
 {
     return [
-        ['id' => 1, 'name' => 'House Cleaner', 'icon' => '🧹', 'description' => 'Complete home & office House Cleaner', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 2, 'name' => 'Helper', 'icon' => '🧑‍🤝‍🧑', 'description' => 'All-around household helping', 'hourly_rate' => 400, 'flat_rate' => 400, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 3, 'name' => 'Laundry Worker', 'icon' => '🧺', 'description' => 'Washing, drying & folding', 'hourly_rate' => 300, 'flat_rate' => 300, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 4, 'name' => 'Plumber', 'icon' => '🔧', 'description' => 'Pipe repair, clogs & installs', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 5, 'name' => 'Carpenter', 'icon' => '🔨', 'description' => 'Furniture making & wood repairs', 'hourly_rate' => 600, 'flat_rate' => 600, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
-        ['id' => 6, 'name' => 'Appliance Technician', 'icon' => '🔩', 'description' => 'Appliance repairs & diagnostics', 'hourly_rate' => 400, 'flat_rate' => 500, 'min_hours' => 1, 'pricing_type' => 'flat', 'active' => 1],
+        ['id' => 1, 'name' => 'House Cleaner', 'icon' => '🧹', 'description' => 'Complete home & office House Cleaner', 'active' => 1],
+        ['id' => 2, 'name' => 'Helper', 'icon' => '🧑‍🤝‍🧑', 'description' => 'All-around household helping', 'active' => 1],
+        ['id' => 3, 'name' => 'Laundry Worker', 'icon' => '🧺', 'description' => 'Washing, drying & folding', 'active' => 1],
+        ['id' => 4, 'name' => 'Plumber', 'icon' => '🔧', 'description' => 'Pipe repair, clogs & installs', 'active' => 1],
+        ['id' => 5, 'name' => 'Carpenter', 'icon' => '🔨', 'description' => 'Furniture making & wood repairs', 'active' => 1],
+        ['id' => 6, 'name' => 'Appliance Technician', 'icon' => '🔩', 'description' => 'Appliance repairs & diagnostics', 'active' => 1],
     ];
 }
 

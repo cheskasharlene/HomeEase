@@ -281,10 +281,6 @@ if ($section === 'services') {
         name VARCHAR(100) NOT NULL,
         icon VARCHAR(20) DEFAULT '🔧',
         description TEXT,
-        hourly_rate DECIMAL(10,2) DEFAULT 0,
-        flat_rate DECIMAL(10,2) DEFAULT 0,
-        min_hours INT DEFAULT 1,
-        pricing_type VARCHAR(20) DEFAULT 'both',
         active TINYINT(1) DEFAULT 1,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -300,23 +296,19 @@ if ($section === 'services') {
         $name        = trim($_POST['name'] ?? '');
         $icon        = trim($_POST['icon'] ?? '🔧');
         $desc        = trim($_POST['description'] ?? '');
-        $hourly      = floatval($_POST['hourly_rate'] ?? 0);
-        $flat        = floatval($_POST['flat_rate'] ?? 0);
-        $min_h       = max(1, intval($_POST['min_hours'] ?? 1));
-        $ptype       = trim($_POST['pricing_type'] ?? 'both');
         $active      = intval($_POST['active'] ?? 1);
 
         if (!$name) respond(false, 'Service name required.');
 
         if ($action === 'add') {
-            $stmt = $conn->prepare("INSERT INTO services (name, icon, description, hourly_rate, flat_rate, min_hours, pricing_type, active) VALUES (?,?,?,?,?,?,?,?)");
-            $stmt->bind_param("sssdddsi", $name, $icon, $desc, $hourly, $flat, $min_h, $ptype, $active);
+            $stmt = $conn->prepare("INSERT INTO services (name, icon, description, active) VALUES (?,?,?,?)");
+            $stmt->bind_param("sssi", $name, $icon, $desc, $active);
             $stmt->execute(); $newId = $conn->insert_id; $ok = $stmt->affected_rows > 0; $stmt->close();
             respond($ok, $ok ? 'Service added.' : 'Insert failed.', ['id' => $newId]);
         } else {
             if (!$id) respond(false, 'Service ID required.');
-            $stmt = $conn->prepare("UPDATE services SET name=?,icon=?,description=?,hourly_rate=?,flat_rate=?,min_hours=?,pricing_type=?,active=? WHERE id=?");
-            $stmt->bind_param("sssdddsii", $name, $icon, $desc, $hourly, $flat, $min_h, $ptype, $active, $id);
+            $stmt = $conn->prepare("UPDATE services SET name=?,icon=?,description=?,active=? WHERE id=?");
+            $stmt->bind_param("sssii", $name, $icon, $desc, $active, $id);
             $stmt->execute();
             $ok = $stmt->affected_rows > 0;
             $stmt->close();

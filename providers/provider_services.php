@@ -11,6 +11,15 @@ enforceProviderSectionAccess('services', $conn);
 $providerId = (int)($_SESSION['provider_id'] ?? 0);
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider');
 
+$serviceBaseFees = [
+  'House Cleaner' => 500,
+  'Helper' => 400,
+  'Laundry Worker' => 300,
+  'Plumber' => 500,
+  'Carpenter' => 600,
+  'Appliance Technician' => 500
+];
+
 // Fetch provider's services
 $stmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ?");
 $stmt->bind_param('i', $providerId);
@@ -22,7 +31,7 @@ $providerServices = array_filter(array_map('trim', $providerServices));
 $stmt->close();
 
 // Fetch all available services from database
-$servicesResult = $conn->query("SELECT id, name, description, flat_rate, hourly_rate, icon FROM services WHERE active = 1 ORDER BY name ASC");
+$servicesResult = $conn->query("SELECT id, name, description, icon FROM services WHERE active = 1 ORDER BY name ASC");
 $availableServices = $servicesResult ? $servicesResult->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 <!DOCTYPE html>
@@ -90,7 +99,8 @@ $availableServices = $servicesResult ? $servicesResult->fetch_all(MYSQLI_ASSOC) 
                     <div class="svc-nm"><?= htmlspecialchars($service['name']) ?></div>
                     <div class="svc-desc"><?= htmlspecialchars($service['description'] ?? '') ?></div>
                   </div>
-                  <div class="svc-price">₱<?= number_format($service['flat_rate'] ?? 0, 0) ?></div>
+                  <?php $baseFee = $serviceBaseFees[$service['name']] ?? null; ?>
+                  <div class="svc-price"><?= $baseFee !== null ? '₱' . number_format($baseFee, 0) : 'Pricing set on booking' ?></div>
                 </div>
                 <div class="svc-footer">
                   <button class="btn-edit" onclick="editService(<?= $service['id'] ?>, '<?= htmlspecialchars($service['name']) ?>')"><i class="bi bi-pencil-fill" style="margin-right:5px;"></i>Edit</button>

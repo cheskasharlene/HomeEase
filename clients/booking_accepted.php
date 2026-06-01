@@ -236,6 +236,8 @@ if (empty($_SESSION['user_id'])) {
     let currentPaymentData = null;
     let paymentExpiryTimer = null;
     let paymentExpiryModalShown = false;
+    let paymentPollTimer = null;
+    let bookingStatusTimer = null;
 
     function goPage(page) {
       window.location.href = page;
@@ -345,6 +347,30 @@ if (empty($_SESSION['user_id'])) {
       }
     }
 
+    function stopBookingStatusPolling() {
+      if (bookingStatusTimer) {
+        clearInterval(bookingStatusTimer);
+        bookingStatusTimer = null;
+      }
+    }
+
+    function startBookingStatusPolling() {
+      if (bookingStatusTimer) return;
+      bookingStatusTimer = window.setInterval(loadBookingStatus, 8000);
+    }
+
+    function stopPaymentPolling() {
+      if (paymentPollTimer) {
+        clearInterval(paymentPollTimer);
+        paymentPollTimer = null;
+      }
+    }
+
+    function startPaymentPolling() {
+      if (paymentPollTimer) return;
+      paymentPollTimer = window.setInterval(loadPaymentDetails, 8000);
+    }
+
     function startPaymentExpiryTimer(expiryValue) {
       stopPaymentExpiryTimer();
       paymentExpiryModalShown = false;
@@ -416,6 +442,17 @@ if (empty($_SESSION['user_id'])) {
         }
 
         const b = d.booking;
+        const status = String(b.status || '').toLowerCase();
+        if (status === 'done' || status === 'completed') {
+          stopBookingStatusPolling();
+          goPage('booking_detail.php?booking_id=' + encodeURIComponent(bookingId));
+          return;
+        }
+        if (status === 'cancelled' || status === 'canceled') {
+          stopBookingStatusPolling();
+          goBackToBookings();
+          return;
+        }
         document.getElementById('providerName').textContent = b.provider_name || 'Assigned Provider';
         document.getElementById('providerService').textContent = b.provider_specialty || b.service || 'Worker';
         document.getElementById('providerPhone').textContent = b.provider_phone || 'No contact info';
@@ -434,6 +471,30 @@ if (empty($_SESSION['user_id'])) {
         document.getElementById('bookingNotes').textContent = b.details || b.notes || 'None';
       } catch (e) {
         showEmptyState();
+      }
+    }
+
+    async function loadBookingStatus() {
+      const params = new URLSearchParams(window.location.search);
+      const bookingId = params.get('booking_id');
+      if (!bookingId) return;
+
+      try {
+        const res = await fetch('../api/booking_status_api.php?booking_id=' + encodeURIComponent(bookingId) + '&_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (!data.success) return;
+        const status = String(data.status || '').toLowerCase();
+        if (status === 'done' || status === 'completed') {
+          stopBookingStatusPolling();
+          goPage('booking_detail.php?booking_id=' + encodeURIComponent(bookingId));
+          return;
+        }
+        if (status === 'cancelled' || status === 'canceled') {
+          stopBookingStatusPolling();
+          goBackToBookings();
+        }
+      } catch (e) {
+        // Ignore polling errors
       }
     }
 
@@ -484,6 +545,7 @@ if (empty($_SESSION['user_id'])) {
       document.getElementById('cashPaymentNote').classList.add('ab-hide');
       document.getElementById('paymentWaitingNote').classList.add('ab-hide');
       document.getElementById('paymentCompletedNote').classList.add('ab-hide');
+      document.getElementById('payNowContainer').classList.add('ab-hide');
       closePaymentExpiredModal();
 
       if (method === 'cash') {
@@ -492,18 +554,21 @@ if (empty($_SESSION['user_id'])) {
           document.getElementById('paymentCompletedNote').classList.remove('ab-hide');
         }
         stopPaymentExpiryTimer();
+        stopPaymentPolling();
         return;
       }
 
       if (status === 'completed') {
         document.getElementById('paymentCompletedNote').classList.remove('ab-hide');
         stopPaymentExpiryTimer();
+        stopPaymentPolling();
         return;
       }
 
       if (status === 'submitted') {
         document.getElementById('paymentWaitingNote').classList.remove('ab-hide');
         stopPaymentExpiryTimer();
+        startPaymentPolling();
         return;
       }
 
@@ -513,6 +578,7 @@ if (empty($_SESSION['user_id'])) {
         toggleQRDisplay(method);
         startPaymentExpiryTimer(p.expected_until);
         openUserPaymentModal();
+        stopPaymentPolling();
       }
     }
 
@@ -598,7 +664,11 @@ if (empty($_SESSION['user_id'])) {
       if (e.target === this) closePaymentExpiredModal();
     });
 
-    loadAcceptedBooking().then(loadPaymentDetails);
+    loadAcceptedBooking().then(() => {
+      loadPaymentDetails();
+      startBookingStatusPolling();
+      loadBookingStatus();
+    });
   </script>
 </body>
 

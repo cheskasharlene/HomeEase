@@ -88,8 +88,16 @@ try {
 
 /* ─── fetch available services ───────────────────────────────────── */
 $services = [];
+$serviceBaseFees = [
+    'House Cleaner' => 500,
+    'Helper' => 400,
+    'Laundry Worker' => 300,
+    'Plumber' => 500,
+    'Carpenter' => 600,
+    'Appliance Technician' => 500
+];
 try {
-    $sRes = $conn->query("SELECT name, flat_rate, description FROM services WHERE active = 1 ORDER BY name ASC");
+    $sRes = $conn->query("SELECT name, description FROM services WHERE active = 1 ORDER BY name ASC");
     if ($sRes)
         $services = $sRes->fetch_all(MYSQLI_ASSOC);
 } catch (Exception $e) {
@@ -140,10 +148,16 @@ if (empty($bookings)) {
 
 if (empty($services)) {
     // fallback hardcoded services
-    $serviceLines = "- House Cleaner: ₱500 flat\n- Helper: ₱400 flat\n- Laundry Worker: ₱300 flat\n- Plumber: ₱500 flat\n- Carpenter: ₱600 flat\n- Appliance Technician: ₱500 flat";
+    $serviceLines = "- House Cleaner: ₱500 base\n- Helper: ₱400 base\n- Laundry Worker: ₱300 base\n- Plumber: ₱500 base\n- Carpenter: ₱600 base\n- Appliance Technician: ₱500 base";
 } else {
     $serviceLines = implode("\n", array_map(
-        fn($s) => "- {$s['name']}: ₱" . number_format((float) ($s['flat_rate'] ?? 0), 0) . " flat — {$s['description']}",
+        function ($s) use ($serviceBaseFees) {
+            $fee = (float) ($serviceBaseFees[$s['name']] ?? 0);
+            $priceLabel = $fee > 0
+                ? '₱' . number_format($fee, 0) . ' base'
+                : 'Price set on booking';
+            return "- {$s['name']}: {$priceLabel} — {$s['description']}";
+        },
         $services
     ));
 }
@@ -354,7 +368,7 @@ if ($action && ($action['type'] ?? '') === 'create_booking' && !empty($action['s
     }
 
     // Get service details
-    $svcStmt = $conn->prepare("SELECT id, name, flat_rate, description FROM services WHERE active=1 AND name=? LIMIT 1");
+    $svcStmt = $conn->prepare("SELECT id, name, description FROM services WHERE active=1 AND name=? LIMIT 1");
     $svcStmt->bind_param("s", $service);
     $svcStmt->execute();
     $svcRow = $svcStmt->get_result()->fetch_assoc();
@@ -365,7 +379,7 @@ if ($action && ($action['type'] ?? '') === 'create_booking' && !empty($action['s
         exit;
     }
 
-    $price = (float) ($svcRow['flat_rate'] ?? 0);
+    $price = (float) ($serviceBaseFees[$service] ?? 0);
     if ($price <= 0)
         $price = 500;
 

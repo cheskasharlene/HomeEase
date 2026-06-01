@@ -795,7 +795,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     function changeHours(delta) {
-      const min = parseInt(selectedSvc?.min_hours || 1);
+      const min = 1;
       hours = Math.max(min, Math.min(12, hours + delta));
       document.getElementById('hoursInput').value = hours;
       updatePricePreview();
