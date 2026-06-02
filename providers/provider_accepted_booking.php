@@ -429,11 +429,37 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       setTimeout(() => { modal.style.display = 'none'; }, 220);
     }
 
+    function showPaymentConfirmedModal() {
+      const modal = document.getElementById('paymentConfirmedOverlay');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
+    }
+
+    function closePaymentConfirmedModal() {
+      const modal = document.getElementById('paymentConfirmedOverlay');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 220);
+      document.body.classList.remove('modal-open');
+    }
+
     async function confirmPayment() {
       if (!window.__current_payment_id) return alert('No payment selected');
       const fd = new FormData(); fd.append('payment_id', window.__current_payment_id);
       const res = await fetch('../api/payments_api.php?action=provider_confirm', { method: 'POST', body: fd });
-      const j = await res.json(); if (j.success) { alert(j.message || 'Confirmed'); location.reload(); } else { alert(j.message || 'Failed'); }
+      const j = await res.json();
+      if (j.success) {
+        await loadProviderPayment();
+        showPaymentConfirmedModal();
+      } else {
+        alert(j.message || 'Failed');
+      }
     }
 
     async function rejectPayment() {
@@ -1089,6 +1115,25 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       <div class="booking-confirm-actions">
         <button class="booking-confirm-btn cancel" type="button" onclick="(function(){closeCannotCompleteModal(); document.getElementById('paymentGateBanner')?.scrollIntoView({behavior:'smooth'});})();">View Payment Status</button>
         <button class="booking-confirm-btn ok" type="button" onclick="closeCannotCompleteModal()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="booking-confirm-overlay" id="paymentConfirmedOverlay" aria-hidden="true" onclick="closePaymentConfirmedModal()">
+    <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="paymentConfirmedTitle" onclick="event.stopPropagation()">
+      <div class="booking-confirm-head">
+        <div class="booking-confirm-icon" style="background:linear-gradient(135deg,#059669,#10B981);"><i class="bi bi-check-circle-fill"></i></div>
+        <div>
+          <h3 id="paymentConfirmedTitle">Payment Confirmed</h3>
+          <p>The client’s payment has been successfully confirmed.</p>
+        </div>
+      </div>
+      <div class="booking-confirm-note" style="color:#0F766E;background:#ECFDF5;border-color:#A7F3D0;">
+        <i class="bi bi-shield-check"></i>
+        You can now proceed with the service.
+      </div>
+      <div class="booking-confirm-actions" style="grid-template-columns:1fr;">
+        <button class="booking-confirm-btn ok" type="button" onclick="closePaymentConfirmedModal()">OK</button>
       </div>
     </div>
   </div>

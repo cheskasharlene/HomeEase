@@ -227,6 +227,25 @@ if (empty($_SESSION['user_id'])) {
           </div>
         </div>
       </div>
+
+      <div class="payment-success-overlay" id="paymentSuccessOverlay" aria-hidden="true">
+        <div class="payment-success-card" role="dialog" aria-modal="true" aria-labelledby="paymentSuccessTitle">
+          <div class="payment-success-head">
+            <div class="payment-success-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+              <h3 id="paymentSuccessTitle">Payment Submitted</h3>
+              <p>Your payment has been submitted successfully and is awaiting worker confirmation.</p>
+            </div>
+          </div>
+          <div class="payment-success-note">
+            <i class="bi bi-shield-check"></i>
+            Your proof is now with the worker for review.
+          </div>
+          <div class="payment-success-actions">
+            <button type="button" class="payment-success-btn primary" id="paymentSuccessOk">OK</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -238,6 +257,7 @@ if (empty($_SESSION['user_id'])) {
     let paymentExpiryModalShown = false;
     let paymentPollTimer = null;
     let bookingStatusTimer = null;
+    let paymentSuccessModalShown = false;
 
     function goPage(page) {
       window.location.href = page;
@@ -301,6 +321,26 @@ if (empty($_SESSION['user_id'])) {
       modal.setAttribute('aria-hidden', 'true');
       setTimeout(() => { modal.style.display = 'none'; }, 300);
       document.body.classList.remove('modal-open');
+    }
+
+    function closePaymentSuccessModal() {
+      const modal = document.getElementById('paymentSuccessOverlay');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 300);
+      document.body.classList.remove('modal-open');
+    }
+
+    function showPaymentSuccessModal() {
+      if (paymentSuccessModalShown) return;
+      paymentSuccessModalShown = true;
+      const modal = document.getElementById('paymentSuccessOverlay');
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
     }
 
     async function cancelBooking() {
@@ -642,17 +682,17 @@ if (empty($_SESSION['user_id'])) {
         const res = await fetch('../api/payments_api.php?action=submit', { method: 'POST', body: fd });
         const j = await res.json();
         if (j.success) {
-          alert(j.message || 'Payment submitted');
+          showPaymentSuccessModal();
           await loadPaymentDetails();
         } else {
           if ((j.message || '').toLowerCase().includes('payment time window expired')) {
             showPaymentExpiredModal('The payment session has expired. Please retry or rebook from your booking history.');
           } else {
-            alert(j.message || 'Submit failed');
+            showPaymentExpiredModal(j.message || 'Submit failed');
           }
         }
       } catch (err) {
-        alert('Error submitting payment');
+        showPaymentExpiredModal('Error submitting payment');
       }
       btn.disabled = false;
       btn.textContent = 'Submit Payment';
@@ -662,6 +702,10 @@ if (empty($_SESSION['user_id'])) {
     document.getElementById('paymentExpiredSecondary').addEventListener('click', closePaymentExpiredModal);
     document.getElementById('paymentExpiredOverlay').addEventListener('click', function (e) {
       if (e.target === this) closePaymentExpiredModal();
+    });
+    document.getElementById('paymentSuccessOk').addEventListener('click', closePaymentSuccessModal);
+    document.getElementById('paymentSuccessOverlay').addEventListener('click', function (e) {
+      if (e.target === this) closePaymentSuccessModal();
     });
 
     loadAcceptedBooking().then(() => {
