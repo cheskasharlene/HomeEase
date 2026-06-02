@@ -52,10 +52,6 @@ $dashboardEarnings = providerDashboardEarnings();
               <div class="earn-sum-lbl">Total Earnings</div>
               <div class="earn-sum-val">₱<?= number_format((int) ($dashboardSummary['total_earnings'] ?? 0)) ?></div>
             </div>
-            <div class="earn-summary-item">
-              <div class="earn-sum-lbl">Pending Payout</div>
-              <div class="earn-sum-val">₱<?= number_format((int) ($dashboardSummary['pending_payout'] ?? 0)) ?></div>
-            </div>
           </div>
         </div>
 
