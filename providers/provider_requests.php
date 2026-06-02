@@ -477,6 +477,19 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         document.getElementById('pollBar').style.display = currentTab === 'live' ? 'block' : 'none';
 
         if (currentTab === 'live') {
+          if (data.is_online === false) {
+            document.getElementById('feedSubtitle').textContent = 'You are Offline';
+            document.getElementById('feedCount').textContent = '';
+            document.getElementById('feedList').innerHTML = `
+              <div class="empty-feed">
+                <div class="empty-feed-icon" style="color: #6b7280;">💤</div>
+                <div class="empty-feed-title">You are Offline</div>
+                <div class="empty-feed-sub">Switch your status to <strong>Online</strong> on the <a href="provider_home.php" style="color: #E8820C; text-decoration: underline; font-weight: 700;">Home page</a> to start receiving and accepting live booking requests.</div>
+              </div>`;
+            knownIds.clear();
+            return;
+          }
+
           renderLiveFeed(data.live_bookings || [], forceReset);
           const count = (data.live_bookings || []).length;
           document.getElementById('feedSubtitle').textContent =

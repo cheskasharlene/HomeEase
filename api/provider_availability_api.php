@@ -83,7 +83,7 @@ if ($method === 'POST') {
         $requested = 'offline';
     }
 
-    $dbValue = $requested === 'online' ? 'available' : 'offline';
+    $dbValue = $requested === 'online' ? 'online' : 'offline';
     $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ? WHERE provider_id = ?');
     if (!$updateStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);

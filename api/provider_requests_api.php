@@ -42,8 +42,21 @@ if ($method === 'GET' && $action === 'live_feed') {
 
     $provService = strtolower(trim((string)($providerRow['service_category'] ?? '')));
     $provAvailability = strtolower(trim((string)($providerRow['availability_status'] ?? 'offline')));
-    // Note: do NOT block offline providers from receiving live booking requests.
-    // Availability is display-only; proceed to return matching pending bookings regardless of availability.
+    
+    // Enforce online status to receive live booking requests.
+    $isOnline = ($provAvailability === 'online');
+    if (!$isOnline) {
+        ob_end_clean();
+        echo json_encode([
+            'success' => true,
+            'live_bookings' => [],
+            'is_online' => false,
+            'provider_service' => $provService,
+            'has_active_job' => false,
+            'count' => 0
+        ]);
+        exit;
+    }
 
     // Check if provider has a truly active booking (not done/completed/cancelled)
     $hasActive = false;
@@ -122,6 +135,7 @@ if ($method === 'GET' && $action === 'live_feed') {
     echo json_encode([
         'success' => true,
         'live_bookings' => $rows,
+        'is_online' => true,
         'provider_service' => $provService,
         'has_active_job' => $hasActive,
         'count' => count($rows)

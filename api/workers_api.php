@@ -17,7 +17,7 @@ if ($action === 'pros') {
     $sql = "SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, jobs_done, rating, is_verified
             FROM service_providers
                         WHERE status = 'active'
-                            AND LOWER(availability_status) IN ('available', 'online')
+                            AND availability_status = 'online'
             ORDER BY jobs_done DESC
             LIMIT 6";
 
@@ -58,7 +58,7 @@ if ($action === 'list') {
     $types = '';
 
     if ($filter === 'available') {
-        $conditions[] = "t.availability_status = 'available'";
+        $conditions[] = "t.availability_status = 'online'";
     } elseif ($filter !== 'all') {
         $conditions[] = "(t.service_category = ? OR t.service_category LIKE ?)";
         $params[] = $filter;

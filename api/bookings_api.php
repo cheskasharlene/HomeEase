@@ -53,7 +53,7 @@ if ($method === 'GET' && $action === 'technicians') {
                 FROM service_providers sp
                 LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
                 LEFT JOIN services s ON s.id = sps.service_id
-                WHERE sp.status='active' AND (s.name LIKE ? OR sp.service_category LIKE ?)
+                WHERE sp.status='active' AND sp.availability_status='online' AND (s.name LIKE ? OR sp.service_category LIKE ?)
                 ORDER BY sp.full_name ASC");
         $stmt->bind_param("ss", $like, $like);
     } else {
@@ -69,7 +69,7 @@ if ($method === 'GET' && $action === 'technicians') {
                 FROM service_providers sp
                 LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
                 LEFT JOIN services s ON s.id = sps.service_id
-                WHERE sp.status='active'
+                WHERE sp.status='active' AND sp.availability_status='online'
                 ORDER BY sp.full_name ASC");
     }
     $stmt->execute();
@@ -520,8 +520,7 @@ if ($method === 'POST' && $action === '') {
 
         $providers = [];
         {
-                        // Broadcast to ALL providers matching the service (no cap).
-                        // NOTE: availability (online/offline) is treated as display-only and must not filter matching.
+                        // Broadcast to ALL providers matching the service (no cap) who are currently online.
                         $providerStmt = $conn->prepare(
                                 "SELECT DISTINCT sp.provider_id AS id,
                                         sp.full_name AS name,
@@ -530,6 +529,7 @@ if ($method === 'POST' && $action === '') {
                                  LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
                                  LEFT JOIN services sv ON sv.id = sps.service_id
                                  WHERE sp.status = 'active'
+                                   AND sp.availability_status = 'online'
                                    AND (LOWER(COALESCE(sv.name, '')) = LOWER(?) OR LOWER(sp.service_category) LIKE ?)
                                  ORDER BY sp.rating DESC, sp.jobs_done DESC"
                         );
