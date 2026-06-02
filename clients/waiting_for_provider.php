@@ -724,9 +724,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             <a class="wfp-prov-btn outline" id="btnChat" href="#" onclick="contactProvider(event,'chat')">
               <i class="bi bi-chat-fill"></i>
             </a>
-            <a class="wfp-prov-btn" id="btnCall" href="#" onclick="contactProvider(event,'call')">
-              <i class="bi bi-telephone-fill"></i>
-            </a>
           </div>
         </div>
 
@@ -1604,11 +1601,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         alert('Provider contact not yet available.');
         return;
       }
-      if (type === 'call') {
-        window.location.href = 'tel:' + providerPhone;
-      } else {
-        openChat();
-      }
+      openChat();
     }
 
     /* ===== CHAT ===== */

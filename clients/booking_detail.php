@@ -21,11 +21,35 @@ if (empty($_SESSION['user_id'])) {
   <link rel="stylesheet" href="../assets/css/main.css">
   <link rel="stylesheet" href="../assets/css/accepted_booking.css">
   <link rel="stylesheet" href="../assets/css/booking_detail.css">
+  <style>
+    .screen.booking-detail-screen {
+      justify-content: flex-start;
+    }
+
+    .booking-detail-screen .ab-scroll {
+      padding-bottom: 154px;
+    }
+
+    .booking-detail-screen .bnav {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      transform: translateX(-50%);
+      width: min(420px, 100vw);
+      z-index: 70;
+    }
+
+    @media (max-width: 420px) {
+      .booking-detail-screen .ab-scroll {
+        padding-bottom: 148px;
+      }
+    }
+  </style>
 </head>
 
 <body>
   <div class="shell">
-    <div class="screen">
+    <div class="screen booking-detail-screen">
       <div class="ab-scroll">
         <div class="ab-hero">
           <div>

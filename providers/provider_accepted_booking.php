@@ -179,9 +179,6 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
             <a class="wfp-prov-btn outline" id="btnChat" href="#" onclick="contactClient(event,'chat')">
               <i class="bi bi-chat-fill"></i>
             </a>
-            <a class="wfp-prov-btn" id="btnCall" href="#" onclick="contactClient(event,'call')">
-              <i class="bi bi-telephone-fill"></i>
-            </a>
           </div>
         </div>
 
@@ -961,12 +958,7 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
 
     function contactClient(event, type) {
       event.preventDefault();
-      if (type === 'call') {
-        if (!clientPhone) { alert('No phone number available.'); return; }
-        window.location.href = 'tel:' + clientPhone;
-      } else {
-        openChat();
-      }
+      openChat();
     }
 
     /* ── CHAT ── */
