@@ -14,12 +14,30 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider
 $providerId = (int) ($_SESSION['user_id'] ?? $_SESSION['provider_id'] ?? 0);
 
 // Initialize earnings variables with strict null-coalescing defaults
+$todayEarnings = 0.00;
 $thisMonthEarnings = 0.00;
 $totalEarnings = 0.00;
 $recentEarnings = [];
 
 if ($providerId > 0 && $conn instanceof mysqli) {
-  // 1. "THIS MONTH" Earnings: Sum of completed/done booking prices in the current calendar month and year
+  // 1. "TODAY" Earnings: Sum of completed/done booking prices matching today's date
+  $todayDateStr = date('Y-m-d');
+  
+  $queryToday = "SELECT SUM(price) AS today_sum 
+                 FROM bookings 
+                 WHERE provider_id = ? 
+                   AND status IN ('completed', 'done') 
+                   AND COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y')) = ?";
+                   
+  if ($stmtToday = $conn->prepare($queryToday)) {
+    $stmtToday->bind_param("is", $providerId, $todayDateStr);
+    $stmtToday->execute();
+    $resultToday = $stmtToday->get_result()->fetch_assoc();
+    $todayEarnings = (float) ($resultToday['today_sum'] ?? 0.00);
+    $stmtToday->close();
+  }
+
+  // 2. "THIS MONTH" Earnings: Sum of completed/done booking prices in the current calendar month and year
   $currentMonth = date('n'); // 1-12
   $currentYear  = date('Y'); // 4-digit year
   
@@ -39,7 +57,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     $stmtThisMonth->close();
   }
 
-  // 2. "TOTAL EARNINGS": Sum of all-time completed/done booking prices for this provider
+  // 3. "TOTAL EARNINGS": Sum of all-time completed/done booking prices for this provider
   $queryTotal = "SELECT SUM(price) AS total_sum 
                  FROM bookings 
                  WHERE provider_id = ? 
@@ -53,7 +71,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     $stmtTotal->close();
   }
 
-  // 3. "Recent Earnings" List: 10 most recent bookings (completed, done, and pending), ordered by date descending
+  // 4. "Recent Earnings" List: 10 most recent bookings (completed, done, and pending), ordered by date descending
   $queryRecent = "SELECT service, date, price, status 
                   FROM bookings 
                   WHERE provider_id = ? 
@@ -106,6 +124,10 @@ if ($providerId > 0 && $conn instanceof mysqli) {
           
           <!-- Earnings Summary Card -->
           <div class="earn-summary-card">
+            <div class="earn-summary-item">
+              <div class="earn-sum-lbl">Today</div>
+              <div class="earn-sum-val">₱<?= number_format($todayEarnings, 2) ?></div>
+            </div>
             <div class="earn-summary-item">
               <div class="earn-sum-lbl">This Month</div>
               <div class="earn-sum-val">₱<?= number_format($thisMonthEarnings, 2) ?></div>

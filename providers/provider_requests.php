@@ -165,20 +165,6 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       gap: 12px;
     }
 
-    .active-job-banner {
-      margin: 0 16px 12px;
-       margin-top: 10px;
-      padding: 14px 16px;
-      background: linear-gradient(135deg,#059669,#10b981);
-      border-radius: 16px;
-      display: flex; align-items: center; gap: 12px;
-      cursor: pointer;
-    }
-    .active-job-banner i { font-size: 24px; color: #fff; flex-shrink: 0; }
-    .active-job-text { flex: 1; }
-    .active-job-text strong { display: block; font-size: 14px; font-weight: 800; color: #fff; font-family:'Poppins',sans-serif; }
-    .active-job-text span { font-size: 12px; color: rgba(255,255,255,0.85); font-weight: 600; }
-    .active-job-banner .go-arrow { color: #fff; font-size: 18px; }
 
     .poll-bar {
       height: 2px; background: #F0EAE0; margin: 0 16px 14px; border-radius: 2px; overflow: hidden;
@@ -354,14 +340,6 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           </div>
         </div>
 
-        <!-- Active job banner -->
-        <div class="active-job-banner" id="activeJobBanner" style="display:none;" onclick="goPage('provider_accepted_booking.php')">
-          <i class="bi bi-tools"></i>
-          <div class="active-job-text">
-            <strong>You have an active job</strong>
-            <span>Tap to view job details →</span>
-          </div>
-        </div>
 
         <!-- Feed tabs -->
         <div class="feed-tabs">
@@ -494,9 +472,6 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
         if (!data.success) return;
 
-        // Show active job banner
-        const banner = document.getElementById('activeJobBanner');
-        banner.style.display = data.has_active_job ? 'flex' : 'none';
 
         // Show/hide poll bar
         document.getElementById('pollBar').style.display = currentTab === 'live' ? 'block' : 'none';

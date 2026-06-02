@@ -1437,27 +1437,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         cancelWrap.style.display = 'block';
         tipsSection.style.display = 'block';
 
-      } else if (data.status === 'accepted' || data.has_provider || data.status === 'progress') {
-        topBarTitle.textContent = 'Provider On the Way';
-        banner.className = 'wfp-status-banner accepted';
-        spinner.style.display = 'none';
-        statusTxt.innerHTML = `Your provider is on the way! <span>🏃</span>`;
-        cancelWrap.style.display = 'none';
-        tipsSection.style.display = 'none';
-        document.getElementById('chatBtnWrap').style.display = 'block';
-
-        if (data.provider) {
-          const p = data.provider;
-          document.getElementById('provAvatar').textContent = p.initials || p.name.substring(0, 2).toUpperCase();
-          document.getElementById('provName').textContent = p.name;
-          document.getElementById('provMeta').textContent = p.service + ' · ' + p.jobs + ' jobs done';
-          const ratingVal = parseFloat(p.rating || 0);
-          document.getElementById('provRating').textContent =
-            ratingVal > 0 ? '⭐ ' + ratingVal.toFixed(1) + ' rating' : 'New Provider';
-          providerPhone = p.phone || '';
-          provCard.style.display = 'flex';
-        }
-
       } else if (data.status === 'done') {
         topBarTitle.textContent = 'Service Complete';
         banner.className = 'wfp-status-banner done';
@@ -1480,6 +1459,27 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         provCard.style.display = 'none';
         cancelWrap.style.display = 'none';
         tipsSection.style.display = 'none';
+
+      } else if (data.status === 'accepted' || data.has_provider || data.status === 'progress') {
+        topBarTitle.textContent = 'Provider On the Way';
+        banner.className = 'wfp-status-banner accepted';
+        spinner.style.display = 'none';
+        statusTxt.innerHTML = `Your provider is on the way! <span>🏃</span>`;
+        cancelWrap.style.display = 'none';
+        tipsSection.style.display = 'none';
+        document.getElementById('chatBtnWrap').style.display = 'block';
+
+        if (data.provider) {
+          const p = data.provider;
+          document.getElementById('provAvatar').textContent = p.initials || p.name.substring(0, 2).toUpperCase();
+          document.getElementById('provName').textContent = p.name;
+          document.getElementById('provMeta').textContent = p.service + ' · ' + p.jobs + ' jobs done';
+          const ratingVal = parseFloat(p.rating || 0);
+          document.getElementById('provRating').textContent =
+            ratingVal > 0 ? '⭐ ' + ratingVal.toFixed(1) + ' rating' : 'New Provider';
+          providerPhone = p.phone || '';
+          provCard.style.display = 'flex';
+        }
       }
 
       syncSheetHeight();

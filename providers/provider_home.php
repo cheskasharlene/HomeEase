@@ -34,7 +34,48 @@ if ($isVerified) {
 }
 
 require_once __DIR__ . '/provider_dashboard_data.php';
-$dashboardSummary = providerDashboardSummary();
+
+// Initialize earnings variables with strict null-coalescing defaults
+$thisMonthEarnings = 0.00;
+$jobsCompleted = 0;
+$monthlyGoal = 16500.00; // Default monthly goal
+
+if ($providerId > 0 && $conn instanceof mysqli) {
+  // 1. "THIS MONTH" Earnings: Sum of completed/done booking prices in the current calendar month and year
+  $currentMonth = date('n'); // 1-12
+  $currentYear  = date('Y'); // 4-digit year
+  
+  $queryThisMonth = "SELECT SUM(price) AS this_month_sum 
+                     FROM bookings 
+                     WHERE provider_id = ? 
+                       AND status IN ('completed', 'done') 
+                       AND COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y')) IS NOT NULL
+                       AND MONTH(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'))) = ? 
+                       AND YEAR(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'))) = ?";
+                       
+  if ($stmtThisMonth = $conn->prepare($queryThisMonth)) {
+    $stmtThisMonth->bind_param("iii", $providerId, $currentMonth, $currentYear);
+    $stmtThisMonth->execute();
+    $resultThisMonth = $stmtThisMonth->get_result()->fetch_assoc();
+    $thisMonthEarnings = (float) ($resultThisMonth['this_month_sum'] ?? 0.00);
+    $stmtThisMonth->close();
+  }
+
+  // 2. Count of completed bookings (jobs done) for this provider
+  $queryJobsCount = "SELECT COUNT(id) AS jobs_count 
+                     FROM bookings 
+                     WHERE provider_id = ? 
+                       AND status IN ('completed', 'done')";
+                       
+  if ($stmtJobs = $conn->prepare($queryJobsCount)) {
+    $stmtJobs->bind_param("i", $providerId);
+    $stmtJobs->execute();
+    $resJobs = $stmtJobs->get_result()->fetch_assoc();
+    $jobsCompleted = (int) ($resJobs['jobs_count'] ?? 0);
+    $stmtJobs->close();
+  }
+}
+
 $dashboardReviews = providerDashboardReviews();
 $reviewPreview = $dashboardReviews[0] ?? null;
 ?>
@@ -341,13 +382,12 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             <div class="sec-ttl">Earnings This Month</div>
           </div>
           <div class="earn-card clickable" onclick="goPage('provider_earnings.php')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goPage('provider_earnings.php');}">
-            <div class="earn-total">PHP <?= number_format((int) ($dashboardSummary['this_month'] ?? 0)) ?></div>
-            <div class="earn-lbl"><?= (int) ($dashboardSummary['jobs_completed'] ?? 0) ?> jobs completed - Goal:
-              PHP <?= number_format((int) ($dashboardSummary['monthly_goal'] ?? 0)) ?></div>
+            <div class="earn-total">PHP <?= number_format($thisMonthEarnings, 2) ?></div>
+            <div class="earn-lbl"><?= $jobsCompleted ?> jobs completed</div>
             <div class="earn-bar-track">
               <?php
-              $goal = max(1, (int) ($dashboardSummary['monthly_goal'] ?? 1));
-              $progress = min(100, (int) round(((int) ($dashboardSummary['this_month'] ?? 0) / $goal) * 100));
+              $goal = max(1.0, (float) $monthlyGoal);
+              $progress = min(100, (int) round(($thisMonthEarnings / $goal) * 100));
               ?>
               <div class="earn-bar-fill" style="width:<?= $progress ?>%;"></div>
             </div>
