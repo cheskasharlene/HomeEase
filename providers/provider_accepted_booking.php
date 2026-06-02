@@ -88,9 +88,8 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
   <div class="wfp-shell">
     <!-- Top Bar -->
     <div class="wfp-topbar">
-      <button class="wfp-topbar-btn" onclick="goPage('provider_requests.php')" aria-label="Back">
-        <i class="bi bi-arrow-left"></i>
-      </button>
+      <!-- Back button removed during ongoing booking to prevent leaving the map view -->
+      <div class="wfp-topbar-btn" style="visibility:hidden;pointer-events:none;"></div>
       <div class="wfp-topbar-title" id="topBarTitle">Active Job</div>
       <button class="wfp-topbar-btn" onclick="openStylePicker()" aria-label="Map Style" style="font-size:16px;">
         <i class="bi bi-layers-fill"></i>

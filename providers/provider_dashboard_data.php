@@ -1,33 +1,38 @@
 <?php
 
-function providerDashboardReviews(): array
+/**
+ * Fetch real reviews for a provider from the database.
+ * Returns an array of review rows or an empty array if none found.
+ */
+function providerDashboardReviews(mysqli $conn, int $providerId): array
 {
-  return [
-    [
-      'customer_name' => 'Anna K.',
-      'rating' => 5.0,
-      'comment' => 'Great work, very professional and on time! Would definitely hire again.',
-      'date' => '2026-03-22'
-    ],
-    [
-      'customer_name' => 'Maria S.',
-      'rating' => 4.2,
-      'comment' => 'Good service, completed the job quickly. Minor communication delays but overall satisfied.',
-      'date' => '2026-03-17'
-    ],
-    [
-      'customer_name' => 'John R.',
-      'rating' => 5.0,
-      'comment' => 'Excellent quality work. Very detail-oriented and friendly. Highly recommended!',
-      'date' => '2026-03-10'
-    ],
-    [
-      'customer_name' => 'Rosa M.',
-      'rating' => 5.0,
-      'comment' => 'Perfect! Fixed everything as promised. Very reliable and trustworthy.',
-      'date' => '2026-03-03'
-    ],
-  ];
+  if ($providerId <= 0) {
+    return [];
+  }
+
+  $stmt = $conn->prepare("
+    SELECT
+      COALESCE(u.name, 'Client')       AS customer_name,
+      r.rating,
+      r.comment,
+      DATE(r.created_at)               AS date
+    FROM   provider_reviews r
+    LEFT   JOIN users u ON u.id = r.user_id
+    WHERE  r.provider_id = ?
+    ORDER  BY r.created_at DESC
+    LIMIT  50
+  ");
+
+  if (!$stmt) {
+    return [];
+  }
+
+  $stmt->bind_param('i', $providerId);
+  $stmt->execute();
+  $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+  $stmt->close();
+
+  return $rows;
 }
 
 function providerDashboardEarnings(): array
@@ -159,13 +164,21 @@ function providerIncomingRequests(mysqli $conn, int $providerId, int $limit = 2)
 
 function providerJobHistory(mysqli $conn, int $providerId, string $providerSpecialty = ''): array
 {
-  $reviews = providerDashboardReviews();
-  $reviewMap = [];
-  foreach ($reviews as $review) {
-    $key = strtolower(trim((string) ($review['customer_name'] ?? '')));
-    if ($key !== '' && !isset($reviewMap[$key])) {
-      $reviewMap[$key] = $review;
+  // Fetch all real reviews for this provider, keyed by booking_id,
+  // so we can attach them to job history rows without a second query per row.
+  $revMap = [];
+  $revStmt = $conn->prepare("
+    SELECT booking_id, rating, comment
+    FROM   provider_reviews
+    WHERE  provider_id = ?
+  ");
+  if ($revStmt) {
+    $revStmt->bind_param('i', $providerId);
+    $revStmt->execute();
+    foreach ($revStmt->get_result()->fetch_all(MYSQLI_ASSOC) as $rev) {
+      $revMap[(int) $rev['booking_id']] = $rev;
     }
+    $revStmt->close();
   }
 
   $colRes = $conn->query("SHOW COLUMNS FROM bookings");
@@ -227,13 +240,14 @@ function providerJobHistory(mysqli $conn, int $providerId, string $providerSpeci
 
   $items = [];
   foreach ($rows as $row) {
+    $bookingId  = (int)   ($row['id']          ?? 0);
     $clientName = (string) ($row['client_name'] ?? 'Client');
-    $clientKey = strtolower(trim($clientName));
-    $review = $reviewMap[$clientKey] ?? null;
+    // Look up review by booking_id — accurate and no name-collision risk.
+    $review     = $revMap[$bookingId] ?? null;
 
     $dateRaw = (string) ($row['date'] ?? '');
     $timeRaw = trim((string) ($row['time_slot'] ?? ''));
-    $ts = strtotime($dateRaw);
+    $ts      = strtotime($dateRaw);
     $dateText = $ts ? date('M j, Y', $ts) : 'No date';
 
     if ($timeRaw === '' && $ts) {
@@ -244,13 +258,13 @@ function providerJobHistory(mysqli $conn, int $providerId, string $providerSpeci
     }
 
     $items[] = [
-      'id' => (int) ($row['id'] ?? 0),
-      'service' => (string) ($row['service'] ?? 'Service'),
-      'client_name' => $clientName,
-      'date_text' => $dateText,
-      'time_text' => $timeRaw !== '' ? $timeRaw : null,
-      'status_text' => 'Completed',
-      'review_rating' => $review ? (float) ($review['rating'] ?? 0) : null,
+      'id'             => $bookingId,
+      'service'        => (string) ($row['service'] ?? 'Service'),
+      'client_name'    => $clientName,
+      'date_text'      => $dateText,
+      'time_text'      => $timeRaw !== '' ? $timeRaw : null,
+      'status_text'    => 'Completed',
+      'review_rating'  => $review ? (float) ($review['rating']  ?? 0)  : null,
       'review_comment' => $review ? (string) ($review['comment'] ?? '') : null,
     ];
   }

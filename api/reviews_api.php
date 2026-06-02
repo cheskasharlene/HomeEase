@@ -122,4 +122,34 @@ if ($method === 'GET' && $action === 'get_reviews') {
     exit;
 }
 
+if ($method === 'GET' && $action === 'check_review') {
+    $booking_id = (int) ($_GET['booking_id'] ?? 0);
+    if ($booking_id <= 0) {
+        echo json_encode(['success' => false, 'reviewed' => false]);
+        exit;
+    }
+    // Confirm the booking belongs to this user before exposing review status
+    $chk = $conn->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? LIMIT 1");
+    if (!$chk) {
+        echo json_encode(['success' => false, 'reviewed' => false]);
+        exit;
+    }
+    $chk->bind_param("ii", $booking_id, $uid);
+    $chk->execute();
+    $owns = $chk->get_result()->fetch_assoc();
+    $chk->close();
+    if (!$owns) {
+        echo json_encode(['success' => false, 'reviewed' => false]);
+        exit;
+    }
+    $rev = $conn->prepare("SELECT id FROM provider_reviews WHERE booking_id = ? LIMIT 1");
+    $rev->bind_param("i", $booking_id);
+    $rev->execute();
+    $exists = (bool) $rev->get_result()->fetch_assoc();
+    $rev->close();
+    echo json_encode(['success' => true, 'reviewed' => $exists]);
+    exit;
+}
+
 echo json_encode(['success' => false, 'message' => 'Unknown action.']);
+

@@ -9,9 +9,12 @@ require_once __DIR__ . '/provider_access.php';
 enforceProviderSectionAccess('reviews', $conn);
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider');
 require_once __DIR__ . '/provider_dashboard_data.php';
-$dashboardReviews = providerDashboardReviews();
-$reviewsCount = count($dashboardReviews);
-$avgRating = $reviewsCount ? array_sum(array_map(static fn($r) => (float) ($r['rating'] ?? 0), $dashboardReviews)) / $reviewsCount : 0;
+$providerId      = (int) ($_SESSION['provider_id'] ?? 0);
+$dashboardReviews = providerDashboardReviews($conn, $providerId);
+$reviewsCount     = count($dashboardReviews);
+$avgRating        = $reviewsCount
+  ? array_sum(array_map(static fn($r) => (float) ($r['rating'] ?? 0), $dashboardReviews)) / $reviewsCount
+  : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">

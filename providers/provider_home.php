@@ -76,7 +76,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
   }
 }
 
-$dashboardReviews = providerDashboardReviews();
+$dashboardReviews = providerDashboardReviews($conn, $providerId);
 $reviewPreview = $dashboardReviews[0] ?? null;
 ?>
 <!DOCTYPE html>

@@ -14,7 +14,7 @@ header('Content-Type: application/json; charset=utf-8');
 $action = $_GET['action'] ?? 'list';
 
 if ($action === 'pros') {
-    $sql = "SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, jobs_done, rating, is_verified
+    $sql = "SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, jobs_done, rating, is_verified, profile_image
             FROM service_providers
                         WHERE status = 'active'
                             AND availability_status = 'online'
@@ -38,7 +38,7 @@ if ($action === 'pros') {
             'rating' => (float) $r['rating'],
             'top' => (int) $r['jobs_done'] >= 100,
             'is_verified' => (bool) $r['is_verified'],
-            'img' => 'https://ui-avatars.com/api/?name=' . urlencode($r['name']) . '&background=ccfbf1&color=0d9488&size=128'
+            'img' => !empty($r['profile_image']) ? $r['profile_image'] : 'https://ui-avatars.com/api/?name=' . urlencode($r['name']) . '&background=ccfbf1&color=0d9488&size=128'
         ];
     }
 
@@ -77,7 +77,7 @@ if ($action === 'list') {
     $where = 'WHERE ' . implode(' AND ', $conditions);
 
     $sql = "SELECT t.provider_id AS id, t.full_name AS name, t.service_category AS role, t.availability_status AS status,
-                   t.jobs_done AS jobs, t.contact_number AS phone, t.rating, t.is_verified,
+                   t.jobs_done AS jobs, t.contact_number AS phone, t.rating, t.is_verified, t.profile_image,
                    t.valid_id, t.barangay_clearance, t.selfie_verification, t.proof_of_address, t.`tools_&_kits`,
                    t.gcash_qr, t.bank_qr, t.qr_gcash, t.qr_bank, t.verification_status
             FROM service_providers t $where ORDER BY $orderBy";
@@ -106,7 +106,7 @@ if ($action === 'list') {
             'name' => $r['name'] ?? '',
             'role' => $r['role'] ?? '',
             'skills' => [],
-            'img' => '',
+            'img' => !empty($r['profile_image']) ? $r['profile_image'] : 'https://ui-avatars.com/api/?name=' . urlencode($r['name']) . '&background=ccfbf1&color=0d9488&size=128',
             'status' => $r['status'] ?? 'offline',
             'jobs' => (int) ($r['jobs'] ?? 0),
             'location' => '',
