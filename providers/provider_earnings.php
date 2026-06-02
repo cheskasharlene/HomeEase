@@ -6,11 +6,73 @@ if (empty($_SESSION['provider_id'])) {
 }
 require_once __DIR__ . '/../api/db.php';
 require_once __DIR__ . '/provider_access.php';
+// Enforce section access (using the existing mysqli connection $conn)
 enforceProviderSectionAccess('earnings', $conn);
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider');
-require_once __DIR__ . '/provider_dashboard_data.php';
-$dashboardSummary = providerDashboardSummary();
-$dashboardEarnings = providerDashboardEarnings();
+
+// Retrieve provider ID from session (assumes $_SESSION['user_id'] per requirements, falls back to $_SESSION['provider_id'])
+$providerId = (int) ($_SESSION['user_id'] ?? $_SESSION['provider_id'] ?? 0);
+
+// Initialize earnings variables with strict null-coalescing defaults
+$thisMonthEarnings = 0.00;
+$totalEarnings = 0.00;
+$recentEarnings = [];
+
+if ($providerId > 0 && $conn instanceof mysqli) {
+  // 1. "THIS MONTH" Earnings: Sum of completed/done booking prices in the current calendar month and year
+  $currentMonth = date('n'); // 1-12
+  $currentYear  = date('Y'); // 4-digit year
+  
+  $queryThisMonth = "SELECT SUM(price) AS this_month_sum 
+                     FROM bookings 
+                     WHERE provider_id = ? 
+                       AND status IN ('completed', 'done') 
+                       AND COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y')) IS NOT NULL
+                       AND MONTH(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'))) = ? 
+                       AND YEAR(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'))) = ?";
+                       
+  if ($stmtThisMonth = $conn->prepare($queryThisMonth)) {
+    $stmtThisMonth->bind_param("iii", $providerId, $currentMonth, $currentYear);
+    $stmtThisMonth->execute();
+    $resultThisMonth = $stmtThisMonth->get_result()->fetch_assoc();
+    $thisMonthEarnings = (float) ($resultThisMonth['this_month_sum'] ?? 0.00);
+    $stmtThisMonth->close();
+  }
+
+  // 2. "TOTAL EARNINGS": Sum of all-time completed/done booking prices for this provider
+  $queryTotal = "SELECT SUM(price) AS total_sum 
+                 FROM bookings 
+                 WHERE provider_id = ? 
+                   AND status IN ('completed', 'done')";
+                   
+  if ($stmtTotal = $conn->prepare($queryTotal)) {
+    $stmtTotal->bind_param("i", $providerId);
+    $stmtTotal->execute();
+    $resultTotal = $stmtTotal->get_result()->fetch_assoc();
+    $totalEarnings = (float) ($resultTotal['total_sum'] ?? 0.00);
+    $stmtTotal->close();
+  }
+
+  // 3. "Recent Earnings" List: 10 most recent bookings (completed, done, and pending), ordered by date descending
+  $queryRecent = "SELECT service, date, price, status 
+                  FROM bookings 
+                  WHERE provider_id = ? 
+                    AND status IN ('completed', 'done', 'pending') 
+                  ORDER BY COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y')) DESC, id DESC 
+                  LIMIT 10";
+                  
+  if ($stmtRecent = $conn->prepare($queryRecent)) {
+    $stmtRecent->bind_param("i", $providerId);
+    $stmtRecent->execute();
+    $resRecent = $stmtRecent->get_result();
+    if ($resRecent) {
+      while ($row = $resRecent->fetch_assoc()) {
+        $recentEarnings[] = $row;
+      }
+    }
+    $stmtRecent->close();
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,11 +108,11 @@ $dashboardEarnings = providerDashboardEarnings();
           <div class="earn-summary-card">
             <div class="earn-summary-item">
               <div class="earn-sum-lbl">This Month</div>
-              <div class="earn-sum-val">₱<?= number_format((int) ($dashboardSummary['this_month'] ?? 0)) ?></div>
+              <div class="earn-sum-val">₱<?= number_format($thisMonthEarnings, 2) ?></div>
             </div>
             <div class="earn-summary-item">
               <div class="earn-sum-lbl">Total Earnings</div>
-              <div class="earn-sum-val">₱<?= number_format((int) ($dashboardSummary['total_earnings'] ?? 0)) ?></div>
+              <div class="earn-sum-val">₱<?= number_format($totalEarnings, 2) ?></div>
             </div>
           </div>
         </div>
@@ -61,22 +123,30 @@ $dashboardEarnings = providerDashboardEarnings();
             <div class="sec-ttl">Recent Earnings</div>
           </div>
           <div class="earn-list">
-            <?php if (!empty($dashboardEarnings)): ?>
-              <?php foreach ($dashboardEarnings as $item): ?>
+            <?php if (!empty($recentEarnings)): ?>
+              <?php foreach ($recentEarnings as $item): ?>
                 <?php
                 $service = htmlspecialchars($item['service'] ?? 'Service');
-                $meta = htmlspecialchars($item['date_label'] ?? '');
-                $status = strtolower((string) ($item['status'] ?? 'pending')) === 'completed' ? 'completed' : 'pending';
-                $statusLabel = $status === 'completed' ? 'Completed' : 'Pending';
-                $amount = (int) ($item['amount'] ?? 0);
+                $status = strtolower((string) ($item['status'] ?? 'pending'));
+                $statusClass = ($status === 'completed' || $status === 'done') ? 'completed' : 'pending';
+                $statusLabel = ($status === 'completed' || $status === 'done') ? 'Completed' : 'Pending';
+                
+                // Formulate the date label dynamically based on status (matching the mock logic)
+                $dateText = $item['date'] ?? 'No date';
+                // If it is in YYYY-MM-DD format, parse and format it dynamically for high-fidelity presentation
+                $ts = strtotime($dateText);
+                $formattedDate = $ts ? date('M j, Y', $ts) : $dateText;
+                $dateLabel = (($status === 'completed' || $status === 'done') ? 'Completed on ' : 'Scheduled for ') . htmlspecialchars($formattedDate);
+                
+                $price = (float) ($item['price'] ?? 0.00);
                 ?>
                 <div class="earn-card">
                   <div class="earn-card-left">
                     <div class="earn-card-service"><?= $service ?></div>
-                    <div class="earn-card-meta"><?= $meta ?></div>
-                    <div class="earn-card-status <?= $status ?>"><?= $statusLabel ?></div>
+                    <div class="earn-card-meta"><?= $dateLabel ?></div>
+                    <div class="earn-card-status <?= $statusClass ?>"><?= $statusLabel ?></div>
                   </div>
-                  <div class="earn-card-amount">+₱<?= number_format($amount) ?></div>
+                  <div class="earn-card-amount">+₱<?= number_format($price, 2) ?></div>
                 </div>
               <?php endforeach; ?>
             <?php else: ?>
