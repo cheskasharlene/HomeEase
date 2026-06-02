@@ -38,16 +38,22 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     @keyframes livePulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
 
     .feed-tabs {
-      display: flex; gap: 8px; padding: 10px 16px 14px; margin-top: 2px; overflow-x: auto;
-      scrollbar-width: none;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      padding: 10px 16px 14px;
+      margin-top: 2px;
     }
-    .feed-tabs::-webkit-scrollbar { display: none; }
 
     .feed-tab {
-      flex-shrink: 0; padding: 7px 16px; border-radius: 99px;
+      width: 100%;
+      padding: 7px 10px;
+      border-radius: 99px;
       border: 1.5px solid #E8E0D5; background: #fff;
-      font-size: 12px; font-weight: 700; color: #7A7064;
+      font-size: 11px; font-weight: 700; color: #7A7064;
       cursor: pointer; transition: all 0.2s; font-family: 'Poppins',sans-serif;
+      text-align: center;
+      white-space: nowrap;
     }
     .feed-tab.on {
       background: linear-gradient(135deg,#E8820C,#F5A623);
@@ -344,8 +350,6 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         <!-- Feed tabs -->
         <div class="feed-tabs">
           <div class="feed-tab on" data-tab="live" onclick="switchTab('live',this)">🔴 Live Feed</div>
-          <div class="feed-tab" data-tab="mine" onclick="switchTab('mine',this)">My Requests</div>
-          <div class="feed-tab" data-tab="accepted" onclick="switchTab('accepted',this)">Accepted</div>
           <div class="feed-tab" data-tab="completed" onclick="switchTab('completed',this)">Completed</div>
         </div>
 
@@ -465,7 +469,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           const res = await fetch('../api/provider_requests_api.php?action=live_feed&_t=' + Date.now(), { cache: 'no-store' });
           data = await res.json();
         } else {
-          const filterMap = { mine: 'all', accepted: 'accepted', completed: 'completed' };
+          const filterMap = { completed: 'completed' };
           const res = await fetch('../api/provider_requests_api.php?filter=' + filterMap[currentTab] + '&_t=' + Date.now(), { cache: 'no-store' });
           data = await res.json();
         }
@@ -597,28 +601,31 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       if (!requests.length) {
         el.innerHTML = `
           <div class="empty-feed">
-            <div class="empty-feed-icon">📋</div>
-            <div class="empty-feed-title">No requests yet</div>
-            <div class="empty-feed-sub">Switch to Live Feed to grab new bookings.</div>
+            <div class="empty-feed-icon">✅</div>
+            <div class="empty-feed-title">No completed requests yet</div>
+            <div class="empty-feed-sub">Completed bookings will appear here once jobs are finished.</div>
           </div>`;
         return;
       }
 
       el.innerHTML = requests.map(r => {
-        const sClass = String(r.status).toLowerCase() === 'accepted' ? 'accepted' : String(r.status).toLowerCase() === 'declined' ? 'declined' : 'new';
-        const isAccepted = String(r.status).toLowerCase() === 'accepted';
+        const rawStatus = currentTab === 'completed'
+          ? String(r.booking_status || r.status || 'completed').toLowerCase()
+          : String(r.status || '').toLowerCase();
+        const sClass = rawStatus === 'accepted' ? 'accepted' : rawStatus === 'declined' ? 'declined' : 'completed';
+        const isCompleted = currentTab === 'completed';
         return `
           <div class="req-card">
             <div class="req-top">
               <div class="req-ic">${svcIcon(r.service)}</div>
               <div class="req-info">
-                <div class="req-type">${r.service} · <span class="status-pill ${sClass}">${r.status}</span></div>
+                <div class="req-type">${r.service} · <span class="status-pill ${sClass}">Completed</span></div>
                 <div class="req-name">${r.customer_name || 'Homeowner'}</div>
                 <div class="req-meta">📍 ${r.address || '—'}<br>📝 ${r.details || '—'}</div>
               </div>
               <div class="req-price-tag">₱${Number(r.fixed_price || 0).toLocaleString('en-PH')}</div>
             </div>
-            ${isAccepted ? `<div class="req-footer"><button class="btn-view" onclick="goPage('provider_accepted_booking.php?booking_id=${r.booking_id}')"><i class="bi bi-eye" style="margin-right:5px;"></i>View details</button></div>` : ''}
+            ${isCompleted ? `<div class="req-footer"><button class="btn-view" onclick="goPage('provider_accepted_booking.php?booking_id=${r.booking_id}')"><i class="bi bi-eye" style="margin-right:5px;"></i>View details</button></div>` : ''}
           </div>`;
       }).join('');
     }

@@ -239,6 +239,12 @@ body {
       color: #059669;
     }
 
+    .status-pill.completed {
+      background: linear-gradient(135deg, #d1fae5, #bbf7d0);
+      color: #047857;
+      border: 1px solid #86efac;
+    }
+
     .status-pill.declined {
       background: #f3f4f6;
       color: #6b7280;
@@ -309,5 +315,19 @@ body {
     body.dark .req-footer { border-top-color: #2a2a3a; }
     body.dark .fpill { background: #1e1e2c; border-color: #2a2a3a; color: #8E8E93; }
     body.dark .btn-decline { background: #1e1e2c; border-color: #2e2e42; color: #F5A623; }
+    body.dark .status-pill.completed { background: #052e1c; color: #34d399; border-color: #14532d; }
     body.dark .status-pill.declined { background: #252535; color: #6b6b88; }
+
+    @media (max-width: 420px) {
+      .feed-tabs {
+        gap: 6px;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .feed-tab {
+        font-size: 10px;
+        padding: 7px 8px;
+      }
+    }
 

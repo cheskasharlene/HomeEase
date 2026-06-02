@@ -195,6 +195,8 @@ if ($method === 'GET') {
         $where .= " AND br.status = 'accepted'";
     } elseif ($filter === 'completed') {
         $where .= " AND LOWER(COALESCE(b.status, '')) IN ('done','completed')";
+    } elseif ($filter === 'rejected') {
+        $where .= " AND br.status = 'declined'";
     }
 
     $sql = "SELECT br.id, br.booking_id, br.service, br.fixed_price, br.date, br.time_slot, br.address,
