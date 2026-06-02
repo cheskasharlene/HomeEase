@@ -101,8 +101,6 @@ if (empty($_SESSION['user_id'])) {
           </div>
         </div>
 
-        <div class="ab-card service-scope-card" id="serviceScopeCardDetail" style="display:none;"></div>
-
         <div class="ab-card" id="providerCard">
           <div class="ab-card-title">Provider Details</div>
           <div class="ab-list">
@@ -198,105 +196,6 @@ if (empty($_SESSION['user_id'])) {
       return html;
     }
 
-    const serviceScopeConfig = {
-      'House Cleaner': {
-        baseFee: 500,
-        included: [
-          'Basic room cleaning and tidying',
-          'Sweeping, mopping, dusting, and wiping surfaces',
-          'Bathroom and kitchen surface cleanup'
-        ],
-        excluded: [
-          'Cleaning materials and supplies',
-          'Heavy stain removal or deep restoration',
-          'Special equipment rentals or disposal fees'
-        ]
-      },
-      'Plumber': {
-        baseFee: 500,
-        included: [
-          'Inspection, diagnosis, and labor for the requested repair',
-          'Minor troubleshooting and standard installation labor'
-        ],
-        excluded: [
-          'Replacement pipes, valves, fixtures, and other parts',
-          'Special materials or specialty fittings',
-          'Major demolition or rebuilding work'
-        ]
-      },
-      'Carpenter': {
-        baseFee: 600,
-        included: [
-          'Labor for repairs, assembly, or installation',
-          'Basic carpentry assessment and measurement'
-        ],
-        excluded: [
-          'Wood, hardware, paint, varnish, and other materials',
-          'Custom fabrication beyond the agreed scope'
-        ]
-      },
-      'Appliance Technician': {
-        baseFee: 500,
-        included: [
-          'Diagnosis and labor for the selected appliance issue',
-          'Basic cleaning of accessible parts during service'
-        ],
-        excluded: [
-          'Replacement parts, refrigerant, or specialty components',
-          'Major repairs that require manufacturer-only parts'
-        ]
-      }
-    };
-
-    function renderScopeItems(items) {
-      return (items || []).map(item => `<li>${item}</li>`).join('');
-    }
-
-    function renderServiceScopeCard(booking) {
-      const card = document.getElementById('serviceScopeCardDetail');
-      const scope = serviceScopeConfig[String(booking.service || '')];
-      if (!card || !scope) {
-        if (card) {
-          card.style.display = 'none';
-          card.innerHTML = '';
-        }
-        return;
-      }
-
-      const supplyOption = String(booking.supply_option || 'client').toLowerCase();
-      const supplyFee = Number(booking.supply_fee || 0);
-
-      card.style.display = 'block';
-      card.innerHTML = `
-        <div class="service-scope-head">
-          <div>
-            <div class="service-scope-title">Service Conditions / Scope</div>
-            <div class="service-scope-sub">Service fee only. Included and excluded items are shown here for clarity.</div>
-          </div>
-          <div class="service-scope-badge">Base fee: PHP ${scope.baseFee.toLocaleString('en-PH')}</div>
-        </div>
-        <div class="service-scope-grid">
-          <div class="service-scope-panel included">
-            <div class="service-scope-panel-title"><i class="bi bi-check2-circle"></i> Included</div>
-            <ul class="service-scope-list">${renderScopeItems(scope.included)}</ul>
-          </div>
-          <div class="service-scope-panel excluded">
-            <div class="service-scope-panel-title"><i class="bi bi-x-circle"></i> Excluded</div>
-            <ul class="service-scope-list">${renderScopeItems(scope.excluded)}</ul>
-          </div>
-        </div>
-        <div class="service-scope-supply">
-          <div class="service-scope-panel-title"><i class="bi bi-box-seam"></i> Materials / Supplies</div>
-          <div class="service-scope-choice service-scope-choice-static">
-            <div>
-              <div class="service-scope-choice-name">${supplyOption === 'provider' ? 'Service Provider will bring the supplies' : 'Client will provide the materials/supplies'}</div>
-              <div class="service-scope-choice-note">${supplyOption === 'provider' ? `Added to total: PHP ${supplyFee.toLocaleString('en-PH')}` : 'No additional supply fee.'}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
     function showEmptyState() {
       document.getElementById('summaryCard').classList.add('ab-hide');
       document.getElementById('providerCard').classList.add('ab-hide');
@@ -327,7 +226,6 @@ if (empty($_SESSION['user_id'])) {
         document.getElementById('bookingAddress').textContent = b.address || 'Address not available';
         document.getElementById('bookingPrice').textContent = formatPrice(b.price || 0);
         document.getElementById('bookingNotes').textContent = b.details || b.notes || 'None';
-        renderServiceScopeCard(b);
 
         const pill = document.getElementById('bookingStatusPill');
         const statusKey = normalizeStatus(b.status);
