@@ -353,13 +353,6 @@ if ($method === 'POST' && $action === '') {
         exit;
     }
 
-    $supplyOption = strtolower(trim((string) ($_POST['supply_option'] ?? $_POST['service_supply_option'] ?? 'client')));
-    $supplyFee = 0.0;
-    $scopeMeta = _serviceScopeMeta($service);
-    if ($supplyOption === 'provider' && $scopeMeta) {
-        $supplyFee = (float) ($scopeMeta['provider_supply_fee'] ?? 0);
-    }
-
     $optionSummary = _summarizeSelectedOptions($service, $_POST);
     if ($optionSummary !== '') {
         $notes = trim($notes) === ''
@@ -435,10 +428,6 @@ if ($method === 'POST' && $action === '') {
         $params[] = $hours;
     }
 
-    _safeAddColumn($conn, 'bookings', 'supply_option', 'VARCHAR(20) NULL');
-    _safeAddColumn($conn, 'bookings', 'supply_fee', 'DECIMAL(10,2) NULL');
-
-
     $stmt = $conn->prepare("INSERT INTO bookings ($col_list) VALUES ($val_list)");
     if (!$stmt) {
         ob_end_clean();
@@ -469,14 +458,6 @@ if ($method === 'POST' && $action === '') {
                 $gpsStmt->execute();
                 $gpsStmt->close();
             }
-        }
-
-        $scopeStmt = $conn->prepare("UPDATE bookings SET supply_option=?, supply_fee=? WHERE id=?");
-        if ($scopeStmt) {
-            $supplyOptionParam = $supplyOption === 'provider' ? 'provider' : 'client';
-            $scopeStmt->bind_param('sdi', $supplyOptionParam, $supplyFee, $bid);
-            $scopeStmt->execute();
-            $scopeStmt->close();
         }
 
         // Save dynamic booking form values to normalized key-value table.
@@ -935,15 +916,6 @@ function _computeFixedPrice($service, $data)
         $total += ($urgency === 'Urgent') ? 300 : 0;
     }
 
-    $supplyOption = strtolower(trim((string) ($data['supply_option'] ?? $data['service_supply_option'] ?? 'client')));
-    if ($supplyOption === 'provider') {
-        $supplyFee = _serviceSupplyFee($service);
-        if ($supplyFee > 0) {
-            $total += $supplyFee;
-            $breakdown[] = 'Provider supplies: ' . $supplyFee;
-        }
-    }
-
     return [
         'total' => max(0, (float) $total),
         'breakdown' => $breakdown
@@ -978,16 +950,6 @@ function _summarizeSelectedOptions($service, $data)
         $pairs[] = 'Appliance: ' . ((string) ($data['appliance_type'] ?? 'TV'));
         $pairs[] = 'Severity: ' . ((string) ($data['problem_severity'] ?? 'Minor'));
         $pairs[] = 'Urgency: ' . ((string) ($data['urgency_level'] ?? 'Normal'));
-    }
-
-    $scope = _serviceScopeMeta($service);
-    if ($scope) {
-        $supplyOption = strtolower(trim((string) ($data['supply_option'] ?? $data['service_supply_option'] ?? 'client')));
-        if ($supplyOption === 'provider') {
-            $pairs[] = 'Materials / Supplies: Service Provider will bring the supplies (+₱' . number_format((float) ($scope['provider_supply_fee'] ?? 0), 0) . ')';
-        } else {
-            $pairs[] = 'Materials / Supplies: Client will provide the materials/supplies';
-        }
     }
 
     if (empty($pairs)) {

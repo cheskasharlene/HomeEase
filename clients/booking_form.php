@@ -97,8 +97,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         <!-- Dynamic service-specific fields -->
         <div id="serviceSpecificFields"></div>
 
-        <div class="service-scope-card" id="serviceScopeCard" style="display:none;"></div>
-
         <div class="fg" id="pricingSection" style="display:none;">
           <label class="fl">Pricing Type</label>
           <div class="price-toggle">
@@ -233,7 +231,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             <span><i class="bi bi-receipt" style="margin-right:4px;opacity:.6;"></i>Total Price</span>
             <span class="fixed-total-value" id="fixedTotalVal">₱0</span>
           </div>
-          <div class="fixed-total-note"><i class="bi bi-shield-check" style="color:#10b981;"></i> Fixed service fee — materials/supplies are separate when the provider brings them.</div>
+          <div class="fixed-total-note"><i class="bi bi-shield-check" style="color:#10b981;"></i> Fixed service fee — the Service Provider will provide the necessary materials/supplies for the service.</div>
         </div>
 
         <button class="btn-book" id="btnSubmit" onclick="submitBooking()"
@@ -324,7 +322,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       <div class="booking-confirm-note">
         <i class="bi bi-shield-check"></i>
-        This is a fixed service fee. If the provider supplies materials/supplies, an extra charge is added.
+        This is a fixed service fee. The Service Provider will provide the necessary materials/supplies for the service.
       </div>
 
       <div class="booking-confirm-actions">
@@ -398,154 +396,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       'Helper': 'Helper',
       'Appliance Technician': 'Appliance Technician',
     };
-
-    const serviceScopeConfig = {
-      'House Cleaner': {
-        baseFee: 500,
-        included: [
-          'Basic room cleaning and tidying',
-          'Sweeping, mopping, dusting, and wiping surfaces',
-          'Bathroom and kitchen surface cleanup'
-        ],
-        excluded: [
-          'Cleaning materials and supplies',
-          'Heavy stain removal or deep restoration',
-          'Special equipment rentals or disposal fees'
-        ],
-        supplyOptions: [
-          { value: 'client', label: 'Client will provide the materials/supplies', fee: 0 },
-          { value: 'provider', label: 'Service Provider will bring the supplies', fee: 450 }
-        ],
-        defaultSupply: 'client'
-      },
-      'Plumber': {
-        baseFee: 500,
-        included: [
-          'Inspection, diagnosis, and labor for the requested repair',
-          'Minor troubleshooting and standard installation labor'
-        ],
-        excluded: [
-          'Replacement pipes, valves, fixtures, and other parts',
-          'Special materials or specialty fittings',
-          'Major demolition or rebuilding work'
-        ],
-        supplyOptions: [
-          { value: 'client', label: 'Client will provide the materials/supplies', fee: 0 },
-          { value: 'provider', label: 'Service Provider will bring the supplies', fee: 300 }
-        ],
-        defaultSupply: 'client'
-      },
-      'Carpenter': {
-        baseFee: 600,
-        included: [
-          'Labor for repairs, assembly, or installation',
-          'Basic carpentry assessment and measurement'
-        ],
-        excluded: [
-          'Wood, hardware, paint, varnish, and other materials',
-          'Custom fabrication beyond the agreed scope'
-        ],
-        supplyOptions: [
-          { value: 'client', label: 'Client will provide the materials/supplies', fee: 0 },
-          { value: 'provider', label: 'Service Provider will bring the supplies', fee: 350 }
-        ],
-        defaultSupply: 'client'
-      },
-      'Appliance Technician': {
-        baseFee: 500,
-        included: [
-          'Diagnosis and labor for the selected appliance issue',
-          'Basic cleaning of accessible parts during service'
-        ],
-        excluded: [
-          'Replacement parts, refrigerant, or specialty components',
-          'Major repairs that require manufacturer-only parts'
-        ],
-        supplyOptions: [
-          { value: 'client', label: 'Client will provide the materials/supplies', fee: 0 },
-          { value: 'provider', label: 'Service Provider will bring the supplies', fee: 250 }
-        ],
-        defaultSupply: 'client'
-      }
-    };
-
-    function getServiceScope(serviceName) {
-      return serviceScopeConfig[serviceName] || null;
-    }
-
-    function getSelectedSupplyOption() {
-      return document.querySelector('input[name="serviceSupplyOption"]:checked')?.value || '';
-    }
-
-    function getSelectedSupplyConfig() {
-      const scope = getServiceScope(selectedSvc?.name || '');
-      if (!scope || !Array.isArray(scope.supplyOptions)) {
-        return null;
-      }
-      const selectedValue = getSelectedSupplyOption() || scope.defaultSupply || '';
-      return scope.supplyOptions.find(opt => opt.value === selectedValue) || scope.supplyOptions[0] || null;
-    }
-
-    function renderScopeList(items) {
-      return (items || []).map(item => `<li>${item}</li>`).join('');
-    }
-
-    function renderServiceScope(serviceName) {
-      const card = document.getElementById('serviceScopeCard');
-      const scope = getServiceScope(serviceName);
-
-      if (!card || !scope) {
-        if (card) {
-          card.innerHTML = '';
-          card.style.display = 'none';
-        }
-        return;
-      }
-
-      const supplyOptions = Array.isArray(scope.supplyOptions) ? scope.supplyOptions : [];
-      const selectedSupply = getSelectedSupplyOption() || scope.defaultSupply || (supplyOptions[0] ? supplyOptions[0].value : 'client');
-
-      card.style.display = 'block';
-      card.innerHTML = `
-        <div class="service-scope-head">
-          <div>
-            <div class="service-scope-title">Service Conditions / Scope</div>
-            <div class="service-scope-sub">Service fee only. Included and excluded items are shown below.</div>
-          </div>
-          <div class="service-scope-badge">Base fee: ₱${scope.baseFee.toLocaleString('en-PH')}</div>
-        </div>
-        <div class="service-scope-grid">
-          <div class="service-scope-panel included">
-            <div class="service-scope-panel-title"><i class="bi bi-check2-circle"></i> Included</div>
-            <ul class="service-scope-list">${renderScopeList(scope.included)}</ul>
-          </div>
-          <div class="service-scope-panel excluded">
-            <div class="service-scope-panel-title"><i class="bi bi-x-circle"></i> Excluded</div>
-            <ul class="service-scope-list">${renderScopeList(scope.excluded)}</ul>
-          </div>
-        </div>
-        ${supplyOptions.length ? `
-          <div class="service-scope-supply">
-            <div class="service-scope-panel-title"><i class="bi bi-box-seam"></i> Materials / Supplies</div>
-            <div class="service-scope-choice-list">
-              ${supplyOptions.map(opt => `
-                <label class="service-scope-choice">
-                  <input type="radio" name="serviceSupplyOption" value="${opt.value}" ${selectedSupply === opt.value ? 'checked' : ''}>
-                  <div>
-                    <div class="service-scope-choice-name">${opt.label}</div>
-                    <div class="service-scope-choice-note">${opt.value === 'provider' ? `Adds ₱${opt.fee.toLocaleString('en-PH')} to the total.` : 'No additional supply fee.'}</div>
-                  </div>
-                </label>
-              `).join('')}
-            </div>
-          </div>
-        ` : ''}
-      `;
-
-      card.querySelectorAll('input[name="serviceSupplyOption"]').forEach(input => {
-        input.addEventListener('change', updatePricePreview);
-      });
-    }
 
     /* ===== GPS LOCATION ===== */
     async function reverseGeocode(lat, lng) {
@@ -706,7 +556,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       // Render dynamic fields for this service
       renderDynamicFields(selectedSvc.name);
-      renderServiceScope(selectedSvc.name);
 
       updatePricePreview();
     }
@@ -826,8 +675,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       if (!selectedSvc) return { total: 0, summaryLines: [] };
 
       const v = collectSelections();
-      const scope = getServiceScope(selectedSvc.name);
-      const supplyChoice = getSelectedSupplyConfig();
       let total = 0;
       const lines = [];
 
@@ -909,16 +756,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         lines.push(`Urgency: +₱${urgAdd}`);
       }
 
-      if (scope && supplyChoice) {
-        const supplyFee = Number(supplyChoice.fee || 0);
-        total += supplyFee;
-        if ((supplyChoice.value || '') === 'provider') {
-          lines.push(`Provider supplies materials/supplies: +₱${supplyFee.toLocaleString('en-PH')}`);
-        } else {
-          lines.push('Client provides materials/supplies: +₱0');
-        }
-      }
-
       return { total, summaryLines: lines };
     }
 
@@ -937,9 +774,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       inputs.forEach(input => {
         input.addEventListener('change', updatePricePreview);
         input.addEventListener('input', updatePricePreview);
-      });
-      document.querySelectorAll('input[name="serviceSupplyOption"]').forEach(input => {
-        input.addEventListener('change', updatePricePreview);
       });
     }
 
@@ -1074,10 +908,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           data[field.name] = input.value || '';
         }
       });
-      const supplyOption = getSelectedSupplyOption();
-      if (supplyOption) {
-        data.service_supply_option = supplyOption;
-      }
       return data;
     }
 
@@ -1085,20 +915,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const selections = collectSelections();
       const rows = [{ label: 'Service', value: selectedSvc.name }];
 
-      const supplyChoice = getSelectedSupplyConfig();
-      if (supplyChoice) {
-        rows.push({
-          label: 'Materials / Supplies',
-          value: supplyChoice.value === 'provider'
-            ? `${supplyChoice.label} (+₱${Number(supplyChoice.fee || 0).toLocaleString('en-PH')})`
-            : supplyChoice.label
-        });
-      }
-
       Object.keys(selections).forEach(key => {
-        if (key === 'service_supply_option') {
-          return;
-        }
         const val = selections[key];
         const label = key.replaceAll('_', ' ');
         if (Array.isArray(val)) {
@@ -1319,10 +1136,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       fd.append('address', addr || 'GPS Location');
       fd.append('notes', notes);
       fd.append('payment_method', paymentMethod);
-      const supplyOption = getSelectedSupplyOption();
-      if (supplyOption) {
-        fd.append('supply_option', supplyOption);
-      }
       if (paymentMethod === 'gcash') {
         fd.append('gcash_number', document.getElementById('gcashNumber').value.trim());
       }
