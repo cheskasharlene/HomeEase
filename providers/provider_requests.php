@@ -14,7 +14,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>HomeEase – Live Requests</title>
+  <title>HomeEase – Incoming Requests</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -330,7 +330,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         <div class="p-hdr">
           <div style="position:relative;z-index:1;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <div class="p-hdr-ttl">Live Requests</div>
+              <div class="p-hdr-ttl">Incoming Requests</div>
               <div class="live-badge">LIVE</div>
             </div>
             <div class="p-hdr-sub" id="feedSubtitle">Looking for bookings…</div>

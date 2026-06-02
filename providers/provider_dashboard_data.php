@@ -136,7 +136,7 @@ function providerIncomingRequests(mysqli $conn, int $providerId, int $limit = 2)
   }
 
   $limitSql = max(1, (int) $limit);
-  $sql = "SELECT id, service, fixed_price, date, time_slot, address, customer_name
+  $sql = "SELECT id, booking_id, service, fixed_price, date, time_slot, address, customer_name
           FROM booking_requests
           WHERE provider_id = ? AND status = 'pending'
           ORDER BY created_at DESC

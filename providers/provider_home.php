@@ -356,8 +356,9 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                 $timeLabel = $date !== '' ? $date : 'TBD';
                 if ($time !== '') { $timeLabel .= ', ' . $time; }
                 $bid = (int) ($req['booking_id'] ?? 0);
+                $rid = (int) ($req['id'] ?? 0);
               ?>
-                <div class="req-card" data-booking-id="<?= $bid ?>" onclick="goPage('provider_requests.php?booking_id=<?= $bid ?>')" style="cursor:pointer;">
+                <div class="req-card" data-request-id="<?= $rid ?>" data-booking-id="<?= $bid ?>" onclick="goPage('provider_requests.php?booking_id=<?= $bid ?>')" style="cursor:pointer;">
                   <div class="req-ic"><?= $initials ?></div>
                   <div class="req-body">
                     <div class="req-type"><?= $service ?></div>
@@ -367,8 +368,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
                     <div class="req-price">PHP <?= $price ?></div>
                     <div class="req-btns">
-                      <button class="btn-accept" onclick="event.stopPropagation();">Accept</button>
-                      <button class="btn-decline" onclick="event.stopPropagation();">Decline</button>
+                      <button class="btn-accept" onclick="event.stopPropagation(); acceptHomeRequest(<?= $rid ?>, <?= $bid ?>);">Accept</button>
+                      <button class="btn-decline" onclick="event.stopPropagation(); declineHomeRequest(<?= $rid ?>);">Decline</button>
                     </div>
                   </div>
                 </div>
@@ -542,6 +543,87 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 260);
       }, 2200);
+    }
+
+    let isHomeActionRunning = false;
+
+    async function acceptHomeRequest(requestId, bookingId) {
+      if (isHomeActionRunning) return;
+      if (!confirm('Are you sure you want to accept this booking?')) return;
+      
+      isHomeActionRunning = true;
+      showNotice('Accepting booking...', 'success');
+      
+      try {
+        const fd = new FormData();
+        fd.append('action', 'accept');
+        fd.append('request_id', requestId);
+        
+        const res = await fetch('../api/provider_requests_api.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        
+        if (data.success) {
+          showNotice('Booking accepted successfully!', 'success');
+          setTimeout(() => {
+            window.location.href = 'provider_accepted_booking.php?booking_id=' + bookingId;
+          }, 800);
+        } else {
+          showNotice(data.message || 'Could not accept request.');
+        }
+      } catch (e) {
+        showNotice('Network error. Please try again.');
+      } finally {
+        isHomeActionRunning = false;
+      }
+    }
+
+    async function declineHomeRequest(requestId) {
+      if (isHomeActionRunning) return;
+      if (!confirm('Are you sure you want to decline this request?')) return;
+      
+      isHomeActionRunning = true;
+      showNotice('Declining request...', 'success');
+      
+      try {
+        const fd = new FormData();
+        fd.append('action', 'decline');
+        fd.append('request_id', requestId);
+        
+        const res = await fetch('../api/provider_requests_api.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        
+        if (data.success) {
+          showNotice('Request declined.', 'success');
+          const card = document.querySelector(`.req-card[data-request-id="${requestId}"]`);
+          if (card) {
+            card.style.transition = 'opacity 0.3s, transform 0.3s';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+              card.remove();
+              const list = document.querySelector('.req-list');
+              if (list && !list.querySelector('.req-card[data-request-id]')) {
+                list.innerHTML = `
+                  <div class="req-card">
+                    <div class="req-ic">—</div>
+                    <div class="req-body">
+                      <div class="req-type">No incoming requests</div>
+                      <div class="req-meta">Check back later for new jobs.</div>
+                    </div>
+                  </div>`;
+              }
+            }, 300);
+          } else {
+            setTimeout(() => window.location.reload(), 800);
+          }
+        } else {
+          showNotice(data.message || 'Could not decline request.');
+        }
+      } catch (e) {
+        showNotice('Network error. Please try again.');
+      } finally {
+        isHomeActionRunning = false;
+      }
     }
 
     const backendVerificationState = <?= json_encode($verificationState) ?>;
