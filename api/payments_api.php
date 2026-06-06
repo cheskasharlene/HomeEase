@@ -180,12 +180,12 @@ if ($method === 'GET' && $action === 'detail') {
             $pstmt = $conn->prepare("SELECT sp.provider_id,
                         sp.full_name,
                         sp.contact_number,
-                        COALESCE(MAX(CASE WHEN pd.document_type = 'gcash_qr' THEN pd.file_path END), COALESCE(sp.qr_gcash, sp.gcash_qr)) AS gcash_qr,
-                        COALESCE(MAX(CASE WHEN pd.document_type = 'bank_qr' THEN pd.file_path END), COALESCE(sp.qr_bank, sp.bank_qr)) AS bank_qr
+                        COALESCE(MAX(CASE WHEN pd.document_type = 'gcash_qr' THEN pd.file_path END), sp.qr_gcash) AS gcash_qr,
+                        COALESCE(MAX(CASE WHEN pd.document_type = 'bank_qr' THEN pd.file_path END), sp.qr_bank) AS bank_qr
                     FROM service_providers sp
                     LEFT JOIN provider_documents pd ON pd.provider_id = sp.provider_id
                     WHERE sp.provider_id = ?
-                    GROUP BY sp.provider_id, sp.full_name, sp.contact_number, sp.qr_gcash, sp.gcash_qr, sp.qr_bank, sp.bank_qr
+                    GROUP BY sp.provider_id, sp.full_name, sp.contact_number, sp.qr_gcash, sp.qr_bank
                     LIMIT 1");
             if ($pstmt) {
                 $pstmt->bind_param('i', $provId);
@@ -216,6 +216,9 @@ if ($method === 'GET' && $action === 'detail') {
 if ($method === 'POST' && $action === 'submit') {
     $bookingId = (int)($_POST['booking_id'] ?? 0);
     $paymentReference = trim($_POST['payment_reference'] ?? '');
+    if ($paymentReference === '') {
+        $paymentReference = null;
+    }
     $senderName = trim($_POST['sender_name'] ?? '');
 
     if ($bookingId <= 0) {
@@ -252,13 +255,6 @@ if ($method === 'POST' && $action === 'submit') {
     $now = date('Y-m-d H:i:s');
     if (!empty($pay['expected_until']) && $now > $pay['expected_until']) {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Payment time window expired']); exit;
-    }
-
-    if ($paymentReference === '') {
-        ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Transaction/reference number is required']); exit;
-    }
-    if ($senderName === '') {
-        ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Sender name is required']); exit;
     }
 
     // Use expected amount directly from DB
@@ -303,7 +299,7 @@ if ($method === 'POST' && $action === 'submit') {
 
     // Update payments row
     $upd = $conn->prepare("UPDATE payments SET payment_reference=?, amount=?, payment_proof_path=?, notes=?, payment_status='submitted', updated_at=NOW() WHERE id = ?");
-    $notes = 'Sender: ' . $senderName;
+    $notes = ($senderName !== '') ? 'Sender: ' . $senderName : null;
     $pid = (int)$pay['id'];
     $upd->bind_param('sdssi', $paymentReference, $amount, $proofPath, $notes, $pid);
     if ($upd->execute()) {

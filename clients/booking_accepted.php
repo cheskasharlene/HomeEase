@@ -164,16 +164,6 @@ if (empty($_SESSION['user_id'])) {
                     <div id="qrTextFallback" class="ab-qr-text"></div>
                   </div>
 
-                  <div class="ab-row">
-                    <div class="ab-col">
-                      <label class="ab-label">Transaction/Reference No.</label>
-                      <input type="text" id="txnRef" name="payment_reference" required placeholder="Enter reference number" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
-                    </div>
-                    <div class="ab-col">
-                      <label class="ab-label">Sender Name</label>
-                      <input type="text" id="senderName" name="sender_name" required placeholder="Enter sender name" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;" />
-                    </div>
-                  </div>
 
                   <div class="ab-upload-card" style="margin-top: 16px;">
                     <label class="ab-label" for="paymentProof">Proof of Payment Image</label>

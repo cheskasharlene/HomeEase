@@ -139,7 +139,16 @@ function ensureUploadDirectories() {
         // Create .htaccess to prevent script execution in upload folders
         $htaccess = $dir . '/.htaccess';
         if (!file_exists($htaccess)) {
-            file_put_contents($htaccess, "deny from all\n");
+            $rules = "<FilesMatch \"\\.(php|php\\d?|phtml|pl|py|jsp|asp|sh|cgi)$\">\n" .
+                     "    <IfModule mod_authz_core.c>\n" .
+                     "        Require all denied\n" .
+                     "    </IfModule>\n" .
+                     "    <IfModule !mod_authz_core.c>\n" .
+                     "        Order Deny,Allow\n" .
+                     "        Deny from all\n" .
+                     "    </IfModule>\n" .
+                     "</FilesMatch>\n";
+            file_put_contents($htaccess, $rules);
         }
     }
 }
@@ -475,8 +484,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
 
     $stmt = $conn->prepare(
         "SELECT valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits`, 
-            COALESCE(qr_gcash, gcash_qr) AS gcash_qr,
-            COALESCE(qr_bank, bank_qr) AS bank_qr,
+            qr_gcash AS gcash_qr,
+            qr_bank AS bank_qr,
             verification_status, verification_submitted_at, verification_approved_at
          FROM service_providers 
          WHERE provider_id = ?"
@@ -591,13 +600,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check_status') {
 
     $stmt = $conn->prepare(
         "SELECT verification_status, verification_submitted_at, verification_approved_at,
-                IF(valid_id IS NOT NULL, 1, 0) as has_valid_id,
-                IF(barangay_clearance IS NOT NULL, 1, 0) as has_barangay_clearance,
-                IF(selfie_verification IS NOT NULL, 1, 0) as has_selfie,
-                IF(proof_of_address IS NOT NULL, 1, 0) as has_proof_of_address,
-                IF(`tools_&_kits` IS NOT NULL, 1, 0) as has_tools_kits,
-                IF(COALESCE(qr_gcash, gcash_qr) IS NOT NULL, 1, 0) as has_gcash_qr,
-                IF(COALESCE(qr_bank, bank_qr) IS NOT NULL, 1, 0) as has_bank_qr
+            IF(valid_id IS NOT NULL, 1, 0) as has_valid_id,
+            IF(barangay_clearance IS NOT NULL, 1, 0) as has_barangay_clearance,
+            IF(selfie_verification IS NOT NULL, 1, 0) as has_selfie,
+            IF(proof_of_address IS NOT NULL, 1, 0) as has_proof_of_address,
+            IF(`tools_&_kits` IS NOT NULL, 1, 0) as has_tools_kits,
+            IF(qr_gcash IS NOT NULL, 1, 0) as has_gcash_qr,
+            IF(qr_bank IS NOT NULL, 1, 0) as has_bank_qr
          FROM service_providers WHERE provider_id = ?"
     );
     $stmt->bind_param('i', $provider_id);
