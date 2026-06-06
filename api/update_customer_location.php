@@ -34,7 +34,7 @@ $cols = [];
 $r = $conn->query("SHOW COLUMNS FROM bookings LIKE 'customer_lat'");
 if ($r && $r->num_rows === 0) {
     $conn->query("ALTER TABLE bookings ADD COLUMN customer_lat DECIMAL(10,8) NULL");
-    $conn->query("ALTER TABLE bookings ADD COLUMN customer_lng DECIMAL(10,8) NULL");
+    $conn->query("ALTER TABLE bookings ADD COLUMN customer_lng DECIMAL(11,8) NULL");
 }
 
 /* Update only if this booking belongs to the logged-in user */

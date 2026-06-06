@@ -550,7 +550,7 @@ if ($method === 'POST' && $action === 'update_location') {
 
     // Safely ensure columns exist (no crash if already present)
     _safeAddColumn($conn, 'bookings', 'provider_lat', 'DECIMAL(10,8) NULL');
-    _safeAddColumn($conn, 'bookings', 'provider_lng', 'DECIMAL(10,8) NULL');
+    _safeAddColumn($conn, 'bookings', 'provider_lng', 'DECIMAL(11,8) NULL');
 
     if ($bookingId > 0 && $lat && $lng) {
         $stmt = $conn->prepare("UPDATE bookings SET provider_lat = ?, provider_lng = ? WHERE id = ?");

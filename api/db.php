@@ -319,6 +319,20 @@ function ensureNormalizationSchema($conn)
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_service_id (service_id)");
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_provider_id (provider_id)");
 
+    // Ensure customer_lng and provider_lng are DECIMAL(11,8) to prevent clamping of longitude (e.g. 121.xx -> 99.99)
+    $res = $conn->query("SHOW COLUMNS FROM bookings LIKE 'customer_lng'");
+    if ($res && ($col = $res->fetch_assoc())) {
+        if (strpos(strtolower($col['Type']), 'decimal(11,8)') === false) {
+            $conn->query("ALTER TABLE bookings MODIFY COLUMN customer_lng DECIMAL(11,8) NULL");
+        }
+    }
+    $res2 = $conn->query("SHOW COLUMNS FROM bookings LIKE 'provider_lng'");
+    if ($res2 && ($col = $res2->fetch_assoc())) {
+        if (strpos(strtolower($col['Type']), 'decimal(11,8)') === false) {
+            $conn->query("ALTER TABLE bookings MODIFY COLUMN provider_lng DECIMAL(11,8) NULL");
+        }
+    }
+
     // Backfill service_id from existing text labels.
     @$conn->query("UPDATE bookings b
         JOIN services s ON LOWER(TRIM(s.name)) = LOWER(TRIM(COALESCE(b.service, '')))

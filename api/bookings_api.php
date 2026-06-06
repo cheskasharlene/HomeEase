@@ -451,7 +451,7 @@ if ($method === 'POST' && $action === '') {
         // Save GPS coordinates if provided (safely add columns if needed)
         if ($customer_lat !== null && $customer_lng !== null) {
             _safeAddColumn($conn, 'bookings', 'customer_lat', 'DECIMAL(10,8) NULL');
-            _safeAddColumn($conn, 'bookings', 'customer_lng', 'DECIMAL(10,8) NULL');
+            _safeAddColumn($conn, 'bookings', 'customer_lng', 'DECIMAL(11,8) NULL');
             $gpsStmt = $conn->prepare("UPDATE bookings SET customer_lat=?, customer_lng=? WHERE id=?");
             if ($gpsStmt) {
                 $gpsStmt->bind_param('ddi', $customer_lat, $customer_lng, $bid);
