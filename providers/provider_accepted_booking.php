@@ -104,6 +104,11 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       <i class="bi bi-crosshair2"></i>
     </button>
 
+    <!-- Report Incident Button -->
+    <button class="wfp-report-btn" id="btnReportIncident" onclick="openReportModal()" aria-label="Report Incident" style="bottom: calc(var(--sheet-h, 260px) + 70px);">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+    </button>
+
     <!-- Style Picker Overlay (Reused from client side) -->
     <div class="wfp-style-overlay" id="styleOverlay"
       style="position:absolute;inset:0;z-index:700;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .28s"
@@ -269,6 +274,74 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       </div>
     </div>
   </div>
+
+    <!-- Report Incident Modal -->
+    <div class="report-modal-overlay" id="reportIncidentModal" aria-hidden="true" style="display:none;" onclick="closeReportModal(event)">
+      <div class="report-modal-card" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
+        <div class="report-modal-header">
+          <div class="report-modal-icon">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <div>
+            <h3 class="report-modal-title">Report Incident</h3>
+            <p class="report-modal-subtitle">Help us keep HomeEase safe. Report any issues below.</p>
+          </div>
+        </div>
+        
+        <form id="reportIncidentForm" onsubmit="handleReportSubmit(event)">
+          <div class="report-form-group">
+            <label class="report-label" for="reportType">Incident Type</label>
+            <select class="report-select" id="reportType" name="incident_type" required>
+              <option value="" disabled selected>Select incident type</option>
+              <option value="Scam/Fraud">Scam / Fraud</option>
+              <option value="Harassment">Harassment</option>
+              <option value="No Show">No Show</option>
+              <option value="Property Damage">Property Damage</option>
+              <option value="Payment Issue">Payment Issue</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          
+          <div class="report-form-group">
+            <label class="report-label" for="reportDescription">Description</label>
+            <textarea class="report-textarea" id="reportDescription" name="description" required placeholder="Describe the incident in detail..."></textarea>
+          </div>
+          
+          <div class="report-form-group">
+            <label class="report-label">Upload Evidence</label>
+            <div class="report-upload-box" onclick="document.getElementById('reportEvidence').click()">
+              <i class="bi bi-cloud-arrow-up"></i>
+              <span>Upload Image / File</span>
+              <p id="evidenceFileName" class="report-file-name">No file selected (Optional)</p>
+            </div>
+            <input type="file" id="reportEvidence" name="evidence" accept="image/*,application/pdf" style="display:none;" onchange="handleFileSelect(this)">
+          </div>
+          
+          <div class="report-modal-actions">
+            <button type="button" class="report-btn secondary" onclick="closeReportModal()">Cancel</button>
+            <button type="submit" class="report-btn primary" id="btnSubmitReport">Submit Report</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="report-modal-overlay" id="reportSuccessModal" aria-hidden="true" style="display:none;" onclick="closeSuccessModal(event)">
+      <div class="report-modal-card success-card" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
+        <div class="report-success-head">
+          <div class="report-success-icon">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <div>
+            <h3 class="report-modal-title">Report Submitted</h3>
+            <p class="report-modal-subtitle">Your report has been successfully submitted and is awaiting admin review.</p>
+          </div>
+        </div>
+        <div class="report-modal-actions success-actions">
+          <button type="button" class="report-btn primary success-ok" onclick="closeSuccessModal()">OK</button>
+        </div>
+      </div>
+    </div>
 
   </div><!-- /.wfp-shell -->
 
@@ -1051,6 +1124,82 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
 
     function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    /* ===== REPORT INCIDENT ===== */
+    function openReportModal() {
+      const modal = document.getElementById('reportIncidentModal');
+      modal.style.display = 'flex';
+      document.body.classList.add('modal-open');
+      setTimeout(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      }, 10);
+    }
+
+    function closeReportModal(e) {
+      if (e && e.target !== document.getElementById('reportIncidentModal')) return;
+      const modal = document.getElementById('reportIncidentModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('reportIncidentForm').reset();
+        document.getElementById('evidenceFileName').textContent = 'No file selected (Optional)';
+      }, 300);
+    }
+
+    function handleFileSelect(input) {
+      const fileNameEl = document.getElementById('evidenceFileName');
+      if (input.files && input.files[0]) {
+        fileNameEl.textContent = input.files[0].name;
+      } else {
+        fileNameEl.textContent = 'No file selected (Optional)';
+      }
+    }
+
+    function handleReportSubmit(e) {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('btnSubmitReport');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      // Simulate submission delay
+      setTimeout(() => {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Report';
+        
+        // Hide report modal
+        const reportModal = document.getElementById('reportIncidentModal');
+        reportModal.classList.remove('show');
+        reportModal.setAttribute('aria-hidden', 'true');
+        
+        // Show success modal
+        const successModal = document.getElementById('reportSuccessModal');
+        successModal.style.display = 'flex';
+        setTimeout(() => {
+          successModal.classList.add('show');
+          successModal.setAttribute('aria-hidden', 'false');
+        }, 10);
+        
+        // Reset form
+        document.getElementById('reportIncidentForm').reset();
+        document.getElementById('evidenceFileName').textContent = 'No file selected (Optional)';
+      }, 800);
+    }
+
+    function closeSuccessModal(e) {
+      if (e && e.target !== document.getElementById('reportSuccessModal')) return;
+      const modal = document.getElementById('reportSuccessModal');
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      setTimeout(() => {
+        modal.style.display = 'none';
+      }, 300);
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
       initMap();
