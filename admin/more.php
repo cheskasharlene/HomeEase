@@ -36,14 +36,6 @@ include __DIR__ . '/includes/sidebar.php';
           </div>
           <i class="bi bi-chevron-right more-arrow"></i>
         </div>
-        <div class="more-row" onclick="openIncidentSheet()">
-          <div class="more-ic" style="background:#fef3c7;color:#d97706;"><i class="bi bi-shield-exclamation"></i></div>
-          <div>
-            <div class="more-nm" style="color:#d97706;">Incident Logs</div>
-            <div class="more-sub">View and investigate user reports and disputes</div>
-          </div>
-          <i class="bi bi-chevron-right more-arrow"></i>
-        </div>
         <div class="more-row" onclick="openLogoutConfirm()">
           <div class="more-ic" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-box-arrow-right"></i>
           </div>
@@ -61,7 +53,4 @@ include __DIR__ . '/includes/sidebar.php';
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
 // ... JS for more page (copy from admindashboard.js)
-function openIncidentSheet() {
-  alert("Incident Logs is only supported in the responsive dashboard SPA. Please log in through admindashboard.php.");
-}
 </script>
