@@ -290,30 +290,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     </div>
   </div>
 
-  <!-- QR Upload Modal -->
-  <div class="map-modal-overlay" id="qrUploadModal" onclick="closeQrModal(event)">
-    <div class="map-modal-card" onclick="event.stopPropagation()">
-      <div class="map-modal-handle"></div>
-      <div class="map-modal-hdr">
-        <div class="map-modal-title">Upload QR Code</div>
-        <button class="map-modal-close" onclick="closeQrModal()"><i class="bi bi-x-lg"></i></button>
-      </div>
-      <div class="map-modal-content" style="padding: 16px;">
-        <p style="font-size: 13px; color: #5E564D; margin-bottom: 12px;" id="qrUploadMsg">This booking requires online payment. Please upload your QR code so the client can pay you.</p>
-        <form id="qrUploadForm" onsubmit="submitQrAndAccept(event)">
-          <div style="background: #FAFAF8; border: 1.5px dashed #E8E0D5; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 16px;">
-            <label for="qrFileInput" style="display: block; cursor: pointer;">
-              <i class="bi bi-cloud-arrow-up" style="font-size: 32px; color: #E8820C;"></i>
-              <div style="font-size: 14px; font-weight: 700; color: #1A1A2E; margin-top: 8px;">Tap to select QR image</div>
-              <div id="qrFileName" style="font-size: 11px; color: #7A7064; margin-top: 4px;">No file selected</div>
-            </label>
-            <input type="file" id="qrFileInput" name="qr_file" accept="image/*" style="display: none;" required onchange="document.getElementById('qrFileName').textContent = this.files[0] ? this.files[0].name : 'No file selected';">
-          </div>
-          <button type="submit" class="btn-map-accept" style="width: 100%;">Upload & Accept Job</button>
-        </form>
-      </div>
-    </div>
-  </div>
+
 
     <div id="ml">
       <div class="ml-wrap">
@@ -821,39 +798,8 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       modalBookingId = null;
     }
 
-    function closeQrModal(e) {
-      if (e && e.target !== document.getElementById('qrUploadModal')) return;
-      document.getElementById('qrUploadModal').classList.remove('open');
-    }
-
-    async function submitQrAndAccept(e) {
-      e.preventDefault();
-      const fileInput = document.getElementById('qrFileInput');
-      if (!fileInput.files.length) return alert('Please select a QR image.');
-      
-      const btn = document.querySelector('#qrUploadForm button');
-      btn.disabled = true;
-      btn.innerHTML = 'Accepting...';
-      
-      await acceptBooking(modalBookingId, document.getElementById('btnModalAccept'), fileInput.files[0]);
-      
-      btn.disabled = false;
-      btn.innerHTML = 'Upload & Accept Job';
-      closeQrModal();
-    }
-
     async function acceptFromModal() {
       if (!modalBookingId) return;
-      const booking = liveBookingLookup.get(Number(modalBookingId));
-      const method = String(booking.payment_method || 'cash').toLowerCase();
-
-      if (method === 'gcash' || method === 'bank') {
-          const mText = method === 'gcash' ? 'GCash' : 'Bank Transfer';
-          document.getElementById('qrUploadMsg').textContent = `This booking requires ${mText} payment. Please upload your QR code before accepting.`;
-          document.getElementById('qrUploadModal').classList.add('open');
-          return;
-      }
-      
       const btn = document.getElementById('btnModalAccept');
       await acceptBooking(modalBookingId, btn);
     }
