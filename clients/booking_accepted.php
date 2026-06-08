@@ -137,14 +137,18 @@ if (empty($_SESSION['user_id'])) {
 
             <div id="paymentCompletedNote" class="ab-note ab-note-success ab-hide">
               Payment confirmed! Your provider will proceed with the service.
-              <div class="ab-note-actions">
-                <button class="ab-btn" type="button" onclick="goToTracking()">Track Provider</button>
+              <div class="ab-note-actions" style="margin-top: 12px; width: 100%;">
+                <button class="ab-payment-single-btn" type="button" onclick="goToTracking()">
+                  <i class="bi bi-geo-alt-fill" style="font-size: 16px;"></i> Track Provider
+                </button>
               </div>
             </div>
 
-            <!-- Pay Now Button (shows if modal is closed but payment is pending) -->
-            <div id="payNowContainer" class="ab-hide" style="text-align: center; padding: 20px 0;">
-              <button class="ab-btn" type="button" onclick="openUserPaymentModal()">Pay Now / Upload Receipt</button>
+            <!-- Pay Now & Upload Receipt Button (shows if payment is pending) -->
+            <div id="payNowContainer" class="ab-hide" style="margin-top: 14px; width: 100%;">
+              <button class="ab-payment-single-btn" type="button" onclick="openUserPaymentModal()">
+                <i class="bi bi-credit-card-2-front-fill" style="font-size: 16px;"></i> Pay Now / Upload Receipt
+              </button>
             </div>
 
             <!-- User Payment Modal -->

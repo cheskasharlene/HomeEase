@@ -848,3 +848,30 @@ body.modal-open {
     height: 46px;
   }
 }
+
+/* ---- PAYMENT ACTION SINGLE BUTTON ---- */
+.ab-payment-single-btn {
+  width: 100%;
+  height: 46px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #E8820C, #F5A623);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(232, 130, 12, 0.28);
+  border: none;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.ab-payment-single-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(232, 130, 12, 0.32);
+}
+
+
