@@ -1019,6 +1019,14 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               </div>
               <i class="bi bi-chevron-right more-arrow"></i>
             </div>
+            <div class="more-row" onclick="openIncidentLogsSheet()">
+              <div class="more-ic" style="background:#fef3c7;color:#d97706;"><i class="bi bi-shield-fill-exclamation"></i></div>
+              <div>
+                <div class="more-nm" style="color:#d97706;">Incident Logs</div>
+                <div class="more-sub">View and manage reported incidents and disputes</div>
+              </div>
+              <i class="bi bi-chevron-right more-arrow"></i>
+            </div>
             <div class="more-row" onclick="openLogoutConfirm()">
               <div class="more-ic" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-box-arrow-right"></i>
               </div>
@@ -1294,6 +1302,46 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <div class="empty-state">
               <p>Loading reviews...</p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Incident Logs Sheet -->
+      <div class="sheet-ol" id="incidentSheetOl" onclick="if(event.target===this)closeSheet('incidentSheetOl')">
+        <div class="sheet" style="max-height:92vh;">
+          <div class="sh-hand"></div>
+          <div class="sh-hdr">
+            <div class="sh-ttl">Incident Logs</div>
+            <button class="sh-close" onclick="closeSheet('incidentSheetOl')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          
+          <div class="search-bar" style="margin:0 0 10px 0;"><i class="bi bi-search"></i><input type="text" id="incSearch" placeholder="Search incidents..." oninput="filterIncidents()"></div>
+          <div class="status-tabs" style="padding: 6px 0 12px; margin: 0;">
+            <div class="stab on" id="inc-tab-all" onclick="setIncFilter('all')">All</div>
+            <div class="stab" id="inc-tab-pending" onclick="setIncFilter('pending')">Pending</div>
+            <div class="stab" id="inc-tab-investigation" onclick="setIncFilter('under investigation')">Under Investigation</div>
+            <div class="stab" id="inc-tab-resolved" onclick="setIncFilter('resolved')">Resolved</div>
+            <div class="stab" id="inc-tab-rejected" onclick="setIncFilter('rejected')">Rejected</div>
+          </div>
+
+          <div id="incidentSheetBody" style="overflow-y:auto;flex:1;padding:4px 0 20px;">
+            <div class="empty-state">
+              <p>Loading incidents...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Incident Details Sheet -->
+      <div class="sheet-ol" id="incidentDetailOl" onclick="if(event.target===this)closeSheet('incidentDetailOl')">
+        <div class="sheet" style="max-height:92vh;">
+          <div class="sh-hand"></div>
+          <div class="sh-hdr">
+            <div class="sh-ttl">Incident Details</div>
+            <button class="sh-close" onclick="closeSheet('incidentDetailOl')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          <div id="incidentDetailBody" style="overflow-y:auto;flex:1;padding:0 4px 20px 4px;">
+            <!-- Rendered dynamically -->
           </div>
         </div>
       </div>
@@ -2874,6 +2922,346 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           img.style.transform = 'scale(1)';
         }
         document.getElementById('zoomLevel').textContent = '100%';
+      }
+
+      // ── Incident Logs ────────────────────────────────────────────────────────
+      let _incFilter = 'all';
+      let _incidents = [
+        {
+          reportId: 'REP-2026-001',
+          bookingId: 'BK-9821',
+          dateReported: '2026-06-05',
+          incidentType: 'Damage to Property',
+          status: 'pending',
+          reporter: {
+            name: 'Sarah Jenkins',
+            contact: '+63 917 123 4567',
+            role: 'Homeowner'
+          },
+          reportedUser: {
+            name: 'Juan dela Cruz',
+            contact: '+63 920 987 6543',
+            role: 'Service Provider'
+          },
+          description: 'The service provider accidentally knocked over a ceramic vase worth ₱5,000 while cleaning the living room. He did not notify me, and I only discovered it after he left.',
+          evidenceName: 'broken_vase_living_room.jpg',
+          notes: ''
+        },
+        {
+          reportId: 'REP-2026-002',
+          bookingId: 'BK-9754',
+          dateReported: '2026-06-06',
+          incidentType: 'Late / No Show',
+          status: 'under investigation',
+          reporter: {
+            name: 'Michael Sy',
+            contact: '+63 918 333 4444',
+            role: 'Homeowner'
+          },
+          reportedUser: {
+            name: 'Maria Santos',
+            contact: '+63 927 555 6666',
+            role: 'Service Provider'
+          },
+          description: 'The provider was scheduled to arrive at 8:00 AM for deep cleaning but has not arrived, and is not responding to calls or messages. This is the second time they have been late.',
+          evidenceName: 'chat_screenshot_no_reply.png',
+          notes: 'Called provider. They claimed there was an emergency family issue but did not inform the client. Awaiting further proof.'
+        },
+        {
+          reportId: 'REP-2026-003',
+          bookingId: 'BK-9612',
+          dateReported: '2026-06-07',
+          incidentType: 'Unprofessional Behavior',
+          status: 'resolved',
+          reporter: {
+            name: 'Pedro Penduko',
+            contact: '+63 908 111 2222',
+            role: 'Service Provider'
+          },
+          reportedUser: {
+            name: 'John Doe',
+            contact: '+63 915 222 3333',
+            role: 'Homeowner'
+          },
+          description: 'The client was extremely rude and demanded extra services that were not included in the booking (cleaning the backyard and garage) and threatened to leave a 1-star review if I refused.',
+          evidenceName: 'unprofessional_demands_chat.png',
+          notes: 'Case resolved. Reviewed chat history. Warned homeowner about platform policies regarding demanding uncontracted services.'
+        },
+        {
+          reportId: 'REP-2026-004',
+          bookingId: 'BK-9588',
+          dateReported: '2026-06-08',
+          incidentType: 'Payment Dispute',
+          status: 'rejected',
+          reporter: {
+            name: 'Emma Watson',
+            contact: '+63 916 444 5555',
+            role: 'Homeowner'
+          },
+          reportedUser: {
+            name: 'Robert Downey',
+            contact: '+63 905 666 7777',
+            role: 'Service Provider'
+          },
+          description: 'Provider demanded cash payment for materials even though the booking contract stated all materials were covered by the base price.',
+          evidenceName: 'materials_receipt.jpg',
+          notes: 'Report rejected. The booking was for carpentry work that explicitly specified client would provide lumber, which the worker had to buy out of pocket because the client did not prepare it.'
+        }
+      ];
+
+      function openIncidentLogsSheet() {
+        openSheet('incidentSheetOl');
+        _incFilter = 'all';
+        document.getElementById('incSearch').value = '';
+        updateIncFilterTabs();
+        renderIncidents();
+      }
+
+      function setIncFilter(filter) {
+        _incFilter = filter;
+        updateIncFilterTabs();
+        renderIncidents();
+      }
+
+      function updateIncFilterTabs() {
+        const ids = {
+          'all': 'inc-tab-all',
+          'pending': 'inc-tab-pending',
+          'under investigation': 'inc-tab-investigation',
+          'resolved': 'inc-tab-resolved',
+          'rejected': 'inc-tab-rejected'
+        };
+        Object.entries(ids).forEach(([f, id]) => {
+          const tab = document.getElementById(id);
+          if (tab) {
+            if (f === _incFilter) {
+              tab.classList.add('on');
+            } else {
+              tab.classList.remove('on');
+            }
+          }
+        });
+      }
+
+      function renderIncidents() {
+        const body = document.getElementById('incidentSheetBody');
+        const query = document.getElementById('incSearch').value.toLowerCase().trim();
+
+        let filtered = _incidents;
+        if (_incFilter !== 'all') {
+          filtered = filtered.filter(i => i.status === _incFilter);
+        }
+        if (query) {
+          filtered = filtered.filter(i => 
+            i.reportId.toLowerCase().includes(query) ||
+            i.bookingId.toLowerCase().includes(query) ||
+            i.reporter.name.toLowerCase().includes(query) ||
+            i.reportedUser.name.toLowerCase().includes(query) ||
+            i.incidentType.toLowerCase().includes(query)
+          );
+        }
+
+        if (!filtered.length) {
+          body.innerHTML = `
+            <div class="empty-state">
+              <i class="bi bi-shield-slash" style="font-size: 30px; opacity: 0.4;"></i>
+              <p>No incidents found.</p>
+            </div>
+          `;
+          return;
+        }
+
+        body.innerHTML = filtered.map(i => {
+          return `
+            <div class="list-item" style="cursor:default;align-items:flex-start;flex-direction:column;gap:8px;padding:16px;background:var(--bg-card);border:1.5px solid var(--border-col);border-radius:16px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.03);">
+              <div style="display:flex;width:100%;align-items:center;justify-content:space-between;margin-bottom:2px;">
+                <span style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;color:var(--txt-primary);">${i.reportId}</span>
+                <span style="font-size:12px;font-weight:700;color:var(--txt-muted);">${i.dateReported}</span>
+              </div>
+              <div style="display:flex;width:100%;justify-content:space-between;align-items:center;">
+                <div style="font-size:12px;color:var(--txt-muted);">
+                  Booking ID: <strong style="color:var(--txt-primary);">${i.bookingId}</strong>
+                </div>
+                <div>${statusBadge(i.status)}</div>
+              </div>
+              <div style="width:100%;border-top:1px solid var(--border-col);margin:4px 0;"></div>
+              <div style="display:flex;width:100%;justify-content:space-between;align-items:center;gap:12px;">
+                <div style="flex:1;min-width:0;">
+                  <div style="font-size:12px;font-weight:700;color:var(--txt-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    Type: ${i.incidentType}
+                  </div>
+                  <div style="font-size:11px;color:var(--txt-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    Reporter: ${i.reporter.name} (${i.reporter.role})
+                  </div>
+                  <div style="font-size:11px;color:var(--txt-muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                    Reported: ${i.reportedUser.name} (${i.reportedUser.role})
+                  </div>
+                </div>
+                <button class="doc-view-btn" onclick="openIncidentDetail('${i.reportId}')" style="padding:6px 12px;font-size:11px;height:auto;flex-shrink:0;">
+                  View Details
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function filterIncidents() {
+        renderIncidents();
+      }
+
+      function openIncidentDetail(reportId) {
+        const inc = _incidents.find(i => i.reportId === reportId);
+        if (!inc) return;
+
+        renderIncidentDetail(inc);
+        openSheet('incidentDetailOl');
+      }
+
+      function renderIncidentDetail(inc) {
+        const body = document.getElementById('incidentDetailBody');
+        body.innerHTML = `
+          <div style="background:var(--bg-screen);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border-col);">
+            <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Report Information</div>
+            <div class="detail-row"><span class="detail-lbl">Report ID</span><span class="detail-val">${inc.reportId}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Booking ID</span><span class="detail-val">${inc.bookingId}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Date Reported</span><span class="detail-val">${inc.dateReported}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Incident Type</span><span class="detail-val">${inc.incidentType}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val">${statusBadge(inc.status)}</span></div>
+          </div>
+
+          <div style="background:var(--bg-screen);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border-col);">
+            <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Reporter Information</div>
+            <div class="detail-row"><span class="detail-lbl">Name</span><span class="detail-val">${inc.reporter.name}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Contact Number</span><span class="detail-val">${inc.reporter.contact}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Role</span><span class="detail-val">${inc.reporter.role}</span></div>
+          </div>
+
+          <div style="background:var(--bg-screen);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border-col);">
+            <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Reported User Information</div>
+            <div class="detail-row"><span class="detail-lbl">Name</span><span class="detail-val">${inc.reportedUser.name}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Contact Number</span><span class="detail-val">${inc.reportedUser.contact}</span></div>
+            <div class="detail-row"><span class="detail-lbl">Role</span><span class="detail-val">${inc.reportedUser.role}</span></div>
+          </div>
+
+          <div style="background:var(--bg-screen);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border-col);">
+            <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Incident Description</div>
+            <div style="font-size:12.5px;color:var(--txt-primary);line-height:1.55;white-space:pre-line;margin-bottom:12px;">${inc.description}</div>
+            
+            <div style="font-size:11px;font-weight:700;color:var(--txt-muted);margin-bottom:6px;">Evidence Attachment</div>
+            <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1.5px dashed var(--border-col);border-radius:12px;padding:12px;cursor:pointer;" onclick="toast('Viewing attachment preview: ${inc.evidenceName}')">
+              <i class="bi bi-file-earmark-image-fill" style="font-size:24px;color:#d97706;"></i>
+              <div style="flex:1;">
+                <div style="font-size:12px;font-weight:700;color:var(--txt-primary);">${inc.evidenceName}</div>
+                <div style="font-size:10px;color:var(--txt-muted);">1.8 MB · Tap to preview</div>
+              </div>
+              <i class="bi bi-zoom-in" style="font-size:16px;color:var(--txt-muted);"></i>
+            </div>
+          </div>
+
+          ${inc.notes ? `
+          <div style="background:var(--bg-screen);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border-col);">
+            <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Investigation Notes</div>
+            <div style="font-size:12px;color:var(--txt-primary);line-height:1.5;white-space:pre-line;background:#fff8ef;border-left:3px solid #d97706;padding:8px 10px;border-radius:8px;">${inc.notes}</div>
+          </div>
+          ` : ''}
+
+          <div style="margin-top:20px;">
+            <div style="font-size:11px;font-weight:800;color:var(--txt-muted);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Actions</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+              <button class="doc-view-btn" onclick="markIncUnderInvestigation('${inc.reportId}')" style="background:#eff6ff;color:#2563eb;box-shadow:none;border:1.5px solid #bfdbfe;font-size:12px;padding:10px 8px;justify-content:center;">
+                <i class="bi bi-search" style="color:#2563eb;"></i> Investigate
+              </button>
+              <button class="doc-view-btn" onclick="resolveIncCase('${inc.reportId}')" style="background:#ecfdf5;color:#059669;box-shadow:none;border:1.5px solid #a7f3d0;font-size:12px;padding:10px 8px;justify-content:center;">
+                <i class="bi bi-check-circle" style="color:#059669;"></i> Resolve Case
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+              <button class="doc-view-btn" onclick="rejectIncReport('${inc.reportId}')" style="background:#fff5f5;color:#e53e3e;box-shadow:none;border:1.5px solid #feb2b2;font-size:12px;padding:10px 8px;justify-content:center;">
+                <i class="bi bi-x-circle" style="color:#e53e3e;"></i> Reject Report
+              </button>
+              <button class="doc-view-btn" onclick="addIncNotes('${inc.reportId}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:12px;padding:10px 8px;justify-content:center;">
+                <i class="bi bi-journal-text" style="color:#d97706;"></i> Add Notes
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reporter.name}', '${inc.reporter.role}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+                Suspend Reporter
+              </button>
+              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reportedUser.name}', '${inc.reportedUser.role}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+                Suspend Suspect
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reporter.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+                Warn Reporter
+              </button>
+              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reportedUser.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+                Warn Suspect
+              </button>
+            </div>
+          </div>
+        `;
+      }
+
+      function statusBadge(s) {
+        const key = String(s || '').toLowerCase().trim();
+        const map = {
+          'pending': 'badge-amber',
+          'under investigation': 'badge-blue',
+          'resolved': 'badge-green',
+          'rejected': 'badge-gray'
+        };
+        return `<span class="${map[key] || 'badge-gray'}" style="text-transform:capitalize;font-weight:700;padding:3px 8px;border-radius:12px;font-size:10px;display:inline-block;">${key}</span>`;
+      }
+
+      function markIncUnderInvestigation(reportId) {
+        const inc = _incidents.find(i => i.reportId === reportId);
+        if (inc) {
+          inc.status = 'under investigation';
+          toast('Incident status set to Under Investigation');
+          renderIncidentDetail(inc);
+          renderIncidents();
+        }
+      }
+
+      function resolveIncCase(reportId) {
+        const inc = _incidents.find(i => i.reportId === reportId);
+        if (inc) {
+          inc.status = 'resolved';
+          toast('Incident case resolved successfully');
+          renderIncidentDetail(inc);
+          renderIncidents();
+        }
+      }
+
+      function rejectIncReport(reportId) {
+        const inc = _incidents.find(i => i.reportId === reportId);
+        if (inc) {
+          inc.status = 'rejected';
+          toast('Incident report rejected');
+          renderIncidentDetail(inc);
+          renderIncidents();
+        }
+      }
+
+      function suspendIncUser(name, role) {
+        toast(`${role} "${name}" suspended (UI only)`, 'e');
+      }
+
+      function sendIncWarning(name) {
+        toast(`Warning sent to "${name}" (UI only)`, 's');
+      }
+
+      function addIncNotes(reportId) {
+        const inc = _incidents.find(i => i.reportId === reportId);
+        if (!inc) return;
+        const notes = prompt('Enter investigation notes:', inc.notes);
+        if (notes !== null) {
+          inc.notes = notes.trim();
+          toast('Investigation notes updated');
+          renderIncidentDetail(inc);
+        }
       }
     </script>
 </body>

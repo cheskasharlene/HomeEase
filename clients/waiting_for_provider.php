@@ -429,164 +429,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         transform: rotate(360deg);
       }
     }
-
-    body.modal-open {
-      overflow: hidden;
-    }
-
-    .wfp-confirm-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1250;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-      background: rgba(26, 20, 8, 0.58);
-      -webkit-backdrop-filter: blur(6px);
-      backdrop-filter: blur(6px);
-    }
-
-    .wfp-confirm-overlay.show {
-      display: flex;
-      animation: wfpConfirmFadeIn 0.22s ease;
-    }
-
-    .wfp-confirm-card {
-      width: min(460px, 100%);
-      background: #fff;
-      border-radius: 24px;
-      border: 1px solid #F3DFC2;
-      box-shadow: 0 24px 54px rgba(26, 20, 8, 0.28);
-      padding: 22px;
-      transform: translateY(14px) scale(0.98);
-      opacity: 0;
-      animation: wfpConfirmPop 0.28s cubic-bezier(.22,1,.36,1) forwards;
-    }
-
-    .wfp-confirm-head {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      margin-bottom: 16px;
-    }
-
-    .wfp-confirm-icon {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 18px;
-      background: linear-gradient(135deg, #EF4444, #F87171);
-      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
-    }
-
-    .wfp-confirm-head h3 {
-      margin: 0;
-      font-size: 19px;
-      line-height: 1.25;
-      color: #1A1A2E;
-      font-family: 'Poppins', sans-serif;
-      font-weight: 800;
-    }
-
-    .wfp-confirm-head p {
-      margin: 4px 0 0;
-      font-size: 12px;
-      color: #7A7064;
-      font-weight: 600;
-      line-height: 1.45;
-    }
-
-    .wfp-confirm-note {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      font-size: 11px;
-      font-weight: 700;
-      color: #92400E;
-      background: #FFF9E8;
-      border: 1px solid #F9D47E;
-      border-radius: 12px;
-      padding: 10px 12px;
-    }
-
-    .wfp-confirm-note i {
-      font-size: 14px;
-    }
-
-    .wfp-confirm-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .wfp-confirm-btn {
-      border: none;
-      border-radius: 14px;
-      height: 44px;
-      font-size: 14px;
-      font-weight: 800;
-      font-family: 'Poppins', sans-serif;
-      cursor: pointer;
-      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
-    }
-
-    .wfp-confirm-btn:hover {
-      transform: translateY(-1px);
-    }
-
-    .wfp-confirm-btn.secondary {
-      color: #7A7064;
-      background: #F7F3EC;
-      border: 1px solid #E6DCCB;
-    }
-
-    .wfp-confirm-btn.primary {
-      color: #fff;
-      background: linear-gradient(135deg, #EF4444, #F87171);
-      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
-    }
-
-    .wfp-confirm-btn:focus-visible {
-      outline: 2px solid #EF4444;
-      outline-offset: 2px;
-    }
-
-    @keyframes wfpConfirmFadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes wfpConfirmPop {
-      from { opacity: 0; transform: translateY(14px) scale(0.98); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    @media (max-width: 480px) {
-      .wfp-confirm-overlay {
-        padding: 12px;
-      }
-
-      .wfp-confirm-card {
-        width: 100%;
-        border-radius: 20px;
-        padding: 18px;
-      }
-
-      .wfp-confirm-actions {
-        grid-template-columns: 1fr;
-      }
-
-      .wfp-confirm-btn {
-        height: 46px;
-      }
-    }
   </style>
 </head>
 
@@ -598,10 +440,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       <button class="wfp-topbar-btn" onclick="goBack()" aria-label="Back">
         <i class="bi bi-arrow-left"></i>
       </button>
-      <div class="wfp-topbar-title" id="topBarTitle">HomeEase</div>
-      <button class="wfp-topbar-btn" onclick="shareBooking()" aria-label="Share" style="font-size:16px;">
-        <i class="bi bi-three-dots-vertical"></i>
-      </button>
+      <div class="wfp-topbar-center" id="topBarCenter">
+        <div class="wfp-topbar-title" id="topBarTitle">HomeEase</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; pointer-events: all; align-items: center;">
+        <button class="wfp-topbar-btn" onclick="shareBooking()" aria-label="Share" style="font-size:16px;">
+          <i class="bi bi-three-dots-vertical"></i>
+        </button>
+        <button class="wfp-topbar-btn" onclick="openReportModal()" aria-label="Report" style="display: flex; align-items: center; justify-content: center; padding: 0;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="#dc2626" stroke="#dc2626" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M12 9v4" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 17h.01" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Map -->
@@ -1156,15 +1009,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       if (!el) {
         el = document.createElement('div');
         el.id = 'gpsBanner';
-        el.style.cssText = 'position:absolute;top:90px;left:50%;transform:translateX(-50%);z-index:600;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;max-width:90%;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.18);pointer-events:none;font-family:"Poppins",sans-serif;';
-        document.getElementById('wfpMap').parentElement.appendChild(el);
+        document.getElementById('topBarCenter').appendChild(el);
       }
-      const styles = {
-        loading: 'background:#FFF8F0;color:#E8820C;border:1.5px solid #FFE5B4;',
-        error: 'background:#FFF5F5;color:#EF4444;border:1.5px solid #FCA5A5;',
-        success: 'background:#ECFDF5;color:#059669;border:1.5px solid #6EE7B7;'
-      };
-      el.style.cssText += styles[type] || styles.loading;
+      el.className = 'gps-status-banner ' + type;
       el.textContent = msg;
       el.style.display = 'block';
     }
@@ -1774,8 +1621,130 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       setTimeout(() => { if (m.classList.contains('hidden')) m.style.display = 'none'; }, 400);
     }
 
+    /* ── Report Action Workflows ── */
+    function openReportModal() {
+      const modal = document.getElementById('reportModalOverlay');
+      if (!modal) return;
+      document.getElementById('reportType').value = '';
+      document.getElementById('reportDesc').value = '';
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
+    }
+
+    // Handles modal clicking/closing
+    function closeReportModal(e) {
+      if (e && e.target !== document.getElementById('reportModalOverlay')) return;
+      const modal = document.getElementById('reportModalOverlay');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 220);
+      document.body.classList.remove('modal-open');
+    }
+
+    function submitReportForm(event) {
+      event.preventDefault();
+      closeReportModal();
+      setTimeout(openReportSuccessModal, 250);
+    }
+
+    function openReportSuccessModal() {
+      const modal = document.getElementById('reportSuccessOverlay');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
+    }
+
+    function closeReportSuccessModal(e) {
+      if (e && e.target !== document.getElementById('reportSuccessOverlay')) return;
+      const modal = document.getElementById('reportSuccessOverlay');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 220);
+      document.body.classList.remove('modal-open');
+    }
+
     document.addEventListener('DOMContentLoaded', boot);
   </script>
+
+  <!-- Report Modal Overlay -->
+  <div class="wfp-confirm-overlay" id="reportModalOverlay" aria-hidden="true" onclick="closeReportModal(event)" style="z-index: 1300;">
+    <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle" onclick="event.stopPropagation()" style="max-height: 90vh; overflow-y: auto;">
+      <div class="wfp-confirm-head" style="margin-bottom: 20px;">
+        <div class="wfp-confirm-icon" style="background: linear-gradient(135deg, #dc2626, #f87171); box-shadow: 0 8px 20px rgba(220, 38, 38, 0.28); display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M12 9v4" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 17h.01" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h3 id="reportModalTitle">Report Issue</h3>
+          <p>Please describe the issue you encountered.</p>
+        </div>
+      </div>
+
+      <form id="reportForm" onsubmit="submitReportForm(event)">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Report Type *</label>
+          <select id="reportType" required style="width: 100%; height: 46px; border-radius: 12px; border: 1.5px solid #E6DCCB; padding: 0 12px; font-family: 'Nunito', sans-serif; font-size: 13.5px; color: #1A1A2E; outline: none; background: #FFFDFB;">
+            <option value="" disabled selected>Select report type</option>
+            <option value="Scam/Fraud">Scam/Fraud</option>
+            <option value="Payment Issue">Payment Issue</option>
+            <option value="No Show">No Show</option>
+            <option value="Harassment">Harassment</option>
+            <option value="Property Damage">Property Damage</option>
+            <option value="Unprofessional Behavior">Unprofessional Behavior</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Description *</label>
+          <textarea id="reportDesc" required placeholder="Provide details about the incident..." style="width: 100%; min-height: 100px; border-radius: 12px; border: 1.5px solid #E6DCCB; padding: 12px; font-family: 'Nunito', sans-serif; font-size: 13.5px; color: #1A1A2E; outline: none; resize: vertical; background: #FFFDFB;"></textarea>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Evidence Upload</label>
+          <div style="border: 1.5px dashed #E6DCCB; border-radius: 12px; padding: 16px; text-align: center; background: #FAF8F5; cursor: pointer;" onclick="toast('Evidence upload is UI placeholder only')">
+            <i class="bi bi-cloud-arrow-up-fill" style="font-size: 26px; color: #E8820C; display: block; margin-bottom: 4px;"></i>
+            <span style="font-size: 12px; font-weight: 700; color: #1A1A2E; display: block;">Upload Photos or Screenshots</span>
+            <span style="font-size: 10px; color: #9E9690; display: block; margin-top: 2px;">Supported formats: JPG, PNG, PDF (Max 5MB)</span>
+          </div>
+        </div>
+
+        <div class="wfp-confirm-actions">
+          <button type="button" class="wfp-confirm-btn secondary" onclick="closeReportModal()">Cancel</button>
+          <button type="submit" class="wfp-confirm-btn primary" style="background: linear-gradient(135deg, #E8820C, #F5A623); box-shadow: 0 8px 20px rgba(232, 130, 12, 0.28);">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Success Modal Overlay -->
+  <div class="wfp-confirm-overlay" id="reportSuccessOverlay" aria-hidden="true" onclick="closeReportSuccessModal(event)" style="z-index: 1350;">
+    <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportSuccessTitle" onclick="event.stopPropagation()">
+      <div class="wfp-confirm-head" style="margin-bottom: 16px; flex-direction: column; align-items: center; text-align: center; gap: 12px;">
+        <div class="wfp-confirm-icon" style="background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28); margin: 0 auto;"><i class="bi bi-check-lg"></i></div>
+        <div>
+          <h3 id="reportSuccessTitle" style="font-size: 20px; font-weight: 800; color: #1A1A2E;">Report Submitted</h3>
+          <p style="font-size: 13px; color: #7A7064; line-height: 1.5; margin-top: 6px;">Your report has been submitted successfully and will be reviewed by the admin team.</p>
+        </div>
+      </div>
+      <div style="margin-top: 20px;">
+        <button type="button" class="wfp-confirm-btn primary" onclick="closeReportSuccessModal()" style="width: 100%; background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28);">OK</button>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>

@@ -90,10 +90,21 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
     <div class="wfp-topbar">
       <!-- Back button removed during ongoing booking to prevent leaving the map view -->
       <div class="wfp-topbar-btn" style="visibility:hidden;pointer-events:none;"></div>
-      <div class="wfp-topbar-title" id="topBarTitle">Active Job</div>
-      <button class="wfp-topbar-btn" onclick="openStylePicker()" aria-label="Map Style" style="font-size:16px;">
-        <i class="bi bi-layers-fill"></i>
-      </button>
+      <div class="wfp-topbar-center" id="topBarCenter">
+        <div class="wfp-topbar-title" id="topBarTitle">Active Job</div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; pointer-events: all; align-items: center;">
+        <button class="wfp-topbar-btn" onclick="openStylePicker()" aria-label="Map Style" style="font-size:16px;">
+          <i class="bi bi-layers-fill"></i>
+        </button>
+        <button class="wfp-topbar-btn" onclick="openReportModal()" aria-label="Report" style="display: flex; align-items: center; justify-content: center; padding: 0;">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="#dc2626" stroke="#dc2626" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M12 9v4" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 17h.01" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Map -->
@@ -683,11 +694,9 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       if (!el) {
         el = document.createElement('div');
         el.id = 'provGpsBanner';
-        el.style.cssText = 'position:absolute;top:90px;left:50%;transform:translateX(-50%);z-index:600;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap;max-width:90%;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.18);pointer-events:none;font-family:"Poppins",sans-serif;';
-        document.getElementById('wfpMap').parentElement.appendChild(el);
+        document.getElementById('topBarCenter').appendChild(el);
       }
-      const s = { loading: 'background:#FFF8F0;color:#E8820C;border:1.5px solid #FFE5B4;', error: 'background:#FFF5F5;color:#EF4444;border:1.5px solid #FCA5A5;', success: 'background:#ECFDF5;color:#059669;border:1.5px solid #6EE7B7;' };
-      el.style.cssText += (s[type] || s.loading);
+      el.className = 'gps-status-banner ' + type;
       el.textContent = msg;
       el.style.display = 'block';
     }
@@ -1052,6 +1061,57 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
     function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }
     function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
+    /* ── Report Action Workflows ── */
+    function openReportModal() {
+      const modal = document.getElementById('reportModalOverlay');
+      if (!modal) return;
+      document.getElementById('reportType').value = '';
+      document.getElementById('reportDesc').value = '';
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
+    }
+
+    function closeReportModal(e) {
+      if (e && e.target !== document.getElementById('reportModalOverlay')) return;
+      const modal = document.getElementById('reportModalOverlay');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 220);
+      document.body.classList.remove('modal-open');
+    }
+
+    function submitReportForm(event) {
+      event.preventDefault();
+      closeReportModal();
+      setTimeout(openReportSuccessModal, 250);
+    }
+
+    function openReportSuccessModal() {
+      const modal = document.getElementById('reportSuccessOverlay');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
+    }
+
+    function closeReportSuccessModal(e) {
+      if (e && e.target !== document.getElementById('reportSuccessOverlay')) return;
+      const modal = document.getElementById('reportSuccessOverlay');
+      if (!modal) return;
+      modal.classList.remove('show');
+      modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { modal.style.display = 'none'; }, 220);
+      document.body.classList.remove('modal-open');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       initMap();
       setTimeout(() => { map.invalidateSize(); }, 200);
@@ -1125,6 +1185,76 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       </div>
       <div class="booking-confirm-actions" style="grid-template-columns:1fr;">
         <button class="booking-confirm-btn ok" type="button" onclick="closePaymentConfirmedModal()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report Modal Overlay -->
+  <div class="wfp-confirm-overlay" id="reportModalOverlay" aria-hidden="true" onclick="closeReportModal(event)" style="z-index: 1300;">
+    <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle" onclick="event.stopPropagation()" style="max-height: 90vh; overflow-y: auto;">
+      <div class="wfp-confirm-head" style="margin-bottom: 20px;">
+        <div class="wfp-confirm-icon" style="background: linear-gradient(135deg, #dc2626, #f87171); box-shadow: 0 8px 20px rgba(220, 38, 38, 0.28); display: flex; align-items: center; justify-content: center;">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" fill="#ffffff" stroke="#ffffff" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M12 9v4" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+            <path d="M12 17h.01" stroke="#dc2626" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h3 id="reportModalTitle">Report Issue</h3>
+          <p>Please describe the issue you encountered.</p>
+        </div>
+      </div>
+
+      <form id="reportForm" onsubmit="submitReportForm(event)">
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Report Type *</label>
+          <select id="reportType" required style="width: 100%; height: 46px; border-radius: 12px; border: 1.5px solid #E6DCCB; padding: 0 12px; font-family: 'Nunito', sans-serif; font-size: 13.5px; color: #1A1A2E; outline: none; background: #FFFDFB;">
+            <option value="" disabled selected>Select report type</option>
+            <option value="Scam/Fraud">Scam/Fraud</option>
+            <option value="Payment Issue">Payment Issue</option>
+            <option value="No Show">No Show</option>
+            <option value="Harassment">Harassment</option>
+            <option value="Property Damage">Property Damage</option>
+            <option value="Unprofessional Behavior">Unprofessional Behavior</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Description *</label>
+          <textarea id="reportDesc" required placeholder="Provide details about the incident..." style="width: 100%; min-height: 100px; border-radius: 12px; border: 1.5px solid #E6DCCB; padding: 12px; font-family: 'Nunito', sans-serif; font-size: 13.5px; color: #1A1A2E; outline: none; resize: vertical; background: #FFFDFB;"></textarea>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Evidence Upload</label>
+          <div style="border: 1.5px dashed #E6DCCB; border-radius: 12px; padding: 16px; text-align: center; background: #FAF8F5; cursor: pointer;" onclick="toast('Evidence upload is UI placeholder only')">
+            <i class="bi bi-cloud-arrow-up-fill" style="font-size: 26px; color: #E8820C; display: block; margin-bottom: 4px;"></i>
+            <span style="font-size: 12px; font-weight: 700; color: #1A1A2E; display: block;">Upload Photos or Screenshots</span>
+            <span style="font-size: 10px; color: #9E9690; display: block; margin-top: 2px;">Supported formats: JPG, PNG, PDF (Max 5MB)</span>
+          </div>
+        </div>
+
+        <div class="wfp-confirm-actions">
+          <button type="button" class="wfp-confirm-btn secondary" onclick="closeReportModal()">Cancel</button>
+          <button type="submit" class="wfp-confirm-btn primary" style="background: linear-gradient(135deg, #E8820C, #F5A623); box-shadow: 0 8px 20px rgba(232, 130, 12, 0.28);">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Success Modal Overlay -->
+  <div class="wfp-confirm-overlay" id="reportSuccessOverlay" aria-hidden="true" onclick="closeReportSuccessModal(event)" style="z-index: 1350;">
+    <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportSuccessTitle" onclick="event.stopPropagation()">
+      <div class="wfp-confirm-head" style="margin-bottom: 16px; flex-direction: column; align-items: center; text-align: center; gap: 12px;">
+        <div class="wfp-confirm-icon" style="background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28); margin: 0 auto;"><i class="bi bi-check-lg"></i></div>
+        <div>
+          <h3 id="reportSuccessTitle" style="font-size: 20px; font-weight: 800; color: #1A1A2E;">Report Submitted</h3>
+          <p style="font-size: 13px; color: #7A7064; line-height: 1.5; margin-top: 6px;">Your report has been submitted successfully and will be reviewed by the admin team.</p>
+        </div>
+      </div>
+      <div style="margin-top: 20px;">
+        <button type="button" class="wfp-confirm-btn primary" onclick="closeReportSuccessModal()" style="width: 100%; background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28);">OK</button>
       </div>
     </div>
   </div>
