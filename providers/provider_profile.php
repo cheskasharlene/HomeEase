@@ -240,6 +240,13 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               <div class="st-row-sub">Update your password</div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
+          <div class="st-row" onclick="openQrChangeScreen()" id="qrChangeSettingsRow">
+            <div class="st-ic" style="background:#d1fae5;color:#059669;"><i class="bi bi-qr-code"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl">GCash/Bank Transfer Change Request</div>
+              <div class="st-row-sub" id="qrChangeSettingsSub">Request a QR code change</div>
+            </div><i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
         </div>
         
         <div class="st-sec">
@@ -1002,6 +1009,351 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     loadSavedAvatar();
     refreshProviderUi();
   </script>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       QR CHANGE REQUEST SCREEN
+  ══════════════════════════════════════════════════════════════ -->
+  <div id="qrChangeScreen" style="display:none;position:absolute;inset:0;background:var(--bg-screen,#f8fafc);z-index:150;flex-direction:column;overflow:hidden;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:12px;padding:52px 18px 16px;background:var(--bg-screen,#f8fafc);flex-shrink:0;border-bottom:1px solid var(--border-col,#e5e7eb);">
+      <button onclick="closeQrChangeScreen()" style="width:36px;height:36px;border-radius:50%;border:none;background:var(--bg-card,#fff);color:var(--txt-muted,#64748b);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div>
+        <div style="font-family:'Poppins',sans-serif;font-size:18px;font-weight:800;color:var(--txt-primary,#0f172a);">QR Change Request</div>
+        <div style="font-size:11px;color:var(--txt-muted,#64748b);font-weight:600;">GCash / Bank Transfer</div>
+      </div>
+    </div>
+
+    <!-- Scrollable body -->
+    <div style="flex:1;overflow-y:auto;padding:18px 18px 100px;">
+
+      <!-- Alert banner -->
+      <div id="qrChangeAlert" style="display:none;border-radius:12px;padding:11px 14px;font-size:13px;font-weight:700;margin-bottom:14px;"></div>
+
+      <!-- Info notice -->
+      <div style="background:linear-gradient(135deg,rgba(5,150,105,.08),rgba(16,185,129,.04));border:1.5px solid rgba(5,150,105,.2);border-radius:14px;padding:14px 16px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;">
+        <i class="bi bi-info-circle-fill" style="color:#059669;font-size:18px;flex-shrink:0;margin-top:1px;"></i>
+        <div style="font-size:12px;color:#065f46;line-height:1.55;font-weight:600;">To update your GCash or Bank Transfer QR code, fill out this form. An admin will review your request before the change takes effect. This process protects your account from unauthorized payment changes.</div>
+      </div>
+
+      <!-- Current Payment Method (read-only) -->
+      <div style="background:var(--bg-card,#fff);border-radius:16px;border:1.5px solid var(--border-col,#e5e7eb);padding:16px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:800;color:var(--txt-muted,#64748b);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;">Current Payment Method</div>
+        <div id="qrCurrentInfo">
+          <div style="display:flex;align-items:center;gap:8px;color:var(--txt-muted,#64748b);font-size:13px;font-weight:600;">
+            <i class="bi bi-arrow-clockwise" style="animation:qr-spin .9s linear infinite;"></i> Loading...
+          </div>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div style="background:var(--bg-card,#fff);border-radius:16px;border:1.5px solid var(--border-col,#e5e7eb);padding:16px;margin-bottom:16px;">
+        <div style="font-size:11px;font-weight:800;color:var(--txt-muted,#64748b);text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px;">Change Request Details</div>
+
+        <!-- Reason -->
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--txt-primary,#0f172a);margin-bottom:6px;">Reason for Change <span style="color:#ef4444;">*</span></label>
+          <textarea id="qrChangeReason" rows="4" placeholder="Explain why you need to change your QR code (e.g., account blocked, limit reached, account migration)..." style="width:100%;border:1.5px solid var(--border-col,#e5e7eb);border-radius:12px;padding:11px 13px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--txt-primary,#0f172a);background:var(--bg-screen,#f8fafc);resize:vertical;outline:none;box-sizing:border-box;line-height:1.55;transition:border-color .2s;"></textarea>
+        </div>
+
+        <!-- New QR Upload -->
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--txt-primary,#0f172a);margin-bottom:6px;">Upload New QR Code <span style="color:#ef4444;">*</span></label>
+          <input type="file" id="qrNewFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="onQrFileSelected(this)">
+          <div id="qrUploadArea" onclick="document.getElementById('qrNewFileInput').click()" style="border:2px dashed var(--border-col,#e5e7eb);border-radius:14px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-screen,#f8fafc);">
+            <i class="bi bi-qr-code" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:8px;"></i>
+            <div style="font-size:13px;font-weight:700;color:var(--txt-muted,#64748b);">Tap to upload QR image</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:4px;">JPG, PNG, WEBP · max 5 MB</div>
+          </div>
+          <!-- Preview -->
+          <div id="qrPreviewWrap" style="display:none;margin-top:12px;position:relative;">
+            <img id="qrPreviewImg" src="" alt="QR Preview" style="width:100%;max-height:220px;object-fit:contain;border-radius:12px;border:1.5px solid var(--border-col,#e5e7eb);background:#f8fafc;">
+            <button onclick="clearQrFile()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:none;background:#ef4444;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+              <i class="bi bi-x-lg"></i>
+            </button>
+            <div id="qrFileName" style="font-size:11px;color:var(--txt-muted,#64748b);margin-top:6px;text-align:center;font-weight:600;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <button id="qrSubmitBtn" onclick="openQrConfirmModal()" style="width:100%;padding:15px;border-radius:50px;border:none;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(5,150,105,.3);transition:all .2s;margin-bottom:20px;">
+        <i class="bi bi-send-fill" style="margin-right:6px;"></i> Submit Request
+      </button>
+
+      <!-- Request History -->
+      <div style="background:var(--bg-card,#fff);border-radius:16px;border:1.5px solid var(--border-col,#e5e7eb);overflow:hidden;">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border-col,#e5e7eb);display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:13px;font-weight:800;color:var(--txt-primary,#0f172a);">My Past Requests</div>
+          <button onclick="loadMyQrRequests()" style="background:none;border:none;color:var(--txt-muted,#64748b);font-size:16px;cursor:pointer;"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+        <div id="qrHistoryList" style="padding:10px 0;">
+          <div style="text-align:center;padding:20px;color:var(--txt-muted,#64748b);font-size:13px;font-weight:600;">
+            <i class="bi bi-arrow-clockwise" style="animation:qr-spin .9s linear infinite;"></i> Loading...
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /scroll -->
+  </div><!-- /qrChangeScreen -->
+
+  <!-- QR Submit Confirmation Modal -->
+  <div id="qrConfirmModal" style="display:none;position:absolute;inset:0;background:rgba(15,23,42,.52);z-index:200;align-items:center;justify-content:center;padding:20px;">
+    <div style="width:100%;max-width:340px;background:var(--bg-card,#fff);border-radius:22px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.18);transform:translateY(0);">
+      <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#d1fae5,#a7f3d0);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <i class="bi bi-qr-code" style="font-size:22px;color:#059669;"></i>
+      </div>
+      <div style="font-family:'Poppins',sans-serif;font-size:17px;font-weight:800;color:var(--txt-primary,#0f172a);text-align:center;margin-bottom:8px;">Submit QR Change Request?</div>
+      <div style="font-size:12px;color:var(--txt-muted,#64748b);text-align:center;line-height:1.6;margin-bottom:18px;">Are you sure you want to submit a request to change your GCash/Bank Transfer QR code? This request will be reviewed by an administrator before it takes effect.</div>
+      <div style="display:flex;gap:10px;">
+        <button onclick="closeQrConfirmModal()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--border-col,#e5e7eb);background:transparent;color:var(--txt-muted,#64748b);font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Cancel</button>
+        <button id="qrConfirmOkBtn" onclick="submitQrChangeRequest()" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 14px rgba(5,150,105,.28);">Yes, Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes qr-spin { to { transform: rotate(360deg); } }
+    #qrChangeReason:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.16); }
+    #qrUploadArea:hover { border-color: #10b981; background: rgba(16,185,129,.04); }
+    .qr-hist-item { display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border-col,#e5e7eb); }
+    .qr-hist-item:last-child { border-bottom:none; }
+    .qr-status-pill { display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:800;letter-spacing:.2px; }
+    .qr-status-pill.pending  { background:#fff7ed;color:#c2410c; }
+    .qr-status-pill.approved { background:#d1fae5;color:#065f46; }
+    .qr-status-pill.rejected { background:#fee2e2;color:#b91c1c; }
+  </style>
+
+  <script>
+    var qrSelectedFile = null;
+
+    // Re-parent QR overlays into the #app shell so they respect mobile layout
+    (function() {
+      var appShell = document.getElementById('app');
+      var qrScreen = document.getElementById('qrChangeScreen');
+      var qrModal  = document.getElementById('qrConfirmModal');
+      if (appShell && qrScreen) appShell.appendChild(qrScreen);
+      if (appShell && qrModal)  appShell.appendChild(qrModal);
+    })();
+
+    function openQrChangeScreen() {
+      closeSettingsScreen();
+      var scr = document.getElementById('qrChangeScreen');
+      scr.style.display = 'flex';
+      loadCurrentQrInfo();
+      loadMyQrRequests();
+      updateQrSettingsSub();
+    }
+
+    function closeQrChangeScreen() {
+      document.getElementById('qrChangeScreen').style.display = 'none';
+    }
+
+    function showQrAlert(msg, type) {
+      var el = document.getElementById('qrChangeAlert');
+      if (!el) return;
+      if (!msg) { el.style.display = 'none'; return; }
+      el.style.display = 'block';
+      var isErr = type === 'err';
+      el.style.background = isErr ? '#fee2e2' : '#d1fae5';
+      el.style.color = isErr ? '#b91c1c' : '#065f46';
+      el.style.border = '1.5px solid ' + (isErr ? '#fca5a5' : '#6ee7b7');
+      el.textContent = msg;
+    }
+
+    function loadCurrentQrInfo() {
+      var box = document.getElementById('qrCurrentInfo');
+      if (!box) return;
+      box.innerHTML = '<div style="display:flex;align-items:center;gap:8px;color:var(--txt-muted,#64748b);font-size:13px;font-weight:600;"><i class="bi bi-arrow-clockwise" style="animation:qr-spin .9s linear infinite;"></i> Loading...</div>';
+      fetch('../api/qr_change_api.php?action=current_qr', { cache: 'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          if (!data.success) { box.innerHTML = '<div style="color:#64748b;font-size:13px;">Could not load QR info.</div>'; return; }
+          var html = '';
+          if (data.has_gcash || data.has_bank) {
+            if (data.has_gcash) {
+              html += '<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">';
+              html += '<img src="../' + escHtml(data.gcash_qr) + '" alt="GCash QR" style="width:64px;height:64px;object-fit:contain;border-radius:10px;border:1.5px solid #e5e7eb;background:#f8fafc;">';
+              html += '<div><div style="font-size:13px;font-weight:700;color:#0f172a;">GCash QR</div><div style="font-size:11px;color:#64748b;">Active</div></div></div>';
+            }
+            if (data.has_bank) {
+              html += '<div style="display:flex;align-items:center;gap:12px;">';
+              html += '<img src="../' + escHtml(data.bank_qr) + '" alt="Bank QR" style="width:64px;height:64px;object-fit:contain;border-radius:10px;border:1.5px solid #e5e7eb;background:#f8fafc;">';
+              html += '<div><div style="font-size:13px;font-weight:700;color:#0f172a;">Bank Transfer QR</div><div style="font-size:11px;color:#64748b;">Active</div></div></div>';
+            }
+          } else {
+            html = '<div style="display:flex;align-items:center;gap:8px;color:#94a3b8;font-size:13px;font-weight:600;"><i class="bi bi-qr-code"></i> No QR code configured yet.</div>';
+          }
+          box.innerHTML = html;
+        })
+        .catch(function() {
+          box.innerHTML = '<div style="color:#64748b;font-size:13px;">Could not load QR info.</div>';
+        });
+    }
+
+    function onQrFileSelected(input) {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var allowed = ['image/jpeg','image/png','image/webp'];
+      if (allowed.indexOf(file.type) === -1) {
+        showQrAlert('Only JPG, PNG, or WEBP images are allowed.', 'err');
+        input.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showQrAlert('File must not exceed 5 MB.', 'err');
+        input.value = '';
+        return;
+      }
+      qrSelectedFile = file;
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('qrPreviewImg').src = e.target.result;
+        document.getElementById('qrFileName').textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        document.getElementById('qrUploadArea').style.display = 'none';
+        document.getElementById('qrPreviewWrap').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+      showQrAlert('', '');
+    }
+
+    function clearQrFile() {
+      qrSelectedFile = null;
+      document.getElementById('qrNewFileInput').value = '';
+      document.getElementById('qrPreviewWrap').style.display = 'none';
+      document.getElementById('qrUploadArea').style.display = 'block';
+      document.getElementById('qrPreviewImg').src = '';
+    }
+
+    function openQrConfirmModal() {
+      showQrAlert('', '');
+      var reason = (document.getElementById('qrChangeReason').value || '').trim();
+      if (!reason) {
+        showQrAlert('Please enter a reason for the change.', 'err');
+        document.getElementById('qrChangeReason').focus();
+        return;
+      }
+      if (!qrSelectedFile) {
+        showQrAlert('Please upload your new QR code image.', 'err');
+        return;
+      }
+      var modal = document.getElementById('qrConfirmModal');
+      modal.style.display = 'flex';
+    }
+
+    function closeQrConfirmModal() {
+      document.getElementById('qrConfirmModal').style.display = 'none';
+    }
+
+    function submitQrChangeRequest() {
+      var btn = document.getElementById('qrConfirmOkBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      var fd = new FormData();
+      fd.append('action', 'submit');
+      fd.append('reason', document.getElementById('qrChangeReason').value.trim());
+      fd.append('new_qr', qrSelectedFile);
+
+      fetch('../api/qr_change_api.php', { method: 'POST', body: fd })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          closeQrConfirmModal();
+          btn.disabled = false;
+          btn.textContent = 'Yes, Submit';
+          if (data.success) {
+            showQrAlert('Request submitted successfully! Pending admin review.', 'ok');
+            document.getElementById('qrChangeReason').value = '';
+            clearQrFile();
+            loadMyQrRequests();
+            updateQrSettingsSub();
+          } else {
+            showQrAlert(data.message || 'Submission failed. Please try again.', 'err');
+          }
+        })
+        .catch(function() {
+          closeQrConfirmModal();
+          btn.disabled = false;
+          btn.textContent = 'Yes, Submit';
+          showQrAlert('Network error. Please try again.', 'err');
+        });
+    }
+
+    function loadMyQrRequests() {
+      var list = document.getElementById('qrHistoryList');
+      if (!list) return;
+      list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--txt-muted,#64748b);font-size:13px;font-weight:600;"><i class="bi bi-arrow-clockwise" style="animation:qr-spin .9s linear infinite;"></i> Loading...</div>';
+      fetch('../api/qr_change_api.php?action=my_requests', { cache: 'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          if (!data.success || !data.requests.length) {
+            list.innerHTML = '<div style="text-align:center;padding:24px 16px;color:#94a3b8;font-size:13px;font-weight:600;"><i class="bi bi-inbox" style="display:block;font-size:26px;margin-bottom:6px;"></i>No requests submitted yet.</div>';
+            return;
+          }
+          list.innerHTML = data.requests.map(function(req) {
+            var statusClass = req.status;
+            var statusLabel = req.status === 'pending' ? 'Pending Review' : req.status.charAt(0).toUpperCase() + req.status.slice(1);
+            var date = req.submitted_at ? req.submitted_at.substring(0,10) : '–';
+            var reviewedInfo = '';
+            if (req.status === 'rejected' && req.admin_remarks) {
+              reviewedInfo = '<div style="font-size:11px;color:#b91c1c;margin-top:4px;font-weight:600;">Remarks: ' + escHtml(req.admin_remarks) + '</div>';
+            }
+            if (req.status === 'approved') {
+              reviewedInfo = '<div style="font-size:11px;color:#059669;margin-top:4px;font-weight:600;">Approved – new QR is now active.</div>';
+            }
+            return '<div class="qr-hist-item">' +
+              '<div style="flex-shrink:0;width:42px;height:42px;border-radius:10px;background:#f0fdf4;display:flex;align-items:center;justify-content:center;">' +
+                '<i class="bi bi-qr-code" style="font-size:18px;color:#059669;"></i>' +
+              '</div>' +
+              '<div style="flex:1;min-width:0;">' +
+                '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">' +
+                  '<span class="qr-status-pill ' + statusClass + '">' + statusLabel + '</span>' +
+                  '<span style="font-size:10px;color:#94a3b8;font-weight:600;">' + escHtml(date) + '</span>' +
+                '</div>' +
+                '<div style="font-size:12px;color:var(--txt-primary,#0f172a);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(req.reason) + '</div>' +
+                reviewedInfo +
+              '</div>' +
+            '</div>';
+          }).join('');
+        })
+        .catch(function() {
+          list.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px;">Could not load request history.</div>';
+        });
+    }
+
+    function updateQrSettingsSub() {
+      fetch('../api/qr_change_api.php?action=my_requests', { cache: 'no-store' })
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+          var sub = document.getElementById('qrChangeSettingsSub');
+          if (!sub) return;
+          var pending = data.requests && data.requests.filter(function(r){ return r.status==='pending'; });
+          if (pending && pending.length) {
+            sub.textContent = '1 request pending review';
+            sub.style.color = '#c2410c';
+          } else {
+            sub.textContent = 'Request a QR code change';
+            sub.style.color = '';
+          }
+        })
+        .catch(function(){});
+    }
+
+    function escHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g,'&amp;')
+        .replace(/</g,'&lt;')
+        .replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;');
+    }
+
+    // Initialise sub-label on page load
+    updateQrSettingsSub();
+  </script>
+
 </body>
 
 </html>

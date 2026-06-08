@@ -1027,6 +1027,17 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               </div>
               <i class="bi bi-chevron-right more-arrow"></i>
             </div>
+            <div class="more-row" onclick="openQrRequestsSheet()" id="qrMoreRow">
+              <div class="more-ic" style="background:#d1fae5;color:#059669;"><i class="bi bi-qr-code-scan"></i></div>
+              <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <div class="more-nm" style="color:#059669;">QR Change Requests</div>
+                  <span id="qrAdminBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;line-height:1.4;">0</span>
+                </div>
+                <div class="more-sub">Review GCash/Bank QR code change requests</div>
+              </div>
+              <i class="bi bi-chevron-right more-arrow"></i>
+            </div>
             <div class="more-row" onclick="openLogoutConfirm()">
               <div class="more-ic" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-box-arrow-right"></i>
               </div>
@@ -3264,6 +3275,288 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         }
       }
     </script>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     QR CHANGE REQUESTS — ADMIN BOTTOM SHEET
+══════════════════════════════════════════════════════════════ -->
+
+<!-- Main sheet overlay -->
+<div class="sheet-ol" id="qrRequestsSheetOl" onclick="if(event.target===this)closeQrRequestsSheet()">
+  <div class="sheet" style="max-height:94vh;">
+    <div class="sh-hand"></div>
+    <div class="sh-hdr">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="sh-ttl">QR Change Requests</div>
+        <span id="qrSheetBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;">0</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <select id="qrStatusFilter" onchange="loadQrRequests()" style="border:1.5px solid var(--border-col);border-radius:10px;padding:5px 10px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;color:var(--txt-muted);background:var(--bg-card);outline:none;">
+          <option value="all">All</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button class="sh-close" onclick="closeQrRequestsSheet()"><i class="bi bi-x-lg"></i></button>
+      </div>
+    </div>
+    <div id="qrRequestsList" style="flex:1;overflow-y:auto;padding-bottom:20px;">
+      <div class="empty-state"><i class="bi bi-arrow-clockwise" style="animation:w-spin .9s linear infinite;"></i><p>Loading...</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- Approve confirm dialog -->
+<div class="confirm-ol" id="qrApproveConfirmOl" onclick="if(event.target===this)closeQrApproveConfirm()">
+  <div class="confirm-card">
+    <div class="confirm-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669;"><i class="bi bi-check-circle-fill"></i></div>
+    <div class="confirm-title">Approve QR Change?</div>
+    <div class="confirm-sub">The provider's active QR code will be replaced with the newly uploaded one immediately.</div>
+    <div class="confirm-actions">
+      <button class="confirm-btn cancel" onclick="closeQrApproveConfirm()">Cancel</button>
+      <button class="confirm-btn ok" id="qrApproveOkBtn" onclick="submitQrApprove()">Approve</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject confirm dialog -->
+<div class="confirm-ol" id="qrRejectConfirmOl" onclick="if(event.target===this)closeQrRejectConfirm()">
+  <div class="confirm-card">
+    <div class="confirm-icon"><i class="bi bi-x-circle-fill"></i></div>
+    <div class="confirm-title">Reject QR Change?</div>
+    <div class="confirm-sub">Please provide a reason for rejection. The provider will be notified.</div>
+    <div class="confirm-reason-wrap">
+      <textarea id="qrRejectRemarks" class="confirm-reason" placeholder="Enter rejection remarks (required)..."></textarea>
+    </div>
+    <div class="confirm-actions">
+      <button class="confirm-btn cancel" onclick="closeQrRejectConfirm()">Cancel</button>
+      <button class="confirm-btn ok" id="qrRejectOkBtn" onclick="submitQrReject()" style="background:#ef4444;box-shadow:0 8px 16px rgba(239,68,68,.28);">Reject</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .qr-req-card { background:var(--bg-card); border-radius:16px; border:1.5px solid var(--border-col); padding:14px 16px; margin:10px 18px; }
+  .qr-req-hdr  { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .qr-req-name { font-size:14px; font-weight:800; color:var(--txt-primary); }
+  .qr-req-date { font-size:10px; color:var(--txt-muted); font-weight:600; }
+  .qr-req-reason { font-size:12px; color:var(--txt-muted); line-height:1.5; margin-bottom:12px; }
+  .qr-qrs-row { display:flex; gap:12px; margin-bottom:12px; }
+  .qr-qr-box { flex:1; background:var(--bg-screen); border-radius:12px; border:1.5px solid var(--border-col); padding:10px; text-align:center; }
+  .qr-qr-lbl { font-size:10px; font-weight:800; color:var(--txt-muted); text-transform:uppercase; letter-spacing:.3px; margin-bottom:6px; }
+  .qr-qr-img  { width:72px; height:72px; object-fit:contain; border-radius:8px; cursor:pointer; transition:opacity .15s; border:1px solid var(--border-col); background:#fff; }
+  .qr-qr-img:hover { opacity:.8; }
+  .qr-qr-none { width:72px; height:72px; border-radius:8px; background:var(--bg-card); border:1.5px dashed var(--border-col); display:flex; align-items:center; justify-content:center; font-size:22px; color:#cbd5e1; margin:0 auto; }
+  .qr-req-actions { display:flex; gap:8px; }
+  .qr-act-btn { flex:1; padding:10px; border-radius:12px; border:none; font-family:'Poppins',sans-serif; font-size:12px; font-weight:800; cursor:pointer; transition:all .18s; }
+  .qr-act-approve { background:linear-gradient(135deg,#059669,#10b981); color:#fff; box-shadow:0 6px 14px rgba(5,150,105,.28); }
+  .qr-act-reject  { background:#fee2e2; color:#dc2626; }
+  .qr-act-approve:hover { filter:brightness(1.05); }
+  .qr-act-reject:hover  { background:#fecaca; }
+  .qr-remarks-box { background:#fff7ed; border:1.5px solid #fed7aa; border-radius:10px; padding:9px 12px; font-size:11px; color:#9a3412; font-weight:600; margin-top:8px; line-height:1.5; }
+</style>
+
+<script>
+  // ── QR Change Requests — Admin ───────────────────────────────────────────
+  var _qrPendingId = null;
+
+  function openQrRequestsSheet() {
+    document.getElementById('qrRequestsSheetOl').classList.add('on');
+    loadQrRequests();
+  }
+
+  function closeQrRequestsSheet() {
+    document.getElementById('qrRequestsSheetOl').classList.remove('on');
+  }
+
+  function loadQrRequests() {
+    const list = document.getElementById('qrRequestsList');
+    const status = document.getElementById('qrStatusFilter').value;
+    list.innerHTML = '<div class="empty-state"><i class="bi bi-arrow-clockwise" style="animation:w-spin .9s linear infinite;"></i><p>Loading...</p></div>';
+    fetch('../api/qr_change_api.php?action=list&status=' + encodeURIComponent(status), { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.success) { list.innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load requests.</p></div>'; return; }
+        renderQrRequests(data.requests);
+      })
+      .catch(() => { list.innerHTML = '<div class="empty-state"><i class="bi bi-wifi-off"></i><p>Network error.</p></div>'; });
+  }
+
+  function renderQrRequests(rows) {
+    const list = document.getElementById('qrRequestsList');
+    if (!rows || !rows.length) {
+      list.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No requests found.</p></div>';
+      return;
+    }
+    const baseUrl = '../';
+    list.innerHTML = rows.map(r => {
+      const statusPill = {
+        pending:  '<span class="badge-amber" style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:800;">Pending Review</span>',
+        approved: '<span class="badge-green" style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:800;">Approved</span>',
+        rejected: '<span class="badge-gray"  style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:800;">Rejected</span>',
+      }[r.status] || '';
+
+      const currentQrHtml = r.current_qr_path
+        ? `<img src="${baseUrl}${qrEsc(r.current_qr_path)}" class="qr-qr-img" alt="Current QR" onclick="openImagePreview('${baseUrl}${qrEsc(r.current_qr_path)}', 'Current QR — ${qrEsc(r.provider_name)}')"> `
+        : '<div class="qr-qr-none"><i class="bi bi-qr-code"></i></div>';
+
+      const newQrHtml = r.new_qr_path
+        ? `<img src="${baseUrl}${qrEsc(r.new_qr_path)}" class="qr-qr-img" alt="New QR" onclick="openImagePreview('${baseUrl}${qrEsc(r.new_qr_path)}', 'New QR — ${qrEsc(r.provider_name)}')">`
+        : '<div class="qr-qr-none"><i class="bi bi-qr-code"></i></div>';
+
+      const date = r.submitted_at ? r.submitted_at.substring(0,10) : '–';
+
+      const remarksHtml = (r.status === 'rejected' && r.admin_remarks)
+        ? `<div class="qr-remarks-box"><i class="bi bi-chat-left-text" style="margin-right:5px;"></i>Rejection remarks: ${qrEsc(r.admin_remarks)}</div>`
+        : '';
+
+      const actionsHtml = r.status === 'pending'
+        ? `<div class="qr-req-actions">
+             <button class="qr-act-btn qr-act-reject" onclick="openQrRejectConfirm(${r.id})"><i class="bi bi-x-circle"></i> Reject</button>
+             <button class="qr-act-btn qr-act-approve" onclick="openQrApproveConfirm(${r.id})"><i class="bi bi-check-circle"></i> Approve</button>
+           </div>`
+        : '';
+
+      return `<div class="qr-req-card">
+        <div class="qr-req-hdr">
+          <div>
+            <div class="qr-req-name">${qrEsc(r.provider_name || 'Unknown')}</div>
+            <div style="font-size:11px;color:var(--txt-muted);margin-top:1px;">${qrEsc(r.service_category || '')} · ${qrEsc(r.contact_number || '')}</div>
+          </div>
+          <div style="text-align:right;">
+            ${statusPill}
+            <div class="qr-req-date" style="margin-top:4px;">Submitted: ${qrEsc(date)}</div>
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--txt-muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px;">Reason for Change</div>
+        <div class="qr-req-reason">${qrEsc(r.reason)}</div>
+        <div class="qr-qrs-row">
+          <div class="qr-qr-box">
+            <div class="qr-qr-lbl">Current QR</div>
+            ${currentQrHtml}
+          </div>
+          <div class="qr-qr-box">
+            <div class="qr-qr-lbl">Requested QR</div>
+            ${newQrHtml}
+          </div>
+        </div>
+        ${remarksHtml}
+        ${actionsHtml}
+      </div>`;
+    }).join('');
+  }
+
+  // Approve flow
+  function openQrApproveConfirm(id) {
+    _qrPendingId = id;
+    document.getElementById('qrApproveConfirmOl').classList.add('on');
+  }
+  function closeQrApproveConfirm() {
+    document.getElementById('qrApproveConfirmOl').classList.remove('on');
+    _qrPendingId = null;
+  }
+  function submitQrApprove() {
+    if (!_qrPendingId) return;
+    const btn = document.getElementById('qrApproveOkBtn');
+    btn.disabled = true; btn.textContent = 'Approving...';
+    const fd = new FormData();
+    fd.append('id', _qrPendingId);
+    fetch('../api/qr_change_api.php?action=approve', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(data => {
+        btn.disabled = false; btn.textContent = 'Approve';
+        closeQrApproveConfirm();
+        if (data.success) {
+          toast('QR change request approved. Provider notified.', 's');
+          loadQrRequests();
+          pollQrRequestCount();
+        } else {
+          toast(data.message || 'Approval failed.', 'e');
+        }
+      })
+      .catch(() => { btn.disabled = false; btn.textContent = 'Approve'; toast('Network error.', 'e'); });
+  }
+
+  // Reject flow
+  function openQrRejectConfirm(id) {
+    _qrPendingId = id;
+    document.getElementById('qrRejectRemarks').value = '';
+    document.getElementById('qrRejectConfirmOl').classList.add('on');
+  }
+  function closeQrRejectConfirm() {
+    document.getElementById('qrRejectConfirmOl').classList.remove('on');
+    _qrPendingId = null;
+  }
+  function submitQrReject() {
+    const remarks = document.getElementById('qrRejectRemarks').value.trim();
+    if (!remarks) { toast('Rejection remarks are required.', 'e'); return; }
+    if (!_qrPendingId) return;
+    const btn = document.getElementById('qrRejectOkBtn');
+    btn.disabled = true; btn.textContent = 'Rejecting...';
+    const fd = new FormData();
+    fd.append('id', _qrPendingId);
+    fd.append('remarks', remarks);
+    fetch('../api/qr_change_api.php?action=reject', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(data => {
+        btn.disabled = false; btn.textContent = 'Reject';
+        closeQrRejectConfirm();
+        if (data.success) {
+          toast('QR change request rejected. Provider notified.', 's');
+          loadQrRequests();
+          pollQrRequestCount();
+        } else {
+          toast(data.message || 'Rejection failed.', 'e');
+        }
+      })
+      .catch(() => { btn.disabled = false; btn.textContent = 'Reject'; toast('Network error.', 'e'); });
+  }
+
+  // Badge poll
+  function pollQrRequestCount() {
+    fetch('../api/qr_change_api.php?action=pending_count', { cache: 'no-store' })
+      .then(r => r.json())
+      .then(data => {
+        const count = data.count || 0;
+        const moreBadge = document.getElementById('qrAdminBadge');
+        const sheetBadge = document.getElementById('qrSheetBadge');
+        if (moreBadge) { moreBadge.textContent = count; moreBadge.style.display = count > 0 ? 'inline-block' : 'none'; }
+        if (sheetBadge) { sheetBadge.textContent = count; sheetBadge.style.display = count > 0 ? 'inline-block' : 'none'; }
+      })
+      .catch(() => {});
+  }
+
+  // Image preview reuse
+  function openImagePreview(src, title) {
+    const overlay = document.getElementById('imagePreviewOverlay');
+    const img = document.getElementById('previewImageEl') || document.querySelector('.preview-image');
+    const titleEl = document.getElementById('imagePreviewTitle');
+    if (!overlay) return;
+    if (titleEl) titleEl.textContent = title || 'Image Preview';
+    if (img) { img.src = src; img.style.transform = 'scale(1)'; }
+    overlay.classList.add('active');
+  }
+
+  // Safe HTML escape
+  function qrEsc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Re-parent QR overlays into the #app shell so they respect the mobile layout
+  (function() {
+    var appShell = document.getElementById('app');
+    ['qrRequestsSheetOl', 'qrApproveConfirmOl', 'qrRejectConfirmOl'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (appShell && el) appShell.appendChild(el);
+    });
+  })();
+
+  // Poll on page load and every 2 minutes
+  pollQrRequestCount();
+  setInterval(pollQrRequestCount, 120000);
+</script>
+
 </body>
 
 </html>
