@@ -266,3 +266,354 @@ body {
     body.dark .earn-card-status.pending { background: #2d2306; color: #f59e0b; }
     body.dark .empty-state, body.dark .empty-txt { color: #6b6b88; }
 
+    /* Remittance button and modal styling */
+    .earn-remit-btn {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background .2s, transform 0.1s;
+    }
+    .earn-remit-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .earn-remit-btn:active {
+      transform: scale(0.96);
+    }
+
+    .remit-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(26, 20, 8, .5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      opacity: 0;
+      transition: opacity .22s ease;
+    }
+
+    .remit-modal-overlay.on {
+      display: flex;
+      opacity: 1;
+    }
+
+    .remit-modal-card {
+      width: 100%;
+      max-width: 360px;
+      background: #fff;
+      border: 1.5px solid #EDE8E0;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, .15);
+      display: flex;
+      flex-direction: column;
+      transform: translateY(12px) scale(.98);
+      transition: transform .22s ease;
+      max-height: 85vh;
+    }
+
+    .remit-modal-overlay.on .remit-modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .remit-modal-header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #EDE8E0;
+    }
+    .remit-modal-header span {
+      font-family: 'Poppins', sans-serif;
+      font-size: 16px;
+      font-weight: 800;
+      color: #1A1A2E;
+    }
+    .remit-modal-header button {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: #8E8E93;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color .2s;
+    }
+    .remit-modal-header button:hover {
+      color: #1A1A2E;
+    }
+    .remit-modal-body {
+      padding: 0;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .remit-amount-card {
+      background: linear-gradient(135deg, #FFF6EB 0%, #FFEAD2 100%);
+      border: 1.5px solid #FFD8A8;
+      border-radius: 18px;
+      padding: 18px;
+      margin: 16px 20px 12px;
+      text-align: center;
+    }
+    .remit-amount-lbl {
+      font-size: 11px;
+      font-weight: 700;
+      color: #E8820C;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 4px;
+    }
+    .remit-amount-val {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: #C86500;
+      line-height: 1.2;
+    }
+    .remit-details-box {
+      background: #FDFBF7;
+      border: 1.5px solid #EDE8E0;
+      border-radius: 18px;
+      padding: 16px;
+      margin: 0 20px 16px;
+    }
+    .remit-detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .remit-detail-row:last-child {
+      margin-bottom: 0;
+    }
+    .remit-detail-row span:first-child {
+      color: #8E8E93;
+      font-weight: 600;
+    }
+    .remit-detail-row span:last-child {
+      color: #1A1A2E;
+      font-weight: 700;
+      text-align: right;
+    }
+    .remit-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 8px;
+      display: inline-block;
+      text-transform: capitalize;
+    }
+    .remit-badge.pending {
+      background: #FEF3C7;
+      color: #B45309;
+    }
+    .remit-badge.paid {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+    .remit-badge.overdue {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+    .remit-title-text {
+      font-family: 'Poppins', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      color: #1A1A2E;
+      margin: 16px 20px 10px;
+    }
+    .remit-history-list {
+      padding: 0 20px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+    .remit-history-item {
+      background: #FDFBF7;
+      border: 1.5px solid #EDE8E0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .remit-history-info {
+      display: flex;
+      flex-direction: column;
+    }
+    .remit-history-ref {
+      font-size: 12px;
+      font-weight: 700;
+      color: #1A1A2E;
+    }
+    .remit-history-meta {
+      font-size: 10px;
+      color: #8E8E93;
+      margin-top: 2px;
+    }
+    .remit-history-amount-status {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .remit-history-amt {
+      font-size: 12px;
+      font-weight: 800;
+      color: #1A1A2E;
+    }
+    .remit-divider {
+      height: 1px;
+      background: #EDE8E0;
+      margin: 0 20px 16px;
+    }
+    .remit-modal-footer {
+      padding: 0 20px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .remit-btn-primary {
+      background: linear-gradient(135deg, #C86500 0%, #E8820C 100%);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      width: 100%;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(232, 130, 12, .2);
+      transition: background .2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .remit-btn-primary:hover {
+      background: linear-gradient(135deg, #D97108 0%, #F5A623 100%);
+    }
+    .remit-btn-primary:active {
+      transform: scale(0.98);
+    }
+    .remit-btn-secondary {
+      background: transparent;
+      color: #E8820C;
+      border: 1.5px solid #EDE8E0;
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      width: 100%;
+      cursor: pointer;
+      transition: background .2s, border-color .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .remit-btn-secondary:hover {
+      background: #FDFBF7;
+      border-color: #E8820C;
+    }
+    .remit-btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    /* Dark Mode support */
+    body.dark .remit-modal-card {
+      background: #1e1e2c;
+      border-color: #2a2a3a;
+      box-shadow: 0 18px 46px rgba(0, 0, 0, .4);
+    }
+
+    body.dark .remit-modal-header {
+      background: linear-gradient(135deg, #3d2203, #221401) !important;
+      border-bottom-color: #2a2a3a !important;
+    }
+
+    body.dark .remit-modal-header span {
+      color: #e8e8f0 !important;
+    }
+
+    body.dark .remit-modal-header button {
+      color: #8e8e93 !important;
+    }
+
+    body.dark .remit-amount-card {
+      background: linear-gradient(135deg, #3a2203, #2c1a01) !important;
+      border-color: #553305 !important;
+    }
+
+    body.dark .remit-amount-lbl {
+      color: #F5A623;
+    }
+
+    body.dark .remit-amount-val {
+      color: #FFA834;
+    }
+
+    body.dark .remit-details-box {
+      background: #14141c !important;
+      border-color: #2a2a3a !important;
+    }
+
+    body.dark .remit-detail-row span:first-child {
+      color: #8e8e93 !important;
+    }
+
+    body.dark .remit-detail-row span:last-child {
+      color: #e8e8f0 !important;
+    }
+
+    body.dark .remit-history-item {
+      background: #14141c !important;
+      border-color: #2a2a3a !important;
+    }
+
+    body.dark .remit-history-item span {
+      color: #e8e8f0 !important;
+    }
+
+    body.dark .remit-history-item .remit-history-meta {
+      color: #8e8e93 !important;
+    }
+
+    body.dark .remit-history-ref,
+    body.dark .remit-history-amt {
+      color: #e8e8f0;
+    }
+
+    body.dark .remit-title-text {
+      color: #e8e8f0 !important;
+    }
+
+    body.dark .remit-divider {
+      background: #2a2a3a !important;
+    }
+
+    body.dark .remit-btn-secondary {
+      border-color: #2a2a3a !important;
+      color: #e8e8f0 !important;
+    }
+
+

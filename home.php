@@ -79,7 +79,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         <div class="sec-row">
           <div class="sec-ttl">Our Services</div>
         </div>
-        <div class="svc-ads-scroll" id="svcAdsScroll"></div>
+        <div class="svc-ads-grid" id="svcAdsGrid"></div>
 
         <!-- Service Detail Panel -->
         <div class="svc-detail-overlay" id="svcDetailOverlay" onclick="closeSvcDetail(event)"></div>
@@ -127,14 +127,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
 
 
-        <div class="sec-row">
-          <div>
-            <div class="sec-ttl">Our Trusted Pros</div>
-            <div class="sec-desc">Verified providers with proven track records</div>
-          </div>
-          <span class="see-more" onclick="openAllProviders()">View all →</span>
-        </div>
-        <div class="pro-row" id="workerRow"></div>
+
 
         <!-- All Providers Panel -->
         <div class="svc-detail-overlay" id="proOverlay" onclick="closeAllProviders(event)"></div>
@@ -380,7 +373,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     // ── RENDER AD CARDS
-    const svcAdsScroll = document.getElementById('svcAdsScroll');
+    const svcAdsGrid = document.getElementById('svcAdsGrid');
     svcAdData.forEach((svc, i) => {
       const card = document.createElement('div');
       card.className = 'svc-ad-card';
@@ -406,7 +399,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="sac-cta">See Details <i class="bi bi-arrow-right"></i></div>
         </div>`;
       card.addEventListener('click', () => openSvcDetail(svc));
-      svcAdsScroll.appendChild(card);
+      svcAdsGrid.appendChild(card);
     });
 
     // ── ALL PROVIDERS PANEL
@@ -470,60 +463,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     // Most Popular section removed
 
 
-    async function loadPros() {
-      const workerRow = document.getElementById('workerRow');
-      workerRow.innerHTML = '<div style="padding:20px;color:var(--tm);font-size:13px;font-family:Nunito,sans-serif;">Loading...</div>';
-      try {
-        const res = await fetch('api/workers_api.php?action=pros', { cache: 'no-store' });
-        const data = await res.json();
-        if (!data.success || !data.pros.length) {
-          workerRow.innerHTML = '<div style="padding:20px;color:var(--tm);font-size:13px;font-family:Nunito,sans-serif;">No pros available.</div>';
-          return;
-        }
-        const specialtyColors = {
-          'House Cleaner':       { g: 'linear-gradient(145deg,#E8820C,#F5A623,#FFB347)', light: '#FFF3E0', text: '#C2410C' },
-          'Plumbing':            { g: 'linear-gradient(135deg,#D97706,#F5A623,#FBB73C)', light: '#FEF9E7', text: '#B45309' },
-          'Helper':              { g: 'linear-gradient(120deg,#F97316,#F5A623,#FCD34D)', light: '#FFF7E6', text: '#EA580C' },
-          'Appliance Technician':{ g: 'linear-gradient(150deg,#C2410C,#E8820C,#F5A623)', light: '#FFF0E0', text: '#C2410C' },
-          'Laundry':             { g: 'linear-gradient(125deg,#F59E0B,#F5B942,#FBBF24)', light: '#FFFCE6', text: '#D97706' },
-          'Carpentry':           { g: 'linear-gradient(160deg,#EA580C,#F5A623,#FBA94C)', light: '#FFF1E6', text: '#EA580C' },
-        };
-        
-        window._recentPros = data.pros;
-        
-        workerRow.innerHTML = window._recentPros.map((w, idx) => {
-          const initials = w.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-          const sc = specialtyColors[w.specialty] || { g: 'linear-gradient(135deg,#E8820C,#F5A623)', light: '#FFF3E0', text: '#C2410C' };
-          const stars = parseFloat(w.rating || 4.8);
-          const starsHtml = Array.from({length:5},(_,i) =>
-            `<i class="bi ${i < Math.floor(stars) ? 'bi-star-fill' : (i < stars ? 'bi-star-half' : 'bi-star')}"></i>`
-          ).join('');
-          return `
-          <div class="pro-portrait-card" style="animation-delay:${idx*0.08}s; cursor:pointer;" onclick="openProviderProfile(${idx}, 'recent')">
-            <div class="ppc-header" style="background:${sc.g}">
-              <img class="ppc-cover" src="${w.img}" alt="${w.name}"
-                onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-              <div class="ppc-cover-initials">${initials}</div>
-              <div class="ppc-header-fade"></div>
-              ${w.top ? '<div class="ppc-top-badge"><i class="bi bi-trophy-fill"></i> TOP PRO</div>' : ''}
-              ${w.is_verified ? '<div class="ppc-verified-badge"><i class="bi bi-patch-check-fill"></i></div>' : ''}
-            </div>
-            <div class="ppc-body">
-              <div class="ppc-name">${w.name.split(' ')[0]} ${w.name.split(' ')[1] ? w.name.split(' ')[1][0]+'.' : ''}</div>
-              <div class="ppc-specialty" style="color:${sc.text}">${w.specialty}</div>
-              <div class="ppc-stars">${starsHtml}<span>${stars.toFixed(1)}</span></div>
-              <div class="ppc-jobs"><i class="bi bi-briefcase-fill"></i>${w.jobs_done} jobs</div>
-              <button class="ppc-book" style="background:${sc.g}" onclick="event.stopPropagation(); goPage('clients/booking_form.php?svc=${encodeURIComponent(w.specialty)}&newbooking=1')">
-                Book Now
-              </button>
-            </div>
-          </div>`;
-        }).join('');
-      } catch (e) {
-        workerRow.innerHTML = '<div style="padding:20px;color:var(--tm);font-size:13px;font-family:Nunito,sans-serif;">Could not load pros.</div>';
-      }
-    }
-    loadPros();
+
 
     // ── PROVIDER PROFILE MODAL ──
     const proSpecColors = {

@@ -57,15 +57,7 @@ include __DIR__ . '/includes/sidebar.php';
       </div>
       <div class="rev-bar-wrap" id="revChart"></div>
     </div>
-    <div class="chart-card" style="margin-top:12px;">
-      <div class="sec-ttl">Booking Status</div>
-      <div class="donut-wrap">
-        <svg class="donut-svg" viewBox="0 0 80 80" id="donutSvg">
-          <circle cx="40" cy="40" r="30" fill="none" stroke="var(--border-col)" stroke-width="12" />
-        </svg>
-        <div class="donut-legend" id="donutLegend"></div>
-      </div>
-    </div>
+
     <div class="sec-pad">
       <div class="sec-hdr">
         <div class="sec-ttl">Recent Bookings</div>

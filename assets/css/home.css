@@ -131,7 +131,7 @@
       height: 100%;
       overflow-y: auto;
       overflow-x: hidden;
-      padding-bottom: 90px;
+      padding-bottom: 70px;
     }
 
     .h-scroll::-webkit-scrollbar {
@@ -2005,7 +2005,7 @@
     }
 
     .h-pb {
-      height: 20px;
+      height: 8px;
     }
 
     /* ═══════════════════════════════════════════
@@ -2399,4 +2399,136 @@
       background: #332A1C;
       border-color: #4A3E28;
       color: #EBCB93;
+    }
+
+    /* ─── Our Services Grid Layout ─── */
+    .svc-ads-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 12px !important;
+      padding: 4px var(--page-gutter) 16px !important;
+    }
+
+    .svc-ads-grid .svc-ad-card {
+      min-width: 0 !important;
+      width: 100% !important;
+      height: 175px !important;
+      border-radius: 20px !important;
+      padding: 16px 14px 14px !important;
+      margin: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: space-between !important;
+    }
+
+    .svc-ads-grid .sac-top {
+      display: flex !important;
+      justify-content: flex-start !important;
+      align-items: center !important;
+    }
+
+    .svc-ads-grid .sac-badge {
+      font-size: 8px !important;
+      font-weight: 700 !important;
+      padding: 3px 8px !important;
+      border-radius: 20px !important;
+      background: rgba(255, 255, 255, 0.22) !important;
+      border: 1px solid rgba(255, 255, 255, 0.4) !important;
+      text-shadow: none !important;
+      color: #fff !important;
+    }
+
+    /* Hide promo label in grid view to prevent clutter */
+    .svc-ads-grid .sac-promo {
+      display: none !important;
+    }
+
+    .svc-ads-grid .sac-emoji {
+      font-size: 34px !important;
+      top: 12px !important;
+      right: 10px !important;
+      opacity: 0.12 !important;
+    }
+
+    .svc-ads-grid .sac-body {
+      margin-top: 8px !important;
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+    }
+
+    .svc-ads-grid .sac-tagline {
+      font-size: 14px !important;
+      font-weight: 800 !important;
+      line-height: 1.25 !important;
+      white-space: normal !important;
+      color: #fff !important;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* Hide subline and rating to reduce vertical clutter */
+    .svc-ads-grid .sac-subline,
+    .svc-ads-grid .sac-rating {
+      display: none !important;
+    }
+
+    .svc-ads-grid .sac-footer {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding-top: 8px !important;
+      margin-top: auto !important;
+      border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .svc-ads-grid .sac-footer-left {
+      display: flex !important;
+      flex-direction: column !important;
+    }
+
+    .svc-ads-grid .sac-price {
+      font-size: 12px !important;
+      font-weight: 800 !important;
+      color: #fff !important;
+      margin-top: 0 !important;
+    }
+
+    .svc-ads-grid .sac-price span {
+      font-size: 9px !important;
+      font-weight: 600 !important;
+      opacity: 0.85 !important;
+    }
+
+    /* Redesign CTA button into a clean circular arrow button */
+    .svc-ads-grid .sac-cta {
+      background: rgba(255, 255, 255, 0.25) !important;
+      border: 1px solid rgba(255, 255, 255, 0.45) !important;
+      color: #fff !important;
+      width: 26px !important;
+      height: 26px !important;
+      border-radius: 50% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      font-size: 0 !important; /* Hide text "See Details" */
+      transition: background 0.2s, transform 0.15s !important;
+      box-shadow: none !important;
+    }
+
+    .svc-ads-grid .sac-cta::after {
+      content: "\F138" !important; /* bootstrap icon bi-chevron-right */
+      font-family: "bootstrap-icons" !important;
+      font-size: 11px !important;
+      font-weight: 800 !important;
+    }
+
+    .svc-ads-grid .sac-cta i {
+      display: none !important;
+    }
+
+    .svc-ads-grid .svc-ad-card:hover .sac-cta {
+      background: rgba(255, 255, 255, 0.4) !important;
+      transform: scale(1.08) !important;
     }

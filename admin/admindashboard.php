@@ -741,15 +741,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
 
 
-        <div class="chart-card" style="margin-top:12px;">
-          <div class="sec-ttl">Booking Status</div>
-          <div class="donut-wrap">
-            <svg class="donut-svg" viewBox="0 0 80 80" id="donutSvg">
-              <circle cx="40" cy="40" r="30" fill="none" stroke="var(--border-col)" stroke-width="12" />
-            </svg>
-            <div class="donut-legend" id="donutLegend"></div>
-          </div>
-        </div>
+
 
 
         <div class="sec-pad">
@@ -942,6 +934,14 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="sec-pad" style="margin-top:14px;">
           <div class="sec-ttl">Admin</div>
           <div class="card">
+            <div class="more-row" onclick="openRemitSheet()">
+              <div class="more-ic" style="background:#fff7ed;color:#ea580c;"><i class="bi bi-cash-stack"></i></div>
+              <div>
+                <div class="more-nm" style="color:#ea580c;">Manage Remittances</div>
+                <div class="more-sub">Monitor and audit provider payment remittances</div>
+              </div>
+              <i class="bi bi-chevron-right more-arrow"></i>
+            </div>
             <div class="more-row" onclick="openReviewSheet()">
               <div class="more-ic" style="background:#e0e7ff;color:#4f46e5;"><i class="bi bi-star-fill"></i></div>
               <div>
@@ -1266,6 +1266,84 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
+      <!-- Remittance Sheet (UI Only) -->
+      <div class="sheet-ol" id="remitSheetOl" onclick="if(event.target===this)closeSheet('remitSheetOl')">
+        <div class="sheet" style="max-height:92vh;">
+          <div class="sh-hand"></div>
+          <div class="sh-hdr">
+            <div class="sh-ttl">Manage Remittances</div>
+            <button class="sh-close" onclick="closeSheet('remitSheetOl')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          
+          <!-- Summary Cards Grid -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 18px 12px;">
+            <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(234,88,12,0.05);">
+              <div style="font-size:10px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.3px;">This Month</div>
+              <div style="font-size:14px; font-weight:800; color:#1f2937; margin-top:2px;" id="remitStatMonth">₱0.00</div>
+            </div>
+            <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(234,88,12,0.05);">
+              <div style="font-size:10px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.3px;">This Week</div>
+              <div style="font-size:14px; font-weight:800; color:#1f2937; margin-top:2px;" id="remitStatWeek">₱0.00</div>
+            </div>
+            <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(234,88,12,0.05);">
+              <div style="font-size:10px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.3px;">Total Received</div>
+              <div style="font-size:14px; font-weight:800; color:#1f2937; margin-top:2px;" id="remitStatTotal">₱0.00</div>
+            </div>
+            <div style="background:#fef2f2; border:1px solid #fee2e2; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(220,38,38,0.05);">
+              <div style="font-size:10px; font-weight:700; color:#b91c1c; text-transform:uppercase; letter-spacing:0.3px;">Outstanding</div>
+              <div style="font-size:14px; font-weight:800; color:#b91c1c; margin-top:2px;" id="remitStatOutstanding">₱0.00</div>
+            </div>
+          </div>
+
+          <!-- Controls: Filters and Sorting -->
+          <div style="background:var(--bg-card); border-bottom:1.5px solid var(--border-col); padding:10px 18px 12px; flex-shrink:0;">
+            <!-- Filter Tabs -->
+            <div style="display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:8px;">
+              <div class="stab on" id="remit-tab-all" onclick="setRemitFilter('all')" style="padding:5px 12px; font-size:11px;">All</div>
+              <div class="stab" id="remit-tab-paid" onclick="setRemitFilter('paid')" style="padding:5px 12px; font-size:11px;">Paid</div>
+              <div class="stab" id="remit-tab-pending" onclick="setRemitFilter('pending')" style="padding:5px 12px; font-size:11px;">Pending</div>
+              <div class="stab" id="remit-tab-overdue" onclick="setRemitFilter('overdue')" style="padding:5px 12px; font-size:11px;">Overdue</div>
+            </div>
+            <!-- Sorting dropdown -->
+            <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+              <span style="font-size:11px; font-weight:700; color:var(--txt-muted);">Sort By:</span>
+              <select class="fi" id="remitSort" onchange="loadAdminRemittances()" style="flex:1; padding:6px 10px; font-size:12px; height:auto; min-height:auto;">
+                <option value="name_asc">Alphabetical (A–Z)</option>
+                <option value="name_desc">Alphabetical (Z–A)</option>
+                <option value="due_desc">Due Date (Newest)</option>
+                <option value="due_asc">Due Date (Oldest)</option>
+                <option value="remit_desc">Date Remitted (Newest)</option>
+                <option value="amt_desc">Highest Amount Due</option>
+                <option value="amt_asc">Lowest Amount Due</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Remittance List -->
+          <div id="remitSheetBody" style="overflow-y:auto; flex:1; padding:12px 18px 24px;">
+            <!-- Loaded dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Remittance Details Modal -->
+      <div class="sheet-ol" id="remitDetailOl" onclick="if(event.target===this)closeSheet('remitDetailOl')">
+        <div class="sheet" style="max-height:85vh;">
+          <div class="sh-hand"></div>
+          <div class="sh-hdr">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div class="sh-ttl">Remittance Details</div>
+              <span id="remitDtlStatusBadge"></span>
+            </div>
+            <button class="sh-close" onclick="closeSheet('remitDetailOl')"><i class="bi bi-x-lg"></i></button>
+          </div>
+          
+          <div id="remitDetailBody" style="overflow-y:auto; flex:1; padding:0 4px 20px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+      </div>
+
     </div><!-- /.shell -->
 
     <script>
@@ -1458,28 +1536,29 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             chart.innerHTML = '<div style="font-size:12px;color:var(--txt-muted);text-align:center;width:100%;padding:20px 0;">No revenue data yet</div>';
           }
 
-          // Donut
-          const bd = s.breakdown || {};
-          const colors = { pending: '#f59e0b', progress: '#3b82f6', done: '#F5A623', cancelled: '#9ca3af' };
-          const total = Object.values(bd).reduce((a, b) => a + b, 0) || 1;
-          let offset = 0; const circ = 2 * Math.PI * 30;
+          // Donut (Safe-guarded)
           const svg = document.getElementById('donutSvg');
           const legend = document.getElementById('donutLegend');
-
-          svg.innerHTML = '<circle cx="40" cy="40" r="30" fill="none" stroke="var(--border-col)" stroke-width="12"/>';
-          legend.innerHTML = '';
-          Object.entries(bd).forEach(([st, cnt]) => {
-            const pct = cnt / total; const dash = pct * circ;
-            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', '40'); circle.setAttribute('cy', '40'); circle.setAttribute('r', '30');
-            circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', colors[st] || '#e5e7eb');
-            circle.setAttribute('stroke-width', '12');
-            circle.setAttribute('stroke-dasharray', `${dash} ${circ}`);
-            circle.setAttribute('stroke-dashoffset', `${-offset}`);
-            svg.appendChild(circle);
-            offset += dash;
-            legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${colors[st] || '#e5e7eb'}"></div>${st}: <strong>${cnt}</strong></div>`;
-          });
+          if (svg && legend) {
+            const bd = s.breakdown || {};
+            const colors = { pending: '#f59e0b', progress: '#3b82f6', done: '#F5A623', cancelled: '#9ca3af' };
+            const total = Object.values(bd).reduce((a, b) => a + b, 0) || 1;
+            let offset = 0; const circ = 2 * Math.PI * 30;
+            svg.innerHTML = '<circle cx="40" cy="40" r="30" fill="none" stroke="var(--border-col)" stroke-width="12"/>';
+            legend.innerHTML = '';
+            Object.entries(bd).forEach(([st, cnt]) => {
+              const pct = cnt / total; const dash = pct * circ;
+              const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              circle.setAttribute('cx', '40'); circle.setAttribute('cy', '40'); circle.setAttribute('r', '30');
+              circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', colors[st] || '#e5e7eb');
+              circle.setAttribute('stroke-width', '12');
+              circle.setAttribute('stroke-dasharray', `${dash} ${circ}`);
+              circle.setAttribute('stroke-dashoffset', `${-offset}`);
+              svg.appendChild(circle);
+              offset += dash;
+              legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${colors[st] || '#e5e7eb'}"></div>${st}: <strong>${cnt}</strong></div>`;
+            });
+          }
 
           // Recent bookings
           const rb = document.getElementById('recentBookings');
@@ -3282,14 +3361,210 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // Re-parent QR overlays into the #app shell so they respect the mobile layout
+  // Re-parent QR and Remittance overlays into the #app shell so they respect the mobile layout
   (function() {
     var appShell = document.getElementById('app');
-    ['qrRequestsSheetOl', 'qrApproveConfirmOl', 'qrRejectConfirmOl'].forEach(function(id) {
+    ['qrRequestsSheetOl', 'qrApproveConfirmOl', 'qrRejectConfirmOl', 'remitSheetOl', 'remitDetailOl'].forEach(function(id) {
       var el = document.getElementById(id);
       if (appShell && el) appShell.appendChild(el);
     });
   })();
+
+  // ── Remittance Section (UI Only) ─────────────────────────────────────────
+  let remitFilter = 'all';
+  
+  const mockRemittances = [
+    { id: 1, provider_name: 'Jana Marasigan', service_type: 'House Cleaner', provider_email: 'jana@homeease.ph', provider_phone: '09171234567', amount_due: 850.00, amount_paid: 0.00, due_date: '2026-06-15', date_remitted: null, reference_no: 'REF-2026-00824', status: 'pending', payment_method: '-' },
+    { id: 2, provider_name: 'Lance Austria', service_type: 'House Cleaner', provider_email: 'lance@homeease.ph', provider_phone: '09187654321', amount_due: 1450.00, amount_paid: 1450.00, due_date: '2026-06-08', date_remitted: '2026-06-08', reference_no: 'REF-2026-00712', status: 'paid', payment_method: 'GCash' },
+    { id: 3, provider_name: 'Mark Santos', service_type: 'Plumber', provider_email: 'mark@homeease.ph', provider_phone: '09192233445', amount_due: 950.00, amount_paid: 0.00, due_date: '2026-05-25', date_remitted: null, reference_no: 'REF-2026-00511', status: 'overdue', payment_method: '-' },
+    { id: 4, provider_name: 'Maria Clara', service_type: 'Helper', provider_email: 'maria@homeease.ph', provider_phone: '09205566778', amount_due: 1200.00, amount_paid: 1200.00, due_date: '2026-06-01', date_remitted: '2026-06-01', reference_no: 'REF-2026-00605', status: 'paid', payment_method: 'Bank Transfer' },
+    { id: 5, provider_name: 'Juan Dela Cruz', service_type: 'Carpenter', provider_email: 'juan@homeease.ph', provider_phone: '09219988776', amount_due: 750.00, amount_paid: 750.00, due_date: '2026-05-18', date_remitted: '2026-05-18', reference_no: 'REF-2026-00410', status: 'paid', payment_method: 'PayMaya' },
+    { id: 6, provider_name: 'Sarah Geronimo', service_type: 'Appliance Technician', provider_email: 'sarah@homeease.ph', provider_phone: '09228887776', amount_due: 1800.00, amount_paid: 0.00, due_date: '2026-06-18', date_remitted: null, reference_no: 'REF-2026-00915', status: 'pending', payment_method: '-' },
+    { id: 7, provider_name: 'Jose Rizal', service_type: 'Laundry', provider_email: 'jose@homeease.ph', provider_phone: '09235554443', amount_due: 850.00, amount_paid: 0.00, due_date: '2026-06-05', date_remitted: null, reference_no: 'REF-2026-00699', status: 'overdue', payment_method: '-' }
+  ];
+
+  function openRemitSheet() {
+    openSheet('remitSheetOl');
+    remitFilter = 'all';
+    document.querySelectorAll('#remitSheetOl .stab').forEach(e => e.classList.remove('on'));
+    document.getElementById('remit-tab-all').classList.add('on');
+    document.getElementById('remitSort').value = 'name_asc';
+    loadAdminRemittances();
+  }
+
+  function setRemitFilter(f) {
+    document.querySelectorAll('#remitSheetOl .stab').forEach(e => e.classList.remove('on'));
+    document.getElementById(`remit-tab-${f}`).classList.add('on');
+    remitFilter = f;
+    loadAdminRemittances();
+  }
+
+  function loadAdminRemittances() {
+    const body = document.getElementById('remitSheetBody');
+    const sortVal = document.getElementById('remitSort').value;
+    
+    // Calculate statistics dynamically
+    const totalReceived = mockRemittances.reduce((s, r) => s + (r.status === 'paid' ? r.amount_paid : 0), 0);
+    const outstanding = mockRemittances.reduce((s, r) => s + (r.status !== 'paid' ? r.amount_due : 0), 0);
+    
+    // This Month (June 2026)
+    const monthReceived = mockRemittances.reduce((s, r) => {
+      if (r.status === 'paid' && r.date_remitted && r.date_remitted.startsWith('2026-06')) {
+        return s + r.amount_paid;
+      }
+      return s;
+    }, 0);
+    
+    // This Week (June 8 to June 14, 2026)
+    const weekReceived = mockRemittances.reduce((s, r) => {
+      if (r.status === 'paid' && r.date_remitted && r.date_remitted >= '2026-06-08' && r.date_remitted <= '2026-06-14') {
+        return s + r.amount_paid;
+      }
+      return s;
+    }, 0);
+
+    document.getElementById('remitStatMonth').textContent = php(monthReceived);
+    document.getElementById('remitStatWeek').textContent = php(weekReceived);
+    document.getElementById('remitStatTotal').textContent = php(totalReceived);
+    document.getElementById('remitStatOutstanding').textContent = php(outstanding);
+
+    // Filter
+    let filtered = mockRemittances;
+    if (remitFilter !== 'all') {
+      filtered = mockRemittances.filter(r => r.status === remitFilter);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortVal === 'name_asc') {
+        return a.provider_name.localeCompare(b.provider_name);
+      } else if (sortVal === 'name_desc') {
+        return b.provider_name.localeCompare(a.provider_name);
+      } else if (sortVal === 'due_desc') {
+        return b.due_date.localeCompare(a.due_date);
+      } else if (sortVal === 'due_asc') {
+        return a.due_date.localeCompare(b.due_date);
+      } else if (sortVal === 'remit_desc') {
+        const dateA = a.date_remitted || '0000-00-00';
+        const dateB = b.date_remitted || '0000-00-00';
+        return dateB.localeCompare(dateA);
+      } else if (sortVal === 'amt_desc') {
+        return b.amount_due - a.amount_due;
+      } else if (sortVal === 'amt_asc') {
+        return a.amount_due - b.amount_due;
+      }
+      return 0;
+    });
+
+    if (!filtered.length) {
+      body.innerHTML = '<div class="empty-state"><i class="bi bi-cash-coin" style="font-size:32px;"></i><p>No remittances found.</p></div>';
+      return;
+    }
+
+    body.innerHTML = filtered.map(r => {
+      const statusClass = r.status === 'paid' ? 'badge-green' : (r.status === 'overdue' ? 'badge-red' : 'badge-amber');
+      const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+      const dateText = r.status === 'paid' ? `Remitted: ${formatDate(r.date_remitted)}` : `Due: ${formatDate(r.due_date)}`;
+      
+      return `
+        <div class="bk-card" onclick='openRemitDetail(${JSON.stringify(r).replace(/'/g, "&apos;")})' style="margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div style="font-size:13px; font-weight:700; color:var(--txt-primary);">${r.provider_name}</div>
+              <div style="font-size:11px; color:var(--txt-muted); margin-top:2px;">${r.service_type} · ${r.reference_no}</div>
+              <div style="font-size:11px; color:var(--txt-muted); margin-top:1px;">${dateText}</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+              <span class="${statusClass}" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;">${statusLabel}</span>
+              <div style="font-size:13px; font-weight:800; color:var(--teal);">${php(r.amount_due)}</div>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:flex-end; margin-top:8px; border-top:1px solid var(--border-col); padding-top:8px;">
+            <span style="font-size:11px; font-weight:700; color:#ea580c; display:flex; align-items:center; gap:3px; cursor:pointer;">
+              View Details <i class="bi bi-chevron-right" style="font-size:10px;"></i>
+            </span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr || dateStr === '-') return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function openRemitDetail(r) {
+    if (typeof r === 'string') r = JSON.parse(r);
+    const modal = document.getElementById('remitDetailOl');
+    const badge = document.getElementById('remitDtlStatusBadge');
+    
+    const statusClass = r.status === 'paid' ? 'badge-green' : (r.status === 'overdue' ? 'badge-red' : 'badge-amber');
+    const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+    
+    badge.className = statusClass;
+    badge.textContent = statusLabel;
+    badge.style.fontSize = '10px';
+    badge.style.padding = '2px 8px';
+    badge.style.borderRadius = '20px';
+
+    const historyMock = [
+      { ref: 'REF-2026-00480', date: '2026-05-15', amt: r.amount_due, status: 'paid' },
+      { ref: 'REF-2026-00350', date: '2026-04-15', amt: r.amount_due, status: 'paid' }
+    ];
+
+    document.getElementById('remitDetailBody').innerHTML = `
+      <div style="background:linear-gradient(135deg, rgba(234,88,12,0.08), rgba(245,166,35,0.04)); border-radius:18px; padding:16px; margin:8px 0 16px; border:1px solid #ffedd5;">
+        <div style="font-size:12px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.3px;">Provider Info</div>
+        <div style="font-size:16px; font-weight:800; color:var(--txt-primary); margin-top:4px;">${r.provider_name}</div>
+        <div style="font-size:12px; color:var(--txt-muted); margin-top:2px;">Specialty: <strong>${r.service_type}</strong></div>
+        <div style="font-size:12px; color:var(--txt-muted); margin-top:1px;">Email: ${r.provider_email}</div>
+        <div style="font-size:12px; color:var(--txt-muted); margin-top:1px;">Phone: ${r.provider_phone}</div>
+      </div>
+      
+      <div class="sec-ttl" style="margin-bottom:8px; font-size:14px;">Payment details</div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="detail-row"><span class="detail-lbl">Reference Number</span><span class="detail-val">${r.reference_no}</span></div>
+        <div class="detail-row"><span class="detail-lbl">Amount Due</span><span class="detail-val" style="color:var(--txt-primary);">${php(r.amount_due)}</span></div>
+        <div class="detail-row"><span class="detail-lbl">Amount Paid</span><span class="detail-val" style="color:var(--teal);">${php(r.amount_paid)}</span></div>
+        <div class="detail-row"><span class="detail-lbl">Due Date</span><span class="detail-val">${formatDate(r.due_date)}</span></div>
+        <div class="detail-row"><span class="detail-lbl">Date Remitted</span><span class="detail-val">${formatDate(r.date_remitted)}</span></div>
+        <div class="detail-row"><span class="detail-lbl">Payment Method</span><span class="detail-val">${r.payment_method}</span></div>
+        <div class="detail-row"><span class="detail-lbl">Payment Period</span><span class="detail-val">Weekly</span></div>
+      </div>
+
+      <div class="sec-ttl" style="margin-bottom:8px; font-size:14px;">Remittance History</div>
+      <div class="card">
+        ${historyMock.map(h => `
+          <div class="detail-row" style="padding:10px 16px;">
+            <div>
+              <div style="font-size:12px; font-weight:700; color:var(--txt-primary);">${h.ref}</div>
+              <div style="font-size:10px; color:var(--txt-muted); margin-top:1px;">Paid on ${formatDate(h.date)}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:12px; font-weight:800; color:var(--txt-primary);">${php(h.amt)}</div>
+              <span class="badge-green" style="font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px;">Paid</span>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    openSheet('remitDetailOl');
+  }
+
+  // Keyboard accessibility: Escape key also closes remittance sheets
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      ['remitSheetOl', 'remitDetailOl'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.classList.contains('on')) {
+          closeSheet(id);
+        }
+      });
+    }
+  });
 
   // Poll on page load and every 2 minutes
   pollQrRequestCount();
