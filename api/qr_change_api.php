@@ -60,10 +60,11 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         $where = $statusFilter !== 'all' ? "WHERE q.status = '" . $conn->real_escape_string($statusFilter) . "'" : '';
         $sql = "SELECT q.id, q.provider_id, q.reason, q.current_qr_path, q.new_qr_path,
                        q.status, q.admin_id, q.admin_remarks, q.submitted_at, q.reviewed_at,
-                       sp.full_name AS provider_name, sp.service_category, sp.contact_number,
+                       sp.full_name AS provider_name, s.name AS service_category, sp.contact_number,
                        sp.qr_gcash, sp.qr_bank
                 FROM qr_change_requests q
                 LEFT JOIN service_providers sp ON sp.provider_id = q.provider_id
+                LEFT JOIN services s ON s.id = sp.service_id
                 $where
                 ORDER BY q.submitted_at DESC
                 LIMIT 200";

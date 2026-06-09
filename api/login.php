@@ -58,7 +58,7 @@ if ($user) {
     }
 }
 
-$stmt2 = $conn->prepare("SELECT provider_id, full_name, email, password, service_category, contact_number, address FROM service_providers WHERE email = ?");
+$stmt2 = $conn->prepare("SELECT sp.provider_id, sp.full_name, sp.email, sp.password, s.name AS service_category, sp.contact_number, sp.address FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.email = ?");
 $stmt2->bind_param("s", $email);
 $stmt2->execute();
 $provider = $stmt2->get_result()->fetch_assoc();

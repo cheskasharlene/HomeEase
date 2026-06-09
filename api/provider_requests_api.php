@@ -25,7 +25,7 @@ ensureBookingRequestsTable($conn);
 
 if ($method === 'GET' && $action === 'live_feed') {
     // Return ALL live pending bookings matching provider's service category
-    $providerStmt = $conn->prepare("SELECT service_category, LOWER(COALESCE(availability_status, 'offline')) AS availability_status FROM service_providers WHERE provider_id = ? LIMIT 1");
+    $providerStmt = $conn->prepare("SELECT s.name AS service_category, LOWER(COALESCE(sp.availability_status, 'offline')) AS availability_status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
     if (!$providerStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error.']);
         exit;
@@ -166,7 +166,7 @@ if ($method === 'GET') {
     $filter = strtolower(trim((string) ($_GET['filter'] ?? 'all')));
 
     // First, get the provider's service category
-    $providerStmt = $conn->prepare("SELECT service_category, LOWER(COALESCE(availability_status, 'offline')) AS availability_status FROM service_providers WHERE provider_id = ? LIMIT 1");
+    $providerStmt = $conn->prepare("SELECT s.name AS service_category, LOWER(COALESCE(sp.availability_status, 'offline')) AS availability_status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
     if (!$providerStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
@@ -257,7 +257,7 @@ if ($method === 'POST' && $action === 'accept_booking') {
         }
 
         // Get provider's service category
-        $provStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+        $provStmt = $conn->prepare("SELECT s.name AS service_category FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
         $provStmt->bind_param('i', $providerId);
         $provStmt->execute();
         $provRow = $provStmt->get_result()->fetch_assoc();
@@ -335,7 +335,7 @@ if ($method === 'POST' && $action === 'accept') {
     $conn->begin_transaction();
     try {
         // Get provider's service category
-        $provStmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1");
+        $provStmt = $conn->prepare("SELECT s.name AS service_category FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
         $provStmt->bind_param('i', $providerId);
         $provStmt->execute();
         $provRow = $provStmt->get_result()->fetch_assoc();

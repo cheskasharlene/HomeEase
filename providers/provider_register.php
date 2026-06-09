@@ -49,14 +49,29 @@ $chk2->close();
 
 $hashed = password_hash($pass, PASSWORD_BCRYPT);
 
+$stmt = $conn->prepare("SELECT id, name FROM services WHERE LOWER(name) = LOWER(?) LIMIT 1");
+if (!$stmt) {
+    respond(false, 'DB error: ' . $conn->error);
+}
+$stmt->bind_param("s", $specialty);
+$stmt->execute();
+$row = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$row) {
+    respond(false, 'Selected specialty is not offered.');
+}
+$service_id = (int) $row['id'];
+$standard_specialty = $row['name'];
+
 $stmt = $conn->prepare(
-    "INSERT INTO service_providers (full_name, email, contact_number, service_category, address, password, availability_status)
+    "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
      VALUES (?, ?, ?, ?, ?, ?, 'offline')"
 );
 if (!$stmt) {
     respond(false, 'DB error: ' . $conn->error);
 }
-$stmt->bind_param("ssssss", $name, $email, $phone, $specialty, $address, $hashed);
+$stmt->bind_param("sssiss", $name, $email, $phone, $service_id, $address, $hashed);
 
 if ($stmt->execute()) {
     $pid = $conn->insert_id;
@@ -65,7 +80,7 @@ if ($stmt->execute()) {
     $_SESSION['provider_email'] = $email;
     $_SESSION['provider_phone'] = $phone;
     $_SESSION['provider_address'] = $address;
-    $_SESSION['provider_specialty'] = $specialty;
+    $_SESSION['provider_specialty'] = $standard_specialty;
 
     respond(true, 'Account created successfully!', [
         'redirect' => 'providers/provider_home.php',

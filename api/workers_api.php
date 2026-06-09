@@ -14,11 +14,12 @@ header('Content-Type: application/json; charset=utf-8');
 $action = $_GET['action'] ?? 'list';
 
 if ($action === 'pros') {
-    $sql = "SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, jobs_done, rating, is_verified, profile_image
-            FROM service_providers
-                        WHERE status = 'active'
-                            AND availability_status = 'online'
-            ORDER BY jobs_done DESC
+    $sql = "SELECT sp.provider_id AS id, sp.full_name AS name, s.name AS specialty, sp.availability_status AS availability, sp.jobs_done, sp.rating, sp.is_verified, sp.profile_image
+            FROM service_providers sp
+            LEFT JOIN services s ON s.id = sp.service_id
+            WHERE sp.status = 'active'
+                AND sp.availability_status = 'online'
+            ORDER BY sp.jobs_done DESC
             LIMIT 6";
 
     $result = $conn->query($sql);
@@ -51,7 +52,7 @@ if ($action === 'list') {
 
     $search = trim($_GET['search'] ?? '');
     $filter = trim($_GET['filter'] ?? 'all');
-    $orderBy = 'jobs_done DESC, name ASC';
+    $orderBy = 't.jobs_done DESC, t.full_name ASC';
 
     $conditions = ["t.status = 'active'"];
     $params = [];
@@ -60,7 +61,7 @@ if ($action === 'list') {
     if ($filter === 'available') {
         $conditions[] = "t.availability_status = 'online'";
     } elseif ($filter !== 'all') {
-        $conditions[] = "(t.service_category = ? OR t.service_category LIKE ?)";
+        $conditions[] = "(s.name = ? OR s.name LIKE ?)";
         $params[] = $filter;
         $params[] = '%' . $filter . '%';
         $types .= 'ss';
@@ -68,7 +69,7 @@ if ($action === 'list') {
 
     if ($search !== '') {
         $like = '%' . $search . '%';
-        $conditions[] = "(t.full_name LIKE ? OR t.service_category LIKE ?)";
+        $conditions[] = "(t.full_name LIKE ? OR s.name LIKE ?)";
         $params[] = $like;
         $params[] = $like;
         $types .= 'ss';
@@ -76,11 +77,13 @@ if ($action === 'list') {
 
     $where = 'WHERE ' . implode(' AND ', $conditions);
 
-    $sql = "SELECT t.provider_id AS id, t.full_name AS name, t.service_category AS role, t.availability_status AS status,
+    $sql = "SELECT t.provider_id AS id, t.full_name AS name, s.name AS role, t.availability_status AS status,
                    t.jobs_done AS jobs, t.contact_number AS phone, t.rating, t.is_verified, t.profile_image,
                    t.valid_id, t.barangay_clearance, t.selfie_verification, t.proof_of_address, t.`tools_&_kits`,
                    t.qr_gcash AS gcash_qr, t.qr_bank AS bank_qr, t.verification_status
-            FROM service_providers t $where ORDER BY $orderBy";
+            FROM service_providers t
+            LEFT JOIN services s ON s.id = t.service_id
+            $where ORDER BY $orderBy";
 
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
@@ -136,9 +139,11 @@ if ($action === 'profile') {
         exit;
     }
 
-    $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, availability_status AS availability, contact_number AS phone, address, profile_image, created_at, rating, jobs_done, status, is_verified,
-                                   valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits`, qr_gcash AS gcash_qr, qr_bank AS bank_qr, verification_status
-                            FROM service_providers WHERE provider_id = ?");
+    $stmt = $conn->prepare("SELECT sp.provider_id AS id, sp.full_name AS name, s.name AS specialty, sp.availability_status AS availability, sp.contact_number AS phone, sp.address, sp.profile_image, sp.created_at, sp.rating, sp.jobs_done, sp.status, sp.is_verified,
+                                   sp.valid_id, sp.barangay_clearance, sp.selfie_verification, sp.proof_of_address, sp.`tools_&_kits`, sp.qr_gcash AS gcash_qr, sp.qr_bank AS bank_qr, sp.verification_status
+                            FROM service_providers sp
+                            LEFT JOIN services s ON s.id = sp.service_id
+                            WHERE sp.provider_id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $provider = $stmt->get_result()->fetch_assoc();

@@ -139,7 +139,7 @@ if ($hasPrice) {
 
 $select .= ', br.details, br.fixed_price, br.provider_id AS request_provider_id';
 $select .= ', sp.provider_id AS provider_id, sp.full_name AS provider_name, sp.contact_number AS provider_phone,';
-$select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, sp.service_category AS provider_service';
+$select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, s.name AS provider_service';
 
 $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'";
 if ($hasProviderId) {
@@ -147,6 +147,7 @@ if ($hasProviderId) {
 } else {
     $join .= ' LEFT JOIN service_providers sp ON sp.provider_id = br.provider_id';
 }
+$join .= ' LEFT JOIN services s ON s.id = sp.service_id';
 
 $where = "b.user_id = ? AND (LOWER(b.status) IN $acceptedStatuses OR br.id IS NOT NULL)";
 $types = 'i';

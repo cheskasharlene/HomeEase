@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications')
         "SELECT 
             sp.provider_id,
             sp.full_name,
-            sp.service_category,
+            s.name AS service_category,
             sp.contact_number,
             sp.email,
             sp.verification_status,
@@ -33,6 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications')
             pd.file_path,
             pd.verified_status
         FROM service_providers sp
+        LEFT JOIN services s ON s.id = sp.service_id
         LEFT JOIN provider_documents pd ON pd.provider_id = sp.provider_id
         WHERE sp.verification_status IN ('submitted', 'partial')
         ORDER BY sp.provider_id DESC

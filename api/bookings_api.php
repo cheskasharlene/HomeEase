@@ -43,7 +43,7 @@ if ($method === 'GET' && $action === 'technicians') {
         $like = "%$specialty%";
         $stmt = $conn->prepare("SELECT DISTINCT sp.provider_id AS id,
                     sp.full_name AS name,
-                    COALESCE(s.name, sp.service_category) AS specialty,
+                    s.name AS specialty,
                     sp.contact_number AS phone,
                     sp.address,
                     sp.availability_status AS availability,
@@ -51,15 +51,14 @@ if ($method === 'GET' && $action === 'technicians') {
                     sp.jobs_done,
                     sp.status
                 FROM service_providers sp
-                LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
-                LEFT JOIN services s ON s.id = sps.service_id
-                WHERE sp.status='active' AND sp.availability_status='online' AND (s.name LIKE ? OR sp.service_category LIKE ?)
+                LEFT JOIN services s ON s.id = sp.service_id
+                WHERE sp.status='active' AND sp.availability_status='online' AND s.name LIKE ?
                 ORDER BY sp.full_name ASC");
-        $stmt->bind_param("ss", $like, $like);
+        $stmt->bind_param("s", $like);
     } else {
         $stmt = $conn->prepare("SELECT DISTINCT sp.provider_id AS id,
                     sp.full_name AS name,
-                    COALESCE(s.name, sp.service_category) AS specialty,
+                    s.name AS specialty,
                     sp.contact_number AS phone,
                     sp.address,
                     sp.availability_status AS availability,
@@ -67,8 +66,7 @@ if ($method === 'GET' && $action === 'technicians') {
                     sp.jobs_done,
                     sp.status
                 FROM service_providers sp
-                LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
-                LEFT JOIN services s ON s.id = sps.service_id
+                LEFT JOIN services s ON s.id = sp.service_id
                 WHERE sp.status='active' AND sp.availability_status='online'
                 ORDER BY sp.full_name ASC");
     }
@@ -145,7 +143,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
 
     $providerJoinExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id)' : 'br.provider_id';
     $select .= ', sp.provider_id AS provider_id, sp.full_name AS provider_name, sp.contact_number AS provider_phone,';
-    $select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, sp.service_category AS provider_service';
+    $select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, s_sp.name AS provider_service';
 
         $serviceJoin = $hasServiceId ? 'LEFT JOIN services sv ON sv.id = b.service_id' : '';
         $sql = "SELECT $select
@@ -153,6 +151,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             $serviceJoin
             LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'
             LEFT JOIN service_providers sp ON sp.provider_id = $providerJoinExpr
+            LEFT JOIN services s_sp ON s_sp.id = sp.service_id
             WHERE b.user_id = ? AND b.id = ?
             LIMIT 1";
 
@@ -505,18 +504,16 @@ if ($method === 'POST' && $action === '') {
                         $providerStmt = $conn->prepare(
                                 "SELECT DISTINCT sp.provider_id AS id,
                                         sp.full_name AS name,
-                                        COALESCE(sv.name, sp.service_category) AS service_category
+                                        sv.name AS service_category
                                  FROM service_providers sp
-                                 LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
-                                 LEFT JOIN services sv ON sv.id = sps.service_id
+                                 LEFT JOIN services sv ON sv.id = sp.service_id
                                  WHERE sp.status = 'active'
                                    AND sp.availability_status = 'online'
-                                   AND (LOWER(COALESCE(sv.name, '')) = LOWER(?) OR LOWER(sp.service_category) LIKE ?)
+                                   AND LOWER(COALESCE(sv.name, '')) = LOWER(?)
                                  ORDER BY sp.rating DESC, sp.jobs_done DESC"
                         );
-            $specialtyLike = '%' . strtolower($service) . '%';
             if ($providerStmt) {
-                $providerStmt->bind_param('ss', $service, $specialtyLike);
+                $providerStmt->bind_param('s', $service);
                 $providerStmt->execute();
                 $providers = $providerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 $providerStmt->close();

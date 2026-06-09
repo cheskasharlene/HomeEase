@@ -120,13 +120,11 @@ try {
 $availableProviders = [];
 try {
     $pRes = $conn->query("SELECT sp.provider_id, sp.full_name,
-                COALESCE(GROUP_CONCAT(DISTINCT s.name ORDER BY s.name SEPARATOR ', '), sp.service_category) AS service_category,
+                s.name AS service_category,
                 sp.availability_status
             FROM service_providers sp
-            LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
-            LEFT JOIN services s ON s.id = sps.service_id
+            LEFT JOIN services s ON s.id = sp.service_id
             WHERE sp.status='active' AND sp.availability_status = 'online'
-            GROUP BY sp.provider_id, sp.full_name, sp.service_category, sp.availability_status
             ORDER BY sp.rating DESC LIMIT 30");
     if ($pRes)
         $availableProviders = $pRes->fetch_all(MYSQLI_ASSOC);
@@ -450,16 +448,14 @@ if ($action && ($action['type'] ?? '') === 'create_booking' && !empty($action['s
     try {
         $providerStmt = $conn->prepare(
             "SELECT DISTINCT sp.provider_id AS id, sp.full_name,
-                            COALESCE(s.name, sp.service_category) AS service_category
+                            s.name AS service_category
              FROM service_providers sp
-             LEFT JOIN service_provider_services sps ON sps.provider_id = sp.provider_id
-             LEFT JOIN services s ON s.id = sps.service_id
+             LEFT JOIN services s ON s.id = sp.service_id
              WHERE sp.status='active' AND sp.availability_status = 'online'
-                 AND (LOWER(COALESCE(s.name, '')) = LOWER(?) OR LOWER(sp.service_category) LIKE ?)
+                 AND LOWER(COALESCE(s.name, '')) = LOWER(?)
              ORDER BY sp.rating DESC"
         );
-        $like = '%' . strtolower($service) . '%';
-        $providerStmt->bind_param('ss', $service, $like);
+        $providerStmt->bind_param('s', $service);
         $providerStmt->execute();
         $matchedProviders = $providerStmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $providerStmt->close();

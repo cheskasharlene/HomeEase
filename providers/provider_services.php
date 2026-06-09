@@ -20,19 +20,18 @@ $serviceBaseFees = [
   'Appliance Technician' => 500
 ];
 
-// Fetch provider's services
-$stmt = $conn->prepare("SELECT service_category FROM service_providers WHERE provider_id = ?");
+// Fetch provider's active service details directly via service_id
+$stmt = $conn->prepare("
+  SELECT s.id, s.name, s.description, s.icon
+  FROM service_providers sp
+  LEFT JOIN services s ON s.id = sp.service_id
+  WHERE sp.provider_id = ?
+");
 $stmt->bind_param('i', $providerId);
 $stmt->execute();
 $result = $stmt->get_result();
-$provider = $result->fetch_assoc();
-$providerServices = $provider ? explode(',', trim($provider['service_category'] ?? '')) : [];
-$providerServices = array_filter(array_map('trim', $providerServices));
+$providerService = $result->fetch_assoc();
 $stmt->close();
-
-// Fetch all available services from database
-$servicesResult = $conn->query("SELECT id, name, description, icon FROM services WHERE active = 1 ORDER BY name ASC");
-$availableServices = $servicesResult ? $servicesResult->fetch_all(MYSQLI_ASSOC) : [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -76,37 +75,34 @@ $availableServices = $servicesResult ? $servicesResult->fetch_all(MYSQLI_ASSOC) 
           </div>
         </div>
 
-        <button class="btn-add" onclick="openAddServiceModal()"><i class="bi bi-plus-lg"></i> Add New Service</button>
+        <div class="svc-card" style="margin: 16px 18px 0; font-size: 12px; color: #8E8E93; line-height: 1.5;">
+          <i class="bi bi-info-circle" style="color: #D4790A; margin-right: 6px; font-size: 14px; vertical-align: -1px;"></i>
+          Under HomeEase policy, each provider is registered for exactly one service specialty. Please contact support if you need to update your registered service category.
+        </div>
 
         <div class="svc-list" id="servicesList">
-          <?php 
-            // Filter to show only services the provider offers
-            $providerOfferedServices = array_filter($availableServices, function($service) use ($providerServices) {
-              return in_array($service['name'], $providerServices, true);
-            });
-          ?>
-          <?php if (empty($providerOfferedServices)): ?>
-            <div style="text-align:center;padding:40px 20px;color:#8E8E93;">
-              <p>You haven't added any services yet.</p>
-              <p style="font-size:12px;margin-top:8px;">Tap "Add New Service" to get started.</p>
+          <?php if (empty($providerService) || empty($providerService['name'])): ?>
+            <div style="text-align: center; padding: 40px 20px; color: #8E8E93;">
+              <p>No active service assigned to your account.</p>
+              <p style="font-size: 12px; margin-top: 8px;">Please contact support to assign a specialty.</p>
             </div>
           <?php else: ?>
-            <?php foreach ($providerOfferedServices as $service): ?>
-              <div class="svc-card" data-service-id="<?= $service['id'] ?>" data-service-name="<?= htmlspecialchars($service['name']) ?>">
-                <div class="svc-top">
-                  <div class="svc-ic"><?= htmlspecialchars($service['icon'] ?? '🔧') ?></div>
-                  <div>
-                    <div class="svc-nm"><?= htmlspecialchars($service['name']) ?></div>
-                    <div class="svc-desc"><?= htmlspecialchars($service['description'] ?? '') ?></div>
-                  </div>
-                  <?php $baseFee = $serviceBaseFees[$service['name']] ?? null; ?>
-                  <div class="svc-price"><?= $baseFee !== null ? '₱' . number_format($baseFee, 0) : 'Pricing set on booking' ?></div>
+            <div class="svc-card" data-service-id="<?= $providerService['id'] ?>" data-service-name="<?= htmlspecialchars($providerService['name']) ?>">
+              <div class="svc-top">
+                <div class="svc-ic"><?= htmlspecialchars($providerService['icon'] ?? '🔧') ?></div>
+                <div>
+                  <div class="svc-nm"><?= htmlspecialchars($providerService['name']) ?></div>
+                  <div class="svc-desc"><?= htmlspecialchars($providerService['description'] ?? '') ?></div>
                 </div>
-                <div class="svc-footer">
-                  <button class="btn-edit" onclick="editService(<?= $service['id'] ?>, '<?= htmlspecialchars($service['name']) ?>')"><i class="bi bi-pencil-fill" style="margin-right:5px;"></i>Edit</button>
+                <?php $baseFee = $serviceBaseFees[$providerService['name']] ?? null; ?>
+                <div class="svc-price"><?= $baseFee !== null ? '₱' . number_format($baseFee, 0) : 'Pricing set on booking' ?></div>
+              </div>
+              <div class="svc-footer">
+                <div class="btn-edit" style="text-align: center; cursor: default; pointer-events: none;">
+                  <i class="bi bi-shield-check" style="margin-right: 5px;"></i> Active Registered Specialty
                 </div>
               </div>
-            <?php endforeach; ?>
+            </div>
           <?php endif; ?>
         </div>
       </div>

@@ -1085,10 +1085,80 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       document.body.classList.remove('modal-open');
     }
 
+    function handleReportEvidenceSelected(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      
+      const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+      if (allowed.indexOf(file.type) === -1) {
+        alert('Only JPG, PNG, or WEBP images are allowed.');
+        input.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File must not exceed 5 MB.');
+        input.value = '';
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('reportEvidencePreview').src = e.target.result;
+        document.getElementById('reportUploadText').textContent = file.name;
+        document.getElementById('reportEvidencePreviewContainer').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearReportEvidence() {
+      document.getElementById('reportEvidenceInput').value = '';
+      document.getElementById('reportEvidencePreview').src = '';
+      document.getElementById('reportUploadText').textContent = 'Upload Photos or Screenshots';
+      document.getElementById('reportEvidencePreviewContainer').style.display = 'none';
+    }
+
     function submitReportForm(event) {
       event.preventDefault();
-      closeReportModal();
-      setTimeout(openReportSuccessModal, 250);
+      const category = document.getElementById('reportType').value;
+      const desc = document.getElementById('reportDesc').value.trim();
+      const bookingId = new URLSearchParams(window.location.search).get('booking_id') || '';
+
+      const submitBtn = document.querySelector('#reportForm button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      const formData = new FormData();
+      formData.append('category', category);
+      formData.append('description', desc);
+      formData.append('booking_id', bookingId);
+
+      const fileInput = document.getElementById('reportEvidenceInput');
+      if (fileInput.files && fileInput.files[0]) {
+        formData.append('evidence', fileInput.files[0]);
+      }
+
+      fetch('../api/submit_report.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        if (data.success) {
+          closeReportModal();
+          setTimeout(openReportSuccessModal, 250);
+          clearReportEvidence();
+        } else {
+          alert(data.message || 'Failed to submit report.');
+        }
+      })
+      .catch(err => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        alert('Network error. Please try again.');
+      });
     }
 
     function openReportSuccessModal() {
@@ -1228,10 +1298,15 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
 
         <div style="margin-bottom: 24px;">
           <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Evidence Upload</label>
-          <div style="border: 1.5px dashed #E6DCCB; border-radius: 12px; padding: 16px; text-align: center; background: #FAF8F5; cursor: pointer;" onclick="toast('Evidence upload is UI placeholder only')">
+          <div style="border: 1.5px dashed #E6DCCB; border-radius: 12px; padding: 16px; text-align: center; background: #FAF8F5; cursor: pointer;" onclick="document.getElementById('reportEvidenceInput').click()">
             <i class="bi bi-cloud-arrow-up-fill" style="font-size: 26px; color: #E8820C; display: block; margin-bottom: 4px;"></i>
-            <span style="font-size: 12px; font-weight: 700; color: #1A1A2E; display: block;">Upload Photos or Screenshots</span>
+            <span id="reportUploadText" style="font-size: 12px; font-weight: 700; color: #1A1A2E; display: block;">Upload Photos or Screenshots</span>
             <span style="font-size: 10px; color: #9E9690; display: block; margin-top: 2px;">Supported formats: JPG, PNG, PDF (Max 5MB)</span>
+            <input type="file" id="reportEvidenceInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleReportEvidenceSelected(this)">
+          </div>
+          <div id="reportEvidencePreviewContainer" style="display:none; margin-top:10px; position:relative;">
+            <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="width:100%; max-height:120px; object-fit:contain; border-radius:10px; border:1px solid #E6DCCB;">
+            <button type="button" onclick="clearReportEvidence()" style="position: absolute; top: 5px; right: 5px; background: rgba(239,68,68,0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i class="bi bi-trash"></i></button>
           </div>
         </div>
 

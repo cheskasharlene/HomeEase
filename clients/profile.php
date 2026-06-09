@@ -1586,8 +1586,39 @@ if ($appBase === '') {
         return;
       }
       
-      closeReportModal();
-      openReportSuccess();
+      const btn = document.getElementById('reportSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const formData = new FormData();
+      formData.append('category', category);
+      formData.append('description', desc);
+      
+      const fileInput = document.getElementById('reportEvidenceInput');
+      if (fileInput.files && fileInput.files[0]) {
+        formData.append('evidence', fileInput.files[0]);
+      }
+
+      fetch('../api/submit_report.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        btn.disabled = false;
+        btn.textContent = 'Submit Report';
+        if (data.success) {
+          closeReportModal();
+          openReportSuccess();
+        } else {
+          alert(data.message || 'Failed to submit report.');
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.textContent = 'Submit Report';
+        alert('Network error. Please try again.');
+      });
     }
 
     function openReportSuccess() {

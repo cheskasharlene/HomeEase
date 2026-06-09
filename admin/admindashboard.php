@@ -2664,95 +2664,53 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       // ── Incident Logs ────────────────────────────────────────────────────────
       let _incFilter = 'all';
-      let _incidents = [
-        {
-          reportId: 'REP-2026-001',
-          bookingId: 'BK-9821',
-          dateReported: '2026-06-05',
-          incidentType: 'Damage to Property',
-          status: 'pending',
-          reporter: {
-            name: 'Sarah Jenkins',
-            contact: '+63 917 123 4567',
-            role: 'Homeowner'
-          },
-          reportedUser: {
-            name: 'Juan dela Cruz',
-            contact: '+63 920 987 6543',
-            role: 'Service Provider'
-          },
-          description: 'The service provider accidentally knocked over a ceramic vase worth ₱5,000 while cleaning the living room. He did not notify me, and I only discovered it after he left.',
-          evidenceName: 'broken_vase_living_room.jpg',
-          notes: ''
-        },
-        {
-          reportId: 'REP-2026-002',
-          bookingId: 'BK-9754',
-          dateReported: '2026-06-06',
-          incidentType: 'Late / No Show',
-          status: 'under investigation',
-          reporter: {
-            name: 'Michael Sy',
-            contact: '+63 918 333 4444',
-            role: 'Homeowner'
-          },
-          reportedUser: {
-            name: 'Maria Santos',
-            contact: '+63 927 555 6666',
-            role: 'Service Provider'
-          },
-          description: 'The provider was scheduled to arrive at 8:00 AM for deep cleaning but has not arrived, and is not responding to calls or messages. This is the second time they have been late.',
-          evidenceName: 'chat_screenshot_no_reply.png',
-          notes: 'Called provider. They claimed there was an emergency family issue but did not inform the client. Awaiting further proof.'
-        },
-        {
-          reportId: 'REP-2026-003',
-          bookingId: 'BK-9612',
-          dateReported: '2026-06-07',
-          incidentType: 'Unprofessional Behavior',
-          status: 'resolved',
-          reporter: {
-            name: 'Pedro Penduko',
-            contact: '+63 908 111 2222',
-            role: 'Service Provider'
-          },
-          reportedUser: {
-            name: 'John Doe',
-            contact: '+63 915 222 3333',
-            role: 'Homeowner'
-          },
-          description: 'The client was extremely rude and demanded extra services that were not included in the booking (cleaning the backyard and garage) and threatened to leave a 1-star review if I refused.',
-          evidenceName: 'unprofessional_demands_chat.png',
-          notes: 'Case resolved. Reviewed chat history. Warned homeowner about platform policies regarding demanding uncontracted services.'
-        },
-        {
-          reportId: 'REP-2026-004',
-          bookingId: 'BK-9588',
-          dateReported: '2026-06-08',
-          incidentType: 'Payment Dispute',
-          status: 'rejected',
-          reporter: {
-            name: 'Emma Watson',
-            contact: '+63 916 444 5555',
-            role: 'Homeowner'
-          },
-          reportedUser: {
-            name: 'Robert Downey',
-            contact: '+63 905 666 7777',
-            role: 'Service Provider'
-          },
-          description: 'Provider demanded cash payment for materials even though the booking contract stated all materials were covered by the base price.',
-          evidenceName: 'materials_receipt.jpg',
-          notes: 'Report rejected. The booking was for carpentry work that explicitly specified client would provide lumber, which the worker had to buy out of pocket because the client did not prepare it.'
-        }
-      ];
+      let _incidents = [];
 
-      function openIncidentLogsSheet() {
+      async function openIncidentLogsSheet() {
         openSheet('incidentSheetOl');
         _incFilter = 'all';
         document.getElementById('incSearch').value = '';
         updateIncFilterTabs();
-        renderIncidents();
+        document.getElementById('incidentSheetBody').innerHTML = '<div class="empty-state"><i class="bi bi-arrow-clockwise" style="animation:w-spin .9s linear infinite; font-size: 24px; display: block; margin-bottom: 8px;"></i><p>Loading incidents...</p></div>';
+        await fetchIncidents();
+      }
+
+      async function fetchIncidents() {
+        try {
+          const data = await api('incidents', 'list');
+          if (data.success) {
+            _incidents = (data.incidents || []).map(row => {
+              return {
+                reportId: row.report_id,
+                bookingId: row.booking_id || 'GENERAL',
+                dateReported: row.created_at ? row.created_at.split(' ')[0] : '–',
+                incidentType: row.category,
+                status: row.status ? row.status.toLowerCase() : 'pending',
+                reporter: {
+                  id: row.reporter_id,
+                  name: row.reporter_name || 'Unknown',
+                  contact: row.reporter_phone || '–',
+                  role: row.reporter_role === 'client' ? 'Homeowner' : 'Service Provider'
+                },
+                reportedUser: {
+                  id: row.reported_user_id || '',
+                  name: row.reported_name || 'None',
+                  contact: row.reported_phone || '–',
+                  role: row.reported_user_role ? (row.reported_user_role === 'client' ? 'Homeowner' : 'Service Provider') : '–'
+                },
+                description: row.description,
+                evidenceName: row.evidence_path ? row.evidence_path.split('/').pop() : '',
+                evidencePath: row.evidence_path || '',
+                notes: row.notes || ''
+              };
+            });
+            renderIncidents();
+          } else {
+            document.getElementById('incidentSheetBody').innerHTML = '<div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Failed to load incidents.</p></div>';
+          }
+        } catch (e) {
+          document.getElementById('incidentSheetBody').innerHTML = '<div class="empty-state"><i class="bi bi-wifi-off"></i><p>Network error.</p></div>';
+        }
       }
 
       function setIncFilter(filter) {
@@ -2886,15 +2844,23 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Incident Description</div>
             <div style="font-size:12.5px;color:var(--txt-primary);line-height:1.55;white-space:pre-line;margin-bottom:12px;">${inc.description}</div>
             
+            ${inc.evidencePath ? `
             <div style="font-size:11px;font-weight:700;color:var(--txt-muted);margin-bottom:6px;">Evidence Attachment</div>
-            <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1.5px dashed var(--border-col);border-radius:12px;padding:12px;cursor:pointer;" onclick="toast('Viewing attachment preview: ${inc.evidenceName}')">
+            <div style="display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1.5px dashed var(--border-col);border-radius:12px;padding:12px;cursor:pointer;" onclick="openImagePreview('../${inc.evidencePath}', 'Evidence — ${inc.reportId}')">
               <i class="bi bi-file-earmark-image-fill" style="font-size:24px;color:#d97706;"></i>
               <div style="flex:1;">
                 <div style="font-size:12px;font-weight:700;color:var(--txt-primary);">${inc.evidenceName}</div>
-                <div style="font-size:10px;color:var(--txt-muted);">1.8 MB · Tap to preview</div>
+                <div style="font-size:10px;color:var(--txt-muted);">Tap to preview</div>
               </div>
               <i class="bi bi-zoom-in" style="font-size:16px;color:var(--txt-muted);"></i>
             </div>
+            ` : `
+            <div style="font-size:11px;font-weight:700;color:var(--txt-muted);margin-bottom:6px;">Evidence Attachment</div>
+            <div style="display:flex;align-items:center;gap:10px;background:var(--bg-screen);border:1.5px dashed var(--border-col);border-radius:12px;padding:12px;color:var(--txt-muted);">
+              <i class="bi bi-file-earmark-x" style="font-size:24px;color:var(--txt-muted);"></i>
+              <div style="font-size:12px;">No evidence uploaded</div>
+            </div>
+            `}
           </div>
 
           ${inc.notes ? `
@@ -2923,20 +2889,32 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               </button>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reporter.name}', '${inc.reporter.role}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reporter.id}', '${inc.reporter.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reporter.name}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
                 Suspend Reporter
               </button>
-              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reportedUser.name}', '${inc.reportedUser.role}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+              ${inc.reportedUser.id ? `
+              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reportedUser.id}', '${inc.reportedUser.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reportedUser.name}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
                 Suspend Suspect
               </button>
+              ` : `
+              <button class="doc-view-btn" disabled style="background:#f8fafc;color:#cbd5e1;box-shadow:none;border:1.5px solid #f1f5f9;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;cursor:not-allowed;">
+                No Suspect
+              </button>
+              `}
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reporter.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reporter.id}', '${inc.reporter.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reporter.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
                 Warn Reporter
               </button>
-              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reportedUser.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
+              ${inc.reportedUser.id ? `
+              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reportedUser.id}', '${inc.reportedUser.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reportedUser.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
                 Warn Suspect
               </button>
+              ` : `
+              <button class="doc-view-btn" disabled style="background:#f8fafc;color:#cbd5e1;box-shadow:none;border:1.5px solid #f1f5f9;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;cursor:not-allowed;">
+                No Suspect
+              </button>
+              `}
             </div>
           </div>
         `;
@@ -2953,52 +2931,103 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         return `<span class="${map[key] || 'badge-gray'}" style="text-transform:capitalize;font-weight:700;padding:3px 8px;border-radius:12px;font-size:10px;display:inline-block;">${key}</span>`;
       }
 
-      function markIncUnderInvestigation(reportId) {
-        const inc = _incidents.find(i => i.reportId === reportId);
-        if (inc) {
-          inc.status = 'under investigation';
-          toast('Incident status set to Under Investigation');
-          renderIncidentDetail(inc);
-          renderIncidents();
+      async function markIncUnderInvestigation(reportId) {
+        try {
+          const res = await api('incidents', 'update_status', fd({ id: reportId, status: 'under investigation' }));
+          if (res.success) {
+            toast('Incident status set to Under Investigation');
+            await fetchIncidents();
+            const inc = _incidents.find(i => i.reportId === reportId);
+            if (inc) renderIncidentDetail(inc);
+          } else {
+            toast(res.message || 'Failed to update status', 'e');
+          }
+        } catch (e) {
+          toast('Network error', 'e');
         }
       }
 
-      function resolveIncCase(reportId) {
-        const inc = _incidents.find(i => i.reportId === reportId);
-        if (inc) {
-          inc.status = 'resolved';
-          toast('Incident case resolved successfully');
-          renderIncidentDetail(inc);
-          renderIncidents();
+      async function resolveIncCase(reportId) {
+        try {
+          const res = await api('incidents', 'update_status', fd({ id: reportId, status: 'resolved' }));
+          if (res.success) {
+            toast('Incident case resolved successfully');
+            await fetchIncidents();
+            const inc = _incidents.find(i => i.reportId === reportId);
+            if (inc) renderIncidentDetail(inc);
+          } else {
+            toast(res.message || 'Failed to resolve case', 'e');
+          }
+        } catch (e) {
+          toast('Network error', 'e');
         }
       }
 
-      function rejectIncReport(reportId) {
-        const inc = _incidents.find(i => i.reportId === reportId);
-        if (inc) {
-          inc.status = 'rejected';
-          toast('Incident report rejected');
-          renderIncidentDetail(inc);
-          renderIncidents();
+      async function rejectIncReport(reportId) {
+        try {
+          const res = await api('incidents', 'update_status', fd({ id: reportId, status: 'rejected' }));
+          if (res.success) {
+            toast('Incident report rejected');
+            await fetchIncidents();
+            const inc = _incidents.find(i => i.reportId === reportId);
+            if (inc) renderIncidentDetail(inc);
+          } else {
+            toast(res.message || 'Failed to reject report', 'e');
+          }
+        } catch (e) {
+          toast('Network error', 'e');
         }
       }
 
-      function suspendIncUser(name, role) {
-        toast(`${role} "${name}" suspended (UI only)`, 'e');
+      async function suspendIncUser(userId, role, name) {
+        if (!confirm2(`Are you sure you want to suspend the ${role === 'client' ? 'Homeowner' : 'Service Provider'} "${name}"?`)) return;
+        try {
+          const res = await api('incidents', 'suspend_user', fd({ reporter_id: userId, role: role }));
+          if (res.success) {
+            toast(`${role === 'client' ? 'Homeowner' : 'Service Provider'} "${name}" suspended successfully`, 's');
+          } else {
+            toast(res.message || 'Failed to suspend user', 'e');
+          }
+        } catch (e) {
+          toast('Network error', 'e');
+        }
       }
 
-      function sendIncWarning(name) {
-        toast(`Warning sent to "${name}" (UI only)`, 's');
+      async function sendIncWarning(userId, role, name) {
+        const msg = prompt(`Enter warning message for ${role === 'client' ? 'Homeowner' : 'Service Provider'} "${name}":`, `This is a warning notification from the admin team regarding a reported incident.`);
+        if (msg === null) return;
+        const cleanMsg = msg.trim();
+        try {
+          const res = await api('incidents', 'warn_user', fd({ reporter_id: userId, role: role, message: cleanMsg }));
+          if (res.success) {
+            toast(`Warning sent to "${name}" successfully`, 's');
+          } else {
+            toast(res.message || 'Failed to send warning', 'e');
+          }
+        } catch (e) {
+          toast('Network error', 'e');
+        }
       }
 
-      function addIncNotes(reportId) {
+      async function addIncNotes(reportId) {
         const inc = _incidents.find(i => i.reportId === reportId);
         if (!inc) return;
         const notes = prompt('Enter investigation notes:', inc.notes);
         if (notes !== null) {
-          inc.notes = notes.trim();
-          toast('Investigation notes updated');
-          renderIncidentDetail(inc);
+          const cleanNotes = notes.trim();
+          try {
+            const res = await api('incidents', 'add_notes', fd({ id: reportId, notes: cleanNotes }));
+            if (res.success) {
+              toast('Investigation notes updated');
+              await fetchIncidents();
+              const newInc = _incidents.find(i => i.reportId === reportId);
+              if (newInc) renderIncidentDetail(newInc);
+            } else {
+              toast(res.message || 'Failed to update notes', 'e');
+            }
+          } catch (e) {
+            toast('Network error', 'e');
+          }
         }
       }
     </script>
@@ -3253,16 +3282,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       .catch(() => {});
   }
 
-  // Image preview reuse
-  function openImagePreview(src, title) {
-    const overlay = document.getElementById('imagePreviewOverlay');
-    const img = document.getElementById('previewImageEl') || document.querySelector('.preview-image');
-    const titleEl = document.getElementById('imagePreviewTitle');
-    if (!overlay) return;
-    if (titleEl) titleEl.textContent = title || 'Image Preview';
-    if (img) { img.src = src; img.style.transform = 'scale(1)'; }
-    overlay.classList.add('active');
-  }
+
 
   // Safe HTML escape
   function qrEsc(str) {

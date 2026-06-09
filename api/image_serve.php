@@ -35,12 +35,16 @@ if ($fullPath === false) {
 // Verify it's within allowed directories
 $allowedBase1 = realpath($baseProjectRoot . 'assets' . DIRECTORY_SEPARATOR . 'images' . DIRECTORY_SEPARATOR . 'registration');
 $allowedBase2 = realpath($baseProjectRoot . 'assets' . DIRECTORY_SEPARATOR . 'uploads' . DIRECTORY_SEPARATOR . 'documents');
+$allowedBase3 = realpath($baseProjectRoot . 'uploads');
 
 $isAllowed = false;
 if ($allowedBase1 && strpos($fullPath, $allowedBase1) === 0) {
     $isAllowed = true;
 }
 if ($allowedBase2 && strpos($fullPath, $allowedBase2) === 0) {
+    $isAllowed = true;
+}
+if ($allowedBase3 && strpos($fullPath, $allowedBase3) === 0) {
     $isAllowed = true;
 }
 

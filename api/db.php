@@ -288,15 +288,7 @@ function ensureNormalizationSchema($conn)
         INDEX idx_booking_details_booking (booking_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    $conn->query("CREATE TABLE IF NOT EXISTS service_provider_services (
-        id BIGINT AUTO_INCREMENT PRIMARY KEY,
-        provider_id INT NOT NULL,
-        service_id INT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY uq_provider_service (provider_id, service_id),
-        INDEX idx_sps_provider (provider_id),
-        INDEX idx_sps_service (service_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // Removed service_provider_services table creation - direct 1-to-many service mapping is used instead
 
     $conn->query("CREATE TABLE IF NOT EXISTS provider_documents (
         id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -345,11 +337,34 @@ function ensureNormalizationSchema($conn)
         SET p.payment_method_id = pm.id
         WHERE p.payment_method_id IS NULL");
 
-    // Seed pivot from existing single-service column.
-    @$conn->query("INSERT IGNORE INTO service_provider_services (provider_id, service_id)
-        SELECT sp.provider_id, s.id
-        FROM service_providers sp
-        JOIN services s ON LOWER(TRIM(s.name)) = LOWER(TRIM(COALESCE(sp.service_category, '')))");
+    // Add service_id column to service_providers if not exists
+    $resSp = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'service_id'");
+    if ($resSp && $resSp->num_rows === 0) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN service_id INT NULL AFTER contact_number");
+        $conn->query("ALTER TABLE service_providers ADD INDEX idx_sp_service_id (service_id)");
+        // Add foreign key constraint if it doesn't exist
+        $conn->query("ALTER TABLE service_providers ADD CONSTRAINT fk_sp_service_id FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL");
+    }
+
+    // Standardize existing service_category text if the column still exists, and migrate data to service_id
+    $resCat = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'service_category'");
+    if ($resCat && $resCat->num_rows > 0) {
+        // Standardize text values
+        @$conn->query("UPDATE service_providers SET service_category = 'Plumber' WHERE LOWER(TRIM(service_category)) = 'plumbing'");
+        @$conn->query("UPDATE service_providers SET service_category = 'House Cleaner' WHERE LOWER(TRIM(service_category)) IN ('cleaner', 'cleaning')");
+        
+        // Backfill service_id based on service_category text matching
+        @$conn->query("UPDATE service_providers sp
+            JOIN services s ON LOWER(TRIM(s.name)) = LOWER(TRIM(COALESCE(sp.service_category, '')))
+            SET sp.service_id = s.id
+            WHERE sp.service_id IS NULL");
+            
+        // Drop the redundant service_category text column
+        @$conn->query("ALTER TABLE service_providers DROP COLUMN service_category");
+    }
+
+    // Drop the junction table service_provider_services
+    @$conn->query("DROP TABLE IF EXISTS service_provider_services");
 }
 
 function ensureBookingStatusLogsTable($conn)

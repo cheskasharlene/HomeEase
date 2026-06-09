@@ -114,7 +114,11 @@ if ($section === 'users') {
             $where .= " AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)";
             $params = [$like, $like, $like]; $types = 'sss';
         }
-        $stmt = $conn->prepare("SELECT id, name, email, phone, address, role,
+        $colRes = $conn->query("SHOW COLUMNS FROM users LIKE 'disabled'");
+        $hasDisabled = $colRes && $colRes->num_rows > 0;
+        $disabledSelect = $hasDisabled ? ", disabled" : ", 0 AS disabled";
+
+        $stmt = $conn->prepare("SELECT id, name, email, phone, address, role $disabledSelect,
             (SELECT COUNT(*) FROM bookings WHERE user_id=users.id) AS booking_count,
             (SELECT COUNT(*) FROM bookings WHERE user_id=users.id AND status='done') AS done_count,
             (CASE WHEN EXISTS(SELECT 1 FROM users u2 WHERE u2.id=users.id AND u2.password IS NOT NULL) THEN 1 ELSE 0 END) AS active
@@ -125,14 +129,11 @@ if ($section === 'users') {
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
 
-        $colRes = $conn->query("SHOW COLUMNS FROM users LIKE 'disabled'");
-        $hasDisabled = $colRes && $colRes->num_rows > 0;
-
         foreach ($rows as &$row) {
             $row['id'] = (int)$row['id'];
             $row['booking_count'] = (int)$row['booking_count'];
             $row['done_count'] = (int)$row['done_count'];
-            $row['disabled'] = $hasDisabled ? (bool)($row['disabled'] ?? false) : false;
+            $row['disabled'] = (bool)($row['disabled'] ?? false);
         }
         respond(true, '', ['users' => $rows]);
     }
@@ -178,24 +179,24 @@ if ($section === 'workers') {
         
         if ($search) {
             $like = "%$search%";
-            $where[] = "(full_name LIKE ? OR service_category LIKE ?)";
+            $where[] = "(sp.full_name LIKE ? OR s.name LIKE ?)";
             $params = [$like, $like]; $types = 'ss';
         }
         if ($filter === 'low_rated') {
-            $where[] = "(rating > 0 AND rating < 3.0)";
+            $where[] = "(sp.rating > 0 AND sp.rating < 3.0)";
         }
 
         if ($verificationFilter === 'pending') {
             // Show workers with verification_status = 'pending' or 'submitted'
             // These are applications waiting for admin review
-            $where[] = "(verification_status = 'pending' OR verification_status = 'submitted' OR verification_status = 'pending_review' OR COALESCE(valid_id,'') <> '')";
+            $where[] = "(sp.verification_status = 'pending' OR sp.verification_status = 'submitted' OR sp.verification_status = 'pending_review' OR COALESCE(sp.valid_id,'') <> '')";
         }
         
         $whereClause = count($where) ? "WHERE " . implode(" AND ", $where) : "";
         $verificationSelect = $hasVerificationStatus
-            ? "CASE WHEN verification_status='pending_review' THEN 'pending' WHEN verification_status IS NULL OR verification_status='' THEN CASE WHEN is_verified=1 THEN 'verified' ELSE 'pending' END ELSE verification_status END AS verification_status"
-            : "CASE WHEN is_verified=1 THEN 'verified' ELSE 'pending' END AS verification_status";
-        $stmt = $conn->prepare("SELECT provider_id AS id, full_name AS name, service_category AS specialty, contact_number AS phone, availability_status AS availability, status, rating, jobs_done, is_verified, $verificationSelect, valid_id, selfie_verification, proof_of_address, barangay_clearance, `tools_&_kits` FROM service_providers $whereClause ORDER BY provider_id DESC");
+            ? "CASE WHEN sp.verification_status='pending_review' THEN 'pending' WHEN sp.verification_status IS NULL OR sp.verification_status='' THEN CASE WHEN sp.is_verified=1 THEN 'verified' ELSE 'pending' END ELSE sp.verification_status END AS verification_status"
+            : "CASE WHEN sp.is_verified=1 THEN 'verified' ELSE 'pending' END AS verification_status";
+        $stmt = $conn->prepare("SELECT sp.provider_id AS id, sp.full_name AS name, s.name AS specialty, sp.contact_number AS phone, sp.availability_status AS availability, sp.status, sp.rating, sp.jobs_done, sp.is_verified, $verificationSelect, sp.valid_id, sp.selfie_verification, sp.proof_of_address, sp.barangay_clearance, sp.`tools_&_kits` FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id $whereClause ORDER BY sp.provider_id DESC");
         
         if (!$stmt) respond(false, $conn->error);
         if ($params) $stmt->bind_param($types, ...$params);
@@ -223,8 +224,9 @@ if ($section === 'workers') {
 
         if (!$id) respond(false, 'Worker ID required.');
         
-        $stmt = $conn->prepare("UPDATE service_providers SET full_name=?, service_category=?, contact_number=?, availability_status=?, status=?, rating=?, jobs_done=? WHERE provider_id=?");
-        $stmt->bind_param("sssssdii", $name, $specialty, $phone, $availability, $status, $rating, $jobs_done, $id);
+        $serviceId = resolveServiceIdByName($conn, $specialty);
+        $stmt = $conn->prepare("UPDATE service_providers SET full_name=?, service_id=?, contact_number=?, availability_status=?, status=?, rating=?, jobs_done=? WHERE provider_id=?");
+        $stmt->bind_param("sisssdii", $name, $serviceId, $phone, $availability, $status, $rating, $jobs_done, $id);
         $stmt->execute(); 
         $ok = $stmt->affected_rows >= 0; 
         $stmt->close();
@@ -431,11 +433,12 @@ if ($section === 'bookings') {
                        b.notes, b.provider_id, b.created_at,
                        u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
                        t.full_name AS technician_name, t.contact_number AS tech_phone,
-                       t.service_category AS tech_specialty, t.rating AS tech_rating
+                       st.name AS tech_specialty, t.rating AS tech_rating
                 FROM bookings b
                 LEFT JOIN users u ON b.user_id = u.id
             LEFT JOIN services s ON s.id = b.service_id
                 LEFT JOIN service_providers t ON b.provider_id = t.provider_id
+                LEFT JOIN services st ON st.id = t.service_id
                 $whereClause
                 ORDER BY b.created_at DESC LIMIT 200";
 
@@ -480,7 +483,7 @@ if ($section === 'bookings') {
         $conn->query("UPDATE booking_requests SET status='closed' WHERE booking_id=$bookingId AND provider_id<>$workerId AND status='pending'");
 
         // Fetch worker name for response
-        $r = $conn->query("SELECT full_name AS name, contact_number AS phone, service_category AS specialty, rating FROM service_providers WHERE provider_id=$workerId");
+        $r = $conn->query("SELECT sp.full_name AS name, sp.contact_number AS phone, s.name AS specialty, sp.rating FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id=$workerId");
         $worker = $r ? $r->fetch_assoc() : null;
         respond($ok, $ok ? 'Worker assigned.' : 'Failed.', ['worker' => $worker]);
     }
@@ -585,9 +588,10 @@ if ($section === 'admin_notifications') {
 
     if ($method === 'GET' && $action === 'list') {
         $rows = $conn->query("
-            SELECT an.*, sp.full_name AS provider_name, sp.service_category, sp.is_verified
+            SELECT an.*, sp.full_name AS provider_name, s.name AS service_category, sp.is_verified
             FROM admin_notifications an
             LEFT JOIN service_providers sp ON an.reference_id = sp.provider_id AND an.type = 'verification'
+            LEFT JOIN services s ON s.id = sp.service_id
             ORDER BY an.created_at DESC
             LIMIT 50
         ");
@@ -623,6 +627,154 @@ if ($section === 'admin_notifications') {
         }
         respond(false, 'Invalid ID.');
     }
+}
+
+if ($section === 'incidents') {
+    if ($method === 'GET' && $action === 'list') {
+        $sql = "SELECT 
+                    ir.report_id, 
+                    ir.booking_id, 
+                    ir.reporter_id, 
+                    ir.reporter_role, 
+                    ir.reported_user_id, 
+                    ir.reported_user_role, 
+                    ir.category, 
+                    ir.description, 
+                    ir.evidence_path, 
+                    ir.status, 
+                    ir.notes,
+                    ir.created_at, 
+                    ir.updated_at,
+                    
+                    CASE 
+                        WHEN ir.reporter_role = 'client' THEN uc.name 
+                        WHEN ir.reporter_role = 'provider' THEN spc.full_name 
+                        ELSE 'Unknown' 
+                    END AS reporter_name,
+                    CASE 
+                        WHEN ir.reporter_role = 'client' THEN uc.phone 
+                        WHEN ir.reporter_role = 'provider' THEN spc.contact_number 
+                        ELSE '' 
+                    END AS reporter_phone,
+                    
+                    CASE 
+                        WHEN ir.reported_user_role = 'client' THEN ud.name 
+                        WHEN ir.reported_user_role = 'provider' THEN spd.full_name 
+                        ELSE '' 
+                    END AS reported_name,
+                    CASE 
+                        WHEN ir.reported_user_role = 'client' THEN ud.phone 
+                        WHEN ir.reported_user_role = 'provider' THEN spd.contact_number 
+                        ELSE '' 
+                    END AS reported_phone
+                FROM incident_reports ir
+                LEFT JOIN users uc ON ir.reporter_id = uc.id AND ir.reporter_role = 'client'
+                LEFT JOIN service_providers spc ON ir.reporter_id = spc.provider_id AND ir.reporter_role = 'provider'
+                LEFT JOIN users ud ON ir.reported_user_id = ud.id AND ir.reported_user_role = 'client'
+                LEFT JOIN service_providers spd ON ir.reported_user_id = spd.provider_id AND ir.reported_user_role = 'provider'
+                ORDER BY ir.created_at DESC";
+        $res = $conn->query($sql);
+        if (!$res) respond(false, 'Database error: ' . $conn->error);
+        $rows = $res->fetch_all(MYSQLI_ASSOC);
+        respond(true, '', ['incidents' => $rows]);
+    }
+
+    if ($method === 'POST' && $action === 'update_status') {
+        $id = trim($_POST['id'] ?? '');
+        $status = trim($_POST['status'] ?? '');
+        if ($id === '' || $status === '') respond(false, 'Report ID and status are required.');
+        
+        $status_mapping = [
+            'pending' => 'Pending',
+            'under investigation' => 'Under Investigation',
+            'resolved' => 'Resolved',
+            'rejected' => 'Rejected'
+        ];
+        $norm_status = $status_mapping[strtolower($status)] ?? $status;
+
+        $stmt = $conn->prepare("UPDATE incident_reports SET status = ? WHERE report_id = ?");
+        if (!$stmt) respond(false, 'Database error: ' . $conn->error);
+        $stmt->bind_param("ss", $norm_status, $id);
+        if ($stmt->execute()) {
+            respond(true, 'Incident status updated to ' . $norm_status);
+        }
+        respond(false, 'Failed to update incident status.');
+    }
+
+    if ($method === 'POST' && $action === 'add_notes') {
+        $id = trim($_POST['id'] ?? '');
+        $notes = trim($_POST['notes'] ?? '');
+        if ($id === '') respond(false, 'Report ID is required.');
+
+        $stmt = $conn->prepare("UPDATE incident_reports SET notes = ? WHERE report_id = ?");
+        if (!$stmt) respond(false, 'Database error: ' . $conn->error);
+        $stmt->bind_param("ss", $notes, $id);
+        if ($stmt->execute()) {
+            respond(true, 'Investigation notes updated.');
+        }
+        respond(false, 'Failed to update notes.');
+    }
+
+    if ($method === 'POST' && $action === 'suspend_user') {
+        $reporter_id = (int)($_POST['reporter_id'] ?? 0);
+        $role = trim($_POST['role'] ?? '');
+        if (!$reporter_id || !$role) respond(false, 'User ID and role are required.');
+
+        if ($role === 'client' || $role === 'homeowner') {
+            $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS disabled TINYINT(1) NOT NULL DEFAULT 0");
+            $stmt = $conn->prepare("UPDATE users SET disabled = 1 WHERE id = ? AND role != 'admin'");
+            $stmt->bind_param("i", $reporter_id);
+            if ($stmt->execute()) {
+                respond(true, 'Client suspended successfully.');
+            }
+        } else if ($role === 'provider' || $role === 'service provider') {
+            $stmt = $conn->prepare("UPDATE service_providers SET status = 'inactive' WHERE provider_id = ?");
+            $stmt->bind_param("i", $reporter_id);
+            if ($stmt->execute()) {
+                respond(true, 'Service Provider suspended successfully.');
+            }
+        }
+        respond(false, 'Failed to suspend user.');
+    }
+
+    if ($method === 'POST' && $action === 'warn_user') {
+        $reporter_id = (int)($_POST['reporter_id'] ?? 0);
+        $role = trim($_POST['role'] ?? '');
+        $message = trim($_POST['message'] ?? 'This is a warning notification from the admin team regarding a reported incident.');
+        if (!$reporter_id || !$role) respond(false, 'User ID and role are required.');
+
+        if ($role === 'client' || $role === 'homeowner') {
+            $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Admin Warning', ?, 'exclamation-triangle', 0, NOW())");
+            $stmt->bind_param("is", $reporter_id, $message);
+            if ($stmt->execute()) {
+                respond(true, 'Warning notification sent to Client.');
+            }
+        } else if ($role === 'provider' || $role === 'service provider') {
+            ensureProviderNotificationsTable($conn);
+            $stmt = $conn->prepare("INSERT INTO provider_notifications (provider_id, title, message, icon, is_read, created_at) VALUES (?, 'Admin Warning', ?, 'exclamation-triangle', 0, NOW())");
+            $stmt->bind_param("is", $reporter_id, $message);
+            if ($stmt->execute()) {
+                respond(true, 'Warning notification sent to Service Provider.');
+            }
+        }
+        respond(false, 'Failed to send warning.');
+    }
+}
+
+function ensureProviderNotificationsTable($conn)
+{
+    $sql = "CREATE TABLE IF NOT EXISTS provider_notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        provider_id INT NOT NULL,
+        title VARCHAR(120) NOT NULL,
+        message TEXT,
+        icon VARCHAR(32) DEFAULT NULL,
+        is_read TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_provider_read (provider_id, is_read),
+        INDEX idx_provider_created (provider_id, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($sql);
 }
 
 respond(false, 'Unknown request.');

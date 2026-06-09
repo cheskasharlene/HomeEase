@@ -122,7 +122,13 @@ function providerIncomingRequests(mysqli $conn, int $providerId, int $limit = 2)
     return [];
   }
 
-  $provStmt = $conn->prepare('SELECT service_category FROM service_providers WHERE provider_id = ? LIMIT 1');
+  $provStmt = $conn->prepare('
+    SELECT s.name AS service_category
+    FROM service_providers sp
+    LEFT JOIN services s ON s.id = sp.service_id
+    WHERE sp.provider_id = ?
+    LIMIT 1
+  ');
   if (!$provStmt) {
     return [];
   }
