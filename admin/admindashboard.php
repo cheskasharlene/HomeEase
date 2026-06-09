@@ -1684,25 +1684,17 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           ${notesHtml}
 
           <div style="margin-top:16px;">
-            <div class="fl" style="margin-bottom:8px;">Update Status</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              ${['pending', 'progress', 'done', 'cancelled'].map(s => `
-              <button onclick="updateBkStatus(${b.id},'${s}')" style="padding:7px 13px;border-radius:20px;border:2px solid;cursor:pointer;font-size:11px;font-weight:700;
-                background:${b.status === s ? 'var(--teal)' : 'transparent'};
-                color:${b.status === s ? '#fff' : 'var(--txt-muted)'};
-                border-color:${b.status === s ? 'var(--teal)' : 'var(--border-col)'};">${s}</button>`).join('')}
+            <div class="fl" style="margin-bottom:8px;">Status</div>
+            <div style="display:inline-block;">
+              ${statusPill(b.status)}
             </div>
           </div>
 
           <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
-            <button class="btn-p" onclick="openWorkerPicker(${b.id},'${b.technician_name ? 'reassign' : 'assign'}')">
-              <i class="bi bi-person-check-fill"></i> ${b.technician_name ? 'Reassign Worker' : 'Assign Worker'}
-            </button>
-            ${b.status !== 'cancelled' && b.status !== 'done' ? `
-            <button onclick="cancelBk(${b.id})" style="padding:11px;border-radius:14px;border:2px solid #f59e0b;background:#fff8f0;color:#d97706;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;">
-              <i class="bi bi-x-circle-fill"></i> Cancel Booking
+            ${!b.technician_name ? `
+            <button class="btn-p" onclick="openWorkerPicker(${b.id},'assign')">
+              <i class="bi bi-person-check-fill"></i> Assign Worker
             </button>` : ''}
-            <button class="btn-danger" onclick="deleteBk(${b.id})"><i class="bi bi-trash-fill"></i> Delete Booking</button>
           </div>
         </div>`;
         openSheet('bkDetailOl');
