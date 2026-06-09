@@ -86,20 +86,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         </div>
 
      
-        <div class="p-stats">
-          <div class="p-stat">
-            <div class="p-stat-val">24</div>
-            <div class="p-stat-lbl">Jobs Done</div>
-          </div>
-          <div class="p-stat">
-            <div class="p-stat-val">4.9</div>
-            <div class="p-stat-lbl">Rating</div>
-          </div>
-          <div class="p-stat">
-            <div class="p-stat-val">6</div>
-            <div class="p-stat-lbl">Yrs Exp.</div>
-          </div>
-        </div>
+
 
         <div class="p-body">
         
@@ -123,19 +110,8 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
                     stroke="#F5A623" stroke-width="2" />
                 </svg></div>
               <div class="p-row-info">
-                <div class="p-row-lbl">Service Area</div>
-                <div class="p-row-sub" id="profileServiceAreaValue"><?= $address ?></div>
-              </div>
-              <i class="bi bi-chevron-right p-row-arrow"></i>
-            </div>
-            <div class="p-row actionable" onclick="openActionSheet('working-hours')">
-              <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="#F5A623" stroke-width="2" />
-                  <path d="M12 6v6l4 2" stroke="#F5A623" stroke-width="2" stroke-linecap="round" />
-                </svg></div>
-              <div class="p-row-info">
-                <div class="p-row-lbl">Working Hours</div>
-                <div class="p-row-sub" id="profileWorkingHoursValue">Mon-Sat, 8:00 AM - 6:00 PM</div>
+                <div class="p-row-lbl">Address</div>
+                <div class="p-row-sub" id="profileAddressValue"><?= $address ?></div>
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
@@ -239,20 +215,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           </div>
           <?php endif; ?>
         </div>
-        
-        <?php if ($isVerified): ?>
-        <div class="st-sec">
-          <div class="st-sec-ttl">Notifications</div>
-          <div class="st-row">
-            <div class="st-ic orange"><i class="bi bi-bell-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">New Job Requests</div>
-              <div class="st-row-sub">Get notified of new requests</div>
-            </div>
-            <div class="st-toggle on" onclick="this.classList.toggle('on')"></div>
-          </div>
-        </div>
-        <?php endif; ?>
+
 
         <div class="st-sec">
           <div class="st-sec-ttl">Support</div>
@@ -688,21 +651,8 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           <div class="sheet-section" id="sheetServiceArea">
             <div class="edit-modal-form">
               <div class="edit-fg">
-                <label class="edit-flbl">Service Area</label>
-                <input class="edit-fin" id="sheetServiceAreaInput" type="text" placeholder="Enter service area">
-              </div>
-            </div>
-          </div>
-
-          <div class="sheet-section" id="sheetWorkingHours">
-            <div class="edit-modal-form sheet-time-grid">
-              <div class="edit-fg">
-                <label class="edit-flbl">Start Time</label>
-                <input class="edit-fin" id="sheetStartTime" type="time" value="08:00">
-              </div>
-              <div class="edit-fg">
-                <label class="edit-flbl">End Time</label>
-                <input class="edit-fin" id="sheetEndTime" type="time" value="18:00">
+                <label class="edit-flbl">Address</label>
+                <input class="edit-fin" id="sheetServiceAreaInput" type="text" placeholder="Enter address">
               </div>
             </div>
           </div>
@@ -797,18 +747,21 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <label class="report-lbl" for="reportDescription">Description</label>
             <textarea class="report-textarea" id="reportDescription" placeholder="Provide detailed information about the issue..."></textarea>
           </div>
-          
-          <div class="report-fg">
+                  <div class="report-fg">
             <label class="report-lbl">Evidence (Optional)</label>
             <div class="report-upload-area" onclick="triggerReportEvidencePicker()">
-              <i class="bi bi-cloud-arrow-up report-upload-icon"></i>
-              <span class="report-upload-text" id="reportUploadText">Upload image or screenshot</span>
-              <span class="report-upload-subtext">JPEG, PNG, WEBP up to 5MB</span>
+              <div id="reportUploadDefault" style="display:flex; flex-direction:column; align-items:center;">
+                <i class="bi bi-cloud-arrow-up report-upload-icon"></i>
+                <span class="report-upload-text" id="reportUploadText">Upload image or screenshot</span>
+                <span class="report-upload-subtext">JPEG, PNG, WEBP up to 5MB</span>
+              </div>
+              <div id="reportUploadChip" style="display:none; align-items:center; gap:8px; background:#fff; border:1px solid var(--border-col); padding:6px 12px; border-radius:20px; max-width:90%; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin: 4px 0;">
+                <i class="bi bi-paperclip" style="color:var(--teal,#e8820c); font-size:14px;"></i>
+                <span id="reportUploadFileName" style="font-size:12px; font-weight:700; color:var(--txt-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:180px;"></span>
+                <button type="button" onclick="event.stopPropagation(); clearReportEvidence()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; padding:0; display:flex; align-items:center;"><i class="bi bi-trash3-fill"></i></button>
+              </div>
               <input type="file" id="reportEvidenceInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleReportEvidenceSelected(this)">
-            </div>
-            <div id="reportEvidencePreviewContainer" style="display:none; margin-top:10px; position:relative;">
-              <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="width:100%; max-height:120px; object-fit:contain; border-radius:10px; border:1px solid var(--border-col);">
-              <button class="report-preview-remove" onclick="clearReportEvidence()"><i class="bi bi-trash3-fill"></i></button>
+              <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="display:none;">
             </div>
           </div>
         </div>
@@ -990,15 +943,11 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       return hour12 + ':' + minText + ' ' + suffix;
     }
 
-    function formatWorkingHoursText() {
-      return 'Mon-Sat, ' + to12Hour(providerUiState.workingStart) + ' - ' + to12Hour(providerUiState.workingEnd);
-    }
-
     function getPhoneText() {
       return providerUiState.phone || 'Not set';
     }
 
-    function getServiceAreaText() {
+    function getAddressText() {
       return providerUiState.serviceArea || 'Not set';
     }
 
@@ -1094,8 +1043,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       const nameEl = document.getElementById('profileName');
       const emailEl = document.getElementById('profileEmail');
       const phoneEl = document.getElementById('profilePhoneValue');
-      const areaEl = document.getElementById('profileServiceAreaValue');
-      const hoursEl = document.getElementById('profileWorkingHoursValue');
+      const areaEl = document.getElementById('profileAddressValue');
       const specialtyEl = document.getElementById('profileSpecialty');
       const editSubEl = document.getElementById('settingsEditProfileSub');
       const serviceSubEl = document.getElementById('settingsManageServicesSub');
@@ -1103,10 +1051,9 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       if (nameEl) nameEl.textContent = providerUiState.name || 'Service Provider';
       if (emailEl) emailEl.textContent = providerUiState.email || '';
       if (phoneEl) phoneEl.textContent = getPhoneText();
-      if (areaEl) areaEl.textContent = getServiceAreaText();
-      if (hoursEl) hoursEl.textContent = formatWorkingHoursText();
+      if (areaEl) areaEl.textContent = getAddressText();
       if (specialtyEl) specialtyEl.textContent = providerUiState.services[0] || providerUiState.specialty || 'General Services';
-      if (editSubEl) editSubEl.textContent = (providerUiState.name || 'Name') + ', ' + getPhoneText() + ', ' + getServiceAreaText();
+      if (editSubEl) editSubEl.textContent = (providerUiState.name || 'Name') + ', ' + getPhoneText() + ', ' + getAddressText();
       if (serviceSubEl) serviceSubEl.textContent = getManageServicesSummary();
       if (!providerUiState.avatarUrl || String(providerUiState.avatarUrl).indexOf('ui-avatars.com/api/?name=') !== -1) {
         providerUiState.avatarUrl = getDefaultAvatarUrl();
@@ -1135,10 +1082,6 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       if (action === 'service-area') {
         document.getElementById('sheetServiceAreaInput').value = providerUiState.serviceArea || '';
       }
-      if (action === 'working-hours') {
-        document.getElementById('sheetStartTime').value = providerUiState.workingStart || '08:00';
-        document.getElementById('sheetEndTime').value = providerUiState.workingEnd || '18:00';
-      }
       if (action === 'edit-profile') {
         document.getElementById('sheetProfileName').value = providerUiState.name || '';
         document.getElementById('sheetProfileEmail').value = providerUiState.email || '';
@@ -1158,8 +1101,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     function openActionSheet(action) {
       const configMap = {
         phone: { title: 'Update Phone Number', sub: 'Update your contact number', save: 'Update' },
-        'service-area': { title: 'Edit Service Area', sub: 'Set where you can accept jobs', save: 'Save' },
-        'working-hours': { title: 'Update Working Hours', sub: 'Choose your available time window', save: 'Save' },
+        'service-area': { title: 'Edit Address', sub: 'Update your address', save: 'Save' },
         'edit-profile': { title: 'Edit Profile', sub: 'Update profile information', save: 'Save' },
         'change-password': { title: 'Change Password', sub: 'Set a stronger password', save: 'Save' },
         'manage-services': { title: 'Manage Services', sub: 'Choose services you currently offer', save: 'Save' }
@@ -1176,7 +1118,6 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       const targetByAction = {
         phone: 'sheetPhone',
         'service-area': 'sheetServiceArea',
-        'working-hours': 'sheetWorkingHours',
         'edit-profile': 'sheetEditProfile',
         'change-password': 'sheetChangePassword',
         'manage-services': 'sheetManageServices'
@@ -1205,20 +1146,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       if (activeSheetAction === 'service-area') {
         providerUiState.serviceArea = document.getElementById('sheetServiceAreaInput').value.trim();
       }
-      if (activeSheetAction === 'working-hours') {
-        const start = document.getElementById('sheetStartTime').value;
-        const end = document.getElementById('sheetEndTime').value;
-        if (!start || !end) {
-          setSheetAlert('Please select both start and end time.', 'err');
-          return;
-        }
-        if (start >= end) {
-          setSheetAlert('End time must be later than start time.', 'err');
-          return;
-        }
-        providerUiState.workingStart = start;
-        providerUiState.workingEnd = end;
-      }
+
       if (activeSheetAction === 'edit-profile') {
         providerUiState.name = document.getElementById('sheetProfileName').value.trim();
         providerUiState.email = document.getElementById('sheetProfileEmail').value.trim();
@@ -1296,8 +1224,9 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       const reader = new FileReader();
       reader.onload = function(e) {
         document.getElementById('reportEvidencePreview').src = e.target.result;
-        document.getElementById('reportUploadText').textContent = file.name;
-        document.getElementById('reportEvidencePreviewContainer').style.display = 'block';
+        document.getElementById('reportUploadDefault').style.display = 'none';
+        document.getElementById('reportUploadFileName').textContent = file.name;
+        document.getElementById('reportUploadChip').style.display = 'flex';
       };
       reader.readAsDataURL(file);
     }
@@ -1305,8 +1234,9 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     function clearReportEvidence() {
       document.getElementById('reportEvidenceInput').value = '';
       document.getElementById('reportEvidencePreview').src = '';
-      document.getElementById('reportUploadText').textContent = 'Upload image or screenshot';
-      document.getElementById('reportEvidencePreviewContainer').style.display = 'none';
+      document.getElementById('reportUploadDefault').style.display = 'flex';
+      document.getElementById('reportUploadChip').style.display = 'none';
+      document.getElementById('reportUploadFileName').textContent = '';
     }
 
     function submitReportForm() {

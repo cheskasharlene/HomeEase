@@ -72,17 +72,6 @@ if (!$worker_id) {
                     <img src="${imgSrc}" class="wp-avatar" alt="${p.name}">
                     <div class="wp-name">${p.name} ${isVerified ? '<i class="bi bi-patch-check-fill" style="color:#10b981;font-size:16px;" title="Verified Professional"></i>' : ''}</div>
                     <div class="wp-role">${p.specialty}</div>
-                    
-                    <div class="wp-stats">
-                        <div class="wp-stat-item">
-                            <div class="wp-stat-val">⭐ ${parseFloat(p.rating || 5).toFixed(1)}</div>
-                            <div class="wp-stat-lbl">Rating</div>
-                        </div>
-                        <div class="wp-stat-item">
-                            <div class="wp-stat-val">${p.jobs_done}</div>
-                            <div class="wp-stat-lbl">Jobs Done</div>
-                        </div>
-                    </div>
                 </div>
                 
                 <div class="wp-section">

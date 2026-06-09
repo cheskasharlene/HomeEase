@@ -189,8 +189,7 @@ if (empty($_SESSION['user_id'])) {
             </div>
 
             <div class="ab-card-actions" style="display: flex; gap: 10px; margin-top: 16px;">
-              <button class="ab-btn ab-btn-outline" style="flex: 1;" onclick="goBackToBookings()">Back to bookings</button>
-              <button class="ab-btn" style="flex: 1; background: #ef4444; border: none; color: white;" onclick="cancelBooking()">Cancel Booking</button>
+              <button class="ab-btn" style="width: 100%; background: #ef4444; border: none; color: white;" onclick="cancelBooking()">Cancel Booking</button>
             </div>
           </div>
         </div>

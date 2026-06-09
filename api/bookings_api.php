@@ -344,6 +344,16 @@ if ($method === 'POST' && $action === '') {
         exit;
     }
 
+    // Validation for problem_description on repair services
+    if (in_array($service, ['Plumber', 'Carpenter', 'Appliance Technician'], true)) {
+        $problemDesc = trim($_POST['problem_description'] ?? '');
+        if ($problemDesc === '') {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Problem Description is required for this service.']);
+            exit;
+        }
+    }
+
     $computed = _computeFixedPrice($service, $_POST);
     $price = (float) ($computed['total'] ?? 0);
     if ($price <= 0) {
@@ -947,6 +957,10 @@ function _summarizeSelectedOptions($service, $data)
         $pairs[] = 'Appliance: ' . ((string) ($data['appliance_type'] ?? 'TV'));
         $pairs[] = 'Severity: ' . ((string) ($data['problem_severity'] ?? 'Minor'));
         $pairs[] = 'Urgency: ' . ((string) ($data['urgency_level'] ?? 'Normal'));
+    }
+
+    if (isset($data['problem_description']) && trim((string)$data['problem_description']) !== '') {
+        $pairs[] = 'Problem Description: ' . trim((string)$data['problem_description']);
     }
 
     if (empty($pairs)) {

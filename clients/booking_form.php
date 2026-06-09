@@ -78,11 +78,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
           <div class="fg-row">
             <div class="fg" style="margin-bottom:0;">
-              <label class="fl">Full Name</label>
+              <label class="fl">Full Name <span style="color:#ef4444;">*</span></label>
               <input class="fi" type="text" id="uName" placeholder="Your full name" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
             </div>
             <div class="fg" style="margin-bottom:0;">
-              <label class="fl">Phone Number</label>
+              <label class="fl">Phone Number <span style="color:#ef4444;">*</span></label>
               <input class="fi" type="text" id="uPhone" placeholder="09XXXXXXXXX" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
             </div>
           </div>
@@ -95,7 +95,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         <!-- GPS Location Display Card -->
         <div class="fg" style="margin-bottom:14px;">
-          <label class="fl" style="font-family:'Poppins',sans-serif;font-size:13px;">📍 Service Location</label>
+          <label class="fl" style="font-family:'Poppins',sans-serif;font-size:13px;">📍 Service Location <span style="color:#ef4444;">*</span></label>
           <div id="gpsCard" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:linear-gradient(135deg,#FFF8F0,#FFF3E0);border:1.5px solid #FFE0B2;border-radius:14px;">
             <div id="gpsSpinner" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#E8820C,#F5A623);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <i class="bi bi-arrow-clockwise" style="color:#fff;font-size:15px;animation:spin .8s linear infinite;"></i>
@@ -282,22 +282,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
-        <div
-          style="background:linear-gradient(135deg,#FEF9C3,#FEF3C7); padding:14px; border-radius:14px; text-align:center;">
-          <div style="font-size:20px; font-weight:800; color:#92400E; font-family:'Poppins',sans-serif;" id="tmRating">
-          </div>
-          <div style="font-size:10px; color:#A16207; text-transform:uppercase; font-weight:800; letter-spacing:.3px;">
-            Rating</div>
-        </div>
-        <div
-          style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5); padding:14px; border-radius:14px; text-align:center;">
-          <div style="font-size:20px; font-weight:800; color:#047857; font-family:'Poppins',sans-serif;" id="tmJobs">
-          </div>
-          <div style="font-size:10px; color:#059669; text-transform:uppercase; font-weight:800; letter-spacing:.3px;">
-            Jobs Done</div>
-        </div>
-      </div>
+
 
       <div style="font-size:14px; color:#5E564D; line-height:1.6; margin-bottom:16px;">
         <div style="margin-bottom:8px;"><i class="bi bi-geo-alt-fill" style="color:#C5BEB3; margin-right:6px;"></i>
@@ -362,35 +347,39 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     // Service-specific dynamic fields and pricing rules
     const serviceFields = {
       'House Cleaner': [
-        { name: 'cleaning_type', label: 'House Cleaner Type', type: 'select', options: ['General', 'Deep House Cleaner', 'Move-in/out'] },
-        { name: 'property_type', label: 'Property Type', type: 'select', options: ['Condo/Apartment', 'House'] },
-        { name: 'num_rooms', label: 'Number of Rooms', type: 'number', min: 1, max: 10 },
-        { name: 'num_bathrooms', label: 'Number of Bathrooms', type: 'number', min: 1, max: 5 },
-        { name: 'inclusions_note', label: 'Additional Notes', type: 'text', placeholder: 'e.g., windows, carpets, etc.' }
+        { name: 'cleaning_type', label: 'House Cleaner Type', type: 'select', options: ['General', 'Deep House Cleaner', 'Move-in/out'], required: true },
+        { name: 'property_type', label: 'Property Type', type: 'select', options: ['Condo/Apartment', 'House'], required: true },
+        { name: 'num_rooms', label: 'Number of Rooms', type: 'number', min: 1, max: 10, required: true },
+        { name: 'num_bathrooms', label: 'Number of Bathrooms', type: 'number', min: 1, max: 5, required: true },
+        { name: 'inclusions_note', label: 'Additional Notes', type: 'text', placeholder: 'e.g., windows, carpets, etc.', required: false },
+        { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe any specific instructions, preferences, or details...', required: false }
       ],
       'Helper': [
-        { name: 'helper_tasks', label: 'Tasks Needed', type: 'checkbox-group', options: ['Cooking', 'Childcare', 'General Errands'], defaultChecked: [] },
-        { name: 'helper_hours', label: 'Number of Hours', type: 'number', min: 4, max: 12 }
+        { name: 'helper_tasks', label: 'Tasks Needed', type: 'checkbox-group', options: ['Cooking', 'Childcare', 'General Errands'], defaultChecked: [], required: true },
+        { name: 'helper_hours', label: 'Number of Hours', type: 'number', min: 4, max: 12, required: true },
+        { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the helper tasks or instructions in detail...', required: false }
       ],
       'Laundry Worker': [
-        { name: 'laundry_services', label: 'Services', type: 'checkbox-group', options: ['Wash & Dry', 'Fold', 'Iron'], defaultChecked: ['Wash & Dry'] },
-        { name: 'laundry_kilos', label: 'Laundry Load', type: 'select', options: ['Under 5kg', '5-10kg', 'Over 10kg'] }
+        { name: 'laundry_services', label: 'Services', type: 'checkbox-group', options: ['Wash & Dry', 'Fold', 'Iron'], defaultChecked: ['Wash & Dry'], required: true },
+        { name: 'laundry_kilos', label: 'Laundry Load', type: 'select', options: ['Under 5kg', '5-10kg', 'Over 10kg'], required: true },
+        { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe any special laundry instructions or details...', required: false }
       ],
       'Plumber': [
-        { name: 'issue_type', label: 'Issue Type', type: 'select', options: ['Leak', 'Clog', 'Installation'] },
-        { name: 'issue_location', label: 'Location', type: 'select', options: ['Kitchen', 'Bathroom', 'Outdoor'] },
-        { name: 'urgency', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'] }
+        { name: 'issue_type', label: 'Issue Type', type: 'select', options: ['Leak', 'Clog', 'Installation'], required: true },
+        { name: 'issue_location', label: 'Location', type: 'select', options: ['Kitchen', 'Bathroom', 'Outdoor'], required: true },
+        { name: 'urgency', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'], required: true },
+        { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the plumbing issue in detail...', required: true }
       ],
       'Carpenter': [
-        { name: 'carpentry_task', label: 'Task', type: 'select', options: ['Repairs', 'Installation'] },
-        { name: 'complexity', label: 'Complexity', type: 'select', options: ['Simple', 'Complex'] },
-        { name: 'description', label: 'Description', type: 'textarea', placeholder: 'Describe the woodwork needed...' }
+        { name: 'carpentry_task', label: 'Task', type: 'select', options: ['Repairs', 'Installation'], required: true },
+        { name: 'complexity', label: 'Complexity', type: 'select', options: ['Simple', 'Complex'], required: true },
+        { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the woodwork or carpentry problem in detail...', required: true }
       ],
       'Appliance Technician': [
-        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Ref', 'Washing Machine', 'TV'] },
-        { name: 'problem_severity', label: 'Problem Severity', type: 'select', options: ['Minor', 'Major'] },
-        { name: 'urgency_level', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'] },
-        { name: 'problem_desc', label: 'Problem Description', type: 'textarea', placeholder: 'Describe the issue in detail' }
+        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Ref', 'Washing Machine', 'TV'], required: true },
+        { name: 'problem_severity', label: 'Problem Severity', type: 'select', options: ['Minor', 'Major'], required: true },
+        { name: 'urgency_level', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'], required: true },
+        { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the appliance issue or repair details...', required: true }
       ]
     };
 
@@ -585,10 +574,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }
 
       fieldsContainer.innerHTML = fields.map(field => {
+        const reqStar = field.required ? ' <span style="color:#ef4444;">*</span>' : '';
         if (field.type === 'select') {
           return `
             <div class="fg">
-              <label class="fl">${field.label}</label>
+              <label class="fl">${field.label}${reqStar}</label>
               <select class="fi" id="field_${field.name}">
                 <option value="">Select an option...</option>
                 ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
@@ -598,21 +588,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         } else if (field.type === 'textarea') {
           return `
             <div class="fg">
-              <label class="fl">${field.label}</label>
+              <label class="fl">${field.label}${reqStar}</label>
               <textarea class="fi" id="field_${field.name}" placeholder="${field.placeholder || ''}" rows="3" style="resize: vertical; min-height: 70px;"></textarea>
             </div>
           `;
         } else if (field.type === 'number') {
           return `
             <div class="fg">
-              <label class="fl">${field.label}</label>
+              <label class="fl">${field.label}${reqStar}</label>
               <input class="fi calc-input" id="field_${field.name}" type="number" min="${field.min}" max="${field.max}" value="1">
             </div>
           `;
         } else if (field.type === 'checkbox-group') {
           return `
             <div class="fg">
-              <label class="fl">${field.label}</label>
+              <label class="fl">${field.label}${reqStar}</label>
               <div class="opt-grid">
                 ${field.options.map(opt => {
             const safe = opt.replace(/[^a-zA-Z0-9]/g, '_');
@@ -625,14 +615,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         } else if (field.type === 'file') {
           return `
             <div class="fg">
-              <label class="fl">${field.label}</label>
+              <label class="fl">${field.label}${reqStar}</label>
               <input class="fi" id="field_${field.name}" type="file" accept="${field.accept || ''}">
             </div>
           `;
         } else {
           return `
             <div class="fg">
-              <label class="fl">${field.label}</label>
+              <label class="fl">${field.label}${reqStar}</label>
               <input class="fi calc-input" id="field_${field.name}" type="text" placeholder="${field.placeholder || ''}">
             </div>
           `;
@@ -843,8 +833,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       document.getElementById('tmAv').textContent = t.name[0];
       document.getElementById('tmName').textContent = t.name;
       document.getElementById('tmSpec').textContent = t.specialty;
-      document.getElementById('tmRating').textContent = isRated ? `⭐ ${parseFloat(t.rating).toFixed(1)}` : '-';
-      document.getElementById('tmJobs').textContent = t.jobs_done;
+
       document.getElementById('tmLocation').textContent = t.address || 'Address not available';
       document.getElementById('tmPhone').textContent = t.phone || 'Phone not available';
       document.getElementById('tmAvail').innerHTML = `<span class="avail-dot ${t.availability}"></span> ${t.availability}`;
@@ -929,10 +918,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     function buildConfirmationRows(price) {
       const selections = collectSelections();
       const rows = [{ label: 'Service', value: selectedSvc.name }];
+      const fields = serviceFields[selectedSvc?.name] || [];
 
       Object.keys(selections).forEach(key => {
         const val = selections[key];
-        const label = key.replaceAll('_', ' ');
+        const fieldObj = fields.find(f => f.name === key);
+        const label = fieldObj ? fieldObj.label : key.replaceAll('_', ' ');
         if (Array.isArray(val)) {
           rows.push({ label, value: val.join(', ') || 'None' });
         } else if (String(val).trim() !== '') {
@@ -1123,6 +1114,28 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       if (!uName)  { toast('Full Name is missing in your profile. Please add it first.', 'e'); return; }
       if (!uPhone) { toast('Phone Number is missing in your profile. Please add it first.', 'e'); return; }
+      
+      // Validate dynamic required fields
+      const fields = serviceFields[selectedSvc?.name] || [];
+      for (const field of fields) {
+        if (field.required) {
+          if (field.type === 'checkbox-group') {
+            const checkedCount = document.querySelectorAll(`input[name="field_${field.name}"]:checked`).length;
+            if (checkedCount === 0) {
+              toast(`Please select at least one option for ${field.label}`, 'e');
+              return;
+            }
+          } else {
+            const input = document.getElementById(`field_${field.name}`);
+            if (input && !input.value.trim()) {
+              toast(`Please select or enter a value for ${field.label}`, 'e');
+              input.focus();
+              return;
+            }
+          }
+        }
+      }
+
       if (!paymentMethod) { 
         document.getElementById('paymentError').textContent = 'Please select a payment method';
         toast('Please select a payment method', 'e');

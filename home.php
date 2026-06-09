@@ -168,22 +168,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             </div>
             <div id="proProfileSpecialty" style="font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;margin-top:6px;padding:4px 14px;border-radius:20px;"></div>
             
-            <div style="display:flex;align-items:center;gap:24px;margin-top:24px;width:100%;justify-content:center;">
-              <div style="text-align:center;">
-                <div id="proProfileStars" style="color:#F5A623;font-size:14px;margin-bottom:2px;"></div>
-                <div id="proProfileRating" style="font-family:'Poppins',sans-serif;font-size:20px;font-weight:800;color:var(--td);"></div>
-                <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Rating</div>
-              </div>
-              <div style="width:1px;height:35px;background:var(--border);"></div>
-              <div style="text-align:center;">
-                <div style="color:var(--primary);font-size:14px;margin-bottom:2px;"><i class="bi bi-briefcase-fill"></i></div>
-                <div id="proProfileJobs" style="font-family:'Poppins',sans-serif;font-size:20px;font-weight:800;color:var(--td);"></div>
-                <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Jobs Done</div>
-              </div>
-            </div>
           </div>
           
-          <div style="padding:24px;margin-top:10px;">
+          <div style="padding:24px;margin-top:24px;">
             <button id="proProfileBookBtn" style="width:100%;padding:16px;border:none;border-radius:16px;color:#fff;font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,0.15);">
               Book Now
             </button>
@@ -579,10 +566,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       spec.style.background = sc.light;
       spec.style.color = sc.text;
       
-      // Stats
-      document.getElementById('proProfileStars').innerHTML = Array.from({length:5},(_,i)=>`<i class="bi ${i<Math.floor(stars)?'bi-star-fill':(i<stars?'bi-star-half':'bi-star')}"></i>`).join(' ');
-      document.getElementById('proProfileRating').textContent = stars.toFixed(1);
-      document.getElementById('proProfileJobs').textContent = w.jobs_done;
+
       
       // Book btn
       const btn = document.getElementById('proProfileBookBtn');

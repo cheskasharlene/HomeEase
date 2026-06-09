@@ -1225,14 +1225,18 @@ if ($appBase === '') {
           <div class="report-fg">
             <label class="report-lbl">Evidence (Optional)</label>
             <div class="report-upload-area" onclick="triggerReportEvidencePicker()">
-              <i class="bi bi-cloud-arrow-up report-upload-icon"></i>
-              <span class="report-upload-text" id="reportUploadText">Upload image or screenshot</span>
-              <span class="report-upload-subtext">JPEG, PNG, WEBP up to 5MB</span>
+              <div id="reportUploadDefault" style="display:flex; flex-direction:column; align-items:center;">
+                <i class="bi bi-cloud-arrow-up report-upload-icon"></i>
+                <span class="report-upload-text" id="reportUploadText">Upload image or screenshot</span>
+                <span class="report-upload-subtext">JPEG, PNG, WEBP up to 5MB</span>
+              </div>
+              <div id="reportUploadChip" style="display:none; align-items:center; gap:8px; background:#fff; border:1px solid var(--border-col); padding:6px 12px; border-radius:20px; max-width:90%; box-shadow: 0 2px 6px rgba(0,0,0,0.05); margin: 4px 0;">
+                <i class="bi bi-paperclip" style="color:var(--teal,#e8820c); font-size:14px;"></i>
+                <span id="reportUploadFileName" style="font-size:12px; font-weight:700; color:var(--txt-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:180px;"></span>
+                <button type="button" onclick="event.stopPropagation(); clearReportEvidence()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; padding:0; display:flex; align-items:center;"><i class="bi bi-trash3-fill"></i></button>
+              </div>
               <input type="file" id="reportEvidenceInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleReportEvidenceSelected(this)">
-            </div>
-            <div id="reportEvidencePreviewContainer" style="display:none; margin-top:10px; position:relative;">
-              <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="width:100%; max-height:120px; object-fit:contain; border-radius:10px; border:1px solid var(--border-col);">
-              <button class="report-preview-remove" onclick="clearReportEvidence()"><i class="bi bi-trash3-fill"></i></button>
+              <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="display:none;">
             </div>
           </div>
         </div>
@@ -1561,8 +1565,9 @@ if ($appBase === '') {
       const reader = new FileReader();
       reader.onload = function(e) {
         document.getElementById('reportEvidencePreview').src = e.target.result;
-        document.getElementById('reportUploadText').textContent = file.name;
-        document.getElementById('reportEvidencePreviewContainer').style.display = 'block';
+        document.getElementById('reportUploadDefault').style.display = 'none';
+        document.getElementById('reportUploadFileName').textContent = file.name;
+        document.getElementById('reportUploadChip').style.display = 'flex';
       };
       reader.readAsDataURL(file);
     }
@@ -1570,8 +1575,9 @@ if ($appBase === '') {
     function clearReportEvidence() {
       document.getElementById('reportEvidenceInput').value = '';
       document.getElementById('reportEvidencePreview').src = '';
-      document.getElementById('reportUploadText').textContent = 'Upload image or screenshot';
-      document.getElementById('reportEvidencePreviewContainer').style.display = 'none';
+      document.getElementById('reportUploadDefault').style.display = 'flex';
+      document.getElementById('reportUploadChip').style.display = 'none';
+      document.getElementById('reportUploadFileName').textContent = '';
     }
 
     function submitReportForm() {

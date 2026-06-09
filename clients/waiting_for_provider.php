@@ -1665,8 +1665,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const reader = new FileReader();
       reader.onload = function(e) {
         document.getElementById('reportEvidencePreview').src = e.target.result;
-        document.getElementById('reportUploadText').textContent = file.name;
-        document.getElementById('reportEvidencePreviewContainer').style.display = 'block';
+        document.getElementById('reportUploadDefault').style.display = 'none';
+        document.getElementById('reportUploadFileName').textContent = file.name;
+        document.getElementById('reportUploadChip').style.display = 'flex';
       };
       reader.readAsDataURL(file);
     }
@@ -1674,8 +1675,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     function clearReportEvidence() {
       document.getElementById('reportEvidenceInput').value = '';
       document.getElementById('reportEvidencePreview').src = '';
-      document.getElementById('reportUploadText').textContent = 'Upload Photos or Screenshots';
-      document.getElementById('reportEvidencePreviewContainer').style.display = 'none';
+      document.getElementById('reportUploadDefault').style.display = 'block';
+      document.getElementById('reportUploadChip').style.display = 'none';
+      document.getElementById('reportUploadFileName').textContent = '';
     }
 
     function submitReportForm(event) {
@@ -1785,15 +1787,19 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         <div style="margin-bottom: 24px;">
           <label style="display: block; font-size: 12px; font-weight: 700; color: #1A1A2E; margin-bottom: 6px; font-family: 'Poppins', sans-serif;">Evidence Upload</label>
-          <div style="border: 1.5px dashed #E6DCCB; border-radius: 12px; padding: 16px; text-align: center; background: #FAF8F5; cursor: pointer;" onclick="document.getElementById('reportEvidenceInput').click()">
-            <i class="bi bi-cloud-arrow-up-fill" style="font-size: 26px; color: #E8820C; display: block; margin-bottom: 4px;"></i>
-            <span id="reportUploadText" style="font-size: 12px; font-weight: 700; color: #1A1A2E; display: block;">Upload Photos or Screenshots</span>
-            <span style="font-size: 10px; color: #9E9690; display: block; margin-top: 2px;">Supported formats: JPG, PNG, PDF (Max 5MB)</span>
+          <div style="border: 1.5px dashed #E6DCCB; border-radius: 12px; padding: 16px; text-align: center; background: #FAF8F5; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 84px;" onclick="document.getElementById('reportEvidenceInput').click()">
+            <div id="reportUploadDefault" style="display: block;">
+              <i class="bi bi-cloud-arrow-up-fill" style="font-size: 26px; color: #E8820C; display: block; margin-bottom: 4px;"></i>
+              <span id="reportUploadText" style="font-size: 12px; font-weight: 700; color: #1A1A2E; display: block;">Upload Photos or Screenshots</span>
+              <span style="font-size: 10px; color: #9E9690; display: block; margin-top: 2px;">Supported formats: JPG, PNG, PDF (Max 5MB)</span>
+            </div>
+            <div id="reportUploadChip" style="display:none; align-items:center; gap:8px; background:#fff; border:1px solid #E6DCCB; padding:6px 12px; border-radius:20px; max-width:90%; box-shadow: 0 2px 6px rgba(0,0,0,0.05);">
+              <i class="bi bi-paperclip" style="color:#E8820C; font-size:14px;"></i>
+              <span id="reportUploadFileName" style="font-size:12px; font-weight:700; color:#1A1A2E; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:180px;"></span>
+              <button type="button" onclick="event.stopPropagation(); clearReportEvidence()" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:14px; padding:0; display:flex; align-items:center;"><i class="bi bi-trash"></i></button>
+            </div>
             <input type="file" id="reportEvidenceInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleReportEvidenceSelected(this)">
-          </div>
-          <div id="reportEvidencePreviewContainer" style="display:none; margin-top:10px; position:relative;">
-            <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="width:100%; max-height:120px; object-fit:contain; border-radius:10px; border:1px solid #E6DCCB;">
-            <button type="button" onclick="clearReportEvidence()" style="position: absolute; top: 5px; right: 5px; background: rgba(239,68,68,0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer;"><i class="bi bi-trash"></i></button>
+            <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="display:none;">
           </div>
         </div>
 
