@@ -140,6 +140,19 @@ $stmt->bind_param("ssisissss",
 );
 
 if ($stmt->execute()) {
+    // Insert into admin_notifications
+    $notif_type = 'incident';
+    $notif_title = 'New Incident Report';
+    $truncated_desc = strlen($description) > 100 ? substr($description, 0, 97) . '...' : $description;
+    $notif_message = 'New incident report (' . $report_id . ') submitted under category "' . $category . '": ' . $truncated_desc;
+    
+    $notif_stmt = $conn->prepare("INSERT INTO admin_notifications (type, title, message, report_id, created_at) VALUES (?, ?, ?, ?, NOW())");
+    if ($notif_stmt) {
+        $notif_stmt->bind_param("ssss", $notif_type, $notif_title, $notif_message, $report_id);
+        $notif_stmt->execute();
+        $notif_stmt->close();
+    }
+
     respond(true, 'Report submitted successfully!', ['report_id' => $report_id]);
 } else {
     respond(false, 'Failed to submit report. Please try again.');

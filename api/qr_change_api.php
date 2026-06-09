@@ -143,8 +143,14 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
                 title VARCHAR(200) NOT NULL,
                 message TEXT,
                 reference_id INT NULL,
+                provider_id INT NULL,
+                report_id VARCHAR(20) NULL,
+                qr_change_request_id INT NULL,
                 is_read TINYINT(1) NOT NULL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX idx_admin_notif_provider (provider_id),
+                INDEX idx_admin_notif_report (report_id),
+                INDEX idx_admin_notif_qr (qr_change_request_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
             $conn->commit();
@@ -380,15 +386,21 @@ if ($method === 'POST' && $action === 'submit') {
         title VARCHAR(200) NOT NULL,
         message TEXT,
         reference_id INT NULL,
+        provider_id INT NULL,
+        report_id VARCHAR(20) NULL,
+        qr_change_request_id INT NULL,
         is_read TINYINT(1) NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_admin_notif_provider (provider_id),
+        INDEX idx_admin_notif_report (report_id),
+        INDEX idx_admin_notif_qr (qr_change_request_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     $provName = $conn->real_escape_string($_SESSION['provider_name'] ?? 'A provider');
-    $conn->query("INSERT INTO admin_notifications (type, title, message, reference_id, is_read, created_at)
+    $conn->query("INSERT INTO admin_notifications (type, title, message, reference_id, qr_change_request_id, is_read, created_at)
         VALUES ('qr_change', 'New QR Change Request',
         '$provName submitted a GCash/Bank Transfer QR code change request.',
-        $newId, 0, NOW())");
+        $newId, $newId, 0, NOW())");
 
     ob_end_clean();
     echo json_encode(['success' => true, 'message' => 'Your request has been submitted and is pending admin review.', 'request_id' => $newId]);

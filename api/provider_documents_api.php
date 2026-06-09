@@ -423,8 +423,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
         title VARCHAR(200) NOT NULL,
         message TEXT,
         reference_id INT NULL,
+        provider_id INT NULL,
+        report_id VARCHAR(20) NULL,
+        qr_change_request_id INT NULL,
         is_read TINYINT(1) NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_admin_notif_provider (provider_id),
+        INDEX idx_admin_notif_report (report_id),
+        INDEX idx_admin_notif_qr (qr_change_request_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     $provider_stmt = $conn->prepare("SELECT full_name FROM service_providers WHERE provider_id = ?");
@@ -437,8 +443,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     $notif_title = 'New Verification Documents Submitted';
     $notif_message = $provider_name . ' has submitted ' . count($uploaded_docs) . ' verification document(s).';
 
-    $notif_stmt = $conn->prepare("INSERT INTO admin_notifications (type, title, message, reference_id, created_at) VALUES ('verification', ?, ?, ?, NOW())");
-    $notif_stmt->bind_param('ssi', $notif_title, $notif_message, $provider_id);
+    $notif_stmt = $conn->prepare("INSERT INTO admin_notifications (type, title, message, reference_id, provider_id, created_at) VALUES ('verification', ?, ?, ?, ?, NOW())");
+    $notif_stmt->bind_param('ssii', $notif_title, $notif_message, $provider_id, $provider_id);
     $notif_stmt->execute();
     $notif_stmt->close();
 

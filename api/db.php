@@ -365,6 +365,46 @@ function ensureNormalizationSchema($conn)
 
     // Drop the junction table service_provider_services
     @$conn->query("DROP TABLE IF EXISTS service_provider_services");
+
+    // Ensure admin_notifications table exists
+    $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        type VARCHAR(50) NOT NULL DEFAULT 'general',
+        title VARCHAR(200) NOT NULL,
+        message TEXT,
+        reference_id INT NULL,
+        is_read TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // Add new columns for strict normalization
+    $columns = [];
+    $result = $conn->query("SHOW COLUMNS FROM admin_notifications");
+    if ($result) {
+        while ($col = $result->fetch_assoc()) {
+            $columns[] = $col['Field'];
+        }
+    }
+
+    if (!in_array('provider_id', $columns)) {
+        @$conn->query("ALTER TABLE admin_notifications ADD COLUMN provider_id INT NULL AFTER reference_id");
+        @$conn->query("ALTER TABLE admin_notifications ADD INDEX idx_admin_notif_provider (provider_id)");
+        @$conn->query("ALTER TABLE admin_notifications ADD CONSTRAINT fk_admin_notif_provider FOREIGN KEY (provider_id) REFERENCES service_providers(provider_id) ON DELETE CASCADE");
+    }
+    if (!in_array('report_id', $columns)) {
+        @$conn->query("ALTER TABLE admin_notifications ADD COLUMN report_id VARCHAR(20) NULL AFTER provider_id");
+        @$conn->query("ALTER TABLE admin_notifications ADD INDEX idx_admin_notif_report (report_id)");
+        @$conn->query("ALTER TABLE admin_notifications ADD CONSTRAINT fk_admin_notif_report FOREIGN KEY (report_id) REFERENCES incident_reports(report_id) ON DELETE CASCADE");
+    }
+    if (!in_array('qr_change_request_id', $columns)) {
+        @$conn->query("ALTER TABLE admin_notifications ADD COLUMN qr_change_request_id INT NULL AFTER report_id");
+        @$conn->query("ALTER TABLE admin_notifications ADD INDEX idx_admin_notif_qr (qr_change_request_id)");
+        @$conn->query("ALTER TABLE admin_notifications ADD CONSTRAINT fk_admin_notif_qr FOREIGN KEY (qr_change_request_id) REFERENCES qr_change_requests(id) ON DELETE CASCADE");
+    }
+
+    // Backfill existing rows if they are empty
+    @$conn->query("UPDATE admin_notifications SET provider_id = reference_id WHERE type = 'verification' AND provider_id IS NULL");
+    @$conn->query("UPDATE admin_notifications SET qr_change_request_id = reference_id WHERE type = 'qr_change' AND qr_change_request_id IS NULL");
 }
 
 function ensureBookingStatusLogsTable($conn)

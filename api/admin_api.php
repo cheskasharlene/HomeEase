@@ -582,16 +582,28 @@ if ($section === 'admin_notifications') {
         title VARCHAR(200) NOT NULL,
         message TEXT,
         reference_id INT NULL,
+        provider_id INT NULL,
+        report_id VARCHAR(20) NULL,
+        qr_change_request_id INT NULL,
         is_read TINYINT(1) NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_admin_notif_provider (provider_id),
+        INDEX idx_admin_notif_report (report_id),
+        INDEX idx_admin_notif_qr (qr_change_request_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     if ($method === 'GET' && $action === 'list') {
         $rows = $conn->query("
-            SELECT an.*, sp.full_name AS provider_name, s.name AS service_category, sp.is_verified
+            SELECT an.*, 
+                   sp.full_name AS provider_name, 
+                   s.name AS service_category, 
+                   sp.is_verified,
+                   ir.category AS incident_category,
+                   ir.status AS incident_status
             FROM admin_notifications an
-            LEFT JOIN service_providers sp ON an.reference_id = sp.provider_id AND an.type = 'verification'
+            LEFT JOIN service_providers sp ON an.provider_id = sp.provider_id
             LEFT JOIN services s ON s.id = sp.service_id
+            LEFT JOIN incident_reports ir ON an.report_id = ir.report_id
             ORDER BY an.created_at DESC
             LIMIT 50
         ");
