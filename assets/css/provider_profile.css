@@ -1215,3 +1215,79 @@ body.dark .bnav {
 #editModalForm:empty{
   display:none;
 }
+
+/* ── Modals (Help Center & Terms and Conditions) ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  overflow-y: auto;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 650px;
+  margin: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border-col, #e5e7eb);
+  animation: modalScaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes modalScaleUp {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 16px 12px;
+  }
+  .modal-card {
+    border-radius: 16px;
+  }
+}
+
+/* Dark mode support for modals */
+body.dark .modal-card {
+  background: var(--bg-card, #1e293b) !important;
+  border-color: var(--border-col, #334155) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+body.dark .modal-card div,
+body.dark .modal-card p,
+body.dark .modal-card span,
+body.dark .modal-card button,
+body.dark .modal-card i,
+body.dark .modal-card li {
+  color: var(--txt-primary, #f8fafc) !important;
+  border-color: var(--border-col, #334155) !important;
+}
+
+body.dark .faq-question {
+  background: #334155 !important;
+  color: #f8fafc !important;
+}
+
+body.dark .faq-answer {
+  background: #1e293b !important;
+  color: #cbd5e1 !important;
+}

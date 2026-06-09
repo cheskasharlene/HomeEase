@@ -5,6 +5,17 @@ if (empty($_SESSION['user_id'])) {
   exit;
 }
 
+require_once __DIR__ . '/../api/db.php';
+$stmt = $conn->prepare("SELECT name, phone FROM users WHERE id = ?");
+$stmt->bind_param("i", $_SESSION['user_id']);
+$stmt->execute();
+$row = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+if ($row) {
+  $_SESSION['user_name'] = $row['name'];
+  $_SESSION['user_phone'] = $row['phone'];
+}
+
 // Check if service is pre-selected
 $serviceName = isset($_GET['svc']) ? trim($_GET['svc']) : '';
 if (!$serviceName) {
@@ -61,17 +72,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>
 
         <div class="fg" style="margin-bottom:14px;">
-          <label class="fl" style="font-family:'Poppins',sans-serif;font-size:13px;">Your Information</label>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <label class="fl" style="font-family:'Poppins',sans-serif;font-size:13px;margin-bottom:0;">Your Information</label>
+            <a href="profile.php" style="font-size:11px;color:#E8820C;font-weight:700;text-decoration:none;"><i class="bi bi-pencil-square" style="margin-right:2px;"></i>Edit in Profile</a>
+          </div>
           <div class="fg-row">
             <div class="fg" style="margin-bottom:0;">
               <label class="fl">Full Name</label>
-              <input class="fi" type="text" id="uName" placeholder="Your full name">
+              <input class="fi" type="text" id="uName" placeholder="Your full name" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
             </div>
             <div class="fg" style="margin-bottom:0;">
               <label class="fl">Phone Number</label>
-              <input class="fi" type="text" id="uPhone" placeholder="09XXXXXXXXX">
+              <input class="fi" type="text" id="uPhone" placeholder="09XXXXXXXXX" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
             </div>
           </div>
+          <p style="font-size:10.5px;color:#94a3b8;margin:6px 0 0 0;font-weight:600;line-height:1.4;"><i class="bi bi-info-circle-fill" style="margin-right:3px;"></i>Locked to profile data. To update, go to <a href="profile.php" style="color:#E8820C;text-decoration:underline;font-weight:700;">Profile Settings</a>.</p>
           <!-- Hidden GPS coords + pre-confirmed address from location picker -->
           <input type="hidden" id="customerLat" value="<?= htmlspecialchars($preselectedLat) ?>">
           <input type="hidden" id="customerLng" value="<?= htmlspecialchars($preselectedLng) ?>">
@@ -1098,15 +1113,16 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     async function submitBooking() {
       if (!selectedSvc) { toast('Please select a service first', 'e'); return; }
-      const uName   = document.getElementById('uName').value.trim();
-      const uPhone  = document.getElementById('uPhone').value.trim();
+      // Securely read name and phone from the server-initialized window.HE.user object
+      const uName   = (window.HE.user.name || '').trim();
+      const uPhone  = (window.HE.user.phone || '').trim();
       const addr    = document.getElementById('detectedAddress').value.trim();
       const notes   = document.getElementById('bNotes').value.trim();
       const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
       const price   = getPrice();
 
-      if (!uName)  { toast('Please enter your full name', 'e'); return; }
-      if (!uPhone) { toast('Please enter your phone number', 'e'); return; }
+      if (!uName)  { toast('Full Name is missing in your profile. Please add it first.', 'e'); return; }
+      if (!uPhone) { toast('Phone Number is missing in your profile. Please add it first.', 'e'); return; }
       if (!paymentMethod) { 
         document.getElementById('paymentError').textContent = 'Please select a payment method';
         toast('Please select a payment method', 'e');

@@ -229,6 +229,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               <div class="st-row-sub">Update your password</div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
+          <?php if ($isVerified): ?>
           <div class="st-row" onclick="openQrChangeScreen()" id="qrChangeSettingsRow">
             <div class="st-ic" style="background:#d1fae5;color:#059669;"><i class="bi bi-qr-code"></i></div>
             <div class="st-row-info">
@@ -236,8 +237,10 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               <div class="st-row-sub" id="qrChangeSettingsSub">Request a QR code change</div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
+          <?php endif; ?>
         </div>
         
+        <?php if ($isVerified): ?>
         <div class="st-sec">
           <div class="st-sec-ttl">Notifications</div>
           <div class="st-row">
@@ -249,6 +252,8 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <div class="st-toggle on" onclick="this.classList.toggle('on')"></div>
           </div>
         </div>
+        <?php endif; ?>
+
         <div class="st-sec">
           <div class="st-sec-ttl">Support</div>
           <div class="st-row" onclick="openHelpCenter()">
@@ -258,6 +263,14 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               <div class="st-row-sub">FAQs & guides</div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
+          <div class="st-row" onclick="openTermsModal()">
+            <div class="st-ic orange"><i class="bi bi-file-earmark-text-fill"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl">Terms and Conditions</div>
+              <div class="st-row-sub">Read provider terms & policies</div>
+            </div><i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
+          <?php if ($isVerified): ?>
           <div class="st-row" onclick="openReportModal()">
             <div class="st-ic orange"><i class="bi bi-exclamation-triangle-fill"></i></div>
             <div class="st-row-info">
@@ -265,6 +278,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               <div class="st-row-sub">Submit a concern or bug</div>
             </div><i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
+          <?php endif; ?>
         </div>
         <div class="st-sec">
           <div class="st-sec-ttl">Session</div>
@@ -279,8 +293,8 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       </div>
     </div>
 
-    <div class="modal-overlay" id="helpCenterModal" onclick="if(event.target===this)closeHelpCenter()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
-      <div class="modal-card" style="background:#fff;border-radius:20px;max-width:650px;margin:40px auto;box-shadow:0 10px 40px rgba(0,0,0,.15);">
+    <div class="modal-overlay" id="helpCenterModal" onclick="if(event.target===this)closeHelpCenter()" style="display:none;">
+      <div class="modal-card">
         <div style="padding:28px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
           <div style="font-size:20px;font-weight:800;color:#0f172a;">Service Provider Help Center</div>
           <button onclick="closeHelpCenter()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
@@ -440,6 +454,195 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
                 Use the in-app support feature.
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="termsModal" onclick="if(event.target===this)closeTermsModal()" style="display:none;">
+      <div class="modal-card">
+        <div style="padding:28px 24px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:20px;font-weight:800;color:#0f172a;">Terms and Conditions</div>
+          <button onclick="closeTermsModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="max-height:70vh;overflow-y:auto;padding:24px;line-height:1.7;color:#4b5563;font-size:14px;">
+          <!-- 1. Introduction -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">1. Introduction</div>
+            <p style="margin:0;">These Terms and Conditions govern the use of the HomeEase platform by individuals registering as Service Providers. By registering, submitting requirements, and continuing to use the platform, you acknowledge that you have read, understood, and agreed to comply with these terms.</p>
+          </div>
+
+          <!-- 2. Eligibility -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">2. Eligibility</div>
+            <p style="margin:0 0 8px 0;">To qualify as a Service Provider on HomeEase, you must:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">Be at least eighteen (18) years old;</li>
+              <li style="margin-bottom:6px;">Provide accurate, complete, and truthful information;</li>
+              <li style="margin-bottom:6px;">Submit the required verification documents requested by HomeEase;</li>
+              <li style="margin-bottom:6px;">Have the legal capacity to enter into this agreement.</li>
+            </ul>
+            <p style="margin:8px 0 0 0;">HomeEase reserves the right to approve, reject, suspend, or terminate any application at its discretion.</p>
+          </div>
+
+          <!-- 3. Verification Requirements -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">3. Verification Requirements</div>
+            <p style="margin:0 0 8px 0;">Service Providers agree to submit authentic and valid documents during the verification process.</p>
+            <p style="margin:0 0 8px 0;">Submission of falsified, altered, misleading, or expired documents may result in:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">Rejection of the application;</li>
+              <li style="margin-bottom:6px;">Suspension of the account; or</li>
+              <li style="margin-bottom:6px;">Permanent removal from the platform.</li>
+            </ul>
+            <p style="margin:8px 0 0 0;">Verification status may be reviewed periodically by HomeEase.</p>
+          </div>
+
+          <!-- 4. Professional Conduct -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">4. Professional Conduct</div>
+            <p style="margin:0 0 8px 0;">Service Providers agree to:</p>
+            <ul style="margin:8px 0 8px 20px;padding:0;">
+              <li style="margin-bottom:6px;">Treat clients with courtesy, honesty, and professionalism;</li>
+              <li style="margin-bottom:6px;">Respect clients and their property;</li>
+              <li style="margin-bottom:6px;">Communicate appropriately at all times;</li>
+              <li style="margin-bottom:6px;">Provide quality services to the best of their abilities;</li>
+              <li style="margin-bottom:6px;">Follow all applicable laws and regulations.</li>
+            </ul>
+            <p style="margin:8px 0 8px 0;">The following behaviors are strictly prohibited:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">Harassment or discrimination;</li>
+              <li style="margin-bottom:6px;">Threatening behavior;</li>
+              <li style="margin-bottom:6px;">Fraudulent activities;</li>
+              <li style="margin-bottom:6px;">Dishonesty or misrepresentation;</li>
+              <li style="margin-bottom:6px;">Any conduct that may compromise the safety and trust of the HomeEase community.</li>
+            </ul>
+          </div>
+
+          <!-- 5. Materials, Supplies, and Equipment Responsibility -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">5. Materials, Supplies, and Equipment Responsibility</div>
+            <p style="margin:0 0 8px 0;">Service Providers are solely responsible for bringing and providing all necessary tools, equipment, materials, and supplies required to perform the services they offer through HomeEase.</p>
+            <p style="margin:0 0 8px 0;">The following conditions apply:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">Homeowners or clients are not required to purchase, prepare, or provide materials needed for the service.</li>
+              <li style="margin-bottom:6px;">Standard materials, supplies, and equipment necessary to complete the service are already considered included in the service fee displayed on the platform.</li>
+              <li style="margin-bottom:6px;">Service Providers shall not request or collect additional payment from clients for standard materials and supplies required to perform the booked service.</li>
+              <li style="margin-bottom:6px;">All tools, equipment, and materials used must be safe, functional, clean, and suitable for their intended purpose.</li>
+              <li style="margin-bottom:6px;">Failure to bring the necessary supplies or equipment that affects service quality may result in complaints, warnings, suspension, or termination.</li>
+            </ul>
+          </div>
+
+          <!-- 6. Bookings and Service Completion -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">6. Bookings and Service Completion</div>
+            <p style="margin:0 0 8px 0;">Service Providers may receive booking requests through the HomeEase platform based on their availability status.</p>
+            <p style="margin:0 0 8px 0;">Once a booking has been accepted and assigned, the Service Provider agrees to:</p>
+            <ul style="margin:8px 0 8px 20px;padding:0;">
+              <li style="margin-bottom:6px;">Perform the requested service responsibly and professionally;</li>
+              <li style="margin-bottom:6px;">Arrive at the client's location within the agreed schedule;</li>
+              <li style="margin-bottom:6px;">Complete the service to the best of their ability;</li>
+              <li style="margin-bottom:6px;">Use the "Mark as Done" feature only after the service has been fully completed.</li>
+            </ul>
+            <p style="margin:8px 0 8px 0;">The "Mark as Done" button serves as confirmation that the requested service has been successfully rendered.</p>
+            <p style="margin:8px 0 8px 0;">Service Providers must not falsely mark bookings as completed when the service has not been fully performed.</p>
+            <p style="margin:8px 0 0 0;">Any misuse of the service completion process may result in client complaints, investigations, warnings, suspension, or permanent removal from the platform.</p>
+          </div>
+
+          <!-- 7. Payments and Fees -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">7. Payments and Fees</div>
+            <p style="margin:0 0 8px 0;">Service Providers agree that:</p>
+            <ul style="margin:8px 0 8px 20px;padding:0;">
+              <li style="margin-bottom:6px;">Payments shall be processed in accordance with HomeEase policies and system procedures;</li>
+              <li style="margin-bottom:6px;">The service fees displayed by the platform shall be followed;</li>
+              <li style="margin-bottom:6px;">Unauthorized charges outside the HomeEase platform are prohibited;</li>
+              <li style="margin-bottom:6px;">Service Providers shall not solicit additional payments from clients beyond what is officially reflected within the system.</li>
+            </ul>
+            <p style="margin:8px 0 0 0;">Violation of this provision may lead to disciplinary action.</p>
+          </div>
+
+          <!-- 8. Ratings and Reviews -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">8. Ratings and Reviews</div>
+            <p style="margin:0 0 8px 0;">Clients may submit ratings and reviews based on their experience.</p>
+            <p style="margin:0 0 8px 0;">Service Providers acknowledge that:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">Ratings contribute to their reputation within HomeEase;</li>
+              <li style="margin-bottom:6px;">Reviews may be used to assess service quality;</li>
+              <li style="margin-bottom:6px;">Attempts to manipulate ratings or submit false reviews are prohibited;</li>
+              <li style="margin-bottom:6px;">Consistently poor performance may result in administrative review.</li>
+            </ul>
+          </div>
+
+          <!-- 9. Reports and Complaints -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">9. Reports and Complaints</div>
+            <p style="margin:0 0 8px 0;">HomeEase may investigate reports submitted by clients concerning fraud, misconduct, negligence, unprofessional behavior, or other violations.</p>
+            <p style="margin:0 0 8px 0;">Service Providers agree to:</p>
+            <ul style="margin:8px 0 8px 20px;padding:0;">
+              <li style="margin-bottom:6px;">Cooperate during your investigations;</li>
+              <li style="margin-bottom:6px;">Provide truthful information when requested;</li>
+              <li style="margin-bottom:6px;">Respect the investigation process.</li>
+            </ul>
+            <p style="margin:8px 0 0 0;">Failure to cooperate may result in disciplinary action.</p>
+          </div>
+
+          <!-- 10. Suspension and Termination -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">10. Suspension and Termination</div>
+            <p style="margin:0 0 8px 0;">HomeEase reserves the right to suspend, restrict, deactivate, or permanently terminate a Service Provider account for reasons including, but not limited to:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">Submission of fraudulent documents;</li>
+              <li style="margin-bottom:6px;">Violation of these Terms and Conditions;</li>
+              <li style="margin-bottom:6px;">Repeated complaints from clients;</li>
+              <li style="margin-bottom:6px;">Fraudulent activities or scams;</li>
+              <li style="margin-bottom:6px;">Unprofessional conduct;</li>
+              <li style="margin-bottom:6px;">Unauthorized charges;</li>
+              <li style="margin-bottom:6px;">Falsely marking services as completed;</li>
+              <li style="margin-bottom:6px;">Actions that compromise the safety, trust, and integrity of the platform.</li>
+            </ul>
+          </div>
+
+          <!-- 11. Limitation of Liability -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">11. Limitation of Liability</div>
+            <p style="margin:0 0 8px 0;">HomeEase acts solely as a platform that connects homeowners and service providers.</p>
+            <p style="margin:0 0 8px 0;">HomeEase shall not be held liable for:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">Damages arising from improper execution of services;</li>
+              <li style="margin-bottom:6px;">Losses caused by the negligence of Service Providers;</li>
+              <li style="margin-bottom:6px;">Misuse of tools, equipment, or materials by Service Providers;</li>
+              <li style="margin-bottom:6px;">Disputes resulting from violations committed by either party.</li>
+            </ul>
+          </div>
+
+          <!-- 12. Amendments -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">12. Amendments</div>
+            <p style="margin:0 0 8px 0;">HomeEase reserves the right to revise or update these Terms and Conditions at any time.</p>
+            <p style="margin:0 0 8px 0;">Any modifications shall become effective upon posting within the platform.</p>
+            <p style="margin:0;">Continued use of HomeEase constitutes acceptance of the updated terms.</p>
+          </div>
+
+          <!-- 13. Governing Law -->
+          <div style="margin-bottom:20px;">
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">13. Governing Law</div>
+            <p style="margin:0 0 8px 0;">These Terms and Conditions shall be governed by and interpreted in accordance with the laws of the Republic of the Philippines.</p>
+            <p style="margin:0;">Any dispute arising from these Terms and Conditions shall be subject to the jurisdiction of the appropriate courts within the Philippines.</p>
+          </div>
+
+          <!-- 14. Acknowledgment and Agreement -->
+          <div>
+            <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">14. Acknowledgment and Agreement</div>
+            <p style="margin:0 0 8px 0;">By selecting "I Agree," submitting verification requirements, registering as a Service Provider, or continuing to use the HomeEase platform, you acknowledge and agree that:</p>
+            <ul style="margin:8px 0 0 20px;padding:0;">
+              <li style="margin-bottom:6px;">You have read and understood these Terms and Conditions;</li>
+              <li style="margin-bottom:6px;">You voluntarily agree to comply with all provisions stated herein;</li>
+              <li style="margin-bottom:6px;">You understand your responsibilities as a Service Provider;</li>
+              <li style="margin-bottom:6px;">You agree to uphold professionalism and integrity while using the platform; and</li>
+              <li style="margin-bottom:6px;">You understand that violations of these Terms and Conditions may result in warnings, suspension, deactivation, or permanent termination of your HomeEase account.</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -1166,8 +1369,19 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         closeActionSheet();
         closeReportModal();
         closeReportSuccess();
+        closeTermsModal();
       }
     });
+
+    function openTermsModal() {
+      document.getElementById('termsModal').style.display = 'flex';
+      document.getElementById('termsModal').style.flexDirection = 'column';
+      document.getElementById('termsModal').style.justifyContent = 'center';
+    }
+
+    function closeTermsModal() {
+      document.getElementById('termsModal').style.display = 'none';
+    }
 
     const sheetProfileAvatarInput = document.getElementById('sheetProfileAvatarInput');
     if (sheetProfileAvatarInput) {

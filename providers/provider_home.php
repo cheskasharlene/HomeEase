@@ -499,6 +499,20 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         </div>
       </div>
     </div>
+    <!-- Accept Booking Confirmation Modal -->
+    <div class="modal-overlay" id="acceptConfirmModal" onclick="if(event.target===this)closeAcceptConfirmModal()">
+      <div class="modal-card" style="padding: 24px;">
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #ffe5b4, #fff8f0); color: #e8820c; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
+          <i class="bi bi-question-circle-fill"></i>
+        </div>
+        <h3 style="font-family: 'Poppins', sans-serif; font-size: 18px; font-weight: 800; color: #1a1a2e; text-align: center; margin: 0 0 8px 0;">Accept Booking</h3>
+        <p style="font-size: 13.5px; color: #6b7280; text-align: center; line-height: 1.5; margin: 0 0 24px 0;">Are you sure you want to accept this booking?</p>
+        <div style="display: flex; gap: 12px;">
+          <button type="button" onclick="closeAcceptConfirmModal()" style="flex: 1; padding: 12px; border-radius: 12px; border: 1.5px solid #ede8e0; background: #fff; color: #8e8e93; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: background 0.2s;">Cancel</button>
+          <button type="button" id="confirmAcceptBtn" onclick="confirmAcceptHomeBooking()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #e8820c, #f5a623); color: #fff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(232, 130, 12, 0.24); transition: transform 0.2s;">Confirm Accept</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="../assets/js/app.js"></script>
@@ -546,11 +560,35 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     }
 
     let isHomeActionRunning = false;
+    let pendingAcceptRequest = null;
+    let pendingAcceptBooking = null;
 
-    async function acceptHomeRequest(requestId, bookingId) {
+    function openAcceptConfirmModal(requestId, bookingId) {
+      pendingAcceptRequest = requestId;
+      pendingAcceptBooking = bookingId;
+      const modal = document.getElementById('acceptConfirmModal');
+      if (modal) {
+        modal.classList.add('on');
+      }
+    }
+
+    function closeAcceptConfirmModal() {
+      pendingAcceptRequest = null;
+      pendingAcceptBooking = null;
+      const modal = document.getElementById('acceptConfirmModal');
+      if (modal) {
+        modal.classList.remove('on');
+      }
+    }
+
+    async function confirmAcceptHomeBooking() {
+      if (!pendingAcceptRequest || !pendingAcceptBooking) return;
       if (isHomeActionRunning) return;
-      if (!confirm('Are you sure you want to accept this booking?')) return;
+
+      const requestId = pendingAcceptRequest;
+      const bookingId = pendingAcceptBooking;
       
+      closeAcceptConfirmModal();
       isHomeActionRunning = true;
       showNotice('Accepting booking...', 'success');
       
@@ -576,6 +614,17 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         isHomeActionRunning = false;
       }
     }
+
+    function acceptHomeRequest(requestId, bookingId) {
+      if (isHomeActionRunning) return;
+      openAcceptConfirmModal(requestId, bookingId);
+    }
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeAcceptConfirmModal();
+      }
+    });
 
     async function declineHomeRequest(requestId) {
       if (isHomeActionRunning) return;
