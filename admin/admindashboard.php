@@ -657,75 +657,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .admin-notif-act-btn.del { background:#fee2e2; color:#dc2626; }
     .admin-notif-act-btn:hover { transform:scale(1.1); }
 
-    /* Analytics */
-    .an-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 18px; margin-bottom:14px; }
-    .an-metric { background:var(--bg-card); border-radius:16px; padding:16px 14px; border:1.5px solid var(--border-col); }
-    .an-metric-lbl { font-size:11px; font-weight:700; color:var(--txt-muted); text-transform:uppercase; letter-spacing:.3px; }
-    .an-metric-val { font-size:22px; font-weight:800; color:var(--txt-primary); font-family:'Poppins',sans-serif; margin-top:4px; }
-    .an-metric-chg { font-size:11px; font-weight:700; margin-top:4px; display:flex; align-items:center; gap:3px; }
-    .an-metric-chg.up { color:#059669; }
-    .an-metric-chg.down { color:#dc2626; }
-    .an-metric-chg.flat { color:#64748b; }
-    .an-cards-grid { display:grid; grid-template-columns:1fr; gap:14px; padding:0 18px 14px; }
-    .an-chart-card { background:var(--bg-card); border-radius:16px; border:1.5px solid var(--border-col); padding:16px; margin:0; }
-    .an-chart-ttl { font-size:14px; font-weight:800; color:var(--txt-primary); font-family:'Poppins',sans-serif; margin-bottom:4px; }
-    .an-chart-sub { font-size:11px; color:var(--txt-muted); margin-bottom:14px; }
-    .an-chart-canvas { width:100%; position:relative; }
-    .service-dist-canvas { min-height:220px; max-width:340px; margin:0 auto 8px; }
-    .service-dist-canvas canvas { width:100% !important; max-width:100%; }
-    .service-legend-grid {
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:8px 12px;
-      margin-top:8px;
-    }
-    .service-legend-item {
-      display:flex;
-      align-items:center;
-      gap:7px;
-      min-width:0;
-      font-size:11px;
-      font-weight:700;
-      color:var(--txt-primary);
-      font-family:'Nunito',sans-serif;
-    }
-    .service-legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-    .service-legend-name {
-      flex:1;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-    .service-legend-count {
-      color:var(--txt-muted);
-      font-weight:800;
-      font-family:'Poppins',sans-serif;
-      flex-shrink:0;
-    }
-    .an-worker-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-col); }
-    .an-worker-row:last-child { border-bottom:none; }
-    .an-worker-rank { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; flex-shrink:0; }
-    .an-worker-rank.gold { background:#fef3c7; color:#d97706; }
-    .an-worker-rank.silver { background:#f1f5f9; color:#64748b; }
-    .an-worker-rank.bronze { background:#fff7ed; color:#c2410c; }
-    .an-worker-rank.other { background:var(--bg-screen); color:var(--txt-muted); }
-    .an-worker-bar-wrap { flex:1; min-width:0; }
-    .an-worker-nm { font-size:12px; font-weight:700; color:var(--txt-primary); font-family:'Poppins',sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .an-worker-bar { height:6px; border-radius:3px; background:var(--border-col); margin-top:4px; overflow:hidden; }
-    .an-worker-bar-fill { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--teal),#FFB347); transition:width .6s; }
-    .an-worker-jobs { font-size:11px; font-weight:700; color:var(--teal); flex-shrink:0; font-family:'Poppins',sans-serif; }
-    .an-chart-card.full-span { grid-column:1 / -1; }
-
-    @media (max-width:420px) {
-      .service-legend-grid { grid-template-columns:1fr; }
-    }
-
-    @media (min-width:700px) {
-      .an-cards-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
-      .an-chart-card.full-span { grid-column:1 / -1; }
-    }
-
   </style>
 </head>
 
@@ -1053,52 +984,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       </div>
     </div>
 
-    <!-- ── Analytics Screen ── -->
-    <div class="screen" id="sc-analytics">
-      <div class="a-hdr">
-        <div>
-          <div class="a-greet">Business</div>
-          <div class="a-ttl">Analytics</div>
-        </div>
-        <div class="a-hdr-right">
-          <button class="hdr-btn" onclick="loadAnalytics()" title="Refresh"><i
-              class="bi bi-arrow-clockwise"></i></button>
-        </div>
-      </div>
-      <div class="a-scroll" id="analytics-scroll" style="padding-top:8px;padding-bottom:90px;">
-        <div class="an-cards-grid">
-          <!-- Service Distribution -->
-          <div class="an-chart-card full-span">
-            <div class="an-chart-ttl">Service Distribution</div>
-            <div class="an-chart-sub">Bookings by service category</div>
-            <div class="an-chart-canvas service-dist-canvas"><canvas id="chartServiceDist"
-                height="220"></canvas></div>
-            <div class="service-legend-grid" id="serviceDistLegend"></div>
-          </div>
-
-          <!-- Revenue Chart -->
-          <div class="an-chart-card full-span">
-            <div class="an-chart-ttl">Weekly Revenue</div>
-            <div class="an-chart-sub">Revenue from completed bookings (last 8 weeks)</div>
-            <div class="an-chart-canvas"><canvas id="chartRevenue" height="180"></canvas></div>
-          </div>
-
-          <!-- Top Workers -->
-          <div class="an-chart-card full-span">
-            <div class="an-chart-ttl">Top Performing Workers</div>
-            <div class="an-chart-sub">Ranked by total jobs completed</div>
-            <div id="anTopWorkers"></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
     <div class="bnav">
       <div class="ni on" id="nav-overview" onclick="showTab('overview')"><i class="bi bi-grid-1x2-fill"></i><span
           class="nl">Overview</span></div>
-      <div class="ni" id="nav-analytics" onclick="showTab('analytics')"><i class="bi bi-graph-up"></i><span
-          class="nl">Analytics</span></div>
       <div class="ni" id="nav-bookings" onclick="showTab('bookings')"><i class="bi bi-calendar-check-fill"></i><span
           class="nl">Bookings</span></div>
       <div class="ni" id="nav-workers" onclick="showTab('workers')"><i class="bi bi-person-badge-fill"></i><span
@@ -1524,8 +1412,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       function php(n) { return '₱' + parseFloat(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 
       let curTab = 'overview';
-      const tabMap = { overview: 'sc-overview', analytics: 'sc-analytics', bookings: 'sc-bookings', workers: 'sc-workers', users: 'sc-users', more: 'sc-more' };
-      const loadMap = { analytics: loadAnalytics, bookings: loadBookings, workers: loadWorkers, users: loadUsers, more: loadMore };
+      const tabMap = { overview: 'sc-overview', bookings: 'sc-bookings', workers: 'sc-workers', users: 'sc-users', more: 'sc-more' };
+      const loadMap = { bookings: loadBookings, workers: loadWorkers, users: loadUsers, more: loadMore };
 
       function showTab(tab) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -2670,167 +2558,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         } catch (e) {
           toast('Network error', 'e');
         }
-      }
-
-      // ── Analytics Charts ────────────────────────────────────────────────────────
-      let _chartInstances = {};
-
-      function destroyChart(name) {
-        if (_chartInstances[name]) { _chartInstances[name].destroy(); delete _chartInstances[name]; }
-      }
-
-      function chartColors() {
-        return {
-          grid: 'rgba(0,0,0,.06)',
-          text: '#9ca3af',
-          bg: '#ffffff',
-        };
-      }
-
-      const HOMEEASE_SERVICES = [
-        { key: 'house_cleaner', label: 'House Cleaner', color: '#F5A623', terms: ['clean', 'cleaner', 'cleaning'] },
-        { key: 'helper', label: 'Helper', color: '#3b82f6', terms: ['helper', 'house helper', 'household helper'] },
-        { key: 'laundry_worker', label: 'Laundry Worker', color: '#10b981', terms: ['laundry', 'washer', 'washing'] },
-        { key: 'plumber', label: 'Plumber', color: '#06b6d4', terms: ['plumb', 'pipe'] },
-        { key: 'carpenter', label: 'Carpenter', color: '#8b5cf6', terms: ['carpenter', 'wood'] },
-        { key: 'appliance_technician', label: 'Appliance Technician', color: '#ef4444', terms: ['appliance', 'technician', 'electric', 'electronics'] }
-      ];
-
-      function toCanonicalServiceKey(name) {
-        const raw = String(name || '').toLowerCase().trim();
-        if (!raw) return null;
-
-        for (const service of HOMEEASE_SERVICES) {
-          if (service.terms.some(term => raw.includes(term))) {
-            return service.key;
-          }
-        }
-        return null;
-      }
-
-      function getServiceDistributionModel(serviceDistribution) {
-        const counts = Object.fromEntries(HOMEEASE_SERVICES.map(s => [s.key, 0]));
-
-        (serviceDistribution || []).forEach(item => {
-          const key = toCanonicalServiceKey(item?.name);
-          const count = Number(item?.count || 0);
-          if (key && Number.isFinite(count)) {
-            counts[key] += count;
-          }
-        });
-
-        return {
-          labels: HOMEEASE_SERVICES.map(s => s.label),
-          data: HOMEEASE_SERVICES.map(s => counts[s.key]),
-          colors: HOMEEASE_SERVICES.map(s => s.color)
-        };
-      }
-
-      function renderServiceLegend(model) {
-        const el = document.getElementById('serviceDistLegend');
-        if (!el) return;
-
-        el.innerHTML = HOMEEASE_SERVICES.map((service, idx) => `
-          <div class="service-legend-item">
-            <span class="service-legend-dot" style="background:${service.color}"></span>
-            <span class="service-legend-name">${service.label}</span>
-            <span class="service-legend-count">${model.data[idx]}</span>
-          </div>
-        `).join('');
-      }
-
-      async function loadAnalytics() {
-        try {
-          const data = await api('analytics');
-          if (!data.success) return;
-          const a = data.analytics;
-          const c = chartColors();
-
-          // Growth metrics and booking trend were removed from the analytics layout.
-          // Keep only the remaining charts below.
-          destroyChart('trend');
-
-          // ── Service Distribution (doughnut) ──
-          destroyChart('svcDist');
-          const serviceModel = getServiceDistributionModel(a.service_distribution);
-          renderServiceLegend(serviceModel);
-          const distCtx = document.getElementById('chartServiceDist').getContext('2d');
-          _chartInstances.svcDist = new Chart(distCtx, {
-            type: 'doughnut',
-            data: {
-              labels: serviceModel.labels,
-              datasets: [{
-                data: serviceModel.data,
-                backgroundColor: serviceModel.colors,
-                borderWidth: 2,
-                borderColor: c.bg,
-                hoverOffset: 8,
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              cutout: '62%',
-              plugins: {
-                legend: {
-                  display: false
-                }
-              }
-            }
-          });
-
-          // ── Revenue (bar) ──
-          destroyChart('revenue');
-          const revCtx = document.getElementById('chartRevenue').getContext('2d');
-          _chartInstances.revenue = new Chart(revCtx, {
-            type: 'bar',
-            data: {
-              labels: a.weekly_revenue.map(w => w.week),
-              datasets: [{
-                label: 'Revenue ₱',
-                data: a.weekly_revenue.map(w => w.revenue),
-                backgroundColor: a.weekly_revenue.map((_, i) => {
-                  const gradient = revCtx.createLinearGradient(0, 0, 0, 180);
-                  gradient.addColorStop(0, 'rgba(245,166,35,.85)');
-                  gradient.addColorStop(1, 'rgba(245,166,35,.25)');
-                  return gradient;
-                }),
-                borderRadius: 6,
-                borderSkipped: false,
-                maxBarThickness: 32,
-              }]
-            },
-            options: {
-              responsive: true,
-              plugins: { legend: { display: false } },
-              scales: {
-                x: { grid: { display: false }, ticks: { color: c.text, font: { size: 9, family: 'Nunito' } } },
-                y: { beginAtZero: true, grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 }, callback: v => '₱' + (v >= 1000 ? (v / 1000).toFixed(1) + 'k' : v) } }
-              }
-            }
-          });
-
-          // ── Top Workers ──
-          const twEl = document.getElementById('anTopWorkers');
-          if (!a.top_workers.length) {
-            twEl.innerHTML = '<div class="empty-state"><p>No worker data yet.</p></div>';
-          } else {
-            const maxJobs = Math.max(...a.top_workers.map(w => w.jobs), 1);
-            twEl.innerHTML = a.top_workers.map((w, i) => {
-              const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : 'other';
-              const pct = Math.max(5, Math.round((w.jobs / maxJobs) * 100));
-              return `<div class="an-worker-row">
-              <div class="an-worker-rank ${rankClass}">${i + 1}</div>
-              <div class="an-worker-bar-wrap">
-                <div class="an-worker-nm">${w.name}</div>
-                <div class="an-worker-bar"><div class="an-worker-bar-fill" style="width:${pct}%"></div></div>
-              </div>
-              <div class="an-worker-jobs">${w.jobs}</div>
-            </div>`;
-            }).join('');
-          }
-
-        } catch (e) { console.error('Analytics error:', e); }
       }
 
       // ── Image Preview Modal ──────────────────────────────────────────────────

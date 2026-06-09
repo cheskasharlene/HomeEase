@@ -94,11 +94,6 @@ async function loadOverview() {
   } catch (e) { console.error(e); }
 }
 
-// Analytics Page
-function initAdminAnalytics() {
-  loadAnalytics();
-}
-
 // Bookings Page
 function initAdminBookings() {
   loadBookings();

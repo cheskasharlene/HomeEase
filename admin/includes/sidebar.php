@@ -4,7 +4,6 @@ if (!isset($activePage)) $activePage = '';
 <nav class="admin-sidebar">
   <ul>
     <li class="<?= $activePage === 'overview' ? 'active' : '' ?>"><a href="overview.php"><i class="bi bi-grid-1x2-fill"></i> Overview</a></li>
-    <li class="<?= $activePage === 'analytics' ? 'active' : '' ?>"><a href="analytics.php"><i class="bi bi-graph-up"></i> Analytics</a></li>
     <li class="<?= $activePage === 'bookings' ? 'active' : '' ?>"><a href="bookings.php"><i class="bi bi-calendar-check-fill"></i> Bookings</a></li>
     <li class="<?= $activePage === 'workers' ? 'active' : '' ?>"><a href="workers.php"><i class="bi bi-person-badge-fill"></i> Workers</a></li>
     <li class="<?= $activePage === 'users' ? 'active' : '' ?>"><a href="users.php"><i class="bi bi-people-fill"></i> Users</a></li>

@@ -144,18 +144,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           <?php if ($isVerified): ?>
             <div class="p-sec">
               <div class="p-sec-ttl">Services & Portfolio</div>
-              <div class="p-row" onclick="goPage('provider_services.php')">
-                <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"
-                      stroke="#F5A623" stroke-width="2" />
-                  </svg></div>
-                <div class="p-row-info">
-                  <div class="p-row-lbl">My Services</div>
-                  <div class="p-row-sub">Manage what you offer</div>
-                </div>
-                <i class="bi bi-chevron-right p-row-arrow"></i>
-              </div>
+
               <div class="p-row" onclick="goPage('provider_job_history.php')">
                 <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
                     <path d="M9 11l3 3L22 4" stroke="#F5A623" stroke-width="2" stroke-linecap="round"
