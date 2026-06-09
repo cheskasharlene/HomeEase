@@ -76,7 +76,10 @@ if ($section === 'security') {
 
     if (!$current || !$new || !$confirm) { respond(false, 'All password fields are required.'); }
     if ($new !== $confirm) { respond(false, 'New passwords do not match.'); }
-    if (strlen($new) < 6)  { respond(false, 'New password must be at least 6 characters.'); }
+    if (strlen($new) < 8)  { respond(false, 'New password must be at least 8 characters long.'); }
+    if (!preg_match('/[A-Z]/', $new)) { respond(false, 'New password must contain at least one uppercase letter.'); }
+    if (!preg_match('/[a-z]/', $new)) { respond(false, 'New password must contain at least one lowercase letter.'); }
+    if (!preg_match('/[0-9]/', $new)) { respond(false, 'New password must contain at least one number.'); }
 
     $stmt = $conn->prepare("SELECT password FROM users WHERE id=?");
     $stmt->bind_param("i", $uid); $stmt->execute();

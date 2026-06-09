@@ -1157,7 +1157,22 @@ if ($appBase === '') {
           </div>
           <div class="s-fg"><label class="s-lbl">New Password</label>
             <div class="s-iw"><i class="bi bi-lock-fill s-ico"></i><input type="password" class="s-fi" id="s_npwd"
-                placeholder="Min. 6 characters"><i class="bi bi-eye-fill s-eye" onclick="tPwd('s_npwd',this)"></i></div>
+                placeholder="Min. 8 characters" oninput="updateSecPwdStrength(this.value)"><i class="bi bi-eye-fill s-eye" onclick="tPwd('s_npwd',this)"></i></div>
+            <!-- Password strength meter -->
+            <div id="secPwdStrength" style="display:none;margin-top:6px;">
+              <div style="display:flex;gap:4px;margin-bottom:5px;">
+                <div id="spbar1" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+                <div id="spbar2" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+                <div id="spbar3" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+                <div id="spbar4" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:3px;">
+                <div id="sreq-len" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least 8 characters</div>
+                <div id="sreq-upper" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one uppercase letter (A-Z)</div>
+                <div id="sreq-lower" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one lowercase letter (a-z)</div>
+                <div id="sreq-num" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one number (0-9)</div>
+              </div>
+            </div>
           </div>
           <div class="s-fg"><label class="s-lbl">Confirm New Password</label>
             <div class="s-iw"><i class="bi bi-lock-fill s-ico"></i><input type="password" class="s-fi" id="s_cpwd2"
@@ -1422,6 +1437,27 @@ if ($appBase === '') {
       btn.className = show ? 'bi bi-eye-slash-fill s-eye' : 'bi bi-eye-fill s-eye';
     }
 
+    function updateSecPwdStrength(val) {
+      const wrap = document.getElementById('secPwdStrength');
+      wrap.style.display = val.length > 0 ? 'block' : 'none';
+      const hasLen   = val.length >= 8;
+      const hasUpper = /[A-Z]/.test(val);
+      const hasLower = /[a-z]/.test(val);
+      const hasNum   = /[0-9]/.test(val);
+      const score = [hasLen, hasUpper, hasLower, hasNum].filter(Boolean).length;
+      const barClass = score <= 1 ? '#ef4444' : score === 2 ? '#f59e0b' : score === 3 ? '#10b981' : '#059669';
+      const metColor = '#059669';
+      const unmetColor = '#8E8E93';
+      for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById('spbar' + i);
+        bar.style.background = i <= score ? barClass : '#EDE8E0';
+      }
+      document.getElementById('sreq-len').style.color   = hasLen   ? metColor : unmetColor;
+      document.getElementById('sreq-upper').style.color = hasUpper ? metColor : unmetColor;
+      document.getElementById('sreq-lower').style.color = hasLower ? metColor : unmetColor;
+      document.getElementById('sreq-num').style.color   = hasNum   ? metColor : unmetColor;
+    }
+
 
     async function saveSettings() {
       const btn = document.getElementById('saveBtn');
@@ -1437,10 +1473,19 @@ if ($appBase === '') {
         fd.append('phone', document.getElementById('s_phone').value.trim());
         fd.append('address', document.getElementById('s_addr').value.trim());
       } else if (activeSection === 'security') {
+        const cpwd = document.getElementById('s_cpwd').value;
+        const npwd = document.getElementById('s_npwd').value;
+        const cpwd2 = document.getElementById('s_cpwd2').value;
+        if (!cpwd || !npwd || !cpwd2) { showSubAlert('All password fields are required.', 'error'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2" style="margin-right:6px;"></i>Save Changes'; return; }
+        if (npwd.length < 8) { showSubAlert('New password must be at least 8 characters long.', 'error'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2" style="margin-right:6px;"></i>Save Changes'; return; }
+        if (!/[A-Z]/.test(npwd)) { showSubAlert('New password must contain at least one uppercase letter.', 'error'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2" style="margin-right:6px;"></i>Save Changes'; return; }
+        if (!/[a-z]/.test(npwd)) { showSubAlert('New password must contain at least one lowercase letter.', 'error'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2" style="margin-right:6px;"></i>Save Changes'; return; }
+        if (!/[0-9]/.test(npwd)) { showSubAlert('New password must contain at least one number.', 'error'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2" style="margin-right:6px;"></i>Save Changes'; return; }
+        if (npwd !== cpwd2) { showSubAlert('New passwords do not match.', 'error'); btn.disabled = false; btn.innerHTML = '<i class="bi bi-check2" style="margin-right:6px;"></i>Save Changes'; return; }
         fd.append('section', 'security');
-        fd.append('current_password', document.getElementById('s_cpwd').value);
-        fd.append('new_password', document.getElementById('s_npwd').value);
-        fd.append('confirm_password', document.getElementById('s_cpwd2').value);
+        fd.append('current_password', cpwd);
+        fd.append('new_password', npwd);
+        fd.append('confirm_password', cpwd2);
       } else if (activeSection === 'address') {
         fd.append('section', 'address');
         fd.append('address', document.getElementById('s_newaddr').value.trim());

@@ -694,7 +694,22 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               </div>
               <div class="edit-fg">
                 <label class="edit-flbl">New Password</label>
-                <input class="edit-fin" id="sheetNewPassword" type="password" placeholder="New password">
+                <input class="edit-fin" id="sheetNewPassword" type="password" placeholder="New password" oninput="updateProviderPwdStrength(this.value)">
+                <!-- Password strength meter -->
+                <div id="provPwdStrength" style="display:none;margin-top:7px;">
+                  <div style="display:flex;gap:4px;margin-bottom:5px;">
+                    <div id="ppbar1" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+                    <div id="ppbar2" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+                    <div id="ppbar3" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+                    <div id="ppbar4" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:3px;">
+                    <div id="preq-len" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least 8 characters</div>
+                    <div id="preq-upper" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one uppercase letter (A-Z)</div>
+                    <div id="preq-lower" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one lowercase letter (a-z)</div>
+                    <div id="preq-num" style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#8E8E93;transition:color 0.2s;"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one number (0-9)</div>
+                  </div>
+                </div>
               </div>
               <div class="edit-fg">
                 <label class="edit-flbl">Confirm Password</label>
@@ -1161,8 +1176,20 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           setSheetAlert('Please complete all password fields.', 'err');
           return;
         }
-        if (next.length < 6) {
-          setSheetAlert('New password must be at least 6 characters.', 'err');
+        if (next.length < 8) {
+          setSheetAlert('New password must be at least 8 characters long.', 'err');
+          return;
+        }
+        if (!/[A-Z]/.test(next)) {
+          setSheetAlert('New password must contain at least one uppercase letter.', 'err');
+          return;
+        }
+        if (!/[a-z]/.test(next)) {
+          setSheetAlert('New password must contain at least one lowercase letter.', 'err');
+          return;
+        }
+        if (!/[0-9]/.test(next)) {
+          setSheetAlert('New password must contain at least one number.', 'err');
           return;
         }
         if (next !== confirm) {
@@ -1316,6 +1343,26 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     const sheetProfileAvatarInput = document.getElementById('sheetProfileAvatarInput');
     if (sheetProfileAvatarInput) {
       sheetProfileAvatarInput.addEventListener('change', handleProfilePhotoPick);
+    }
+
+    function updateProviderPwdStrength(val) {
+      const wrap = document.getElementById('provPwdStrength');
+      wrap.style.display = val.length > 0 ? 'block' : 'none';
+      const hasLen   = val.length >= 8;
+      const hasUpper = /[A-Z]/.test(val);
+      const hasLower = /[a-z]/.test(val);
+      const hasNum   = /[0-9]/.test(val);
+      const score = [hasLen, hasUpper, hasLower, hasNum].filter(Boolean).length;
+      const barColor = score <= 1 ? '#ef4444' : score === 2 ? '#f59e0b' : score === 3 ? '#10b981' : '#059669';
+      const metColor = '#059669';
+      const unmetColor = '#8E8E93';
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById('ppbar' + i).style.background = i <= score ? barColor : '#EDE8E0';
+      }
+      document.getElementById('preq-len').style.color   = hasLen   ? metColor : unmetColor;
+      document.getElementById('preq-upper').style.color = hasUpper ? metColor : unmetColor;
+      document.getElementById('preq-lower').style.color = hasLower ? metColor : unmetColor;
+      document.getElementById('preq-num').style.color   = hasNum   ? metColor : unmetColor;
     }
 
     loadSavedAvatar();

@@ -26,7 +26,16 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     respond(false, 'Please enter a valid email address.');
 }
 if (strlen($pass) < 8) {
-    respond(false, 'Password must be at least 8 characters.');
+    respond(false, 'Password must be at least 8 characters long.');
+}
+if (!preg_match('/[A-Z]/', $pass)) {
+    respond(false, 'Password must contain at least one uppercase letter.');
+}
+if (!preg_match('/[a-z]/', $pass)) {
+    respond(false, 'Password must contain at least one lowercase letter.');
+}
+if (!preg_match('/[0-9]/', $pass)) {
+    respond(false, 'Password must contain at least one number.');
 }
 
 $chk = $conn->prepare("SELECT provider_id FROM service_providers WHERE email = ?");

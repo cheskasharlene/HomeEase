@@ -188,6 +188,27 @@ if (!empty($_SESSION['provider_id'])) {
     }
     .acct-type-lbl { font-size: 11px; font-weight: 800; color: var(--txt-muted, #8E8E93); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; display: block; }
     #regSpecialtyWrap { display: none; }
+    /* ── Password Strength Meter ── */
+    .pwd-strength-wrap { margin-top: 6px; }
+    .pwd-bars { display: flex; gap: 4px; margin-bottom: 6px; }
+    .pwd-bar {
+      flex: 1; height: 4px; border-radius: 4px;
+      background: var(--border-col, #EDE8E0);
+      transition: background 0.25s;
+    }
+    .pwd-bar.weak   { background: #ef4444; }
+    .pwd-bar.fair   { background: #f59e0b; }
+    .pwd-bar.good   { background: #10b981; }
+    .pwd-bar.strong { background: #059669; }
+    .pwd-reqs { display: flex; flex-direction: column; gap: 3px; }
+    .pwd-req {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600;
+      color: var(--txt-muted, #8E8E93);
+      transition: color 0.2s;
+    }
+    .pwd-req.met { color: #059669; }
+    .pwd-req i { font-size: 11px; }
   </style>
 </head>
 
@@ -325,9 +346,23 @@ if (!empty($_SESSION['provider_id'])) {
         <div class="fg">
           <label class="fl">Password</label>
           <div class="fi-wrap">
-            <input type="password" class="fi" id="regPwd" placeholder="Min. 8 characters" autocomplete="new-password" />
+            <input type="password" class="fi" id="regPwd" placeholder="Min. 8 characters" autocomplete="new-password" oninput="updatePwdStrength(this.value)" />
             <button class="eye-btn" type="button" onclick="togglePwd('regPwd',this)"><i
                 class="bi bi-eye-fill"></i></button>
+          </div>
+          <div class="pwd-strength-wrap" id="regPwdStrength" style="display:none;">
+            <div class="pwd-bars">
+              <div class="pwd-bar" id="pbar1"></div>
+              <div class="pwd-bar" id="pbar2"></div>
+              <div class="pwd-bar" id="pbar3"></div>
+              <div class="pwd-bar" id="pbar4"></div>
+            </div>
+            <div class="pwd-reqs">
+              <div class="pwd-req" id="req-len"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least 8 characters</div>
+              <div class="pwd-req" id="req-upper"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one uppercase letter (A-Z)</div>
+              <div class="pwd-req" id="req-lower"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one lowercase letter (a-z)</div>
+              <div class="pwd-req" id="req-num"><i class="bi bi-circle-fill" style="font-size:6px;"></i> At least one number (0-9)</div>
+            </div>
           </div>
         </div>
         <div class="fg">
@@ -474,7 +509,10 @@ if (!empty($_SESSION['provider_id'])) {
       if (!first || !last || !email || !phone || !pwd || !pwd2) { showAlert('regErr', 'regErrTxt', 'Please fill in all fields.', 'error'); return; }
       if (accountType === 'provider' && !specialty) { showAlert('regErr', 'regErrTxt', 'Please select your specialty.', 'error'); return; }
       if (pwd !== pwd2) { showAlert('regErr', 'regErrTxt', 'Passwords do not match.', 'error'); return; }
-      if (pwd.length < 8) { showAlert('regErr', 'regErrTxt', 'Password must be at least 8 characters.', 'error'); return; }
+      if (pwd.length < 8) { showAlert('regErr', 'regErrTxt', 'Password must be at least 8 characters long.', 'error'); return; }
+      if (!/[A-Z]/.test(pwd)) { showAlert('regErr', 'regErrTxt', 'Password must contain at least one uppercase letter.', 'error'); return; }
+      if (!/[a-z]/.test(pwd)) { showAlert('regErr', 'regErrTxt', 'Password must contain at least one lowercase letter.', 'error'); return; }
+      if (!/[0-9]/.test(pwd)) { showAlert('regErr', 'regErrTxt', 'Password must contain at least one number.', 'error'); return; }
 
       setLoading('btnReg', true);
       const endpoint = accountType === 'provider' ? 'providers/provider_register.php' : 'api/register.php';
@@ -511,6 +549,29 @@ if (!empty($_SESSION['provider_id'])) {
       if (document.getElementById('panelLogin').classList.contains('on')) doLogin();
       else doRegister();
     });
+
+    function updatePwdStrength(val) {
+      const wrap = document.getElementById('regPwdStrength');
+      wrap.style.display = val.length > 0 ? 'block' : 'none';
+      const hasLen   = val.length >= 8;
+      const hasUpper = /[A-Z]/.test(val);
+      const hasLower = /[a-z]/.test(val);
+      const hasNum   = /[0-9]/.test(val);
+      const score = [hasLen, hasUpper, hasLower, hasNum].filter(Boolean).length;
+
+      // Requirement indicators
+      document.getElementById('req-len').classList.toggle('met', hasLen);
+      document.getElementById('req-upper').classList.toggle('met', hasUpper);
+      document.getElementById('req-lower').classList.toggle('met', hasLower);
+      document.getElementById('req-num').classList.toggle('met', hasNum);
+
+      // Color bars
+      const barClass = score <= 1 ? 'weak' : score === 2 ? 'fair' : score === 3 ? 'good' : 'strong';
+      for (let i = 1; i <= 4; i++) {
+        const bar = document.getElementById('pbar' + i);
+        bar.className = 'pwd-bar' + (i <= score ? ' ' + barClass : '');
+      }
+    }
   </script>
 </body>
 
