@@ -464,7 +464,7 @@ if (empty($_SESSION['user_id'])) {
       const bookingId = params.get('booking_id');
       if (!bookingId) {
         showEmptyState();
-        return;
+        return false;
       }
 
       try {
@@ -472,20 +472,20 @@ if (empty($_SESSION['user_id'])) {
         const d = await res.json();
         if (!d.success || !d.booking) {
           showEmptyState();
-          return;
+          return false;
         }
 
         const b = d.booking;
         const status = String(b.status || '').toLowerCase();
         if (status === 'done' || status === 'completed') {
           stopBookingStatusPolling();
-          goPage('booking_detail.php?booking_id=' + encodeURIComponent(bookingId));
-          return;
+          goPage('../home.php');
+          return false;
         }
         if (status === 'cancelled' || status === 'canceled') {
           stopBookingStatusPolling();
           goBackToBookings();
-          return;
+          return false;
         }
         document.getElementById('providerName').textContent = b.provider_name || 'Assigned Provider';
         document.getElementById('providerService').textContent = b.provider_specialty || b.service || 'Worker';
@@ -503,8 +503,10 @@ if (empty($_SESSION['user_id'])) {
         document.getElementById('bookingAddress').textContent = b.address || 'Address not available';
         document.getElementById('bookingPrice').textContent = formatPrice(b.price || 0);
         document.getElementById('bookingNotes').textContent = b.details || b.notes || 'None';
+        return true;
       } catch (e) {
         showEmptyState();
+        return false;
       }
     }
 
@@ -520,7 +522,7 @@ if (empty($_SESSION['user_id'])) {
         const status = String(data.status || '').toLowerCase();
         if (status === 'done' || status === 'completed') {
           stopBookingStatusPolling();
-          goPage('booking_detail.php?booking_id=' + encodeURIComponent(bookingId));
+          goPage('../home.php');
           return;
         }
         if (status === 'cancelled' || status === 'canceled') {
@@ -702,10 +704,12 @@ if (empty($_SESSION['user_id'])) {
       if (e.target === this) closePaymentSuccessModal();
     });
 
-    loadAcceptedBooking().then(() => {
-      loadPaymentDetails();
-      startBookingStatusPolling();
-      loadBookingStatus();
+    loadAcceptedBooking().then((shouldContinue) => {
+      if (shouldContinue) {
+        loadPaymentDetails();
+        startBookingStatusPolling();
+        loadBookingStatus();
+      }
     });
   </script>
 </body>
