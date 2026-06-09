@@ -542,7 +542,6 @@ if ($appBase === '') {
                 <div class="p-row-lbl">Saved Addresses</div>
                 <div class="p-row-sub" id="addressRowSub">Manage delivery addresses</div>
               </div>
-              <i class="bi bi-chevron-right p-row-arrow"></i>
             </div>
           </div>
 
@@ -608,6 +607,14 @@ if ($appBase === '') {
               <div class="st-row-sub">Chat or call us</div>
             </div>
             <span class="st-badge">Live</span>
+            <i class="bi bi-chevron-right st-row-arrow"></i>
+          </div>
+          <div class="st-row" onclick="openReportModal()">
+            <div class="st-ic orange"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <div class="st-row-info">
+              <div class="st-row-lbl">Report an Issue</div>
+              <div class="st-row-sub">Submit a concern or bug</div>
+            </div>
             <i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
         </div>
@@ -1184,6 +1191,71 @@ if ($appBase === '') {
       </div>
     </div>
 
+    <!-- Report Issue Modal Overlay -->
+    <div class="report-modal-ol" id="reportModalOl" onclick="if(event.target===this)closeReportModal()">
+      <div class="report-modal-card">
+        <div class="report-modal-hdr">
+          <div class="report-modal-ttl">Report an Issue</div>
+          <button class="report-modal-close" onclick="closeReportModal()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        
+        <div class="report-modal-body">
+          <div class="report-fg">
+            <label class="report-lbl" for="reportCategory">Category</label>
+            <div class="report-select-wrapper">
+              <select class="report-select" id="reportCategory">
+                <option value="" disabled selected>Select a category</option>
+                <option value="Scam/Fraud">Scam/Fraud</option>
+                <option value="Payment Issue">Payment Issue</option>
+                <option value="Booking Issue">Booking Issue</option>
+                <option value="Service Quality Concern">Service Quality Concern</option>
+                <option value="App Bug/Technical Issue">App Bug/Technical Issue</option>
+                <option value="Harassment">Harassment</option>
+                <option value="Other">Other</option>
+              </select>
+              <i class="bi bi-chevron-down report-select-arrow"></i>
+            </div>
+          </div>
+          
+          <div class="report-fg">
+            <label class="report-lbl" for="reportDescription">Description</label>
+            <textarea class="report-textarea" id="reportDescription" placeholder="Provide detailed information about the issue..."></textarea>
+          </div>
+          
+          <div class="report-fg">
+            <label class="report-lbl">Evidence (Optional)</label>
+            <div class="report-upload-area" onclick="triggerReportEvidencePicker()">
+              <i class="bi bi-cloud-arrow-up report-upload-icon"></i>
+              <span class="report-upload-text" id="reportUploadText">Upload image or screenshot</span>
+              <span class="report-upload-subtext">JPEG, PNG, WEBP up to 5MB</span>
+              <input type="file" id="reportEvidenceInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleReportEvidenceSelected(this)">
+            </div>
+            <div id="reportEvidencePreviewContainer" style="display:none; margin-top:10px; position:relative;">
+              <img id="reportEvidencePreview" src="" alt="Evidence Preview" style="width:100%; max-height:120px; object-fit:contain; border-radius:10px; border:1px solid var(--border-col);">
+              <button class="report-preview-remove" onclick="clearReportEvidence()"><i class="bi bi-trash3-fill"></i></button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="report-modal-actions">
+          <button class="report-btn cancel" onclick="closeReportModal()">Cancel</button>
+          <button class="report-btn submit" id="reportSubmitBtn" onclick="submitReportForm()">Submit Report</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Report Success Modal Overlay -->
+    <div class="report-success-ol" id="reportSuccessOl" onclick="if(event.target===this)closeReportSuccess()">
+      <div class="report-success-card">
+        <div class="report-success-icon"><i class="bi bi-check-circle-fill"></i></div>
+        <div class="report-success-ttl">Report Submitted</div>
+        <div class="report-success-sub">Your concern has been submitted and will be reviewed by the admin team.</div>
+        <div class="report-success-actions">
+          <button class="report-success-btn ok" onclick="closeReportSuccess()">OK</button>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /shell -->
 
   <script src="<?= htmlspecialchars(rtrim($appBase, '/')) ?>/assets/js/app.js"></script>
@@ -1453,6 +1525,86 @@ if ($appBase === '') {
     function closePrivacyPolicy() {
       document.getElementById('privacyModal').style.display = 'none';
     }
+
+    // Report Issue Functions
+    function openReportModal() {
+      document.getElementById('reportModalOl').classList.add('on');
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModalOl').classList.remove('on');
+      document.getElementById('reportCategory').value = '';
+      document.getElementById('reportDescription').value = '';
+      clearReportEvidence();
+    }
+
+    function triggerReportEvidencePicker() {
+      document.getElementById('reportEvidenceInput').click();
+    }
+
+    function handleReportEvidenceSelected(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      
+      const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+      if (allowed.indexOf(file.type) === -1) {
+        alert('Only JPG, PNG, or WEBP images are allowed.');
+        input.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File must not exceed 5 MB.');
+        input.value = '';
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('reportEvidencePreview').src = e.target.result;
+        document.getElementById('reportUploadText').textContent = file.name;
+        document.getElementById('reportEvidencePreviewContainer').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearReportEvidence() {
+      document.getElementById('reportEvidenceInput').value = '';
+      document.getElementById('reportEvidencePreview').src = '';
+      document.getElementById('reportUploadText').textContent = 'Upload image or screenshot';
+      document.getElementById('reportEvidencePreviewContainer').style.display = 'none';
+    }
+
+    function submitReportForm() {
+      const category = document.getElementById('reportCategory').value;
+      const desc = document.getElementById('reportDescription').value.trim();
+      if (!category) {
+        alert('Please select a report category.');
+        return;
+      }
+      if (!desc) {
+        alert('Please provide a description of the issue.');
+        return;
+      }
+      
+      closeReportModal();
+      openReportSuccess();
+    }
+
+    function openReportSuccess() {
+      document.getElementById('reportSuccessOl').classList.add('on');
+    }
+
+    function closeReportSuccess() {
+      document.getElementById('reportSuccessOl').classList.remove('on');
+    }
+
+    // Escape listener for report modals
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeReportModal();
+        closeReportSuccess();
+      }
+    });
 
     loadProfile();
   </script>
