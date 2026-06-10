@@ -1147,13 +1147,7 @@ if ($appBase === '') {
               </div>
             </div>
           </div>
-
-          <div style="padding:12px 14px;background:var(--teal-bg, #FFF8F0);border-radius:12px;border:1px solid var(--teal-mid, #FFE5B4);display:flex;gap:10px;align-items:flex-start;">
-            <i class="bi bi-info-circle-fill" style="color:var(--teal, #E8820C);font-size:16px;margin-top:1px;"></i>
-            <div style="font-size:11px;color:var(--txt-primary, #475569);line-height:1.45;font-weight:600;">
-              Support is available Monday to Sunday, 8:00 AM - 8:00 PM.
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>
