@@ -1446,16 +1446,19 @@ if ($appBase === '') {
       const hasNum   = /[0-9]/.test(val);
       const score = [hasLen, hasUpper, hasLower, hasNum].filter(Boolean).length;
       const barClass = score <= 1 ? '#ef4444' : score === 2 ? '#f59e0b' : score === 3 ? '#10b981' : '#059669';
-      const metColor = '#059669';
-      const unmetColor = '#8E8E93';
       for (let i = 1; i <= 4; i++) {
-        const bar = document.getElementById('spbar' + i);
-        bar.style.background = i <= score ? barClass : '#EDE8E0';
+        document.getElementById('spbar' + i).style.background = i <= score ? barClass : '#EDE8E0';
       }
-      document.getElementById('sreq-len').style.color   = hasLen   ? metColor : unmetColor;
-      document.getElementById('sreq-upper').style.color = hasUpper ? metColor : unmetColor;
-      document.getElementById('sreq-lower').style.color = hasLower ? metColor : unmetColor;
-      document.getElementById('sreq-num').style.color   = hasNum   ? metColor : unmetColor;
+      function setReq(id, met) {
+        const el = document.getElementById(id);
+        el.style.color = met ? '#059669' : '#8E8E93';
+        const ic = el.querySelector('i');
+        if (ic) ic.className = met ? 'bi bi-check-circle-fill' : 'bi bi-circle-fill';
+      }
+      setReq('sreq-len',   hasLen);
+      setReq('sreq-upper', hasUpper);
+      setReq('sreq-lower', hasLower);
+      setReq('sreq-num',   hasNum);
     }
 
 

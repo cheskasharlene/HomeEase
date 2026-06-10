@@ -34,11 +34,21 @@ if ($method === 'GET') {
         respond(true, '', ['unread_count' => $count]);
     }
 
-    $stmt = $conn->prepare("SELECT id, title, message, icon, is_read, created_at FROM provider_notifications WHERE provider_id = ? ORDER BY created_at DESC LIMIT 50");
+    $stmt = $conn->prepare("SELECT id, title, message, icon, is_read, created_at FROM provider_notifications WHERE provider_id = ? ORDER BY created_at DESC LIMIT 100");
     $stmt->bind_param('i', $providerId);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
+
+    foreach ($rows as &$row) {
+        $diff = time() - strtotime($row['created_at']);
+        if ($diff < 60)        $row['time'] = 'Just now';
+        elseif ($diff < 3600)  $row['time'] = floor($diff / 60) . 'm ago';
+        elseif ($diff < 86400) $row['time'] = floor($diff / 3600) . 'h ago';
+        else                   $row['time'] = floor($diff / 86400) . 'd ago';
+    }
+    unset($row);
+
     respond(true, '', ['notifications' => $rows]);
 }
 

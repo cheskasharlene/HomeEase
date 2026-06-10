@@ -22,12 +22,23 @@ $method  = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     $stmt = $conn->prepare(
-        "SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50"
+        "SELECT id, title, message, icon, is_read, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 100"
     );
     $stmt->bind_param("i", $user_id);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
+
+    /* Attach a formatted relative-time string for the client */
+    foreach ($rows as &$row) {
+        $diff = time() - strtotime($row['created_at']);
+        if ($diff < 60)       $row['time'] = 'Just now';
+        elseif ($diff < 3600) $row['time'] = floor($diff / 60) . 'm ago';
+        elseif ($diff < 86400)$row['time'] = floor($diff / 3600) . 'h ago';
+        else                  $row['time'] = floor($diff / 86400) . 'd ago';
+    }
+    unset($row);
+
     respond(true, '', ['notifications' => $rows]);
 }
 

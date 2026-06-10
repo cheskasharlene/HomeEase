@@ -208,7 +208,8 @@ if (!empty($_SESSION['provider_id'])) {
       transition: color 0.2s;
     }
     .pwd-req.met { color: #059669; }
-    .pwd-req i { font-size: 11px; }
+    .pwd-req i { font-size: 10px; transition: all 0.2s; }
+    .pwd-req.met i::before { content: '\F26E'; } /* bi-check-circle-fill */
   </style>
 </head>
 
@@ -559,11 +560,16 @@ if (!empty($_SESSION['provider_id'])) {
       const hasNum   = /[0-9]/.test(val);
       const score = [hasLen, hasUpper, hasLower, hasNum].filter(Boolean).length;
 
-      // Requirement indicators
-      document.getElementById('req-len').classList.toggle('met', hasLen);
-      document.getElementById('req-upper').classList.toggle('met', hasUpper);
-      document.getElementById('req-lower').classList.toggle('met', hasLower);
-      document.getElementById('req-num').classList.toggle('met', hasNum);
+      // Requirement indicators with icon swap
+      function setReq(id, met) {
+        const el = document.getElementById(id);
+        el.classList.toggle('met', met);
+        el.querySelector('i').className = met ? 'bi bi-check-circle-fill' : 'bi bi-circle-fill';
+      }
+      setReq('req-len',   hasLen);
+      setReq('req-upper', hasUpper);
+      setReq('req-lower', hasLower);
+      setReq('req-num',   hasNum);
 
       // Color bars
       const barClass = score <= 1 ? 'weak' : score === 2 ? 'fair' : score === 3 ? 'good' : 'strong';

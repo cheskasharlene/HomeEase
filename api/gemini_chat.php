@@ -9,7 +9,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-define('GEMINI_API_KEY', 'AIzaSyDr_BDc9uKhokxnm5-Ql-lUMnKr0GtQJWQ');
+define('GEMINI_API_KEY', 'AQ.Ab8RN6Im7zlfSpvD9CWsuWFB728ix3pN7Z4WZhH786DAp_LkzA');
 // Fallback chain — tried in order; first 200 OK wins
 define('GEMINI_MODELS', [
     'gemini-2.5-flash',       // best quality; may 503 if overloaded
@@ -387,7 +387,7 @@ if ($action && ($action['type'] ?? '') === 'create_booking' && !empty($action['s
 
     // Insert booking
     $bCols = getColumns($conn, 'bookings');
-    $serviceId = (int)($svcRow['id'] ?? 0);
+    $serviceId = (int) ($svcRow['id'] ?? 0);
     $colList = "user_id, service, date, address, price, status, created_at";
     $valList = "?, ?, ?, ?, ?, 'pending', NOW()";
     $types = "isssd";

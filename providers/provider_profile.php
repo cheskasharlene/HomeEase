@@ -1354,15 +1354,19 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       const hasNum   = /[0-9]/.test(val);
       const score = [hasLen, hasUpper, hasLower, hasNum].filter(Boolean).length;
       const barColor = score <= 1 ? '#ef4444' : score === 2 ? '#f59e0b' : score === 3 ? '#10b981' : '#059669';
-      const metColor = '#059669';
-      const unmetColor = '#8E8E93';
       for (let i = 1; i <= 4; i++) {
         document.getElementById('ppbar' + i).style.background = i <= score ? barColor : '#EDE8E0';
       }
-      document.getElementById('preq-len').style.color   = hasLen   ? metColor : unmetColor;
-      document.getElementById('preq-upper').style.color = hasUpper ? metColor : unmetColor;
-      document.getElementById('preq-lower').style.color = hasLower ? metColor : unmetColor;
-      document.getElementById('preq-num').style.color   = hasNum   ? metColor : unmetColor;
+      function setReq(id, met) {
+        const el = document.getElementById(id);
+        el.style.color = met ? '#059669' : '#8E8E93';
+        const ic = el.querySelector('i');
+        if (ic) ic.className = met ? 'bi bi-check-circle-fill' : 'bi bi-circle-fill';
+      }
+      setReq('preq-len',   hasLen);
+      setReq('preq-upper', hasUpper);
+      setReq('preq-lower', hasLower);
+      setReq('preq-num',   hasNum);
     }
 
     loadSavedAvatar();
