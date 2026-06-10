@@ -4,6 +4,26 @@ if (empty($_SESSION['user_id'])) {
   header('Location: index.php');
   exit;
 }
+
+if (isset($_GET['booking_id'])) {
+  require_once __DIR__ . '/../api/db.php';
+  $booking_id = intval($_GET['booking_id']);
+  $stmt = $conn->prepare("SELECT status FROM bookings WHERE id = ?");
+  $stmt->bind_param("i", $booking_id);
+  $stmt->execute();
+  $res = $stmt->get_result()->fetch_assoc();
+  if ($res) {
+    $status = strtolower($res['status']);
+    if ($status === 'done' || $status === 'completed') {
+      header('Location: booking_detail.php?booking_id=' . $booking_id);
+      exit;
+    }
+    if ($status === 'cancelled' || $status === 'canceled') {
+      header('Location: booking_history.php');
+      exit;
+    }
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -478,7 +498,7 @@ if (empty($_SESSION['user_id'])) {
         const status = String(b.status || '').toLowerCase();
         if (status === 'done' || status === 'completed') {
           stopBookingStatusPolling();
-          goPage('../home.php');
+          goPage('booking_detail.php?booking_id=' + encodeURIComponent(bookingId));
           return false;
         }
         if (status === 'cancelled' || status === 'canceled') {
@@ -521,7 +541,7 @@ if (empty($_SESSION['user_id'])) {
         const status = String(data.status || '').toLowerCase();
         if (status === 'done' || status === 'completed') {
           stopBookingStatusPolling();
-          goPage('../home.php');
+          goPage('booking_detail.php?booking_id=' + encodeURIComponent(bookingId));
           return;
         }
         if (status === 'cancelled' || status === 'canceled') {
