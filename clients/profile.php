@@ -455,6 +455,17 @@ if ($appBase === '') {
         transform: rotate(360deg);
       }
     }
+
+    /* Contact Support Modal Styles */
+    .contact-card {
+      border: 1.5px solid var(--border-col);
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-card);
+    }
   </style>
 </head>
 
@@ -600,13 +611,12 @@ if ($appBase === '') {
             </div>
             <i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
-          <div class="st-row">
+          <div class="st-row" onclick="openContactSupport()">
             <div class="st-ic blue"><i class="bi bi-headset"></i></div>
             <div class="st-row-info">
               <div class="st-row-lbl">Contact Support</div>
-              <div class="st-row-sub">Chat or call us</div>
+              <div class="st-row-sub">Email or call us</div>
             </div>
-            <span class="st-badge">Live</span>
             <i class="bi bi-chevron-right st-row-arrow"></i>
           </div>
           <div class="st-row" onclick="openReportModal()">
@@ -1097,6 +1107,58 @@ if ($appBase === '') {
       </div>
     </div>
 
+    <!-- Contact Support Modal -->
+    <div class="modal-overlay" id="contactSupportModal" onclick="if(event.target===this)closeContactSupport()"
+      style="display:none;position:fixed;inset:0;background:var(--modal-ol, rgba(0,0,0,.5));z-index:200;overflow-y:auto;align-items:center;justify-content:center;">
+      <div class="modal-card"
+        style="background:var(--bg-card, #fff);border:1.5px solid var(--border-col, #e5e7eb);border-radius:20px;width:100%;max-width:360px;margin:20px;box-shadow:0 10px 40px var(--shadow-lg, rgba(0,0,0,.15));position:relative;display:flex;flex-direction:column;max-height:85vh;overflow:hidden;">
+        <div
+          style="padding:20px;border-bottom:1.5px solid var(--border-col, #e5e7eb);display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:18px;font-weight:800;color:var(--txt-primary, #0f172a);font-family:'Poppins', sans-serif;">Contact Support</div>
+          <button onclick="closeContactSupport()"
+            style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--txt-muted, #6b7280);display:flex;align-items:center;padding:4px;"><i
+              class="bi bi-x-lg"></i></button>
+        </div>
+        <div style="overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px;">
+          <p style="margin:0;font-size:13px;color:var(--txt-muted, #6b7280);line-height:1.5;font-weight:600;">
+            Have questions or need assistance? Reach out to the HomeEase official support channels below:
+          </p>
+          
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <!-- Email Contact Card -->
+            <div class="contact-card">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(245, 166, 35, 0.12);display:flex;align-items:center;justify-content:center;color:var(--teal, #E8820C);font-size:18px;flex-shrink:0;">
+                <i class="bi bi-envelope-fill"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:10px;font-weight:800;color:var(--teal, #E8820C);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:1px;">Email Support</div>
+                <div style="font-size:14px;font-weight:700;color:var(--txt-primary, #1A1A2E);word-break:break-all;">homeease@gmail.com</div>
+              </div>
+            </div>
+
+            <!-- Phone Contact Card -->
+            <div class="contact-card">
+              <div style="width:40px;height:40px;border-radius:12px;background:rgba(16, 185, 129, 0.12);display:flex;align-items:center;justify-content:center;color:#059669;font-size:18px;flex-shrink:0;">
+                <i class="bi bi-telephone-fill"></i>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:10px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:1px;">Call Support</div>
+                <div style="font-size:14px;font-weight:700;color:var(--txt-primary, #1A1A2E);word-break:break-all;">+63 970 131 9849</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="padding:12px 14px;background:var(--teal-bg, #FFF8F0);border-radius:12px;border:1px solid var(--teal-mid, #FFE5B4);display:flex;gap:10px;align-items:flex-start;">
+            <i class="bi bi-info-circle-fill" style="color:var(--teal, #E8820C);font-size:16px;margin-top:1px;"></i>
+            <div style="font-size:11px;color:var(--txt-primary, #475569);line-height:1.45;font-weight:600;">
+              Support is available Monday to Sunday, 8:00 AM - 8:00 PM.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
 
     <div id="subSheet" onclick="subSheetBg(event)">
       <div class="sub-sheet-inner">
@@ -1537,6 +1599,18 @@ if ($appBase === '') {
       window.location.href = APP_BASE + '/logout.php';
     }
 
+    // Contact Support Functions
+    function openContactSupport() {
+      document.getElementById('contactSupportModal').style.display = 'flex';
+      document.getElementById('contactSupportModal').style.flexDirection = 'column';
+      document.getElementById('contactSupportModal').style.justifyContent = 'center';
+      document.getElementById('contactSupportModal').style.alignItems = 'center';
+    }
+
+    function closeContactSupport() {
+      document.getElementById('contactSupportModal').style.display = 'none';
+    }
+
     // Help Center Functions
     function openHelpCenter() {
       document.getElementById('helpCenterModal').style.display = 'flex';
@@ -1683,11 +1757,15 @@ if ($appBase === '') {
       document.getElementById('reportSuccessOl').classList.remove('on');
     }
 
-    // Escape listener for report modals
+    // Escape listener for report and other modals
     document.addEventListener('keydown', function(event) {
       if (event.key === 'Escape') {
         closeReportModal();
         closeReportSuccess();
+        closeContactSupport();
+        closeHelpCenter();
+        closeTermsOfService();
+        closePrivacyPolicy();
       }
     });
 
