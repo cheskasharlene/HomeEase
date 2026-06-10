@@ -837,6 +837,50 @@ body {
 
 .nl { font-size: 10px; font-weight: 700; }
 
+/* ── Bell nav item with unread badge ──────────────────────── */
+.ni-bell-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ni-badge {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  font-family: 'Poppins', sans-serif;
+  line-height: 16px;
+  text-align: center;
+  border: 2px solid var(--bg-screen, #fff);
+  animation: badge-pop .3s cubic-bezier(.175,.885,.32,1.275);
+  pointer-events: none;
+}
+
+@keyframes badge-pop {
+  0%   { transform: scale(0); }
+  80%  { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Shake animation when new notifs arrive */
+.ni-bell-shake { animation: bell-shake .5s ease; }
+@keyframes bell-shake {
+  0%,100% { transform: rotate(0); }
+  20%     { transform: rotate(-12deg); }
+  40%     { transform: rotate(12deg); }
+  60%     { transform: rotate(-8deg); }
+  80%     { transform: rotate(8deg); }
+}
+
 .ndot {
   width: 5px; height: 5px;
   background: var(--danger);

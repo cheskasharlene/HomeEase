@@ -1,619 +1,974 @@
+/* ================================================================
+   provider_earnings.css  –  Enhanced Earnings & Remittance UI
+   ================================================================ */
+
+/* ── Base ─────────────────────────────────────────────────────── */
 body {
-      background: #fff;
-    }
+  background: #fff;
+}
 
-    .screen {
-      background: #F9F5EF;
-      align-items: stretch;
-      justify-content: flex-start;
-    }
+.screen {
+  background: #F9F5EF;
+  align-items: stretch;
+  justify-content: flex-start;
+}
 
-    #earnScroll {
-      width: 100%;
-      flex: 1;
-      overflow-y: auto;
-      padding-bottom: calc(78px + env(safe-area-inset-bottom));
-      -ms-overflow-style: none;
-    }
+/* ── Scroll Container ─────────────────────────────────────────── */
+#earnScroll {
+  width: 100%;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
 
-    #earnScroll::-webkit-scrollbar {
-      display: none;
-    }
+#earnScroll::-webkit-scrollbar {
+  display: none;
+}
 
-    .earn-hdr {
-      width: 100%;
-      padding: 48px 22px 24px;
-      background: linear-gradient(145deg, #C86500 0%, #D97108 20%, #E8820C 42%, #F5A623 65%, #FFB347 85%, #FFC96B 100%);
-      border-radius: 0 0 30px 30px;
-      box-shadow: 0 8px 32px rgba(232, 130, 12, .28);
-      position: relative;
-      overflow: hidden;
-    }
+/* ── Header Gradient ──────────────────────────────────────────── */
+.earn-hdr {
+  width: 100%;
+  padding: 50px 22px 28px;
+  background: linear-gradient(145deg, #B85800 0%, #C86500 18%, #D97108 38%, #E8820C 58%, #F5A623 78%, #FFC96B 100%);
+  border-radius: 0 0 36px 36px;
+  box-shadow: 0 10px 40px rgba(200, 101, 0, .32);
+  position: relative;
+  overflow: hidden;
+}
 
-    .earn-hdr::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, .07) 1px, transparent 0);
-      background-size: 22px 22px;
-      pointer-events: none;
-    }
+/* Dot-grid texture */
+.earn-hdr::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,.09) 1px, transparent 0);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
 
-    .earn-hdr-top {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 16px;
-      position: relative;
-      z-index: 1;
-    }
+/* Decorative orb */
+.earn-hdr::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(255,255,255,.15) 0%, transparent 65%);
+  pointer-events: none;
+}
 
-    .earn-back {
-      width: 40px;
-      height: 40px;
-      background: rgba(255, 255, 255, .2);
-      -webkit-backdrop-filter: blur(8px);
-      backdrop-filter: blur(8px);
-      border: 1.5px solid rgba(255, 255, 255, .3);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      transition: background .2s;
-    }
+/* ── Header Top Row ───────────────────────────────────────────── */
+.earn-hdr-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+}
 
-    .earn-back:hover {
-      background: rgba(255, 255, 255, .3);
-    }
+.earn-back {
+  width: 38px;
+  height: 38px;
+  background: rgba(255,255,255,.2);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,.35);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 17px;
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+  flex-shrink: 0;
+}
+.earn-back:hover  { background: rgba(255,255,255,.32); }
+.earn-back:active { transform: scale(.92); }
 
-    .earn-hdr-title {
-      font-family: 'Poppins', sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, .1);
-      position: relative;
-      z-index: 1;
-    }
+.earn-hdr-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0,0,0,.12);
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
 
-    .earn-summary-card {
-      background: rgba(255, 255, 255, .15);
-      -webkit-backdrop-filter: blur(8px);
-      backdrop-filter: blur(8px);
-      border: 1.5px solid rgba(255, 255, 255, .25);
-      border-radius: 16px;
-      padding: 16px 18px;
-      position: relative;
-      z-index: 1;
-      margin-bottom: 10px;
-    }
+/* ── Remittance Button ────────────────────────────────────────── */
+.earn-remit-btn {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,.38);
+  border-radius: 20px;
+  padding: 8px 14px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer;
+  transition: background .2s, transform .15s, box-shadow .2s;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0,0,0,.1);
+}
+.earn-remit-btn:hover  {
+  background: rgba(255,255,255,.34);
+  box-shadow: 0 6px 18px rgba(0,0,0,.15);
+}
+.earn-remit-btn:active { transform: scale(.95); }
 
-    .earn-summary-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
+/* ── Earnings Summary Card ────────────────────────────────────── */
+.earn-summary-card {
+  background: rgba(255,255,255,.16);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255,255,255,.28);
+  border-radius: 20px;
+  padding: 18px 20px 14px;
+  position: relative;
+  z-index: 1;
+}
 
-    .earn-summary-item:last-child {
-      margin-bottom: 0;
-    }
+.earn-summary-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(255,255,255,.15);
+}
+.earn-summary-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.earn-summary-item:first-child { padding-top: 0; }
 
-    .earn-sum-lbl {
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, .75);
-      text-transform: uppercase;
-      letter-spacing: .5px;
-    }
+.earn-sum-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255,255,255,.72);
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
 
-    .earn-sum-val {
-      font-family: 'Poppins', sans-serif;
-      font-size: 15px;
-      font-weight: 800;
-      color: #fff;
-    }
+.earn-sum-val {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.1);
+}
 
-    .earn-body {
-      padding: 16px 12px 0;
-    }
+/* ── Body ─────────────────────────────────────────────────────── */
+.earn-body {
+  padding: 6px 4px 0;
+}
 
-    .sec-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 12px 10px;
-    }
+.sec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 10px;
+}
 
-    .sec-ttl {
-      font-family: 'Poppins', sans-serif;
-      font-size: 16px;
-      font-weight: 800;
-      color: #1A1A2E;
-    }
+.sec-ttl {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1A1A2E;
+}
 
-    .earn-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      padding: 0 12px;
-    }
+/* ── Earnings List ────────────────────────────────────────────── */
+.earn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 16px;
+}
 
-    .earn-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 14px 16px;
-      box-shadow: 0 3px 14px rgba(232, 130, 12, .06);
-      border: 1.5px solid #EDE8E0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
+.earn-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 2px 12px rgba(200,101,0,.07);
+  border: 1.5px solid #EDE8E0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform .15s, box-shadow .15s;
+}
+.earn-card:active {
+  transform: scale(.985);
+  box-shadow: 0 1px 6px rgba(200,101,0,.1);
+}
 
-    .earn-card-left {
-      flex: 1;
-    }
+.earn-card-left { flex: 1; min-width: 0; }
 
-    .earn-card-service {
-      font-size: 13px;
-      font-weight: 700;
-      color: #1A1A2E;
-    }
+.earn-card-service {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1A1A2E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-    .earn-card-meta {
-      font-size: 11px;
-      color: #8E8E93;
-      margin-top: 3px;
-    }
+.earn-card-meta {
+  font-size: 11px;
+  color: #8E8E93;
+  margin-top: 3px;
+}
 
-    .earn-card-amount {
-      font-size: 14px;
-      font-weight: 800;
-      color: #10b981;
-      font-family: 'Poppins', sans-serif;
-    }
+.earn-card-amount {
+  font-size: 14px;
+  font-weight: 800;
+  color: #10b981;
+  font-family: 'Poppins', sans-serif;
+  flex-shrink: 0;
+  margin-left: 10px;
+}
 
-    .earn-card-status {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 8px;
-      margin-top: 4px;
-    }
+.earn-card-status {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  margin-top: 5px;
+  letter-spacing: .3px;
+}
+.earn-card-status.completed { background: #d1fae5; color: #065f46; }
+.earn-card-status.pending   { background: #fef3c7; color: #b45309; }
 
-    .earn-card-status.completed {
-      background: #d1fae5;
-      color: #065f46;
-    }
+/* ── Empty State ──────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #8E8E93;
+}
+.empty-icon {
+  font-size: 52px;
+  margin-bottom: 14px;
+  opacity: .45;
+}
+.empty-txt {
+  font-size: 14px;
+  font-weight: 600;
+}
 
-    .earn-card-status.pending {
-      background: #fef3c7;
-      color: #b45309;
-    }
+/* ── Bottom Nav ───────────────────────────────────────────────── */
+.bnav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff !important;
+  border-top: 1px solid #EDE8E0 !important;
+  display: flex;
+  padding: 9px 0 calc(12px + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 24px rgba(200,101,0,.08);
+  z-index: 50;
+}
 
-    .empty-state {
-      text-align: center;
-      padding: 40px 24px;
-      color: #8E8E93;
-    }
+.ni {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  color: #C5BEB3;
+  font-family: 'Nunito', sans-serif;
+  padding: 2px 0;
+  transition: color .18s;
+}
+.ni i { font-size: 22px; }
+.ni.on, .ni.on i, .ni.on .nl { color: #F5A623; }
+.nl { font-size: 10px; font-weight: 700; }
 
-    .empty-icon {
-      font-size: 48px;
-      margin-bottom: 12px;
-      opacity: .5;
-    }
+/* ================================================================
+   REMITTANCE MODAL  –  Constrained inside .shell (position:absolute)
+   ================================================================ */
 
-    .empty-txt {
-      font-size: 14px;
-      font-weight: 600;
-    }
+.remit-modal-overlay {
+  display: none;
+  /* Use absolute so it stays inside the .shell container, not viewport */
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 20, 8, .55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 200;
+  align-items: flex-end;        /* slide up from bottom */
+  justify-content: center;
+  opacity: 0;
+  transition: opacity .26s ease;
+}
 
-    .bnav {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #fff !important;
-      border-top: 1px solid #EDE8E0 !important;
-      display: flex;
-      padding: 9px 0 calc(12px + env(safe-area-inset-bottom));
-      box-shadow: 0 -4px 20px rgba(232, 130, 12, .07);
-      z-index: 50;
-    }
+.remit-modal-overlay.on {
+  display: flex;
+  opacity: 1;
+}
 
-    .ni {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      color: #C5BEB3;
-      font-family: "Nunito", sans-serif;
-      padding: 2px 0;
-    }
+/* ── Modal Card ───────────────────────────────────────────────── */
+.remit-modal-card {
+  width: 100%;
+  background: #fff;
+  border-radius: 28px 28px 0 0;
+  overflow: hidden;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  /* Slide-up entrance */
+  transform: translateY(30px);
+  transition: transform .28s cubic-bezier(.22,.84,.36,1);
+  max-height: 88%;
+  /* No hard max-width – fills the shell width */
+}
 
-    .ni i {
-      font-size: 22px;
-    }
+.remit-modal-overlay.on .remit-modal-card {
+  transform: translateY(0);
+}
 
-    .ni.on,
-    .ni.on i,
-    .ni.on .nl {
-      color: #F5A623;
-    }
+/* ── Pull Handle ──────────────────────────────────────────────── */
+.remit-modal-card::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: #E0D9CE;
+  border-radius: 3px;
+  margin: 12px auto 0;
+  flex-shrink: 0;
+}
 
-    .nl {
-      font-size: 10px;
-      font-weight: 700;
-    }
+/* ── Modal Header ─────────────────────────────────────────────── */
+.remit-modal-header {
+  padding: 12px 20px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #EDE8E0;
+  flex-shrink: 0;
+}
 
+.remit-modal-header span {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1A1A2E;
+}
 
-    /* DARK MODE */
-    body.dark { background: #0f0f14; }
-    body.dark .screen { background: #14141c; }
-    body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }
-    body.dark .ni { color: #5a5a72; }
-    body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
-    body.dark .sec-ttl { color: #e8e8f0; }
-    body.dark .earn-card { background: #1e1e2c; border-color: #2a2a3a; }
-    body.dark .earn-card-service { color: #e8e8f0; }
-    body.dark .earn-card-meta { color: #6b6b88; }
-    body.dark .earn-card-status.completed { background: #052e1c; color: #34d399; }
-    body.dark .earn-card-status.pending { background: #2d2306; color: #f59e0b; }
-    body.dark .empty-state, body.dark .empty-txt { color: #6b6b88; }
+.remit-modal-header button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #F3EEE7;
+  border: none;
+  font-size: 14px;
+  color: #5E5E6E;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, color .2s, transform .15s;
+  flex-shrink: 0;
+}
+.remit-modal-header button:hover  { background: #EDE8E0; color: #1A1A2E; }
+.remit-modal-header button:active { transform: scale(.9); }
 
-    /* Remittance button and modal styling */
-    .earn-remit-btn {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(255, 255, 255, 0.2);
-      -webkit-backdrop-filter: blur(8px);
-      backdrop-filter: blur(8px);
-      border: 1.5px solid rgba(255, 255, 255, 0.3);
-      border-radius: 12px;
-      padding: 8px 12px;
-      color: #fff;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background .2s, transform 0.1s;
-    }
-    .earn-remit-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-    .earn-remit-btn:active {
-      transform: scale(0.96);
-    }
+/* ── Modal Body ───────────────────────────────────────────────── */
+.remit-modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  -ms-overflow-style: none;
+}
+.remit-modal-body::-webkit-scrollbar { display: none; }
 
-    .remit-modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(26, 20, 8, .5);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      opacity: 0;
-      transition: opacity .22s ease;
-    }
+/* ── Amount Card ──────────────────────────────────────────────── */
+.remit-amount-card {
+  background: linear-gradient(135deg, #FFF6EB 0%, #FFEAD2 100%);
+  border: 1.5px solid #FFD8A8;
+  border-radius: 20px;
+  padding: 20px;
+  margin: 16px 18px 12px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
 
-    .remit-modal-overlay.on {
-      display: flex;
-      opacity: 1;
-    }
+.remit-amount-card::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(circle, rgba(245,166,35,.25) 0%, transparent 65%);
+  pointer-events: none;
+}
 
-    .remit-modal-card {
-      width: 100%;
-      max-width: 360px;
-      background: #fff;
-      border: 1.5px solid #EDE8E0;
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 18px 46px rgba(0, 0, 0, .15);
-      display: flex;
-      flex-direction: column;
-      transform: translateY(12px) scale(.98);
-      transition: transform .22s ease;
-      max-height: 85vh;
-    }
+.remit-amount-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: #D97108;
+  text-transform: uppercase;
+  letter-spacing: .7px;
+  margin-bottom: 6px;
+}
 
-    .remit-modal-overlay.on .remit-modal-card {
-      transform: translateY(0) scale(1);
-    }
+.remit-amount-val {
+  font-family: 'Poppins', sans-serif;
+  font-size: 32px;
+  font-weight: 800;
+  color: #B85800;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
 
-    .remit-modal-header {
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #EDE8E0;
-    }
-    .remit-modal-header span {
-      font-family: 'Poppins', sans-serif;
-      font-size: 16px;
-      font-weight: 800;
-      color: #1A1A2E;
-    }
-    .remit-modal-header button {
-      background: transparent;
-      border: none;
-      font-size: 20px;
-      color: #8E8E93;
-      cursor: pointer;
-      padding: 0;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: color .2s;
-    }
-    .remit-modal-header button:hover {
-      color: #1A1A2E;
-    }
-    .remit-modal-body {
-      padding: 0;
-      overflow-y: auto;
-      flex: 1;
-    }
-    .remit-amount-card {
-      background: linear-gradient(135deg, #FFF6EB 0%, #FFEAD2 100%);
-      border: 1.5px solid #FFD8A8;
-      border-radius: 18px;
-      padding: 18px;
-      margin: 16px 20px 12px;
-      text-align: center;
-    }
-    .remit-amount-lbl {
-      font-size: 11px;
-      font-weight: 700;
-      color: #E8820C;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      margin-bottom: 4px;
-    }
-    .remit-amount-val {
-      font-family: 'Poppins', sans-serif;
-      font-size: 28px;
-      font-weight: 800;
-      color: #C86500;
-      line-height: 1.2;
-    }
-    .remit-details-box {
-      background: #FDFBF7;
-      border: 1.5px solid #EDE8E0;
-      border-radius: 18px;
-      padding: 16px;
-      margin: 0 20px 16px;
-    }
-    .remit-detail-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      font-size: 13px;
-    }
-    .remit-detail-row:last-child {
-      margin-bottom: 0;
-    }
-    .remit-detail-row span:first-child {
-      color: #8E8E93;
-      font-weight: 600;
-    }
-    .remit-detail-row span:last-child {
-      color: #1A1A2E;
-      font-weight: 700;
-      text-align: right;
-    }
-    .remit-badge {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 3px 8px;
-      border-radius: 8px;
-      display: inline-block;
-      text-transform: capitalize;
-    }
-    .remit-badge.pending {
-      background: #FEF3C7;
-      color: #B45309;
-    }
-    .remit-badge.paid {
-      background: #D1FAE5;
-      color: #065F46;
-    }
-    .remit-badge.overdue {
-      background: #FEE2E2;
-      color: #991B1B;
-    }
-    .remit-title-text {
-      font-family: 'Poppins', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      color: #1A1A2E;
-      margin: 16px 20px 10px;
-    }
-    .remit-history-list {
-      padding: 0 20px;
-      margin-bottom: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 240px;
-      overflow-y: auto;
-    }
-    .remit-history-item {
-      background: #FDFBF7;
-      border: 1.5px solid #EDE8E0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .remit-history-info {
-      display: flex;
-      flex-direction: column;
-    }
-    .remit-history-ref {
-      font-size: 12px;
-      font-weight: 700;
-      color: #1A1A2E;
-    }
-    .remit-history-meta {
-      font-size: 10px;
-      color: #8E8E93;
-      margin-top: 2px;
-    }
-    .remit-history-amount-status {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-    }
-    .remit-history-amt {
-      font-size: 12px;
-      font-weight: 800;
-      color: #1A1A2E;
-    }
-    .remit-divider {
-      height: 1px;
-      background: #EDE8E0;
-      margin: 0 20px 16px;
-    }
-    .remit-modal-footer {
-      padding: 0 20px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .remit-btn-primary {
-      background: linear-gradient(135deg, #C86500 0%, #E8820C 100%);
-      color: #fff;
-      border: none;
-      border-radius: 14px;
-      padding: 14px;
-      font-size: 14px;
-      font-weight: 700;
-      width: 100%;
-      cursor: pointer;
-      box-shadow: 0 4px 14px rgba(232, 130, 12, .2);
-      transition: background .2s, transform 0.1s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .remit-btn-primary:hover {
-      background: linear-gradient(135deg, #D97108 0%, #F5A623 100%);
-    }
-    .remit-btn-primary:active {
-      transform: scale(0.98);
-    }
-    .remit-btn-secondary {
-      background: transparent;
-      color: #E8820C;
-      border: 1.5px solid #EDE8E0;
-      border-radius: 14px;
-      padding: 12px;
-      font-size: 14px;
-      font-weight: 700;
-      width: 100%;
-      cursor: pointer;
-      transition: background .2s, border-color .2s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .remit-btn-secondary:hover {
-      background: #FDFBF7;
-      border-color: #E8820C;
-    }
-    .remit-btn-secondary:active {
-      transform: scale(0.98);
-    }
+/* ── Details Box ──────────────────────────────────────────────── */
+.remit-details-box {
+  background: #FDFBF7;
+  border: 1.5px solid #EDE8E0;
+  border-radius: 20px;
+  padding: 6px 16px;
+  margin: 0 18px 16px;
+}
 
-    /* Dark Mode support */
-    body.dark .remit-modal-card {
-      background: #1e1e2c;
-      border-color: #2a2a3a;
-      box-shadow: 0 18px 46px rgba(0, 0, 0, .4);
-    }
+.remit-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(237,232,224,.7);
+}
+.remit-detail-row:last-child { border-bottom: none; }
 
-    body.dark .remit-modal-header {
-      background: linear-gradient(135deg, #3d2203, #221401) !important;
-      border-bottom-color: #2a2a3a !important;
-    }
+.remit-detail-row span:first-child {
+  color: #8E8E93;
+  font-weight: 600;
+}
 
-    body.dark .remit-modal-header span {
-      color: #e8e8f0 !important;
-    }
+.remit-detail-row span:last-child {
+  color: #1A1A2E;
+  font-weight: 700;
+  text-align: right;
+  max-width: 58%;
+}
 
-    body.dark .remit-modal-header button {
-      color: #8e8e93 !important;
-    }
+/* ── Badges ───────────────────────────────────────────────────── */
+.remit-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-block;
+  text-transform: capitalize;
+  letter-spacing: .3px;
+}
+.remit-badge.pending   { background: #FEF3C7; color: #B45309; }
+.remit-badge.paid      { background: #D1FAE5; color: #065F46; }
+.remit-badge.overdue   { background: #FEE2E2; color: #991B1B; }
+.remit-badge.submitted { background: #EDE9FE; color: #5B21B6; }
 
-    body.dark .remit-amount-card {
-      background: linear-gradient(135deg, #3a2203, #2c1a01) !important;
-      border-color: #553305 !important;
-    }
+/* ── Section Title ────────────────────────────────────────────── */
+.remit-title-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #1A1A2E;
+  margin: 14px 18px 10px;
+}
 
-    body.dark .remit-amount-lbl {
-      color: #F5A623;
-    }
+/* ── History List ─────────────────────────────────────────────── */
+.remit-history-list {
+  padding: 0 18px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+  -ms-overflow-style: none;
+}
+.remit-history-list::-webkit-scrollbar { display: none; }
 
-    body.dark .remit-amount-val {
-      color: #FFA834;
-    }
+.remit-history-item {
+  background: #FDFBF7;
+  border: 1.5px solid #EDE8E0;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color .18s, background .18s;
+}
+.remit-history-item:hover {
+  background: #FFF8F0;
+  border-color: #F5A623;
+}
 
-    body.dark .remit-details-box {
-      background: #14141c !important;
-      border-color: #2a2a3a !important;
-    }
+.remit-history-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  margin-right: 10px;
+}
 
-    body.dark .remit-detail-row span:first-child {
-      color: #8e8e93 !important;
-    }
+.remit-history-ref {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1A1A2E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-    body.dark .remit-detail-row span:last-child {
-      color: #e8e8f0 !important;
-    }
+.remit-history-meta {
+  font-size: 10px;
+  color: #8E8E93;
+  margin-top: 3px;
+}
 
-    body.dark .remit-history-item {
-      background: #14141c !important;
-      border-color: #2a2a3a !important;
-    }
+.remit-history-amount-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+  flex-shrink: 0;
+}
 
-    body.dark .remit-history-item span {
-      color: #e8e8f0 !important;
-    }
+.remit-history-amt {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1A1A2E;
+}
 
-    body.dark .remit-history-item .remit-history-meta {
-      color: #8e8e93 !important;
-    }
+/* ── Divider ──────────────────────────────────────────────────── */
+.remit-divider {
+  height: 1px;
+  background: #EDE8E0;
+  margin: 0 18px 16px;
+}
 
-    body.dark .remit-history-ref,
-    body.dark .remit-history-amt {
-      color: #e8e8f0;
-    }
+/* ── Footer Buttons ───────────────────────────────────────────── */
+.remit-modal-footer {
+  padding: 0 18px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-    body.dark .remit-title-text {
-      color: #e8e8f0 !important;
-    }
+.remit-btn-primary {
+  background: linear-gradient(135deg, #B85800 0%, #D97108 50%, #F5A623 100%);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 15px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  width: 100%;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(200,101,0,.28);
+  transition: background .2s, transform .12s, box-shadow .2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  position: relative;
+  overflow: hidden;
+}
+.remit-btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+.remit-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #C86500 0%, #E8820C 50%, #F5A623 100%);
+  box-shadow: 0 8px 24px rgba(200,101,0,.36);
+}
+.remit-btn-primary:active:not(:disabled) { transform: scale(.97); }
+.remit-btn-primary:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
 
-    body.dark .remit-divider {
-      background: #2a2a3a !important;
-    }
+.remit-btn-secondary {
+  background: transparent;
+  color: #D97108;
+  border: 1.5px solid #EDE8E0;
+  border-radius: 16px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  width: 100%;
+  cursor: pointer;
+  transition: background .2s, border-color .2s, transform .12s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.remit-btn-secondary:hover  {
+  background: #FFF8F0;
+  border-color: #F5A623;
+}
+.remit-btn-secondary:active { transform: scale(.97); }
 
-    body.dark .remit-btn-secondary {
-      border-color: #2a2a3a !important;
-      color: #e8e8f0 !important;
-    }
+/* ── Pay View overrides ───────────────────────────────────────── */
+#remitPayView .remit-modal-footer {
+  flex-direction: row;
+}
+#remitPayView .remit-modal-footer .remit-btn-primary,
+#remitPayView .remit-modal-footer .remit-btn-secondary {
+  flex: 1;
+}
 
+/* QR Image */
+#remitPayView img {
+  max-width: 200px;
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.1);
+  border: 1.5px solid #EDE8E0;
+  display: block;
+  margin: 0 auto 8px;
+}
 
+/* File input */
+#remitReceiptInput {
+  padding: 10px;
+  height: auto;
+  width: 100%;
+  border: 1.5px solid #EDE8E0;
+  border-radius: 12px;
+  background: #FDFBF7;
+  color: #1A1A2E;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  transition: border-color .2s;
+}
+#remitReceiptInput:focus { border-color: #F5A623; outline: none; }
+
+/* ================================================================
+   DARK MODE
+   ================================================================ */
+body.dark { background: #0f0f14; }
+body.dark .screen { background: #14141c; }
+
+/* Nav */
+body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }
+body.dark .ni   { color: #5a5a72; }
+body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
+
+/* Section title */
+body.dark .sec-ttl { color: #e8e8f0; }
+
+/* Earn cards */
+body.dark .earn-card           { background: #1e1e2c; border-color: #2a2a3a; }
+body.dark .earn-card-service   { color: #e8e8f0; }
+body.dark .earn-card-meta      { color: #6b6b88; }
+body.dark .earn-card-status.completed { background: #052e1c; color: #34d399; }
+body.dark .earn-card-status.pending   { background: #2d2306; color: #f59e0b; }
+body.dark .empty-state, body.dark .empty-txt { color: #6b6b88; }
+
+/* Remit modal */
+body.dark .remit-modal-overlay { background: rgba(0,0,0,.7); }
+
+body.dark .remit-modal-card {
+  background: #1e1e2c;
+  box-shadow: 0 -8px 40px rgba(0,0,0,.5);
+}
+body.dark .remit-modal-card::before { background: #3a3a52; }
+
+body.dark .remit-modal-header { border-bottom-color: #2a2a3a; }
+body.dark .remit-modal-header span  { color: #e8e8f0; }
+body.dark .remit-modal-header button {
+  background: #2a2a3a;
+  color: #8e8e93;
+}
+body.dark .remit-modal-header button:hover { background: #333347; color: #e8e8f0; }
+
+body.dark .remit-amount-card {
+  background: linear-gradient(135deg, #3a2203, #2c1a01);
+  border-color: #553305;
+}
+body.dark .remit-amount-lbl { color: #F5A623; }
+body.dark .remit-amount-val { color: #FFA834; }
+
+body.dark .remit-details-box { background: #14141c; border-color: #2a2a3a; }
+body.dark .remit-detail-row  { border-bottom-color: rgba(42,42,58,.8); }
+body.dark .remit-detail-row span:first-child { color: #8e8e93; }
+body.dark .remit-detail-row span:last-child  { color: #e8e8f0; }
+
+body.dark .remit-title-text { color: #e8e8f0; }
+
+body.dark .remit-history-item { background: #14141c; border-color: #2a2a3a; }
+body.dark .remit-history-item:hover { background: #1c1c2e; border-color: #F5A623; }
+body.dark .remit-history-ref { color: #e8e8f0; }
+body.dark .remit-history-amt { color: #e8e8f0; }
+body.dark .remit-history-meta { color: #8e8e93; }
+
+body.dark .remit-divider { background: #2a2a3a; }
+
+body.dark .remit-btn-secondary {
+  border-color: #2a2a3a;
+  color: #F5A623;
+}
+body.dark .remit-btn-secondary:hover {
+  background: #2a2216;
+  border-color: #F5A623;
+}
+
+/* ================================================================
+   QR CARD  –  Pay via GCash view
+   ================================================================ */
+.remit-qr-card {
+  margin: 0 18px 16px;
+  background: linear-gradient(160deg, #007aff 0%, #0055d4 100%);
+  border-radius: 20px;
+  padding: 20px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 28px rgba(0, 82, 212, .28);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle shimmer layer */
+.remit-qr-card::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(255,255,255,.18) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.remit-qr-img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 14px;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.18);
+  display: block;
+}
+
+.remit-qr-account,
+.remit-qr-number {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255,255,255,.9);
+  font-family: 'Poppins', sans-serif;
+}
+
+.remit-qr-account i,
+.remit-qr-number i {
+  font-size: 13px;
+  color: rgba(255,255,255,.7);
+}
+
+/* ================================================================
+   RECEIPT UPLOAD AREA
+   ================================================================ */
+.remit-upload-area {
+  margin: 0 18px 4px;
+  border: 2px dashed #E0D8CE;
+  border-radius: 16px;
+  padding: 20px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 90px;
+  background: #FDFBF7;
+  transition: border-color .2s, background .2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.remit-upload-area:hover {
+  border-color: #F5A623;
+  background: #FFF8F0;
+}
+
+.remit-upload-area.has-file {
+  border-style: solid;
+  border-color: #10b981;
+  background: #f0fdf4;
+  padding: 8px;
+}
+
+.remit-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.remit-upload-placeholder i {
+  font-size: 28px;
+  color: #D97108;
+}
+
+.remit-upload-placeholder span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1A1A2E;
+}
+
+.remit-upload-placeholder small {
+  font-size: 10px;
+  color: #8E8E93;
+  font-weight: 600;
+}
+
+.remit-receipt-preview {
+  width: 100%;
+  max-height: 160px;
+  object-fit: contain;
+  border-radius: 10px;
+  display: block;
+}
+
+.remit-file-name {
+  margin: 6px 18px 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.remit-file-name::before {
+  content: '\F26E';               /* bi-file-earmark-check */
+  font-family: 'bootstrap-icons';
+  font-size: 13px;
+}
+
+/* ================================================================
+   IN-APP TOAST  –  position:absolute inside .shell
+   ================================================================ */
+.app-toast {
+  position: absolute;
+  top: 20px;
+  left: 16px;
+  right: 16px;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  background: #1A1A2E;
+  color: #fff;
+  border-radius: 16px;
+  padding: 13px 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.22);
+
+  /* Hidden by default */
+  opacity: 0;
+  transform: translateY(-10px) scale(.97);
+  pointer-events: none;
+  transition: opacity .28s ease, transform .28s cubic-bezier(.22,.84,.36,1);
+}
+
+.app-toast--show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+/* Type variants */
+.app-toast--success { background: #064e3b; }
+.app-toast--error   { background: #7f1d1d; }
+.app-toast--warn    { background: #78350f; }
+.app-toast--info    { background: #1e3a5f; }
+
+.app-toast-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.app-toast--success .app-toast-icon { color: #34d399; }
+.app-toast--error   .app-toast-icon { color: #f87171; }
+.app-toast--warn    .app-toast-icon { color: #fbbf24; }
+.app-toast--info    .app-toast-icon { color: #60a5fa; }
+
+.app-toast-text {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  line-height: 1.35;
+  flex: 1;
+}
+
+/* ================================================================
+   SPINNER KEYFRAME  –  used by inline submit spinner
+   ================================================================ */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ================================================================
+   DARK MODE  –  new elements
+   ================================================================ */
+
+/* QR card keeps its brand blue in dark mode */
+
+/* Upload area */
+body.dark .remit-upload-area {
+  background: #14141c;
+  border-color: #2a2a3a;
+}
+body.dark .remit-upload-area:hover {
+  border-color: #F5A623;
+  background: #1c1c28;
+}
+body.dark .remit-upload-area.has-file {
+  border-color: #10b981;
+  background: #052e1c;
+}
+
+body.dark .remit-upload-placeholder span { color: #e8e8f0; }
+body.dark .remit-upload-placeholder small { color: #6b6b88; }
+body.dark .remit-upload-placeholder i { color: #F5A623; }
+
+/* Toast — already dark backgrounds, stays as-is */
+
+/* File input (legacy fallback, not used now) */
+body.dark #remitReceiptInput {
+  background: #14141c;
+  border-color: #2a2a3a;
+  color: #e8e8f0;
+}

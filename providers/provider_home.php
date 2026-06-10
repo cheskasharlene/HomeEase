@@ -431,9 +431,17 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <div class="ni on" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
           <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span class="nl">Requests</span></div>
           <div class="ni" onclick="goPage('provider_earnings.php')"><i class="bi bi-cash-stack"></i><span class="nl">Earnings</span></div>
+          <div class="ni ni-bell" onclick="goPage('provider_notifications.php')">
+            <div class="ni-bell-wrap"><i class="bi bi-bell-fill"></i><span class="ni-badge" id="navBellBadge" style="display:none;"></span></div>
+            <span class="nl">Notifs</span>
+          </div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php else: ?>
           <div class="ni on" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
+          <div class="ni ni-bell" onclick="goPage('provider_notifications.php')">
+            <div class="ni-bell-wrap"><i class="bi bi-bell-fill"></i><span class="ni-badge" id="navBellBadge" style="display:none;"></span></div>
+            <span class="nl">Notifs</span>
+          </div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php endif; ?>
       </div>

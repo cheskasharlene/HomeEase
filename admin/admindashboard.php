@@ -1344,6 +1344,45 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
+      <!-- Remittance Approve Confirm Dialog -->
+      <div class="confirm-ol" id="remitApproveConfirmOl" onclick="if(event.target===this)closeRemitApproveConfirm()">
+        <div class="confirm-card">
+          <div class="confirm-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669;">
+            <i class="bi bi-check-circle-fill"></i>
+          </div>
+          <div class="confirm-title">Approve Remittance?</div>
+          <div class="confirm-sub">This will mark the payment as <strong>Paid</strong> and notify the provider. This action cannot be undone.</div>
+          <div class="confirm-actions">
+            <button class="confirm-btn cancel" onclick="closeRemitApproveConfirm()">Cancel</button>
+            <button class="confirm-btn ok" id="remitApproveOkBtn" onclick="submitRemitApprove()"
+              style="background:linear-gradient(135deg,#059669,#10b981);box-shadow:0 8px 16px rgba(5,150,105,.28);">
+              Approve
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remittance Reject Confirm Dialog -->
+      <div class="confirm-ol" id="remitRejectConfirmOl" onclick="if(event.target===this)closeRemitRejectConfirm()">
+        <div class="confirm-card">
+          <div class="confirm-icon" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;">
+            <i class="bi bi-x-circle-fill"></i>
+          </div>
+          <div class="confirm-title">Reject Remittance?</div>
+          <div class="confirm-sub">Please provide a reason. The provider will be notified of the rejection.</div>
+          <div class="confirm-reason-wrap">
+            <textarea id="remitRejectReasonInput" class="confirm-reason" placeholder="Enter rejection reason (required)..."></textarea>
+          </div>
+          <div class="confirm-actions">
+            <button class="confirm-btn cancel" onclick="closeRemitRejectConfirm()">Cancel</button>
+            <button class="confirm-btn ok" id="remitRejectOkBtn" onclick="submitRemitReject()"
+              style="background:#ef4444;box-shadow:0 8px 16px rgba(239,68,68,.28);">
+              Reject
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /.shell -->
 
     <script>
@@ -3367,7 +3406,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
   // Re-parent QR and Remittance overlays into the #app shell so they respect the mobile layout
   (function() {
     var appShell = document.getElementById('app');
-    ['qrRequestsSheetOl', 'qrApproveConfirmOl', 'qrRejectConfirmOl', 'remitSheetOl', 'remitDetailOl'].forEach(function(id) {
+    ['qrRequestsSheetOl', 'qrApproveConfirmOl', 'qrRejectConfirmOl',
+     'remitSheetOl', 'remitDetailOl',
+     'remitApproveConfirmOl', 'remitRejectConfirmOl'].forEach(function(id) {
       var el = document.getElementById(id);
       if (appShell && el) appShell.appendChild(el);
     });
@@ -3560,39 +3601,92 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     openSheet('remitDetailOl');
   }
 
-  async function verifyRemittance(remitId, verifyAction) {
-    let reason = '';
-    if (verifyAction === 'reject') {
-      reason = prompt('Please enter the reason for rejecting this remittance payment:');
-      if (reason === null) return;
-      reason = reason.trim();
-      if (!reason) {
-        toast('Rejection reason is required.', 'e');
-        return;
-      }
-    } else {
-      if (!confirm('Are you sure you want to approve this remittance payment?')) {
-        return;
-      }
-    }
+  // ── In-App Remittance Confirm Dialogs ─────────────────────────────────────
+  let _remitPendingId   = null;
+  let _remitPendingAction = null;
 
+  function verifyRemittance(remitId, verifyAction) {
+    _remitPendingId     = remitId;
+    _remitPendingAction = verifyAction;
+    if (verifyAction === 'reject') {
+      document.getElementById('remitRejectReasonInput').value = '';
+      document.getElementById('remitRejectConfirmOl').classList.add('on');
+    } else {
+      document.getElementById('remitApproveConfirmOl').classList.add('on');
+    }
+  }
+
+  function closeRemitApproveConfirm() {
+    document.getElementById('remitApproveConfirmOl').classList.remove('on');
+    _remitPendingId = null;
+  }
+
+  function closeRemitRejectConfirm() {
+    document.getElementById('remitRejectConfirmOl').classList.remove('on');
+    _remitPendingId = null;
+  }
+
+  async function submitRemitApprove() {
+    if (!_remitPendingId) return;
+    const btn = document.getElementById('remitApproveOkBtn');
+    btn.disabled = true;
+    btn.textContent = 'Approving...';
     try {
       const response = await api('remittances', 'verify', fd({
-        remittance_id: remitId,
-        verify_action: verifyAction,
-        notes: reason
+        remittance_id: _remitPendingId,
+        verify_action: 'approve',
+        notes: ''
       }));
-      
+      btn.disabled = false;
+      btn.textContent = 'Approve';
+      closeRemitApproveConfirm();
       if (response.success) {
-        toast(response.message || 'Remittance verified successfully.');
+        toast(response.message || 'Remittance approved successfully.', 's');
         closeSheet('remitDetailOl');
         loadAdminRemittances();
       } else {
-        toast(response.message || 'Verification failed.', 'e');
+        toast(response.message || 'Approval failed.', 'e');
       }
     } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Approve';
       console.error(err);
-      toast('An error occurred during verification.', 'e');
+      toast('An error occurred. Please try again.', 'e');
+    }
+  }
+
+  async function submitRemitReject() {
+    const reason = document.getElementById('remitRejectReasonInput').value.trim();
+    if (!reason) {
+      toast('Please enter a rejection reason.', 'e');
+      document.getElementById('remitRejectReasonInput').focus();
+      return;
+    }
+    if (!_remitPendingId) return;
+    const btn = document.getElementById('remitRejectOkBtn');
+    btn.disabled = true;
+    btn.textContent = 'Rejecting...';
+    try {
+      const response = await api('remittances', 'verify', fd({
+        remittance_id: _remitPendingId,
+        verify_action: 'reject',
+        notes: reason
+      }));
+      btn.disabled = false;
+      btn.textContent = 'Reject';
+      closeRemitRejectConfirm();
+      if (response.success) {
+        toast(response.message || 'Remittance rejected.', 's');
+        closeSheet('remitDetailOl');
+        loadAdminRemittances();
+      } else {
+        toast(response.message || 'Rejection failed.', 'e');
+      }
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Reject';
+      console.error(err);
+      toast('An error occurred. Please try again.', 'e');
     }
   }
 

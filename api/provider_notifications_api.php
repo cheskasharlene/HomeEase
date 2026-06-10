@@ -80,6 +80,8 @@ function ensureProviderNotificationsTable(mysqli $conn): void
     $sql = "CREATE TABLE IF NOT EXISTS provider_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         provider_id INT NOT NULL,
+        type VARCHAR(40) DEFAULT 'general',
+        reference_id INT DEFAULT NULL,
         title VARCHAR(120) NOT NULL,
         message TEXT,
         icon VARCHAR(32) DEFAULT NULL,
@@ -89,5 +91,15 @@ function ensureProviderNotificationsTable(mysqli $conn): void
         INDEX idx_provider_created (provider_id, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $conn->query($sql);
+
+    // Add columns if they don't exist yet (for existing installs)
+    $conn->query("ALTER TABLE provider_notifications ADD COLUMN IF NOT EXISTS type VARCHAR(40) DEFAULT 'general'");
+    $conn->query("ALTER TABLE provider_notifications ADD COLUMN IF NOT EXISTS reference_id INT DEFAULT NULL");
+}
+
+function respond(bool $success, string $message = '', array $extra = []): never
+{
+    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
+    exit;
 }
 ?>

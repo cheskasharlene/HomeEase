@@ -1350,3 +1350,59 @@ const SVC_IMGS = {
 };
 
 window.addEventListener("DOMContentLoaded", injectGlobalModals);
+
+// ── Provider Nav Bell Badge ────────────────────────────────────────────────
+// Polls the provider notifications API and keeps the bell badge up to date
+// on every provider page that has a #navBellBadge element.
+(function initProviderBellBadge() {
+  // Only run on provider pages (badge element must exist)
+  const badge = document.getElementById('navBellBadge');
+  if (!badge) return;
+
+  let _lastCount = -1;
+
+  function updateBadge(count) {
+    if (count === _lastCount) return;
+    const prev = _lastCount;
+    _lastCount = count;
+
+    if (count > 0) {
+      badge.textContent = count > 99 ? '99+' : String(count);
+      badge.style.display = 'block';
+      // Shake the bell icon if new notifications arrived
+      if (prev >= 0 && count > prev) {
+        const bellIcon = badge.closest('.ni-bell-wrap');
+        if (bellIcon) {
+          bellIcon.classList.remove('ni-bell-shake');
+          void bellIcon.offsetWidth; // reflow to restart animation
+          bellIcon.classList.add('ni-bell-shake');
+          setTimeout(() => bellIcon.classList.remove('ni-bell-shake'), 600);
+        }
+      }
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  async function pollBellCount() {
+    try {
+      const res  = await fetch('../api/provider_notifications_api.php?action=count', { cache: 'no-store' });
+      const data = await res.json();
+      if (data && typeof data.unread_count === 'number') {
+        updateBadge(data.unread_count);
+      }
+    } catch (e) { /* silent — don't break the page */ }
+  }
+
+  // Kick off immediately then poll every 10 s
+  document.addEventListener('DOMContentLoaded', function () {
+    pollBellCount();
+    setInterval(pollBellCount, 10000);
+  });
+
+  // If DOM already loaded (script at bottom of body), run now
+  if (document.readyState !== 'loading') {
+    pollBellCount();
+    setInterval(pollBellCount, 10000);
+  }
+})();
