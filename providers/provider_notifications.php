@@ -108,7 +108,9 @@ if ($stmt) {
 
   <script src="../assets/js/app.js"></script>
   <script>
-    initTheme();
+    if (typeof initTheme === 'function') {
+      initTheme();
+    }
 
     window.HE = window.HE || {};
     window.HE.notifications    = <?= json_encode(array_values($notifs)) ?>;
@@ -245,6 +247,54 @@ if ($stmt) {
             <div class="n-time" style="margin-top:7px;">
               ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
               ${escHtml(n.time || 'Now')}
+            </div>
+          </div>
+        </div>`;
+      }
+
+      if (n.type === 'remittance') {
+        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead(${n.id})">
+          <div class="n-read-ripple"></div>
+          ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
+          <div class="n-ic" style="background:linear-gradient(135deg,#fff7ed,#ffedd5);color:#ea580c;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-cash-stack"></i></div>
+          <div class="n-content">
+            <div class="n-title">${escHtml(n.title)}</div>
+            <div class="n-msg">${escHtml(n.msg)}</div>
+            <div class="n-time">
+              ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+              ${escHtml(n.time)}
+            </div>
+          </div>
+        </div>`;
+      }
+
+      if (n.type === 'warning') {
+        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead(${n.id})">
+          <div class="n-read-ripple"></div>
+          ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
+          <div class="n-ic" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+          <div class="n-content">
+            <div class="n-title" style="color:#dc2626;">${escHtml(n.title)}</div>
+            <div class="n-msg">${escHtml(n.msg)}</div>
+            <div class="n-time">
+              ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+              ${escHtml(n.time)}
+            </div>
+          </div>
+        </div>`;
+      }
+
+      if (n.type === 'report') {
+        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead(${n.id})">
+          <div class="n-read-ripple"></div>
+          ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
+          <div class="n-ic" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#2563eb;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-shield-fill-exclamation"></i></div>
+          <div class="n-content">
+            <div class="n-title">${escHtml(n.title)}</div>
+            <div class="n-msg">${escHtml(n.msg)}</div>
+            <div class="n-time">
+              ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+              ${escHtml(n.time)}
             </div>
           </div>
         </div>`;

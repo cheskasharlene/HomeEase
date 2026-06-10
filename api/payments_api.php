@@ -311,22 +311,7 @@ if ($method === 'POST' && $action === 'submit') {
             logBookingStatusChange($conn, $bookingId, $oldStatus, 'awaiting_payment', 'user', $uid, 'Client submitted payment proof');
         }
 
-        // Notify assigned provider that payment was submitted
-        if ($providerId > 0) {
-            $conn->query("CREATE TABLE IF NOT EXISTS provider_notifications (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                provider_id INT NOT NULL,
-                title VARCHAR(120) NOT NULL,
-                message TEXT,
-                icon VARCHAR(32) DEFAULT NULL,
-                is_read TINYINT(1) NOT NULL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX idx_provider_read (provider_id, is_read),
-                INDEX idx_provider_created (provider_id, created_at)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-            $msg = 'Client submitted payment for booking #' . $bookingId . '. Review and confirm it.';
-            $conn->query("INSERT INTO provider_notifications (provider_id, title, message, icon, is_read, created_at) VALUES ({$providerId}, 'Payment Submitted', '" . $conn->real_escape_string($msg) . "', 'wallet', 0, NOW())");
-        }
+
 
         // Notify client about next step for visibility in notifications page
         $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES ({$uid}, 'Payment Submitted', 'Your payment proof has been sent to the worker for confirmation.', 'wallet', 0, NOW())");

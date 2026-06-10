@@ -34,7 +34,7 @@ if ($method === 'GET') {
         respond(true, '', ['unread_count' => $count]);
     }
 
-    $stmt = $conn->prepare("SELECT id, title, message, icon, is_read, created_at FROM provider_notifications WHERE provider_id = ? ORDER BY created_at DESC LIMIT 100");
+    $stmt = $conn->prepare("SELECT id, type, reference_id, title, message, icon, is_read, created_at FROM provider_notifications WHERE provider_id = ? ORDER BY created_at DESC LIMIT 100");
     $stmt->bind_param('i', $providerId);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);

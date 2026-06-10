@@ -145,7 +145,9 @@ $noReviewCount = $totalJobs - $withReviewCount;
 
   <script src="../assets/js/app.js"></script>
   <script>
-    initTheme();
+    if (typeof initTheme === 'function') {
+      initTheme();
+    }
 
     function goPage(page) {
       window.location.href = page;

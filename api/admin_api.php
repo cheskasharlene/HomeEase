@@ -708,8 +708,22 @@ if ($section === 'incidents') {
         if (!$stmt) respond(false, 'Database error: ' . $conn->error);
         $stmt->bind_param("ss", $norm_status, $id);
         if ($stmt->execute()) {
+            $stmt->close();
+            // Fetch reporter and reported user details to see if either is a provider
+            $resReport = $conn->query("SELECT reporter_id, reporter_role, reported_user_id, reported_user_role, category FROM incident_reports WHERE report_id = '" . $conn->real_escape_string($id) . "'");
+            if ($resReport && $reportData = $resReport->fetch_assoc()) {
+                if ($reportData['reporter_role'] === 'provider') {
+                    $msg = "Your report regarding " . $reportData['category'] . " has been updated to: " . $norm_status . ".";
+                    sendProviderNotification($conn, (int)$reportData['reporter_id'], 'report', 'Report Status Updated', $msg, 'shield-fill-exclamation');
+                }
+                if ($reportData['reported_user_role'] === 'provider') {
+                    $msg = "An incident report involving you has been updated to: " . $norm_status . ".";
+                    sendProviderNotification($conn, (int)$reportData['reported_user_id'], 'report', 'Incident Report Updated', $msg, 'shield-fill-exclamation');
+                }
+            }
             respond(true, 'Incident status updated to ' . $norm_status);
         }
+        $stmt->close();
         respond(false, 'Failed to update incident status.');
     }
 
@@ -722,8 +736,18 @@ if ($section === 'incidents') {
         if (!$stmt) respond(false, 'Database error: ' . $conn->error);
         $stmt->bind_param("ss", $notes, $id);
         if ($stmt->execute()) {
+            $stmt->close();
+            // Notify reporter of updates if they are a provider
+            $resReport = $conn->query("SELECT reporter_id, reporter_role, category FROM incident_reports WHERE report_id = '" . $conn->real_escape_string($id) . "'");
+            if ($resReport && $reportData = $resReport->fetch_assoc()) {
+                if ($reportData['reporter_role'] === 'provider') {
+                    $msg = "Admin added notes to your report regarding " . $reportData['category'] . ".";
+                    sendProviderNotification($conn, (int)$reportData['reporter_id'], 'report', 'Report Notes Updated', $msg, 'shield-fill-exclamation');
+                }
+            }
             respond(true, 'Investigation notes updated.');
         }
+        $stmt->close();
         respond(false, 'Failed to update notes.');
     }
 
@@ -762,10 +786,7 @@ if ($section === 'incidents') {
                 respond(true, 'Warning notification sent to Client.');
             }
         } else if ($role === 'provider' || $role === 'service provider') {
-            ensureProviderNotificationsTable($conn);
-            $stmt = $conn->prepare("INSERT INTO provider_notifications (provider_id, title, message, icon, is_read, created_at) VALUES (?, 'Admin Warning', ?, 'exclamation-triangle', 0, NOW())");
-            $stmt->bind_param("is", $reporter_id, $message);
-            if ($stmt->execute()) {
+            if (sendProviderNotification($conn, $reporter_id, 'warning', 'Admin Warning', $message, 'exclamation-triangle')) {
                 respond(true, 'Warning notification sent to Service Provider.');
             }
         }
@@ -773,20 +794,153 @@ if ($section === 'incidents') {
     }
 }
 
-function ensureProviderNotificationsTable($conn)
-{
-    $sql = "CREATE TABLE IF NOT EXISTS provider_notifications (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        provider_id INT NOT NULL,
-        title VARCHAR(120) NOT NULL,
-        message TEXT,
-        icon VARCHAR(32) DEFAULT NULL,
-        is_read TINYINT(1) NOT NULL DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_provider_read (provider_id, is_read),
-        INDEX idx_provider_created (provider_id, created_at)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-    $conn->query($sql);
+if ($section === 'remittances') {
+    if ($method === 'GET' && $action === 'list') {
+        $provRes = $conn->query("SELECT provider_id FROM service_providers");
+        if ($provRes) {
+            while ($prow = $provRes->fetch_assoc()) {
+                ensureRemittancesForProvider($conn, (int)$prow['provider_id']);
+            }
+        }
+
+        $status = $_GET['status'] ?? 'all';
+        $sort = $_GET['sort'] ?? 'name_asc';
+
+        $where = [];
+        $params = [];
+        $types = "";
+
+        if ($status !== 'all') {
+            $where[] = "r.status = ?";
+            $params[] = $status;
+            $types .= "s";
+        }
+
+        $whereClause = count($where) ? "WHERE " . implode(" AND ", $where) : "";
+
+        $orderBy = "sp.full_name ASC";
+        if ($sort === 'name_desc') {
+            $orderBy = "sp.full_name DESC";
+        } elseif ($sort === 'due_desc') {
+            $orderBy = "r.due_date DESC";
+        } elseif ($sort === 'due_asc') {
+            $orderBy = "r.due_date ASC";
+        } elseif ($sort === 'remit_desc') {
+            $orderBy = "COALESCE(r.date_remitted, '0000-00-00 00:00:00') DESC";
+        } elseif ($sort === 'amt_desc') {
+            $orderBy = "r.amount_due DESC";
+        } elseif ($sort === 'amt_asc') {
+            $orderBy = "r.amount_due ASC";
+        }
+
+        $query = "SELECT r.*, sp.full_name AS provider_name, sp.email AS provider_email, sp.contact_number AS provider_phone, s.name AS service_type
+                  FROM remittances r
+                  INNER JOIN service_providers sp ON r.provider_id = sp.provider_id
+                  LEFT JOIN services s ON sp.service_id = s.id
+                  $whereClause
+                  ORDER BY $orderBy";
+         
+        $stmt = $conn->prepare($query);
+        if ($params) {
+            $stmt->bind_param($types, ...$params);
+        }
+        $stmt->execute();
+        $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+
+        $totalReceived = 0;
+        $outstanding = 0;
+        $monthReceived = 0;
+        $weekReceived = 0;
+
+        $currentMonth = date('Y-m');
+        $mondayStr = date('Y-m-d', strtotime('monday this week'));
+        $sundayStr = date('Y-m-d', strtotime('sunday this week'));
+
+        $statsRes = $conn->query("SELECT status, amount_due, amount_paid, date_remitted FROM remittances");
+        if ($statsRes) {
+            while ($st = $statsRes->fetch_assoc()) {
+                $amtDue = (float)$st['amount_due'];
+                $amtPaid = (float)$st['amount_paid'];
+                $dateRem = $st['date_remitted'];
+                 
+                if ($st['status'] === 'paid') {
+                    $totalReceived += $amtPaid;
+                    if ($dateRem) {
+                        if (strpos($dateRem, $currentMonth) === 0) {
+                            $monthReceived += $amtPaid;
+                        }
+                        $dateRemOnly = substr($dateRem, 0, 10);
+                        if ($dateRemOnly >= $mondayStr && $dateRemOnly <= $sundayStr) {
+                            $weekReceived += $amtPaid;
+                        }
+                    }
+                } else {
+                    $outstanding += $amtDue;
+                }
+            }
+        }
+
+        respond(true, '', [
+            'remittances' => $rows,
+            'stats' => [
+                'month_received' => $monthReceived,
+                'week_received' => $weekReceived,
+                'total_received' => $totalReceived,
+                'outstanding' => $outstanding
+            ]
+        ]);
+    }
+
+    if ($method === 'POST' && $action === 'verify') {
+        $remitId = (int)($_POST['remittance_id'] ?? 0);
+        $verifyAction = $_POST['verify_action'] ?? '';
+        $notes = trim($_POST['notes'] ?? '');
+
+        if ($remitId <= 0 || !in_array($verifyAction, ['approve', 'reject'])) {
+            respond(false, 'Invalid data.');
+        }
+
+        $stmt = $conn->prepare("SELECT r.*, sp.full_name AS provider_name FROM remittances r INNER JOIN service_providers sp ON r.provider_id = sp.provider_id WHERE r.id = ? LIMIT 1");
+        $stmt->bind_param("i", $remitId);
+        $stmt->execute();
+        $remit = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$remit) {
+            respond(false, 'Remittance not found.');
+        }
+
+        $providerId = (int)$remit['provider_id'];
+        $amountDue = (float)$remit['amount_due'];
+        $dueDate = date('M d, Y', strtotime($remit['due_date']));
+
+        if ($verifyAction === 'approve') {
+            $stmt = $conn->prepare("UPDATE remittances SET status = 'paid', date_remitted = NOW() WHERE id = ?");
+            $stmt->bind_param("i", $remitId);
+            $stmt->execute();
+            $stmt->close();
+
+            $notifMsg = "Your remittance payment of ₱" . number_format($amountDue, 2) . " for due date " . $dueDate . " has been approved by the admin.";
+            sendProviderNotification($conn, $providerId, 'remittance', 'Remittance Approved', $notifMsg, 'cash', $remitId);
+
+            respond(true, 'Remittance payment approved.');
+        } elseif ($verifyAction === 'reject') {
+            $today = date('Y-m-d');
+            $newStatus = ($remit['due_date'] < $today) ? 'overdue' : 'pending';
+
+            $stmt = $conn->prepare("UPDATE remittances SET status = ?, amount_paid = 0.00, payment_method = NULL, receipt_path = NULL, submitted_at = NULL WHERE id = ?");
+            $stmt->bind_param("si", $newStatus, $remitId);
+            $stmt->execute();
+            $stmt->close();
+
+            $reasonText = $notes !== '' ? " Reason: " . $notes : "";
+            $notifMsg = "Your remittance payment of ₱" . number_format($amountDue, 2) . " for due date " . $dueDate . " was rejected by the admin." . $reasonText . " Please resubmit your payment.";
+            sendProviderNotification($conn, $providerId, 'remittance', 'Remittance Rejected', $notifMsg, 'exclamation-triangle', $remitId);
+
+            respond(true, 'Remittance payment rejected.');
+        }
+    }
 }
 
 respond(false, 'Unknown request.');

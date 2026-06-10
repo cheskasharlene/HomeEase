@@ -130,11 +130,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
                 VALUES ($providerId, 'gcash_qr', '" . $conn->real_escape_string($newQrPath) . "', 'approved', NOW())
                 ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), verified_status = 'approved', uploaded_at = NOW()");
 
-            // Notify provider
-            ensureProviderNotificationsTable($conn);
-            $msg = 'Your GCash/Bank Transfer QR code change request has been approved. Your new QR code is now active.';
-            $conn->query("INSERT INTO provider_notifications (provider_id, title, message, icon, is_read, created_at)
-                VALUES ($providerId, 'QR Change Approved', '" . $conn->real_escape_string($msg) . "', 'qr-code', 0, NOW())");
+
 
             // Audit log to admin_notifications (ensure table)
             $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
@@ -205,11 +201,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         $upd->execute();
         $upd->close();
 
-        // Notify provider
-        ensureProviderNotificationsTable($conn);
-        $msg = 'Your GCash/Bank Transfer QR code change request has been rejected. Reason: ' . $remarks;
-        $conn->query("INSERT INTO provider_notifications (provider_id, title, message, icon, is_read, created_at)
-            VALUES ($providerId, 'QR Change Rejected', '" . $conn->real_escape_string($msg) . "', 'qr-code', 0, NOW())");
+
 
         ob_end_clean();
         echo json_encode(['success' => true, 'message' => 'Request rejected.']);
@@ -372,12 +364,7 @@ if ($method === 'POST' && $action === 'submit') {
     $newId = $conn->insert_id;
     $ins->close();
 
-    // Notify provider (confirmation)
-    ensureProviderNotificationsTable($conn);
-    $conn->query("INSERT INTO provider_notifications (provider_id, title, message, icon, is_read, created_at)
-        VALUES ($providerId, 'QR Change Request Submitted',
-        'Your GCash/Bank Transfer QR code change request has been submitted and is pending admin review.',
-        'qr-code', 0, NOW())");
+
 
     // Notify admin
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (

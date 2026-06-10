@@ -402,6 +402,69 @@ function ensureNormalizationSchema($conn)
         @$conn->query("ALTER TABLE admin_notifications ADD CONSTRAINT fk_admin_notif_qr FOREIGN KEY (qr_change_request_id) REFERENCES qr_change_requests(id) ON DELETE CASCADE");
     }
 
+    // Ensure remittances table exists
+    $conn->query("CREATE TABLE IF NOT EXISTS remittances (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        provider_id INT NOT NULL,
+        reference_no VARCHAR(50) NOT NULL UNIQUE,
+        amount_due DECIMAL(10, 2) NOT NULL,
+        amount_paid DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        status ENUM('pending', 'submitted', 'paid', 'overdue') NOT NULL DEFAULT 'pending',
+        due_date DATE NOT NULL,
+        date_remitted DATETIME DEFAULT NULL,
+        submitted_at DATETIME DEFAULT NULL,
+        payment_method VARCHAR(50) DEFAULT NULL,
+        receipt_path VARCHAR(512) DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        INDEX idx_remittances_provider (provider_id),
+        INDEX idx_remittances_status (status),
+        CONSTRAINT fk_remittances_provider FOREIGN KEY (provider_id) REFERENCES service_providers(provider_id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Add remittance_id to admin_notifications if not exists
+    $columns = [];
+    $result = $conn->query("SHOW COLUMNS FROM admin_notifications");
+    if ($result) {
+        while ($col = $result->fetch_assoc()) {
+            $columns[] = $col['Field'];
+        }
+    }
+    if (!in_array('remittance_id', $columns)) {
+        @$conn->query("ALTER TABLE admin_notifications ADD COLUMN remittance_id INT NULL AFTER qr_change_request_id");
+        @$conn->query("ALTER TABLE admin_notifications ADD INDEX idx_admin_notif_remittance (remittance_id)");
+        @$conn->query("ALTER TABLE admin_notifications ADD CONSTRAINT fk_admin_notif_remittance FOREIGN KEY (remittance_id) REFERENCES remittances(id) ON DELETE CASCADE");
+    }
+
+    // Ensure provider_notifications table exists and has type & reference_id columns
+    $conn->query("CREATE TABLE IF NOT EXISTS provider_notifications (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        provider_id INT NOT NULL,
+        title VARCHAR(120) NOT NULL,
+        message TEXT,
+        icon VARCHAR(32) DEFAULT NULL,
+        is_read TINYINT(1) NOT NULL DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_provider_read (provider_id, is_read),
+        INDEX idx_provider_created (provider_id, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pcolumns = [];
+    $presult = $conn->query("SHOW COLUMNS FROM provider_notifications");
+    if ($presult) {
+        while ($col = $presult->fetch_assoc()) {
+            $pcolumns[] = $col['Field'];
+        }
+    }
+    if (!in_array('type', $pcolumns)) {
+        @$conn->query("ALTER TABLE provider_notifications ADD COLUMN type VARCHAR(50) NOT NULL DEFAULT 'general' AFTER provider_id");
+        @$conn->query("ALTER TABLE provider_notifications ADD INDEX idx_provider_notif_type (type)");
+    }
+    if (!in_array('reference_id', $pcolumns)) {
+        @$conn->query("ALTER TABLE provider_notifications ADD COLUMN reference_id INT NULL AFTER type");
+        @$conn->query("ALTER TABLE provider_notifications ADD INDEX idx_provider_notif_ref (reference_id)");
+    }
+
     // Backfill existing rows if they are empty
     @$conn->query("UPDATE admin_notifications SET provider_id = reference_id WHERE type = 'verification' AND provider_id IS NULL");
     @$conn->query("UPDATE admin_notifications SET qr_change_request_id = reference_id WHERE type = 'qr_change' AND qr_change_request_id IS NULL");
@@ -473,6 +536,101 @@ function upsertBookingDetail($conn, $bookingId, $fieldName, $fieldValue)
         return false;
     }
     $stmt->bind_param('iss', $bookingId, $fieldName, $fieldValue);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+
+function ensureRemittancesForProvider($conn, $providerId)
+{
+    ensureNormalizationSchema($conn);
+
+    $query = "SELECT 
+                DATE(DATE_ADD(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y')), INTERVAL 6-WEEKDAY(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'))) DAY)) AS SundayDate,
+                SUM(price) AS weekly_earnings
+              FROM bookings
+              WHERE provider_id = ? AND status IN ('completed', 'done')
+              GROUP BY SundayDate";
+              
+    $stmt = $conn->prepare($query);
+    if (!$stmt) return;
+    $stmt->bind_param("i", $providerId);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $weeks = [];
+    while ($row = $res->fetch_assoc()) {
+        if ($row['SundayDate']) {
+            $weeks[$row['SundayDate']] = (float)$row['weekly_earnings'];
+        }
+    }
+    $stmt->close();
+
+    $today = date('Y-m-d');
+
+    foreach ($weeks as $sunday => $earnings) {
+        $amountDue = $earnings * 0.10;
+        if ($amountDue <= 0) continue;
+
+        $checkQuery = "SELECT id, status, amount_due FROM remittances WHERE provider_id = ? AND due_date = ?";
+        $checkStmt = $conn->prepare($checkQuery);
+        $checkStmt->bind_param("is", $providerId, $sunday);
+        $checkStmt->execute();
+        $existing = $checkStmt->get_result()->fetch_assoc();
+        $checkStmt->close();
+
+        if (!$existing) {
+            $refNo = "";
+            while (true) {
+                $refNo = "REF-" . date('Y', strtotime($sunday)) . "-" . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+                $dupCheck = $conn->query("SELECT id FROM remittances WHERE reference_no = '" . $conn->real_escape_string($refNo) . "'");
+                if ($dupCheck && $dupCheck->num_rows === 0) {
+                    break;
+                }
+            }
+
+            $status = 'pending';
+            if ($sunday < $today) {
+                $status = 'overdue';
+            }
+
+            $insertQuery = "INSERT INTO remittances (provider_id, reference_no, amount_due, status, due_date) VALUES (?, ?, ?, ?, ?)";
+            $insStmt = $conn->prepare($insertQuery);
+            $insStmt->bind_param("isdss", $providerId, $refNo, $amountDue, $status, $sunday);
+            $insStmt->execute();
+            $insStmt->close();
+        } else {
+            $remitId = $existing['id'];
+            $status = $existing['status'];
+            
+            if ($status === 'pending' || $status === 'overdue') {
+                $newStatus = $status;
+                if ($sunday < $today && $status === 'pending') {
+                    $newStatus = 'overdue';
+                }
+                
+                $updateQuery = "UPDATE remittances SET amount_due = ?, status = ? WHERE id = ?";
+                $upStmt = $conn->prepare($updateQuery);
+                $upStmt->bind_param("dsi", $amountDue, $newStatus, $remitId);
+                $upStmt->execute();
+                $upStmt->close();
+            }
+        }
+    }
+}
+
+function sendProviderNotification($conn, $providerId, $type, $title, $message, $icon = null, $referenceId = null)
+{
+    ensureNormalizationSchema($conn);
+    
+    $validTypes = ['remittance', 'warning', 'report', 'account_verified', 'general'];
+    if (!in_array($type, $validTypes)) {
+        return false;
+    }
+    
+    $stmt = $conn->prepare("INSERT INTO provider_notifications (provider_id, type, reference_id, title, message, icon, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())");
+    if (!$stmt) return false;
+    
+    $stmt->bind_param("isisss", $providerId, $type, $referenceId, $title, $message, $icon);
     $ok = $stmt->execute();
     $stmt->close();
     return $ok;

@@ -2386,7 +2386,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         openSheet('adminNotifSheetOl');
         await loadAdminNotifications();
       }
-
       async function loadAdminNotifications() {
         try {
           const data = await api('admin_notifications', 'list');
@@ -2404,14 +2403,15 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       function renderAdminNotifications(notifs) {
         const el = document.getElementById('adminNotifList');
         if (!notifs || !notifs.length) {
-          el.innerHTML = '<div class="empty-state" style="padding:40px 20px;"><i class="bi bi-bell" style="font-size:36px;color:var(--txt-muted);opacity:.4;"></i><p style="margin-top:8px;">No notifications yet</p><p style="font-size:11px;color:var(--txt-muted);">You\'ll be notified when workers submit verification documents.</p></div>';
+          el.innerHTML = '<div class="empty-state" style="padding:40px 20px;"><i class="bi bi-bell" style="font-size:36px;color:var(--txt-muted);opacity:.4;"></i><p style="margin-top:8px;">No notifications yet</p><p style="font-size:11px;color:var(--txt-muted);">You\'ll be notified when workers submit verification documents or remittances.</p></div>';
           return;
         }
 
         el.innerHTML = notifs.map(n => {
           const isVerif = n.type === 'verification';
-          const iconClass = isVerif ? 'verif' : 'general';
-          const icon = isVerif ? '<i class="bi bi-file-earmark-check-fill"></i>' : '<i class="bi bi-bell-fill"></i>';
+          const isRemit = n.type === 'remittance';
+          const iconClass = isVerif ? 'verif' : (isRemit ? 'verif' : 'general');
+          const icon = isVerif ? '<i class="bi bi-file-earmark-check-fill"></i>' : (isRemit ? '<i class="bi bi-cash-stack"></i>' : '<i class="bi bi-bell-fill"></i>');
           const timeAgo = getTimeAgo(n.created_at);
           const unreadClass = n.is_read == 0 ? 'unread' : '';
 
@@ -2429,6 +2429,13 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </div>`;
           }
 
+          let actionBtn = '';
+          if (isVerif && n.reference_id) {
+            actionBtn = `<button class="admin-notif-act-btn go" onclick="goToWorkerFromNotif(${n.reference_id}, ${n.id})" title="Review Worker"><i class="bi bi-arrow-right"></i></button>`;
+          } else if (isRemit && n.remittance_id) {
+            actionBtn = `<button class="admin-notif-act-btn go" onclick="goToRemittanceFromNotif(${n.remittance_id}, ${n.id})" title="Verify Remittance"><i class="bi bi-arrow-right"></i></button>`;
+          }
+
           return `
           <div class="admin-notif-item ${unreadClass}" data-id="${n.id}">
             <div class="admin-notif-ic ${iconClass}">${icon}</div>
@@ -2439,7 +2446,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               <div class="admin-notif-time"><i class="bi bi-clock"></i> ${timeAgo}</div>
             </div>
             <div class="admin-notif-actions">
-              ${isVerif && n.reference_id ? `<button class="admin-notif-act-btn go" onclick="goToWorkerFromNotif(${n.reference_id}, ${n.id})" title="Review Worker"><i class="bi bi-arrow-right"></i></button>` : ''}
+              ${actionBtn}
               <button class="admin-notif-act-btn del" onclick="deleteAdminNotif(${n.id})" title="Delete"><i class="bi bi-trash3-fill"></i></button>
             </div>
           </div>`;
@@ -2476,14 +2483,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       async function goToWorkerFromNotif(providerId, notifId) {
-        // Mark this notification as read
         api('admin_notifications', 'mark_read', fd({ id: notifId }));
         closeSheet('adminNotifSheetOl');
-
-        // Switch to workers tab and find the worker
         showTab('workers');
 
-        // Small delay to let the tab and workers load
         setTimeout(async () => {
           if (_allWorkers.length === 0) {
             const d = await api('workers', 'list');
@@ -3370,18 +3373,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     });
   })();
 
-  // ── Remittance Section (UI Only) ─────────────────────────────────────────
+  // ── Remittance Section (Live Data) ─────────────────────────────────────────
   let remitFilter = 'all';
-  
-  const mockRemittances = [
-    { id: 1, provider_name: 'Jana Marasigan', service_type: 'House Cleaner', provider_email: 'jana@homeease.ph', provider_phone: '09171234567', amount_due: 850.00, amount_paid: 0.00, due_date: '2026-06-15', date_remitted: null, reference_no: 'REF-2026-00824', status: 'pending', payment_method: '-' },
-    { id: 2, provider_name: 'Lance Austria', service_type: 'House Cleaner', provider_email: 'lance@homeease.ph', provider_phone: '09187654321', amount_due: 1450.00, amount_paid: 1450.00, due_date: '2026-06-08', date_remitted: '2026-06-08', reference_no: 'REF-2026-00712', status: 'paid', payment_method: 'GCash' },
-    { id: 3, provider_name: 'Mark Santos', service_type: 'Plumber', provider_email: 'mark@homeease.ph', provider_phone: '09192233445', amount_due: 950.00, amount_paid: 0.00, due_date: '2026-05-25', date_remitted: null, reference_no: 'REF-2026-00511', status: 'overdue', payment_method: '-' },
-    { id: 4, provider_name: 'Maria Clara', service_type: 'Helper', provider_email: 'maria@homeease.ph', provider_phone: '09205566778', amount_due: 1200.00, amount_paid: 1200.00, due_date: '2026-06-01', date_remitted: '2026-06-01', reference_no: 'REF-2026-00605', status: 'paid', payment_method: 'Bank Transfer' },
-    { id: 5, provider_name: 'Juan Dela Cruz', service_type: 'Carpenter', provider_email: 'juan@homeease.ph', provider_phone: '09219988776', amount_due: 750.00, amount_paid: 750.00, due_date: '2026-05-18', date_remitted: '2026-05-18', reference_no: 'REF-2026-00410', status: 'paid', payment_method: 'PayMaya' },
-    { id: 6, provider_name: 'Sarah Geronimo', service_type: 'Appliance Technician', provider_email: 'sarah@homeease.ph', provider_phone: '09228887776', amount_due: 1800.00, amount_paid: 0.00, due_date: '2026-06-18', date_remitted: null, reference_no: 'REF-2026-00915', status: 'pending', payment_method: '-' },
-    { id: 7, provider_name: 'Jose Rizal', service_type: 'Laundry', provider_email: 'jose@homeease.ph', provider_phone: '09235554443', amount_due: 850.00, amount_paid: 0.00, due_date: '2026-06-05', date_remitted: null, reference_no: 'REF-2026-00699', status: 'overdue', payment_method: '-' }
-  ];
+  let remittancesCache = [];
 
   function openRemitSheet() {
     openSheet('remitSheetOl');
@@ -3399,94 +3393,61 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     loadAdminRemittances();
   }
 
-  function loadAdminRemittances() {
+  async function loadAdminRemittances() {
     const body = document.getElementById('remitSheetBody');
     const sortVal = document.getElementById('remitSort').value;
     
-    // Calculate statistics dynamically
-    const totalReceived = mockRemittances.reduce((s, r) => s + (r.status === 'paid' ? r.amount_paid : 0), 0);
-    const outstanding = mockRemittances.reduce((s, r) => s + (r.status !== 'paid' ? r.amount_due : 0), 0);
+    body.innerHTML = '<div class="empty-state"><i class="bi bi-arrow-clockwise" style="animation:w-spin .9s linear infinite;display:inline-block; font-size:32px;"></i><p>Loading...</p></div>';
     
-    // This Month (June 2026)
-    const monthReceived = mockRemittances.reduce((s, r) => {
-      if (r.status === 'paid' && r.date_remitted && r.date_remitted.startsWith('2026-06')) {
-        return s + r.amount_paid;
+    try {
+      const data = await api('remittances', 'list', null, `&status=${remitFilter}&sort=${sortVal}`);
+      if (!data.success) {
+        body.innerHTML = `<div class="empty-state"><p>${data.message || 'Error loading remittances.'}</p></div>`;
+        return;
       }
-      return s;
-    }, 0);
-    
-    // This Week (June 8 to June 14, 2026)
-    const weekReceived = mockRemittances.reduce((s, r) => {
-      if (r.status === 'paid' && r.date_remitted && r.date_remitted >= '2026-06-08' && r.date_remitted <= '2026-06-14') {
-        return s + r.amount_paid;
-      }
-      return s;
-    }, 0);
-
-    document.getElementById('remitStatMonth').textContent = php(monthReceived);
-    document.getElementById('remitStatWeek').textContent = php(weekReceived);
-    document.getElementById('remitStatTotal').textContent = php(totalReceived);
-    document.getElementById('remitStatOutstanding').textContent = php(outstanding);
-
-    // Filter
-    let filtered = mockRemittances;
-    if (remitFilter !== 'all') {
-      filtered = mockRemittances.filter(r => r.status === remitFilter);
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      if (sortVal === 'name_asc') {
-        return a.provider_name.localeCompare(b.provider_name);
-      } else if (sortVal === 'name_desc') {
-        return b.provider_name.localeCompare(a.provider_name);
-      } else if (sortVal === 'due_desc') {
-        return b.due_date.localeCompare(a.due_date);
-      } else if (sortVal === 'due_asc') {
-        return a.due_date.localeCompare(b.due_date);
-      } else if (sortVal === 'remit_desc') {
-        const dateA = a.date_remitted || '0000-00-00';
-        const dateB = b.date_remitted || '0000-00-00';
-        return dateB.localeCompare(dateA);
-      } else if (sortVal === 'amt_desc') {
-        return b.amount_due - a.amount_due;
-      } else if (sortVal === 'amt_asc') {
-        return a.amount_due - b.amount_due;
-      }
-      return 0;
-    });
-
-    if (!filtered.length) {
-      body.innerHTML = '<div class="empty-state"><i class="bi bi-cash-coin" style="font-size:32px;"></i><p>No remittances found.</p></div>';
-      return;
-    }
-
-    body.innerHTML = filtered.map(r => {
-      const statusClass = r.status === 'paid' ? 'badge-green' : (r.status === 'overdue' ? 'badge-red' : 'badge-amber');
-      const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
-      const dateText = r.status === 'paid' ? `Remitted: ${formatDate(r.date_remitted)}` : `Due: ${formatDate(r.due_date)}`;
       
-      return `
-        <div class="bk-card" onclick='openRemitDetail(${JSON.stringify(r).replace(/'/g, "&apos;")})' style="margin-bottom:10px;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-              <div style="font-size:13px; font-weight:700; color:var(--txt-primary);">${r.provider_name}</div>
-              <div style="font-size:11px; color:var(--txt-muted); margin-top:2px;">${r.service_type} · ${r.reference_no}</div>
-              <div style="font-size:11px; color:var(--txt-muted); margin-top:1px;">${dateText}</div>
+      const s = data.stats;
+      document.getElementById('remitStatMonth').textContent = php(s.month_received);
+      document.getElementById('remitStatWeek').textContent = php(s.week_received);
+      document.getElementById('remitStatTotal').textContent = php(s.total_received);
+      document.getElementById('remitStatOutstanding').textContent = php(s.outstanding);
+
+      remittancesCache = data.remittances || [];
+      if (!remittancesCache.length) {
+        body.innerHTML = '<div class="empty-state"><i class="bi bi-cash-coin" style="font-size:32px;"></i><p>No remittances found.</p></div>';
+        return;
+      }
+
+      body.innerHTML = remittancesCache.map(r => {
+        const statusClass = r.status === 'paid' ? 'badge-green' : (r.status === 'overdue' ? 'badge-red' : (r.status === 'submitted' ? 'badge-blue' : 'badge-amber'));
+        const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+        const dateText = r.status === 'paid' ? `Remitted: ${formatDate(r.date_remitted)}` : `Due: ${formatDate(r.due_date)}`;
+        
+        return `
+          <div class="bk-card" onclick='openRemitDetailById(${r.id})' style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <div style="font-size:13px; font-weight:700; color:var(--txt-primary);">${r.provider_name}</div>
+                <div style="font-size:11px; color:var(--txt-muted); margin-top:2px;">${r.service_type || 'Worker'} · ${r.reference_no}</div>
+                <div style="font-size:11px; color:var(--txt-muted); margin-top:1px;">${dateText}</div>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+                <span class="${statusClass}" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;">${statusLabel}</span>
+                <div style="font-size:13px; font-weight:800; color:var(--teal);">${php(r.amount_due)}</div>
+              </div>
             </div>
-            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
-              <span class="${statusClass}" style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;">${statusLabel}</span>
-              <div style="font-size:13px; font-weight:800; color:var(--teal);">${php(r.amount_due)}</div>
+            <div style="display:flex; justify-content:flex-end; margin-top:8px; border-top:1px solid var(--border-col); padding-top:8px;">
+              <span style="font-size:11px; font-weight:700; color:#ea580c; display:flex; align-items:center; gap:3px; cursor:pointer;">
+                View Details <i class="bi bi-chevron-right" style="font-size:10px;"></i>
+              </span>
             </div>
           </div>
-          <div style="display:flex; justify-content:flex-end; margin-top:8px; border-top:1px solid var(--border-col); padding-top:8px;">
-            <span style="font-size:11px; font-weight:700; color:#ea580c; display:flex; align-items:center; gap:3px; cursor:pointer;">
-              View Details <i class="bi bi-chevron-right" style="font-size:10px;"></i>
-            </span>
-          </div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
+    } catch (err) {
+      console.error(err);
+      body.innerHTML = '<div class="empty-state"><p>Error loading remittances.</p></div>';
+    }
   }
 
   function formatDate(dateStr) {
@@ -3496,12 +3457,18 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
-  function openRemitDetail(r) {
-    if (typeof r === 'string') r = JSON.parse(r);
+  function openRemitDetailById(id) {
+    const remit = remittancesCache.find(r => r.id == id);
+    if (remit) {
+      openRemitDetail(remit);
+    }
+  }
+
+  async function openRemitDetail(r) {
     const modal = document.getElementById('remitDetailOl');
     const badge = document.getElementById('remitDtlStatusBadge');
     
-    const statusClass = r.status === 'paid' ? 'badge-green' : (r.status === 'overdue' ? 'badge-red' : 'badge-amber');
+    const statusClass = r.status === 'paid' ? 'badge-green' : (r.status === 'overdue' ? 'badge-red' : (r.status === 'submitted' ? 'badge-blue' : 'badge-amber'));
     const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
     
     badge.className = statusClass;
@@ -3510,51 +3477,125 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     badge.style.padding = '2px 8px';
     badge.style.borderRadius = '20px';
 
-    const historyMock = [
-      { ref: 'REF-2026-00480', date: '2026-05-15', amt: r.amount_due, status: 'paid' },
-      { ref: 'REF-2026-00350', date: '2026-04-15', amt: r.amount_due, status: 'paid' }
-    ];
+    // Receipt HTML
+    let receiptHtml = '';
+    if (r.receipt_path) {
+      receiptHtml = `
+        <div class="detail-row" style="align-items:flex-start; flex-direction:column; gap:8px; margin-top:12px; padding:10px 16px;">
+          <span class="detail-lbl" style="font-weight:700;">GCash Receipt Uploaded</span>
+          <div style="text-align:center; width:100%;">
+            <img src="../${r.receipt_path}" alt="Receipt" style="max-height:220px; max-width:100%; border-radius:8px; cursor:zoom-in; border:1px solid var(--border-col);" onclick="openImagePreview('../${r.receipt_path}', 'Remittance Receipt')">
+            <div style="font-size:10px; color:var(--txt-muted); margin-top:4px;"><i class="bi bi-zoom-in"></i> Click image to zoom</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Action buttons for submitted remittance
+    let actionButtons = '';
+    if (r.status === 'submitted') {
+      actionButtons = `
+        <div style="display:flex; gap:10px; margin-top:16px; padding:0 16px;">
+          <button class="btn-p" style="flex:1;" onclick="verifyRemittance(${r.id}, 'approve')">
+            <i class="bi bi-check-circle-fill"></i> Approve
+          </button>
+          <button class="btn-danger" style="flex:1; background:#ef4444; border:none; border-radius:12px; color:#fff; font-weight:700; cursor:pointer; padding:12px;" onclick="verifyRemittance(${r.id}, 'reject')">
+            <i class="bi bi-x-circle-fill"></i> Reject
+          </button>
+        </div>
+      `;
+    }
+
+    // Load history for this specific provider (last 3 payments)
+    let historyHtml = '<div style="font-size:11px; color:var(--txt-muted); padding:10px 16px;">No past remittance records.</div>';
+    const pastRemits = remittancesCache.filter(rem => rem.provider_id === r.provider_id && rem.id !== r.id).slice(0, 3);
+    if (pastRemits.length > 0) {
+      historyHtml = pastRemits.map(h => {
+        const hStatusClass = h.status === 'paid' ? 'badge-green' : (h.status === 'overdue' ? 'badge-red' : (h.status === 'submitted' ? 'badge-blue' : 'badge-amber'));
+        const hStatusLabel = h.status.charAt(0).toUpperCase() + h.status.slice(1);
+        const hDate = h.status === 'paid' ? `Paid on ${formatDate(h.date_remitted)}` : `Due ${formatDate(h.due_date)}`;
+        return `
+          <div class="detail-row" style="padding:10px 16px;">
+            <div>
+              <div style="font-size:12px; font-weight:700; color:var(--txt-primary);">${h.reference_no}</div>
+              <div style="font-size:10px; color:var(--txt-muted); margin-top:1px;">${hDate}</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:12px; font-weight:800; color:var(--txt-primary);">${php(h.amount_due)}</div>
+              <span class="${hStatusClass}" style="font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px;">${hStatusLabel}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
     document.getElementById('remitDetailBody').innerHTML = `
-      <div style="background:linear-gradient(135deg, rgba(234,88,12,0.08), rgba(245,166,35,0.04)); border-radius:18px; padding:16px; margin:8px 0 16px; border:1px solid #ffedd5;">
+      <div style="background:linear-gradient(135deg, rgba(234,88,12,0.08), rgba(245,166,35,0.04)); border-radius:18px; padding:16px; margin:8px 16px 16px; border:1px solid #ffedd5;">
         <div style="font-size:12px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.3px;">Provider Info</div>
         <div style="font-size:16px; font-weight:800; color:var(--txt-primary); margin-top:4px;">${r.provider_name}</div>
-        <div style="font-size:12px; color:var(--txt-muted); margin-top:2px;">Specialty: <strong>${r.service_type}</strong></div>
+        <div style="font-size:12px; color:var(--txt-muted); margin-top:2px;">Specialty: <strong>${r.service_type || 'Worker'}</strong></div>
         <div style="font-size:12px; color:var(--txt-muted); margin-top:1px;">Email: ${r.provider_email}</div>
         <div style="font-size:12px; color:var(--txt-muted); margin-top:1px;">Phone: ${r.provider_phone}</div>
       </div>
       
-      <div class="sec-ttl" style="margin-bottom:8px; font-size:14px;">Payment details</div>
-      <div class="card" style="margin-bottom:16px;">
+      <div class="sec-ttl" style="margin-bottom:8px; font-size:14px; padding:0 16px;">Payment details</div>
+      <div class="card" style="margin:0 16px 16px;">
         <div class="detail-row"><span class="detail-lbl">Reference Number</span><span class="detail-val">${r.reference_no}</span></div>
         <div class="detail-row"><span class="detail-lbl">Amount Due</span><span class="detail-val" style="color:var(--txt-primary);">${php(r.amount_due)}</span></div>
         <div class="detail-row"><span class="detail-lbl">Amount Paid</span><span class="detail-val" style="color:var(--teal);">${php(r.amount_paid)}</span></div>
         <div class="detail-row"><span class="detail-lbl">Due Date</span><span class="detail-val">${formatDate(r.due_date)}</span></div>
         <div class="detail-row"><span class="detail-lbl">Date Remitted</span><span class="detail-val">${formatDate(r.date_remitted)}</span></div>
-        <div class="detail-row"><span class="detail-lbl">Payment Method</span><span class="detail-val">${r.payment_method}</span></div>
+        <div class="detail-row"><span class="detail-lbl">Payment Method</span><span class="detail-val">${r.payment_method || '-'}</span></div>
         <div class="detail-row"><span class="detail-lbl">Payment Period</span><span class="detail-val">Weekly</span></div>
       </div>
 
-      <div class="sec-ttl" style="margin-bottom:8px; font-size:14px;">Remittance History</div>
-      <div class="card">
-        ${historyMock.map(h => `
-          <div class="detail-row" style="padding:10px 16px;">
-            <div>
-              <div style="font-size:12px; font-weight:700; color:var(--txt-primary);">${h.ref}</div>
-              <div style="font-size:10px; color:var(--txt-muted); margin-top:1px;">Paid on ${formatDate(h.date)}</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:12px; font-weight:800; color:var(--txt-primary);">${php(h.amt)}</div>
-              <span class="badge-green" style="font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px;">Paid</span>
-            </div>
-          </div>
-        `).join('')}
+      ${receiptHtml}
+      ${actionButtons}
+
+      <div class="sec-ttl" style="margin:16px 0 8px; font-size:14px; padding:0 16px;">Remittance History</div>
+      <div class="card" style="margin:0 16px 20px;">
+        ${historyHtml}
       </div>
     `;
     openSheet('remitDetailOl');
   }
 
-  // Keyboard accessibility: Escape key also closes remittance sheets
+  async function verifyRemittance(remitId, verifyAction) {
+    let reason = '';
+    if (verifyAction === 'reject') {
+      reason = prompt('Please enter the reason for rejecting this remittance payment:');
+      if (reason === null) return;
+      reason = reason.trim();
+      if (!reason) {
+        toast('Rejection reason is required.', 'e');
+        return;
+      }
+    } else {
+      if (!confirm('Are you sure you want to approve this remittance payment?')) {
+        return;
+      }
+    }
+
+    try {
+      const response = await api('remittances', 'verify', fd({
+        remittance_id: remitId,
+        verify_action: verifyAction,
+        notes: reason
+      }));
+      
+      if (response.success) {
+        toast(response.message || 'Remittance verified successfully.');
+        closeSheet('remitDetailOl');
+        loadAdminRemittances();
+      } else {
+        toast(response.message || 'Verification failed.', 'e');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('An error occurred during verification.', 'e');
+    }
+  }
+
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       ['remitSheetOl', 'remitDetailOl'].forEach(id => {

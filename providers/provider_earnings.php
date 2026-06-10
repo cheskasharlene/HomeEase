@@ -13,6 +13,10 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider
 // Retrieve provider ID from session (assumes $_SESSION['user_id'] per requirements, falls back to $_SESSION['provider_id'])
 $providerId = (int) ($_SESSION['user_id'] ?? $_SESSION['provider_id'] ?? 0);
 
+if ($providerId > 0 && $conn instanceof mysqli) {
+  ensureRemittancesForProvider($conn, $providerId);
+}
+
 // Initialize earnings variables with strict null-coalescing defaults
 $todayEarnings = 0.00;
 $thisMonthEarnings = 0.00;
@@ -212,28 +216,28 @@ if ($providerId > 0 && $conn instanceof mysqli) {
         <div id="remitDetailsView">
           <div class="remit-amount-card">
             <div class="remit-amount-lbl">Amount Due</div>
-            <div class="remit-amount-val">₱850.00</div>
+            <div class="remit-amount-val" id="remitDtlAmount">₱850.00</div>
           </div>
           <div class="remit-details-box">
             <div class="remit-detail-row">
               <span>Remittance Status</span>
-              <span><span class="remit-badge pending">Pending</span></span>
+              <span><span class="remit-badge pending" id="remitDtlStatus">Pending</span></span>
             </div>
             <div class="remit-detail-row">
               <span>Due Date</span>
-              <span>June 15, 2026</span>
+              <span id="remitDtlDueDate">June 15, 2026</span>
             </div>
             <div class="remit-detail-row">
               <span>Reference Number</span>
-              <span>REF-2026-00824</span>
+              <span id="remitDtlRef">REF-2026-00824</span>
             </div>
             <div class="remit-detail-row">
               <span>Payment Period</span>
-              <span>Weekly</span>
+              <span id="remitDtlPeriod">Weekly</span>
             </div>
             <div class="remit-detail-row">
               <span>Payment Method</span>
-              <span>GCash / PayMaya / Bank</span>
+              <span id="remitDtlMethod">GCash / PayMaya / Bank</span>
             </div>
           </div>
           <div class="remit-modal-footer">
@@ -293,13 +297,58 @@ if ($providerId > 0 && $conn instanceof mysqli) {
           </div>
         </div>
 
+        <!-- Pay View (Hidden by default) -->
+        <div id="remitPayView" style="display: none;">
+          <div class="remit-title-text" style="margin-bottom:12px; font-weight:700; font-size:14px; color:var(--txt-primary);">Admin GCash QR Code</div>
+          <div style="text-align:center; margin-bottom:16px;">
+            <img src="../assets/images/admin_gcash_qr.png" alt="Admin GCash QR" style="max-width:210px; width:100%; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); border:1px solid #ddd;">
+            <div style="font-size:11px; color:var(--txt-muted); margin-top:6px; font-weight:600;">Account: LA**E HE****X A. · 0981 684 ....</div>
+          </div>
+          <form id="remitPaymentForm" onsubmit="submitRemitPayment(event)">
+            <input type="hidden" id="remitPayId" name="remittance_id">
+            <div class="fg" style="margin-bottom:14px; text-align:left;">
+              <label class="fl" style="font-weight:700; font-size:12px; margin-bottom:6px; color:var(--txt-primary); display:block;">Upload Receipt Screenshot *</label>
+              <input type="file" class="fi" id="remitReceiptInput" name="receipt" accept="image/*" required style="padding:8px; height:auto; width:100%; border:1.5px solid var(--border-col); border-radius:10px; background:var(--bg-screen); color:var(--txt-primary);">
+            </div>
+            <div class="remit-modal-footer" style="margin-top:16px; display:flex; gap:10px;">
+              <button type="submit" class="remit-btn-primary" id="remitSubmitBtn" style="flex:1;">
+                <i class="bi bi-upload"></i> Submit Payment
+              </button>
+              <button type="button" class="remit-btn-secondary" onclick="toggleRemitView('details')" style="flex:1;">
+                <i class="bi bi-arrow-left"></i> Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+
       </div>
     </div>
   </div>
 
   <script src="../assets/js/app.js"></script>
   <script>
-    initTheme();
+    function logRemote(type, info) {
+      fetch('../api/log_error.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type, info: info, url: window.location.href })
+      }).catch(err => console.error(err));
+    }
+
+    window.onerror = function(message, source, lineno, colno, error) {
+      logRemote('window_error', {
+        message: message,
+        source: source,
+        lineno: lineno,
+        colno: colno,
+        error: error ? error.stack : null
+      });
+      return false;
+    };
+
+    if (typeof initTheme === 'function') {
+      initTheme();
+    }
 
     function goPage(page) {
       window.location.href = page;
@@ -308,10 +357,10 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     function openRemittanceModal() {
       const modal = document.getElementById('remitModal');
       modal.style.display = 'flex';
-      // Force layout reflow
       modal.offsetHeight;
       modal.classList.add('on');
       toggleRemitView('details');
+      loadRemittances();
     }
 
     function closeRemittanceModal() {
@@ -330,27 +379,174 @@ if ($providerId > 0 && $conn instanceof mysqli) {
       }
     }
 
+    let remittancesList = [];
+    let activeRemittance = null;
+
+    async function loadRemittances() {
+      try {
+        logRemote('info', 'loadRemittances called');
+        const response = await fetch('../api/provider_remittance_api.php?action=list');
+        logRemote('info', 'fetch response status: ' + response.status);
+        const text = await response.text();
+        logRemote('info', 'fetch response body: ' + text);
+        
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          logRemote('error', 'JSON parse failed: ' + e.message);
+          return;
+        }
+
+        if (data.success && Array.isArray(data.remittances)) {
+          remittancesList = data.remittances;
+          renderRemittances();
+        } else {
+          logRemote('info', 'data.success was false or remittances not array: ' + JSON.stringify(data));
+        }
+      } catch (err) {
+        logRemote('error', 'loadRemittances caught exception: ' + err.message + '\nStack: ' + err.stack);
+        console.error('Failed to load remittances', err);
+      }
+    }
+
+    function renderRemittances() {
+      activeRemittance = remittancesList.find(r => r.status === 'overdue') ||
+                         remittancesList.find(r => r.status === 'pending') ||
+                         remittancesList.find(r => r.status === 'submitted');
+
+      if (activeRemittance) {
+        document.getElementById('remitDtlAmount').textContent = '₱' + parseFloat(activeRemittance.amount_due).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        const badge = document.getElementById('remitDtlStatus');
+        badge.className = 'remit-badge ' + activeRemittance.status;
+        badge.textContent = activeRemittance.status.charAt(0).toUpperCase() + activeRemittance.status.slice(1);
+        
+        document.getElementById('remitDtlDueDate').textContent = formatDateString(activeRemittance.due_date);
+        document.getElementById('remitDtlRef').textContent = activeRemittance.reference_no;
+        document.getElementById('remitDtlPeriod').textContent = 'Weekly';
+        document.getElementById('remitDtlMethod').textContent = activeRemittance.payment_method && activeRemittance.payment_method !== '-' ? activeRemittance.payment_method : 'GCash';
+
+        document.getElementById('remitPayId').value = activeRemittance.id;
+
+        const payBtn = document.querySelector('.remit-btn-primary');
+        if (activeRemittance.status === 'submitted') {
+          payBtn.disabled = true;
+          payBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Awaiting Verification';
+        } else {
+          payBtn.disabled = false;
+          payBtn.innerHTML = '<i class="bi bi-wallet2"></i> Pay Now';
+        }
+      } else {
+        document.getElementById('remitDtlAmount').textContent = '₱0.00';
+        const badge = document.getElementById('remitDtlStatus');
+        badge.className = 'remit-badge paid';
+        badge.textContent = 'Paid';
+        
+        document.getElementById('remitDtlDueDate').textContent = '-';
+        document.getElementById('remitDtlRef').textContent = '-';
+        document.getElementById('remitDtlPeriod').textContent = '-';
+        document.getElementById('remitDtlMethod').textContent = '-';
+
+        const payBtn = document.querySelector('.remit-btn-primary');
+        payBtn.disabled = true;
+        payBtn.innerHTML = '<i class="bi bi-check-circle-fill"></i> All Paid';
+      }
+
+      const historyList = document.querySelector('.remit-history-list');
+      if (remittancesList.length === 0) {
+        historyList.innerHTML = '<div style="text-align:center; padding:20px; font-size:12px; color:#777;">No remittance history found.</div>';
+        return;
+      }
+
+      historyList.innerHTML = remittancesList.map(r => {
+        const statusLabel = r.status.charAt(0).toUpperCase() + r.status.slice(1);
+        const metaText = r.status === 'paid' 
+          ? 'Paid on ' + formatDateString(r.date_remitted) 
+          : (r.status === 'submitted' ? 'Submitted on ' + formatDateString(r.submitted_at) : 'Due ' + formatDateString(r.due_date));
+        
+        return `
+          <div class="remit-history-item">
+            <div class="remit-history-info">
+              <div class="remit-history-ref">${r.reference_no}</div>
+              <div class="remit-history-meta">${metaText} • Weekly</div>
+            </div>
+            <div class="remit-history-amount-status">
+              <div class="remit-history-amt">₱${parseFloat(r.amount_due).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+              <span class="remit-badge ${r.status}">${statusLabel}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function formatDateString(dateStr) {
+      if (!dateStr || dateStr === '-') return '-';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
     function toggleRemitView(view) {
       const detailsView = document.getElementById('remitDetailsView');
       const historyView = document.getElementById('remitHistoryView');
+      const payView = document.getElementById('remitPayView');
       const titleText = document.getElementById('remitModalTitle');
       
+      detailsView.style.display = 'none';
+      historyView.style.display = 'none';
+      payView.style.display = 'none';
+
       if (view === 'history') {
-        detailsView.style.display = 'none';
         historyView.style.display = 'block';
         titleText.textContent = 'Remittance History';
+      } else if (view === 'pay') {
+        payView.style.display = 'block';
+        titleText.textContent = 'Pay Remittance';
       } else {
         detailsView.style.display = 'block';
-        historyView.style.display = 'none';
         titleText.textContent = 'Remittance Details';
       }
     }
 
     function payRemittance() {
-      alert('Remittance payment functionality will be available in a future update.');
+      if (activeRemittance) {
+        toggleRemitView('pay');
+      }
     }
 
-    // Keyboard accessibility
+    async function submitRemitPayment(e) {
+      e.preventDefault();
+      const form = document.getElementById('remitPaymentForm');
+      const formData = new FormData(form);
+      const submitBtn = document.getElementById('remitSubmitBtn');
+      
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+
+      try {
+        const res = await fetch('../api/provider_remittance_api.php?action=submit_payment', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(data.message);
+          form.reset();
+          await loadRemittances();
+          toggleRemitView('details');
+        } else {
+          alert(data.message || 'Payment submission failed.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('An error occurred during submission.');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-upload"></i> Submit Payment';
+      }
+    }
+
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         const modal = document.getElementById('remitModal');
@@ -359,6 +555,8 @@ if ($providerId > 0 && $conn instanceof mysqli) {
         }
       }
     });
+
+    document.addEventListener('DOMContentLoaded', loadRemittances);
   </script>
 </body>
 

@@ -121,7 +121,9 @@ $stmt->close();
   </div>
   <script src="../assets/js/app.js"></script>
   <script>
-    initTheme();
+    if (typeof initTheme === 'function') {
+      initTheme();
+    }
 
     const providerId = <?= $providerId ?>;
 
