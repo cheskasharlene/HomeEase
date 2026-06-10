@@ -2947,13 +2947,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
 
           <div style="background:var(--bg-screen);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border-col);">
-            <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Reported User Information</div>
-            <div class="detail-row"><span class="detail-lbl">Name</span><span class="detail-val">${inc.reportedUser.name}</span></div>
-            <div class="detail-row"><span class="detail-lbl">Contact Number</span><span class="detail-val">${inc.reportedUser.contact}</span></div>
-            <div class="detail-row"><span class="detail-lbl">Role</span><span class="detail-val">${inc.reportedUser.role}</span></div>
-          </div>
-
-          <div style="background:var(--bg-screen);border-radius:16px;padding:16px;margin-bottom:14px;border:1.5px solid var(--border-col);">
             <div style="font-size:11px;font-weight:800;color:var(--teal);text-transform:uppercase;margin-bottom:10px;letter-spacing:0.5px;font-family:'Poppins',sans-serif;">Incident Description</div>
             <div style="font-size:12.5px;color:var(--txt-primary);line-height:1.55;white-space:pre-line;margin-bottom:12px;">${inc.description}</div>
             
@@ -3000,34 +2993,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               <button class="doc-view-btn" onclick="addIncNotes('${inc.reportId}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:12px;padding:10px 8px;justify-content:center;">
                 <i class="bi bi-journal-text" style="color:#d97706;"></i> Add Notes
               </button>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
-              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reporter.id}', '${inc.reporter.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reporter.name}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
-                Suspend Reporter
-              </button>
-              ${inc.reportedUser.id ? `
-              <button class="doc-view-btn" onclick="suspendIncUser('${inc.reportedUser.id}', '${inc.reportedUser.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reportedUser.name}')" style="background:#f1f5f9;color:#475569;box-shadow:none;border:1.5px solid #cbd5e1;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
-                Suspend Suspect
-              </button>
-              ` : `
-              <button class="doc-view-btn" disabled style="background:#f8fafc;color:#cbd5e1;box-shadow:none;border:1.5px solid #f1f5f9;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;cursor:not-allowed;">
-                No Suspect
-              </button>
-              `}
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reporter.id}', '${inc.reporter.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reporter.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
-                Warn Reporter
-              </button>
-              ${inc.reportedUser.id ? `
-              <button class="doc-view-btn" onclick="sendIncWarning('${inc.reportedUser.id}', '${inc.reportedUser.role === 'Homeowner' ? 'client' : 'provider'}', '${inc.reportedUser.name}')" style="background:#fffbeb;color:#d97706;box-shadow:none;border:1.5px solid #fde68a;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;">
-                Warn Suspect
-              </button>
-              ` : `
-              <button class="doc-view-btn" disabled style="background:#f8fafc;color:#cbd5e1;box-shadow:none;border:1.5px solid #f1f5f9;font-size:11px;padding:10px 8px;justify-content:center;white-space:normal;line-height:1.2;text-align:center;cursor:not-allowed;">
-                No Suspect
-              </button>
-              `}
             </div>
           </div>
         `;

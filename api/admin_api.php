@@ -715,6 +715,14 @@ if ($section === 'incidents') {
                 if ($reportData['reporter_role'] === 'provider') {
                     $msg = "Your report regarding " . $reportData['category'] . " has been updated to: " . $norm_status . ".";
                     sendProviderNotification($conn, (int)$reportData['reporter_id'], 'report', 'Report Status Updated', $msg, 'shield-fill-exclamation');
+                } else if ($reportData['reporter_role'] === 'client') {
+                    $msg = "Your report regarding " . $reportData['category'] . " has been updated to: " . $norm_status . ".";
+                    $notifStmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Report Status Updated', ?, 'exclamation-triangle', 0, NOW())");
+                    if ($notifStmt) {
+                        $notifStmt->bind_param("is", $reportData['reporter_id'], $msg);
+                        $notifStmt->execute();
+                        $notifStmt->close();
+                    }
                 }
                 if ($reportData['reported_user_role'] === 'provider') {
                     $msg = "An incident report involving you has been updated to: " . $norm_status . ".";
