@@ -58,7 +58,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="hdr-sub">Hi, <?= $userName ?> 👋</div>
           <div class="hdr-title">Booking Details</div>
         </div>
-        <a href="location_picker.php?svc=<?= urlencode($serviceName) ?>" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="service_selection.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 
@@ -104,8 +104,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
               <div style="font-size:11px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px;">Detecting Location…</div>
               <div id="gpsAddressText" style="font-size:12px;color:#7A7064;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Getting your GPS coordinates…</div>
             </div>
-            <!-- Change location link -->
-            <a href="location_picker.php?svc=<?= urlencode($serviceName) ?>&lat=<?= $preselectedLat ?>&lng=<?= $preselectedLng ?>&addr=<?= urlencode($preselectedAddr) ?>" style="flex-shrink:0;font-size:11px;color:#E8820C;font-weight:700;text-decoration:none;white-space:nowrap;">Change</a>
           </div>
         </div>
 
