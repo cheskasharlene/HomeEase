@@ -503,12 +503,6 @@ if ($appBase === '') {
             src="https://ui-avatars.com/api/?name=User&background=FDECC8&color=E8820C&size=200" alt="Avatar">
           <div class="p-name" id="profileName">Loading…</div>
           <div class="p-email" id="profileEmail"></div>
-          <div class="p-badges">
-            <div class="p-badge" id="profileAddressBadge">
-              <i class="bi bi-geo-alt-fill" style="font-size:11px;"></i>
-              <span id="profileAddressShort">No address</span>
-            </div>
-          </div>
         </div>
         <div class="p-body">
 
@@ -541,18 +535,6 @@ if ($appBase === '') {
                 <div class="p-row-sub">Change your password</div>
               </div>
               <i class="bi bi-chevron-right p-row-arrow"></i>
-            </div>
-            <div class="p-row" onclick="openSubSheet('address')">
-              <div class="p-row-ic">
-                <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2a8 8 0 00-8 8c0 5.5 8 13 8 13s8-7.5 8-13a8 8 0 00-8-8zm0 11a3 3 0 110-6 3 3 0 010 6z"
-                    stroke="#F5A623" stroke-width="2" />
-                </svg>
-              </div>
-              <div class="p-row-info">
-                <div class="p-row-lbl">Saved Addresses</div>
-                <div class="p-row-sub" id="addressRowSub">Manage delivery addresses</div>
-              </div>
             </div>
           </div>
 
@@ -1365,11 +1347,6 @@ if ($appBase === '') {
       document.getElementById('profileName').textContent = u.name || 'User';
       document.getElementById('profileEmail').textContent = u.email || '';
 
-      const shortAddr = u.address
-        ? (u.address.length > 22 ? u.address.slice(0, 22) + '…' : u.address)
-        : 'No address';
-      document.getElementById('profileAddressShort').textContent = shortAddr;
-      document.getElementById('addressRowSub').textContent = u.address || 'Manage delivery addresses';
       if (document.getElementById('stAddressSub')) document.getElementById('stAddressSub').textContent = u.address || 'Manage delivery addresses';
       document.getElementById('savedAddrDisplay').textContent = u.address || 'No address saved yet';
 

@@ -72,8 +72,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
               </div>
             </div>
           </div>
-          <div class="s-bar" onclick="openSearch()"><i class="bi bi-search"></i><span>Search for a service...</span>
-          </div>
         </div>
 
         <div class="sec-row">
