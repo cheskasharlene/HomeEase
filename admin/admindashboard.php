@@ -244,7 +244,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       border: 1.5px solid transparent;
     }
     .confirm-btn.cancel {
-      background: #fff;
+      background: var(--bg-card);
       border-color: var(--border-col);
       color: var(--txt-muted);
     }
@@ -1130,6 +1130,18 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           class="nl">More</span></div>
     </div>
 
+
+    <div class="confirm-ol" id="deleteUserConfirmOl" onclick="if(event.target===this)closeDeleteUserConfirm()">
+      <div class="confirm-card">
+        <div class="confirm-icon" style="background: linear-gradient(135deg, #fee2e2, #fff1f2); color: #dc2626;"><i class="bi bi-trash3-fill"></i></div>
+        <div class="confirm-title">Delete User?</div>
+        <div class="confirm-sub">Are you sure you want to delete this user and all associated data?</div>
+        <div class="confirm-actions">
+          <button class="confirm-btn cancel" onclick="closeDeleteUserConfirm()">Cancel</button>
+          <button class="confirm-btn ok" style="background: linear-gradient(135deg, #dc2626, #ef4444); box-shadow: 0 8px 16px rgba(220, 38, 38, .28); border: none;" onclick="confirmDeleteUser()">Delete</button>
+        </div>
+      </div>
+    </div>
 
     <div class="confirm-ol" id="logoutConfirmOl" onclick="if(event.target===this)closeLogoutConfirm()">
       <div class="confirm-card">
@@ -2569,11 +2581,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         else toast(data.message || 'Failed', 'e');
       }
 
-      async function deleteUser(id) {
-        if (!confirm2('Delete this user and all their data?')) return;
-        const data = await api('users', 'delete', fd({ id }));
-        if (data.success) { toast('User deleted'); closeSheet('usDetailOl'); loadUsers(); }
-        else toast(data.message || 'Failed', 'e');
+      function deleteUser(id) {
+        userIdToDelete = id;
+        document.getElementById('deleteUserConfirmOl').classList.add('on');
       }
 
       async function loadMore() {
@@ -2703,6 +2713,27 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       async function confirmLogout() {
         closeLogoutConfirm();
         window.location.href = '../logout.php';
+      }
+
+      let userIdToDelete = null;
+
+      function closeDeleteUserConfirm() {
+        userIdToDelete = null;
+        document.getElementById('deleteUserConfirmOl').classList.remove('on');
+      }
+
+      async function confirmDeleteUser() {
+        if (!userIdToDelete) return;
+        const id = userIdToDelete;
+        closeDeleteUserConfirm();
+        const data = await api('users', 'delete', fd({ id }));
+        if (data.success) {
+          toast('User deleted');
+          closeSheet('usDetailOl');
+          loadUsers();
+        } else {
+          toast(data.message || 'Failed', 'e');
+        }
       }
 
 
