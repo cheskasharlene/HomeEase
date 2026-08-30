@@ -90,6 +90,25 @@
     body.dark .stat-ic.green { background: #052e16; color: #34d399; }
     body.dark .stat-ic.amber { background: #451a03; color: #fbbf24; }
     body.dark .stat-ic.blue  { background: #1e3a5f; color: #60a5fa; }
+    .stat-ic.red     { background: #fee2e2; color: #dc2626; }
+    body.dark .stat-ic.red   { background: #4c0519; color: #f43f5e; }
+
+    .rev-filter-btn {
+      border: none;
+      background: transparent;
+      color: var(--txt-muted);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .rev-filter-btn.active {
+      background: var(--bg-card);
+      color: var(--teal);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
 
     .stat-val {
       font-family: 'Poppins', sans-serif;
