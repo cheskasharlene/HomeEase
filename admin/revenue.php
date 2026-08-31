@@ -20,28 +20,28 @@ include __DIR__ . '/includes/sidebar.php';
       <div class="stat-card">
         <div class="stat-ic amber"><i class="bi bi-piggy-bank-fill"></i></div>
         <div>
-          <div class="stat-val">₱42.1k</div>
+          <div class="stat-val" id="total-revenue-val">₱0.00</div>
           <div class="stat-lbl">Total Revenue</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-ic teal"><i class="bi bi-calendar3"></i></div>
         <div>
-          <div class="stat-val">₱18.2k</div>
+          <div class="stat-val" id="month-revenue-val">₱0.00</div>
           <div class="stat-lbl">This Month</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-ic blue"><i class="bi bi-calendar2-week-fill"></i></div>
         <div>
-          <div class="stat-val">₱4.3k</div>
+          <div class="stat-val" id="week-revenue-val">₱0.00</div>
           <div class="stat-lbl">This Week</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-ic green"><i class="bi bi-calendar-event-fill"></i></div>
         <div>
-          <div class="stat-val">₱850.00</div>
+          <div class="stat-val" id="today-revenue-val">₱0.00</div>
           <div class="stat-lbl">Today</div>
         </div>
       </div>
@@ -53,7 +53,7 @@ include __DIR__ . '/includes/sidebar.php';
         <div style="display:flex; align-items:center; gap:10px;">
           <div class="stat-ic red"><i class="bi bi-hourglass-split"></i></div>
           <div>
-            <div class="stat-val">₱3,400.00</div>
+            <div class="stat-val" id="pending-remittance-val">₱0.00</div>
             <div class="stat-lbl">Pending Remittance</div>
           </div>
         </div>
@@ -94,14 +94,14 @@ include __DIR__ . '/includes/sidebar.php';
               <div style="width:12px; height:12px; border-radius:50%; background:var(--teal);"></div>
               <span style="font-size:12px; font-weight:700; color:var(--txt-primary);">Service Provider Commission</span>
             </div>
-            <span style="font-size:12px; font-weight:800; color:var(--txt-primary);">₱38,750.00</span>
+            <span style="font-size:12px; font-weight:800; color:var(--txt-primary);" id="breakdown-commission-val">₱0.00</span>
           </div>
           <div style="width:100%; height:8px; background:var(--bg-input); border-radius:4px; overflow:hidden;">
-            <div style="width:92%; height:100%; background:var(--teal); border-radius:4px;"></div>
+            <div style="width:0%; height:100%; background:var(--teal); border-radius:4px;" id="breakdown-commission-bar"></div>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--txt-muted); margin-top:4px;">
             <span>10% commission fee per booking</span>
-            <span>91.9% of total</span>
+            <span id="breakdown-commission-pct">0% of total</span>
           </div>
         </div>
         <div>
@@ -110,14 +110,14 @@ include __DIR__ . '/includes/sidebar.php';
               <div style="width:12px; height:12px; border-radius:50%; background:#2563eb;"></div>
               <span style="font-size:12px; font-weight:700; color:var(--txt-primary);">Platform Convenience Fees</span>
             </div>
-            <span style="font-size:12px; font-weight:800; color:var(--txt-primary);">₱3,400.00</span>
+            <span style="font-size:12px; font-weight:800; color:var(--txt-primary);" id="breakdown-convenience-val">₱0.00</span>
           </div>
           <div style="width:100%; height:8px; background:var(--bg-input); border-radius:4px; overflow:hidden;">
-            <div style="width:8%; height:100%; background:#2563eb; border-radius:4px;"></div>
+            <div style="width:0%; height:100%; background:#2563eb; border-radius:4px;" id="breakdown-convenience-bar"></div>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--txt-muted); margin-top:4px;">
             <span>Fixed service/booking fees</span>
-            <span>8.1% of total</span>
+            <span id="breakdown-convenience-pct">0% of total</span>
           </div>
         </div>
       </div>
@@ -148,100 +148,154 @@ body.dark .stat-ic.red { background:#4c0519; color:#f43f5e; }
 // JavaScript code for desktop-view page
 let revenueChartInstance = null;
 
-function loadRevenue() {
-  initRevenueChart();
-  initRevenueHistory();
+async function loadRevenue() {
+  try {
+    // 1. Load summary metrics
+    const summaryRes = await fetch('../api/admin_api.php?section=revenue&action=summary');
+    const summaryData = await summaryRes.json();
+    if (summaryData.success) {
+      document.getElementById('total-revenue-val').textContent = formatMetric(summaryData.total_revenue, true);
+      document.getElementById('month-revenue-val').textContent = formatMetric(summaryData.month_revenue, true);
+      document.getElementById('week-revenue-val').textContent = formatMetric(summaryData.week_revenue, true);
+      document.getElementById('today-revenue-val').textContent = formatMetric(summaryData.today_revenue, false);
+      document.getElementById('pending-remittance-val').textContent = formatMetric(summaryData.pending_remittance, false);
+
+      // Populate breakdown dynamically
+      const total = summaryData.total_revenue;
+      const commissionAmt = total;
+      const convenienceAmt = 0.00;
+      
+      let commissionPct = 0;
+      let conveniencePct = 0;
+      if (total > 0) {
+        commissionPct = 100;
+        conveniencePct = 0;
+      }
+      
+      document.getElementById('breakdown-commission-val').textContent = '₱' + commissionAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('breakdown-commission-bar').style.width = commissionPct + '%';
+      document.getElementById('breakdown-commission-pct').textContent = commissionPct + '% of total';
+      
+      document.getElementById('breakdown-convenience-val').textContent = '₱' + convenienceAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('breakdown-convenience-bar').style.width = conveniencePct + '%';
+      document.getElementById('breakdown-convenience-pct').textContent = conveniencePct + '% of total';
+    }
+
+    // 2. Load chart data
+    const activeBtn = document.querySelector('.rev-filter-btn.active');
+    const activeFilter = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : 'daily';
+    await fetchAndDrawChart(activeFilter);
+
+    // 3. Load history
+    await initRevenueHistory();
+  } catch (err) {
+    console.error('Failed to load revenue analytics: ', err);
+  }
 }
 
-function initRevenueChart() {
+function formatMetric(val, isAbbrev = true) {
+  const floatVal = parseFloat(val) || 0;
+  if (isAbbrev && floatVal >= 1000) {
+    return '₱' + (floatVal / 1000).toFixed(1) + 'k';
+  }
+  return '₱' + floatVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function fetchAndDrawChart(filter) {
   const ctx = document.getElementById('revenueAnalyticsChart');
   if (!ctx) return;
 
-  const chartData = getRevenueChartData('daily');
+  try {
+    const res = await fetch(`../api/admin_api.php?section=revenue&action=chart&filter=${filter}`);
+    const chartData = await res.json();
+    if (!chartData.success) return;
 
-  if (revenueChartInstance) {
-    revenueChartInstance.destroy();
-  }
+    if (revenueChartInstance) {
+      revenueChartInstance.destroy();
+    }
 
-  const isDark = document.body.classList.contains('dark');
-  const gridColor = isDark ? '#4a3e28' : '#ede8e0';
-  const labelColor = isDark ? '#a19685' : '#8e8e93';
+    const isDark = document.body.classList.contains('dark');
+    const gridColor = isDark ? '#4a3e28' : '#ede8e0';
+    const labelColor = isDark ? '#a19685' : '#8e8e93';
 
-  revenueChartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: chartData.labels,
-      datasets: [{
-        label: 'Platform Revenue (₱)',
-        data: chartData.data,
-        borderColor: '#F5A623',
-        borderWidth: 3,
-        backgroundColor: createChartGradient(ctx, isDark),
-        fill: true,
-        tension: 0.4,
-        pointBackgroundColor: '#F5A623',
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: false
-        },
-        tooltip: {
-          backgroundColor: isDark ? '#2a2216' : '#ffffff',
-          titleColor: isDark ? '#ffffff' : '#1A1A2E',
-          bodyColor: '#F5A623',
+    revenueChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          label: 'Platform Revenue (₱)',
+          data: chartData.data,
           borderColor: '#F5A623',
-          borderWidth: 1,
-          padding: 10,
-          displayColors: false,
-          callbacks: {
-            label: function(context) {
-              return '₱' + context.parsed.y.toLocaleString();
-            }
-          }
-        }
+          borderWidth: 3,
+          backgroundColor: createChartGradient(ctx, isDark),
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#F5A623',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
       },
-      scales: {
-        x: {
-          grid: {
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
             display: false
           },
-          ticks: {
-            color: labelColor,
-            font: {
-              family: 'Nunito',
-              size: 10,
-              weight: 'bold'
+          tooltip: {
+            backgroundColor: isDark ? '#2a2216' : '#ffffff',
+            titleColor: isDark ? '#ffffff' : '#1A1A2E',
+            bodyColor: '#F5A623',
+            borderColor: '#F5A623',
+            borderWidth: 1,
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: function(context) {
+                return '₱' + context.parsed.y.toLocaleString();
+              }
             }
           }
         },
-        y: {
-          grid: {
-            color: gridColor,
-            drawBorder: false
-          },
-          ticks: {
-            color: labelColor,
-            font: {
-              family: 'Nunito',
-              size: 10,
-              weight: 'bold'
+        scales: {
+          x: {
+            grid: {
+              display: false
             },
-            callback: function(value) {
-              return '₱' + value;
+            ticks: {
+              color: labelColor,
+              font: {
+                family: 'Nunito',
+                size: 10,
+                weight: 'bold'
+              }
+            }
+          },
+          y: {
+            grid: {
+              color: gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: labelColor,
+              font: {
+                family: 'Nunito',
+                size: 10,
+                weight: 'bold'
+              },
+              callback: function(value) {
+                return '₱' + value;
+              }
             }
           }
         }
       }
-    }
-  });
+    });
+  } catch (err) {
+    console.error('Failed to draw chart: ', err);
+  }
 }
 
 function createChartGradient(ctx, isDark) {
@@ -252,79 +306,62 @@ function createChartGradient(ctx, isDark) {
   return gradient;
 }
 
-function getRevenueChartData(filter) {
-  switch (filter) {
-    case 'daily':
-      return {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        data: [450, 750, 500, 950, 800, 1200, 850]
-      };
-    case 'weekly':
-      return {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        data: [3800, 4200, 4800, 4350]
-      };
-    case 'monthly':
-      return {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-        data: [12500, 14000, 15800, 13200, 16500, 18250, 17100, 19400]
-      };
-    case 'yearly':
-      return {
-        labels: ['2023', '2024', '2025', '2026'],
-        data: [120000, 185000, 245000, 310000]
-      };
-  }
-}
-
-function updateRevenueChart(filter, btn) {
+async function updateRevenueChart(filter, btn) {
   const buttons = btn.parentElement.querySelectorAll('.rev-filter-btn');
   buttons.forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  if (!revenueChartInstance) return;
-
-  const chartData = getRevenueChartData(filter);
-  revenueChartInstance.data.labels = chartData.labels;
-  revenueChartInstance.data.datasets[0].data = chartData.data;
-  revenueChartInstance.update();
+  await fetchAndDrawChart(filter);
 }
 
-function initRevenueHistory() {
+async function initRevenueHistory() {
   const listContainer = document.getElementById('revenueHistoryList');
   if (!listContainer) return;
 
-  const dummyHistory = [
-    { date: '2026-08-30', worker: 'Lance Austria', service: 'House Cleaner', amount: 1450, revenue: 145, status: 'paid' },
-    { date: '2026-08-29', worker: 'John Doe', service: 'Plumber', amount: 800, revenue: 80, status: 'paid' },
-    { date: '2026-08-28', worker: 'Maria Santos', service: 'Laundry', amount: 600, revenue: 60, status: 'paid' },
-    { date: '2026-08-28', worker: 'Lance Austria', service: 'House Cleaner', amount: 750, revenue: 75, status: 'pending' },
-    { date: '2026-08-27', worker: 'Juan Dela Cruz', service: 'Electrician', amount: 1200, revenue: 120, status: 'paid' },
-    { date: '2026-08-26', worker: 'Jane Austria', service: 'House Cleaner', amount: 1450, revenue: 145, status: 'paid' }
-  ];
+  try {
+    const res = await fetch('../api/admin_api.php?section=revenue&action=history');
+    const data = await res.json();
+    if (!data.success || !data.history || data.history.length === 0) {
+      listContainer.innerHTML = `
+        <div class="empty-state" style="padding: 30px; text-align: center; color: var(--txt-muted);">
+          <i class="bi bi-wallet2" style="font-size: 24px;"></i>
+          <p style="margin-top: 8px; font-weight: bold;">No revenue transactions found.</p>
+        </div>
+      `;
+      return;
+    }
 
-  listContainer.innerHTML = dummyHistory.map(item => {
-    const initial = (item.worker || '?')[0].toUpperCase();
-    const commissionLabel = '₱' + item.revenue.toFixed(2);
-    const totalLabel = 'Price: ₱' + item.amount.toLocaleString();
+    listContainer.innerHTML = data.history.map(item => {
+      const initial = (item.worker || '?')[0].toUpperCase();
+      const commissionLabel = '₱' + item.revenue.toFixed(2);
+      const totalLabel = 'Price: ₱' + item.amount.toLocaleString();
 
-    return `
-      <div class="list-item">
-        <div class="li-av" style="font-size:13px; font-weight:800; background:var(--teal-mid); color:var(--teal-dark);">${initial}</div>
-        <div class="li-body">
-          <div class="li-name">${item.worker}</div>
-          <div class="li-sub">${item.service} · ${item.date}</div>
+      return `
+        <div class="list-item">
+          <div class="li-av" style="font-size:13px; font-weight:800; background:var(--teal-mid); color:var(--teal-dark);">${initial}</div>
+          <div class="li-body">
+            <div class="li-name">${item.worker}</div>
+            <div class="li-sub">${item.service} · ${item.date}</div>
+          </div>
+          <div class="li-right" style="text-align: right; margin-right: 12px;">
+            <div style="font-size:13px; font-weight:800; color:var(--teal);">${commissionLabel}</div>
+            <div style="font-size:10px; color:var(--txt-muted);">${totalLabel}</div>
+          </div>
+          <div style="flex-shrink:0;">
+            ${revenueStatusPill(item.status)}
+          </div>
         </div>
-        <div class="li-right" style="text-align: right; margin-right: 12px;">
-          <div style="font-size:13px; font-weight:800; color:var(--teal);">${commissionLabel}</div>
-          <div style="font-size:10px; color:var(--txt-muted);">${totalLabel}</div>
-        </div>
-        <div style="flex-shrink:0;">
-          ${revenueStatusPill(item.status)}
-        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error('Failed to load history: ', err);
+    listContainer.innerHTML = `
+      <div class="empty-state" style="padding: 30px; text-align: center; color: var(--txt-muted);">
+        <i class="bi bi-exclamation-triangle" style="font-size: 24px; color: red;"></i>
+        <p style="margin-top: 8px; font-weight: bold;">Error loading revenue history.</p>
       </div>
     `;
-  }).join('');
+  }
 }
 
 function revenueStatusPill(s) {

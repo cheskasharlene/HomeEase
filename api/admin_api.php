@@ -51,6 +51,14 @@ if ($section === 'auth' && $action === 'logout') {
 }
 
 if ($section === 'stats') {
+    // Sync remittances first to ensure database calculations are accurate
+    $provRes = $conn->query("SELECT provider_id FROM service_providers");
+    if ($provRes) {
+        while ($prow = $provRes->fetch_assoc()) {
+            ensureRemittancesForProvider($conn, (int)$prow['provider_id']);
+        }
+    }
+
     $stats = [];
 
     $r = $conn->query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
@@ -59,7 +67,8 @@ if ($section === 'stats') {
     $r = $conn->query("SELECT COUNT(*) FROM bookings");
     $stats['total_bookings'] = (int)($r ? $r->fetch_row()[0] : 0);
 
-    $r = $conn->query("SELECT COALESCE(SUM(price),0) FROM bookings WHERE status='done'");
+    // Reuse the exact same query from Revenue Analytics (paid remittances)
+    $r = $conn->query("SELECT COALESCE(SUM(amount_paid),0) FROM remittances WHERE status='paid'");
     $stats['total_revenue'] = (float)($r ? $r->fetch_row()[0] : 0);
 
     $r = $conn->query("SELECT COUNT(*) FROM service_providers WHERE status='active'");
@@ -71,10 +80,13 @@ if ($section === 'stats') {
     $r = $conn->query("SELECT COUNT(*) FROM bookings WHERE status='progress'");
     $stats['in_progress'] = (int)($r ? $r->fetch_row()[0] : 0);
 
+    // Reuse the exact same chart data logic from Revenue Analytics (paid remittances in the last 6 months)
     $revRows = [];
-    $res = $conn->query("SELECT DATE_FORMAT(created_at,'%b') AS mo, COALESCE(SUM(price),0) AS rev
-        FROM bookings WHERE status='done' AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-        GROUP BY YEAR(created_at), MONTH(created_at), mo ORDER BY YEAR(created_at), MONTH(created_at)");
+    $res = $conn->query("SELECT DATE_FORMAT(date_remitted,'%b') AS mo, COALESCE(SUM(amount_paid),0) AS rev
+        FROM remittances 
+        WHERE status='paid' AND date_remitted >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+        GROUP BY YEAR(date_remitted), MONTH(date_remitted), mo 
+        ORDER BY YEAR(date_remitted), MONTH(date_remitted)");
     if ($res) while ($rr = $res->fetch_assoc()) $revRows[] = $rr;
     $stats['revenue_chart'] = $revRows;
 
@@ -948,6 +960,198 @@ if ($section === 'remittances') {
 
             respond(true, 'Remittance payment rejected.');
         }
+    }
+}
+
+if ($section === 'revenue') {
+    if ($method === 'GET' && $action === 'summary') {
+        // Sync remittances first to ensure database calculations are accurate
+        $provRes = $conn->query("SELECT provider_id FROM service_providers");
+        if ($provRes) {
+            while ($prow = $provRes->fetch_assoc()) {
+                ensureRemittancesForProvider($conn, (int)$prow['provider_id']);
+            }
+        }
+
+        $currentMonth = date('Y-m');
+        $todayDate = date('Y-m-d');
+        
+        $mondayStr = date('Y-m-d', strtotime('monday this week'));
+        $sundayStr = date('Y-m-d', strtotime('sunday this week'));
+
+        $totalReceived = 0.00;
+        $outstanding = 0.00;
+        $monthReceived = 0.00;
+        $weekReceived = 0.00;
+        $todayReceived = 0.00;
+
+        $statsRes = $conn->query("SELECT status, amount_due, amount_paid, date_remitted FROM remittances");
+        if ($statsRes) {
+            while ($st = $statsRes->fetch_assoc()) {
+                $amtDue = (float)$st['amount_due'];
+                $amtPaid = (float)$st['amount_paid'];
+                $dateRem = $st['date_remitted'];
+                 
+                if ($st['status'] === 'paid') {
+                    $totalReceived += $amtPaid;
+                    if ($dateRem) {
+                        if (strpos($dateRem, $currentMonth) === 0) {
+                            $monthReceived += $amtPaid;
+                        }
+                        $dateRemOnly = substr($dateRem, 0, 10);
+                        if ($dateRemOnly >= $mondayStr && $dateRemOnly <= $sundayStr) {
+                            $weekReceived += $amtPaid;
+                        }
+                        if ($dateRemOnly === $todayDate) {
+                            $todayReceived += $amtPaid;
+                        }
+                    }
+                } else {
+                    $outstanding += $amtDue;
+                }
+            }
+        }
+
+        respond(true, '', [
+            'total_revenue' => $totalReceived,
+            'month_revenue' => $monthReceived,
+            'week_revenue' => $weekReceived,
+            'today_revenue' => $todayReceived,
+            'pending_remittance' => $outstanding
+        ]);
+    }
+
+    if ($method === 'GET' && $action === 'chart') {
+        $filter = $_GET['filter'] ?? 'daily';
+        $labels = [];
+        $data = [];
+
+        if ($filter === 'daily') {
+            $monday = date('Y-m-d 00:00:00', strtotime('monday this week'));
+            $sunday = date('Y-m-d 23:59:59', strtotime('sunday this week'));
+            
+            $res = $conn->query("SELECT DATE(date_remitted) as day_date, SUM(amount_paid) as day_sum 
+                                 FROM remittances 
+                                 WHERE status = 'paid' AND date_remitted >= '$monday' AND date_remitted <= '$sunday' 
+                                 GROUP BY DATE(date_remitted)");
+            $sums = [];
+            if ($res) {
+                while ($row = $res->fetch_assoc()) {
+                    $sums[$row['day_date']] = (float)$row['day_sum'];
+                }
+            }
+            
+            $mon_time = strtotime('monday this week');
+            for ($i = 0; $i < 7; $i++) {
+                $day = date('Y-m-d', strtotime("+$i days", $mon_time));
+                $labels[] = date('D', strtotime($day));
+                $data[] = $sums[$day] ?? 0.0;
+            }
+        } elseif ($filter === 'weekly') {
+            $weeks = [];
+            for ($i = 3; $i >= 0; $i--) {
+                $startWeek = date('Y-m-d 00:00:00', strtotime("monday this week -$i weeks"));
+                $endWeek = date('Y-m-d 23:59:59', strtotime("sunday this week -$i weeks"));
+                $weeks[] = [
+                    'label' => "Week " . (4 - $i),
+                    'start' => $startWeek,
+                    'end' => $endWeek
+                ];
+            }
+            
+            foreach ($weeks as $w) {
+                $labels[] = $w['label'];
+                $stmt = $conn->prepare("SELECT COALESCE(SUM(amount_paid), 0) FROM remittances WHERE status = 'paid' AND date_remitted >= ? AND date_remitted <= ?");
+                $stmt->bind_param("ss", $w['start'], $w['end']);
+                $stmt->execute();
+                $data[] = (float)$stmt->get_result()->fetch_row()[0];
+                $stmt->close();
+            }
+        } elseif ($filter === 'monthly') {
+            $months = [];
+            for ($i = 7; $i >= 0; $i--) {
+                $monthStart = date('Y-m-01 00:00:00', strtotime("-$i months"));
+                $monthEnd = date('Y-m-t 23:59:59', strtotime("-$i months"));
+                $months[] = [
+                    'label' => date('M', strtotime($monthStart)),
+                    'start' => $monthStart,
+                    'end' => $monthEnd
+                ];
+            }
+            foreach ($months as $m) {
+                $labels[] = $m['label'];
+                $stmt = $conn->prepare("SELECT COALESCE(SUM(amount_paid), 0) FROM remittances WHERE status = 'paid' AND date_remitted >= ? AND date_remitted <= ?");
+                $stmt->bind_param("ss", $m['start'], $m['end']);
+                $stmt->execute();
+                $data[] = (float)$stmt->get_result()->fetch_row()[0];
+                $stmt->close();
+            }
+        } elseif ($filter === 'yearly') {
+            $currentYear = (int)date('Y');
+            for ($i = 3; $i >= 0; $i--) {
+                $year = $currentYear - $i;
+                $labels[] = (string)$year;
+                $yearStart = "$year-01-01 00:00:00";
+                $yearEnd = "$year-12-31 23:59:59";
+                
+                $stmt = $conn->prepare("SELECT COALESCE(SUM(amount_paid), 0) FROM remittances WHERE status = 'paid' AND date_remitted >= ? AND date_remitted <= ?");
+                $stmt->bind_param("ss", $yearStart, $yearEnd);
+                $stmt->execute();
+                $data[] = (float)$stmt->get_result()->fetch_row()[0];
+                $stmt->close();
+            }
+        }
+
+        respond(true, '', ['labels' => $labels, 'data' => $data]);
+    }
+
+    if ($method === 'GET' && $action === 'history') {
+        $commission_rate = 0.10;
+        $rate_res = $conn->query("SELECT r.amount_due, SUM(b.price) as bookings_sum 
+                                  FROM remittances r 
+                                  JOIN bookings b ON b.provider_id = r.provider_id 
+                                  WHERE b.status IN ('done', 'completed') 
+                                    AND DATE(DATE_ADD(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y')), INTERVAL 6-WEEKDAY(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y'))) DAY)) = r.due_date
+                                  GROUP BY r.id LIMIT 1");
+        if ($rate_res && $rate_row = $rate_res->fetch_assoc()) {
+            if ($rate_row['bookings_sum'] > 0) {
+                $commission_rate = (float)$rate_row['amount_due'] / (float)$rate_row['bookings_sum'];
+            }
+        }
+
+        $query = "SELECT 
+                    b.id AS booking_id,
+                    b.date AS booking_date,
+                    b.price AS booking_amount,
+                    sp.full_name AS provider_name,
+                    s.name AS service_name,
+                    r.status AS remittance_status
+                  FROM bookings b
+                  JOIN service_providers sp ON b.provider_id = sp.provider_id
+                  LEFT JOIN services s ON sp.service_id = s.id
+                  LEFT JOIN remittances r ON r.provider_id = b.provider_id 
+                    AND r.due_date = DATE(DATE_ADD(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y')), INTERVAL 6-WEEKDAY(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y'))) DAY))
+                  WHERE b.status IN ('done', 'completed')
+                  ORDER BY COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y')) DESC, b.id DESC
+                  LIMIT 20";
+        
+        $res = $conn->query($query);
+        $history = [];
+        if ($res) {
+            while ($row = $res->fetch_assoc()) {
+                $amount = (float)$row['booking_amount'];
+                $revenue = $amount * $commission_rate;
+                $history[] = [
+                    'date' => $row['booking_date'],
+                    'worker' => $row['provider_name'],
+                    'service' => $row['service_name'] ?? 'General Service',
+                    'amount' => $amount,
+                    'revenue' => $revenue,
+                    'status' => $row['remittance_status'] ?? 'pending'
+                ];
+            }
+        }
+        respond(true, '', ['history' => $history]);
     }
 }
 
