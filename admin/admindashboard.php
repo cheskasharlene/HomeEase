@@ -856,7 +856,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
                 <div style="width:0%; height:100%; background:var(--teal); border-radius:4px;" id="breakdown-commission-bar"></div>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--txt-muted); margin-top:4px;">
-                <span>10% commission fee per booking</span>
+                <span>4% remittance fee per booking</span>
                 <span id="breakdown-commission-pct">0% of total</span>
               </div>
             </div>
@@ -3952,7 +3952,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="detail-row"><span class="detail-lbl">Due Date</span><span class="detail-val">${formatDate(r.due_date)}</span></div>
         <div class="detail-row"><span class="detail-lbl">Date Remitted</span><span class="detail-val">${formatDate(r.date_remitted)}</span></div>
         <div class="detail-row"><span class="detail-lbl">Payment Method</span><span class="detail-val">${r.payment_method || '-'}</span></div>
-        <div class="detail-row"><span class="detail-lbl">Payment Period</span><span class="detail-val">Weekly</span></div>
+        <div class="detail-row"><span class="detail-lbl">Payment Period</span><span class="detail-val">Daily</span></div>
       </div>
 
       ${receiptHtml}

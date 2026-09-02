@@ -515,6 +515,9 @@ if ($method === 'POST' && $action === 'complete') {
                 VALUES ({$uid}, 'Service Complete', 'Your {$svc} service has been completed. Please leave a review!', 'house_cleaner', 0, NOW())");
         }
 
+        // Automatically update worker's daily remittance aggregate
+        ensureRemittancesForProvider($conn, $providerId);
+
         $conn->commit();
         ob_end_clean();
         echo json_encode(['success' => true, 'message' => 'Booking marked as complete.']);

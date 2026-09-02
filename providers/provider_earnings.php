@@ -234,7 +234,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
               </div>
               <div class="remit-detail-row">
                 <span>Period</span>
-                <span id="remitDtlPeriod">Weekly</span>
+                <span id="remitDtlPeriod">Daily</span>
               </div>
               <div class="remit-detail-row">
                 <span>Pay Via</span>
@@ -260,7 +260,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
               <div class="remit-history-item">
                 <div class="remit-history-info">
                   <div class="remit-history-ref">REF-2026-00712</div>
-                  <div class="remit-history-meta">Paid on Jun 8, 2026 · Weekly</div>
+                  <div class="remit-history-meta">Paid on Jun 8, 2026 · Daily</div>
                 </div>
                 <div class="remit-history-amount-status">
                   <div class="remit-history-amt">₱750.00</div>
@@ -427,7 +427,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
         
         document.getElementById('remitDtlDueDate').textContent = formatDateString(activeRemittance.due_date);
         document.getElementById('remitDtlRef').textContent = activeRemittance.reference_no;
-        document.getElementById('remitDtlPeriod').textContent = 'Weekly';
+        document.getElementById('remitDtlPeriod').textContent = 'Daily';
         document.getElementById('remitDtlMethod').textContent = activeRemittance.payment_method && activeRemittance.payment_method !== '-' ? activeRemittance.payment_method : 'GCash';
 
         document.getElementById('remitPayId').value = activeRemittance.id;
@@ -472,7 +472,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
           <div class="remit-history-item">
             <div class="remit-history-info">
               <div class="remit-history-ref">${r.reference_no}</div>
-              <div class="remit-history-meta">${metaText} • Weekly</div>
+              <div class="remit-history-meta">${metaText} • Daily</div>
             </div>
             <div class="remit-history-amount-status">
               <div class="remit-history-amt">₱${parseFloat(r.amount_due).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>

@@ -100,7 +100,7 @@ include __DIR__ . '/includes/sidebar.php';
             <div style="width:0%; height:100%; background:var(--teal); border-radius:4px;" id="breakdown-commission-bar"></div>
           </div>
           <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--txt-muted); margin-top:4px;">
-            <span>10% commission fee per booking</span>
+            <span>4% remittance fee per booking</span>
             <span id="breakdown-commission-pct">0% of total</span>
           </div>
         </div>

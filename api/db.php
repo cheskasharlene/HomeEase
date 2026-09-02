@@ -419,6 +419,8 @@ function ensureNormalizationSchema($conn)
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_remittances_provider (provider_id),
         INDEX idx_remittances_status (status),
+        INDEX idx_remittances_due (due_date),
+        INDEX idx_remittances_prov_due (provider_id, due_date),
         CONSTRAINT fk_remittances_provider FOREIGN KEY (provider_id) REFERENCES service_providers(provider_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
@@ -545,35 +547,37 @@ function ensureRemittancesForProvider($conn, $providerId)
 {
     ensureNormalizationSchema($conn);
 
+    // Group completed/done bookings by their service date (Daily cycle)
     $query = "SELECT 
-                DATE(DATE_ADD(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y')), INTERVAL 6-WEEKDAY(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'))) DAY)) AS SundayDate,
-                SUM(price) AS weekly_earnings
+                DATE(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'), STR_TO_DATE(date, '%M %d, %Y'), created_at)) AS DayDate,
+                SUM(price) AS daily_earnings
               FROM bookings
               WHERE provider_id = ? AND status IN ('completed', 'done')
-              GROUP BY SundayDate";
+              GROUP BY DayDate";
               
     $stmt = $conn->prepare($query);
     if (!$stmt) return;
     $stmt->bind_param("i", $providerId);
     $stmt->execute();
     $res = $stmt->get_result();
-    $weeks = [];
+    $days = [];
     while ($row = $res->fetch_assoc()) {
-        if ($row['SundayDate']) {
-            $weeks[$row['SundayDate']] = (float)$row['weekly_earnings'];
+        if (!empty($row['DayDate'])) {
+            $days[$row['DayDate']] = (float)$row['daily_earnings'];
         }
     }
     $stmt->close();
 
     $today = date('Y-m-d');
 
-    foreach ($weeks as $sunday => $earnings) {
-        $amountDue = $earnings * 0.10;
+    foreach ($days as $day => $earnings) {
+        // 4% remittance fee per completed service / booking daily aggregate
+        $amountDue = round($earnings * 0.04, 2);
         if ($amountDue <= 0) continue;
 
         $checkQuery = "SELECT id, status, amount_due FROM remittances WHERE provider_id = ? AND due_date = ?";
         $checkStmt = $conn->prepare($checkQuery);
-        $checkStmt->bind_param("is", $providerId, $sunday);
+        $checkStmt->bind_param("is", $providerId, $day);
         $checkStmt->execute();
         $existing = $checkStmt->get_result()->fetch_assoc();
         $checkStmt->close();
@@ -581,7 +585,7 @@ function ensureRemittancesForProvider($conn, $providerId)
         if (!$existing) {
             $refNo = "";
             while (true) {
-                $refNo = "REF-" . date('Y', strtotime($sunday)) . "-" . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
+                $refNo = "REF-" . date('Y', strtotime($day)) . "-" . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
                 $dupCheck = $conn->query("SELECT id FROM remittances WHERE reference_no = '" . $conn->real_escape_string($refNo) . "'");
                 if ($dupCheck && $dupCheck->num_rows === 0) {
                     break;
@@ -589,13 +593,13 @@ function ensureRemittancesForProvider($conn, $providerId)
             }
 
             $status = 'pending';
-            if ($sunday < $today) {
+            if ($day < $today) {
                 $status = 'overdue';
             }
 
             $insertQuery = "INSERT INTO remittances (provider_id, reference_no, amount_due, status, due_date) VALUES (?, ?, ?, ?, ?)";
             $insStmt = $conn->prepare($insertQuery);
-            $insStmt->bind_param("isdss", $providerId, $refNo, $amountDue, $status, $sunday);
+            $insStmt->bind_param("isdss", $providerId, $refNo, $amountDue, $status, $day);
             $insStmt->execute();
             $insStmt->close();
         } else {
@@ -604,7 +608,7 @@ function ensureRemittancesForProvider($conn, $providerId)
             
             if ($status === 'pending' || $status === 'overdue') {
                 $newStatus = $status;
-                if ($sunday < $today && $status === 'pending') {
+                if ($day < $today && $status === 'pending') {
                     $newStatus = 'overdue';
                 }
                 

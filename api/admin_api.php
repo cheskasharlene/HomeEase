@@ -1106,18 +1106,7 @@ if ($section === 'revenue') {
     }
 
     if ($method === 'GET' && $action === 'history') {
-        $commission_rate = 0.10;
-        $rate_res = $conn->query("SELECT r.amount_due, SUM(b.price) as bookings_sum 
-                                  FROM remittances r 
-                                  JOIN bookings b ON b.provider_id = r.provider_id 
-                                  WHERE b.status IN ('done', 'completed') 
-                                    AND DATE(DATE_ADD(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y')), INTERVAL 6-WEEKDAY(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y'))) DAY)) = r.due_date
-                                  GROUP BY r.id LIMIT 1");
-        if ($rate_res && $rate_row = $rate_res->fetch_assoc()) {
-            if ($rate_row['bookings_sum'] > 0) {
-                $commission_rate = (float)$rate_row['amount_due'] / (float)$rate_row['bookings_sum'];
-            }
-        }
+        $commission_rate = 0.04;
 
         $query = "SELECT 
                     b.id AS booking_id,
@@ -1130,9 +1119,9 @@ if ($section === 'revenue') {
                   JOIN service_providers sp ON b.provider_id = sp.provider_id
                   LEFT JOIN services s ON sp.service_id = s.id
                   LEFT JOIN remittances r ON r.provider_id = b.provider_id 
-                    AND r.due_date = DATE(DATE_ADD(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y')), INTERVAL 6-WEEKDAY(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y'))) DAY))
+                    AND r.due_date = DATE(COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y'), STR_TO_DATE(b.date, '%M %d, %Y'), b.created_at))
                   WHERE b.status IN ('done', 'completed')
-                  ORDER BY COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y')) DESC, b.id DESC
+                  ORDER BY COALESCE(STR_TO_DATE(b.date, '%Y-%m-%d'), STR_TO_DATE(b.date, '%b %d, %Y'), STR_TO_DATE(b.date, '%M %d, %Y'), b.created_at) DESC, b.id DESC
                   LIMIT 20";
         
         $res = $conn->query($query);
@@ -1140,7 +1129,7 @@ if ($section === 'revenue') {
         if ($res) {
             while ($row = $res->fetch_assoc()) {
                 $amount = (float)$row['booking_amount'];
-                $revenue = $amount * $commission_rate;
+                $revenue = round($amount * $commission_rate, 2);
                 $history[] = [
                     'date' => $row['booking_date'],
                     'worker' => $row['provider_name'],
