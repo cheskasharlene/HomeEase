@@ -123,15 +123,81 @@ include __DIR__ . '/includes/sidebar.php';
       </div>
     </div>
 
-    <!-- History -->
+    <!-- Revenue Performance -->
     <div class="sec-pad">
       <div class="sec-hdr">
-        <div class="sec-ttl">Recent Revenue History</div>
+        <div class="sec-ttl">Revenue Performance</div>
       </div>
-      <div class="card" id="revenueHistoryList">
-        <!-- populated via js -->
+      <div class="card" style="padding:14px 16px;">
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; text-align:center;">
+          <div style="background:var(--bg-input); border-radius:12px; padding:12px 6px; border:1px solid var(--border-col);">
+            <div style="font-size:18px; color:var(--teal); margin-bottom:4px;"><i class="bi bi-check2-circle"></i></div>
+            <div style="font-size:15px; font-weight:800; color:var(--txt-primary);" id="perf-completed-val">0</div>
+            <div style="font-size:10px; font-weight:700; color:var(--txt-muted); margin-top:2px; line-height:1.2;">Completed Bookings</div>
+          </div>
+          <div style="background:var(--bg-input); border-radius:12px; padding:12px 6px; border:1px solid var(--border-col);">
+            <div style="font-size:18px; color:#2563eb; margin-bottom:4px;"><i class="bi bi-coin"></i></div>
+            <div style="font-size:15px; font-weight:800; color:var(--txt-primary);" id="perf-avg-val">₱0.00</div>
+            <div style="font-size:10px; font-weight:700; color:var(--txt-muted); margin-top:2px; line-height:1.2;">Avg. / Booking</div>
+          </div>
+          <div style="background:var(--bg-input); border-radius:12px; padding:12px 6px; border:1px solid var(--border-col);">
+            <div style="font-size:18px; color:#16a34a; margin-bottom:4px;"><i class="bi bi-graph-up-arrow"></i></div>
+            <div style="font-size:14px; font-weight:800; color:#16a34a;" id="perf-growth-val">0.0%</div>
+            <div style="font-size:10px; font-weight:700; color:var(--txt-muted); margin-top:2px; line-height:1.2;">vs. Prev. Month</div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <!-- Revenue Comparison -->
+    <div class="sec-pad" style="margin-top:2px;">
+      <div class="sec-hdr">
+        <div class="sec-ttl">Revenue Comparison</div>
+        <span id="comp-growth-badge" style="font-size:11px; font-weight:700; color:#16a34a; background:rgba(22,163,74,0.12); padding:3px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:4px;">
+          <i class="bi bi-dash"></i> 0.0%
+        </span>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="stat-ic green" style="width:36px; height:36px; font-size:16px;"><i class="bi bi-calendar-check-fill"></i></div>
+            <div>
+              <div style="font-size:10px; font-weight:700; color:var(--txt-muted); text-transform:uppercase; letter-spacing:0.3px;">This Month</div>
+              <div style="font-size:16px; font-weight:800; color:var(--txt-primary);" id="comp-this-month-val">₱0.00</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="badge-green" style="font-size:10px; font-weight:800; padding:3px 8px; border-radius:10px;">Current</span>
+          </div>
+        </div>
+        
+        <div style="height:1px; background:var(--border-col); margin:10px 0;"></div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div class="stat-ic amber" style="width:36px; height:36px; font-size:16px;"><i class="bi bi-calendar-minus-fill"></i></div>
+            <div>
+              <div style="font-size:10px; font-weight:700; color:var(--txt-muted); text-transform:uppercase; letter-spacing:0.3px;">Last Month</div>
+              <div style="font-size:16px; font-weight:800; color:var(--txt-primary);" id="comp-last-month-val">₱0.00</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:10px; font-weight:700; color:var(--txt-muted);">Previous Period</span>
+          </div>
+        </div>
+
+        <div style="margin-top:14px; background:var(--bg-input); border-radius:10px; padding:10px 12px; border:1px solid var(--border-col);">
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:11px; margin-bottom:6px;">
+            <span style="font-weight:700; color:var(--txt-muted);">Month-over-Month Change</span>
+            <span id="comp-change-txt" style="font-weight:800; color:#16a34a;">0.0% (₱0.00)</span>
+          </div>
+          <div style="width:100%; height:6px; background:var(--border-col); border-radius:3px; overflow:hidden;">
+            <div id="comp-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #F5A623, #16a34a); border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="height:20px;"></div>
   </div>
 </main>
 
@@ -179,15 +245,94 @@ async function loadRevenue() {
       document.getElementById('breakdown-convenience-val').textContent = '₱' + convenienceAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       document.getElementById('breakdown-convenience-bar').style.width = conveniencePct + '%';
       document.getElementById('breakdown-convenience-pct').textContent = conveniencePct + '% of total';
+
+      // Populate Revenue Performance dynamically
+      const completedCount = parseInt(summaryData.completed_bookings) || 0;
+      const avgRevenue = parseFloat(summaryData.avg_revenue_per_booking) || 0.00;
+      const growthPct = parseFloat(summaryData.growth_pct) || 0.0;
+      const growthDir = summaryData.growth_direction || 'flat';
+      const growthDiff = parseFloat(summaryData.growth_diff) || 0.00;
+
+      const perfCompEl = document.getElementById('perf-completed-val');
+      if (perfCompEl) perfCompEl.textContent = completedCount.toLocaleString('en-US');
+
+      const perfAvgEl = document.getElementById('perf-avg-val');
+      if (perfAvgEl) perfAvgEl.textContent = '₱' + avgRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const perfGrowthEl = document.getElementById('perf-growth-val');
+      if (perfGrowthEl) {
+        if (growthDir === 'up') {
+          perfGrowthEl.style.color = '#16a34a';
+          perfGrowthEl.textContent = `↑ ${growthPct.toFixed(1)}%`;
+        } else if (growthDir === 'down') {
+          perfGrowthEl.style.color = '#dc2626';
+          perfGrowthEl.textContent = `↓ ${growthPct.toFixed(1)}%`;
+        } else {
+          perfGrowthEl.style.color = 'var(--txt-muted)';
+          perfGrowthEl.textContent = `0.0%`;
+        }
+      }
+
+      // Populate Revenue Comparison dynamically
+      const thisMonthVal = parseFloat(summaryData.month_revenue) || 0.00;
+      const lastMonthVal = parseFloat(summaryData.last_month_revenue) || 0.00;
+
+      const compThisMonthEl = document.getElementById('comp-this-month-val');
+      if (compThisMonthEl) compThisMonthEl.textContent = '₱' + thisMonthVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const compLastMonthEl = document.getElementById('comp-last-month-val');
+      if (compLastMonthEl) compLastMonthEl.textContent = '₱' + lastMonthVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const compBadgeEl = document.getElementById('comp-growth-badge');
+      if (compBadgeEl) {
+        if (growthDir === 'up') {
+          compBadgeEl.style.background = 'rgba(22,163,74,0.12)';
+          compBadgeEl.style.color = '#16a34a';
+          compBadgeEl.innerHTML = `<i class="bi bi-arrow-up-right"></i> +${growthPct.toFixed(1)}%`;
+        } else if (growthDir === 'down') {
+          compBadgeEl.style.background = 'rgba(220,38,38,0.12)';
+          compBadgeEl.style.color = '#dc2626';
+          compBadgeEl.innerHTML = `<i class="bi bi-arrow-down-right"></i> -${growthPct.toFixed(1)}%`;
+        } else {
+          compBadgeEl.style.background = 'var(--bg-input)';
+          compBadgeEl.style.color = 'var(--txt-muted)';
+          compBadgeEl.innerHTML = `<i class="bi bi-dash"></i> 0.0%`;
+        }
+      }
+
+      const compChangeTxtEl = document.getElementById('comp-change-txt');
+      if (compChangeTxtEl) {
+        const sign = growthDiff >= 0 ? '+' : '-';
+        const formattedDiff = `${sign}₱` + Math.abs(growthDiff).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (growthDir === 'up') {
+          compChangeTxtEl.style.color = '#16a34a';
+          compChangeTxtEl.textContent = `↑ ${growthPct.toFixed(1)}% (${formattedDiff})`;
+        } else if (growthDir === 'down') {
+          compChangeTxtEl.style.color = '#dc2626';
+          compChangeTxtEl.textContent = `↓ ${growthPct.toFixed(1)}% (${formattedDiff})`;
+        } else {
+          compChangeTxtEl.style.color = 'var(--txt-muted)';
+          compChangeTxtEl.textContent = `0.0% (₱0.00)`;
+        }
+      }
+
+      const compBarEl = document.getElementById('comp-progress-bar');
+      if (compBarEl) {
+        const maxVal = Math.max(thisMonthVal, lastMonthVal);
+        const barPct = (maxVal > 0) ? Math.min(100, Math.round((thisMonthVal / maxVal) * 100)) : 0;
+        compBarEl.style.width = barPct + '%';
+        if (growthDir === 'down') {
+          compBarEl.style.background = '#dc2626';
+        } else {
+          compBarEl.style.background = 'linear-gradient(90deg, #F5A623, #16a34a)';
+        }
+      }
     }
 
     // 2. Load chart data
     const activeBtn = document.querySelector('.rev-filter-btn.active');
     const activeFilter = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : 'daily';
     await fetchAndDrawChart(activeFilter);
-
-    // 3. Load history
-    await initRevenueHistory();
   } catch (err) {
     console.error('Failed to load revenue analytics: ', err);
   }
@@ -312,70 +457,6 @@ async function updateRevenueChart(filter, btn) {
   btn.classList.add('active');
 
   await fetchAndDrawChart(filter);
-}
-
-async function initRevenueHistory() {
-  const listContainer = document.getElementById('revenueHistoryList');
-  if (!listContainer) return;
-
-  try {
-    const res = await fetch('../api/admin_api.php?section=revenue&action=history');
-    const data = await res.json();
-    if (!data.success || !data.history || data.history.length === 0) {
-      listContainer.innerHTML = `
-        <div class="empty-state" style="padding: 30px; text-align: center; color: var(--txt-muted);">
-          <i class="bi bi-wallet2" style="font-size: 24px;"></i>
-          <p style="margin-top: 8px; font-weight: bold;">No revenue transactions found.</p>
-        </div>
-      `;
-      return;
-    }
-
-    listContainer.innerHTML = data.history.map(item => {
-      const initial = (item.worker || '?')[0].toUpperCase();
-      const commissionLabel = '₱' + item.revenue.toFixed(2);
-      const totalLabel = 'Price: ₱' + item.amount.toLocaleString();
-
-      return `
-        <div class="list-item">
-          <div class="li-av" style="font-size:13px; font-weight:800; background:var(--teal-mid); color:var(--teal-dark);">${initial}</div>
-          <div class="li-body">
-            <div class="li-name">${item.worker}</div>
-            <div class="li-sub">${item.service} · ${item.date}</div>
-          </div>
-          <div class="li-right" style="text-align: right; margin-right: 12px;">
-            <div style="font-size:13px; font-weight:800; color:var(--teal);">${commissionLabel}</div>
-            <div style="font-size:10px; color:var(--txt-muted);">${totalLabel}</div>
-          </div>
-          <div style="flex-shrink:0;">
-            ${revenueStatusPill(item.status)}
-          </div>
-        </div>
-      `;
-    }).join('');
-  } catch (err) {
-    console.error('Failed to load history: ', err);
-    listContainer.innerHTML = `
-      <div class="empty-state" style="padding: 30px; text-align: center; color: var(--txt-muted);">
-        <i class="bi bi-exclamation-triangle" style="font-size: 24px; color: red;"></i>
-        <p style="margin-top: 8px; font-weight: bold;">Error loading revenue history.</p>
-      </div>
-    `;
-  }
-}
-
-function revenueStatusPill(s) {
-  const key = String(s || '').toLowerCase();
-  const map = {
-    pending: 'badge-amber',
-    submitted: 'badge-blue',
-    paid: 'badge-green',
-    collected: 'badge-green',
-    overdue: 'badge-red',
-    completed: 'badge-green'
-  };
-  const label = key === 'paid' ? 'Collected' : (key === 'pending' ? 'Pending' : key.charAt(0).toUpperCase() + key.slice(1));
-  return `<span class="${map[key] || 'badge-gray'}" style="font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 8px;">${label}</span>`;
 }
 
 // Initial load

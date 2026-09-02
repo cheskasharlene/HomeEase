@@ -974,6 +974,7 @@ if ($section === 'revenue') {
         }
 
         $currentMonth = date('Y-m');
+        $lastMonth = date('Y-m', strtotime('first day of last month'));
         $todayDate = date('Y-m-d');
         
         $mondayStr = date('Y-m-d', strtotime('monday this week'));
@@ -982,6 +983,7 @@ if ($section === 'revenue') {
         $totalReceived = 0.00;
         $outstanding = 0.00;
         $monthReceived = 0.00;
+        $lastMonthReceived = 0.00;
         $weekReceived = 0.00;
         $todayReceived = 0.00;
 
@@ -998,6 +1000,9 @@ if ($section === 'revenue') {
                         if (strpos($dateRem, $currentMonth) === 0) {
                             $monthReceived += $amtPaid;
                         }
+                        if (strpos($dateRem, $lastMonth) === 0) {
+                            $lastMonthReceived += $amtPaid;
+                        }
                         $dateRemOnly = substr($dateRem, 0, 10);
                         if ($dateRemOnly >= $mondayStr && $dateRemOnly <= $sundayStr) {
                             $weekReceived += $amtPaid;
@@ -1012,12 +1017,42 @@ if ($section === 'revenue') {
             }
         }
 
+        // Query total completed bookings included in platform revenue calculation
+        $bkRes = $conn->query("SELECT COUNT(*) AS total_completed FROM bookings WHERE status IN ('completed', 'done')");
+        $bkRow = $bkRes ? $bkRes->fetch_assoc() : ['total_completed' => 0];
+        $completedBookings = (int)($bkRow['total_completed'] ?? 0);
+
+        // Calculate Average HomeEase Revenue earned per completed booking
+        $avgRevenuePerBooking = ($completedBookings > 0 && $totalReceived > 0) ? round($totalReceived / $completedBookings, 2) : 0.00;
+
+        // Month-over-Month Revenue Growth calculation
+        $growthDiff = $monthReceived - $lastMonthReceived;
+        $growthPct = 0.0;
+        $growthDirection = 'flat';
+
+        if ($lastMonthReceived > 0) {
+            $growthPct = round(($growthDiff / $lastMonthReceived) * 100, 1);
+            $growthDirection = ($growthPct > 0) ? 'up' : (($growthPct < 0) ? 'down' : 'flat');
+        } elseif ($monthReceived > 0) {
+            $growthPct = 100.0;
+            $growthDirection = 'up';
+        } else {
+            $growthPct = 0.0;
+            $growthDirection = 'flat';
+        }
+
         respond(true, '', [
             'total_revenue' => $totalReceived,
             'month_revenue' => $monthReceived,
+            'last_month_revenue' => $lastMonthReceived,
             'week_revenue' => $weekReceived,
             'today_revenue' => $todayReceived,
-            'pending_remittance' => $outstanding
+            'pending_remittance' => $outstanding,
+            'completed_bookings' => $completedBookings,
+            'avg_revenue_per_booking' => $avgRevenuePerBooking,
+            'growth_pct' => abs($growthPct),
+            'growth_diff' => $growthDiff,
+            'growth_direction' => $growthDirection
         ]);
     }
 
