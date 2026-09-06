@@ -203,6 +203,22 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
         $price = $row['price'] ?? 0;
     }
 
+    $userReviewStmt = $conn->prepare('SELECT id, rating, comment FROM provider_reviews WHERE booking_id = ? AND user_id = ? LIMIT 1');
+    $userReviewed = false;
+    $userRating = 0;
+    $userComment = '';
+    if ($userReviewStmt) {
+        $userReviewStmt->bind_param('ii', $bookingId, $uid);
+        $userReviewStmt->execute();
+        $urRow = $userReviewStmt->get_result()->fetch_assoc();
+        $userReviewStmt->close();
+        if ($urRow) {
+            $userReviewed = true;
+            $userRating = (int) ($urRow['rating'] ?? 0);
+            $userComment = (string) ($urRow['comment'] ?? '');
+        }
+    }
+
     ob_end_clean();
     echo json_encode([
         'success' => true,
@@ -225,6 +241,9 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             'provider_rating' => (float) ($rating ?? 0),
             'provider_review_count' => $reviewCount,
             'provider_jobs' => (int) ($row['provider_jobs'] ?? 0),
+            'has_reviewed' => $userReviewed,
+            'review_rating' => $userRating,
+            'review_comment' => $userComment,
         ]
     ]);
     exit;
@@ -258,7 +277,7 @@ if ($method === 'GET' && $action === '') {
     $select .= ', COALESCE(sp.contact_number, sp2.contact_number) AS tech_phone';
     $providerIdExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id, 0)' : 'COALESCE(br.provider_id, 0)';
     $select .= ", {$providerIdExpr} AS provider_id";
-    $select .= ', IF(pr.id IS NULL, 0, 1) AS has_reviewed';
+    $select .= ', IF(pr.id IS NULL, 0, 1) AS has_reviewed, pr.rating AS review_rating, pr.comment AS review_comment';
 
     $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'";
     if (in_array('service_id', $cols, true)) {

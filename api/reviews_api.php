@@ -60,18 +60,18 @@ if ($method === 'POST' && $action === 'add_review') {
         exit;
     }
 
-    $stmt = $conn->prepare("INSERT INTO provider_reviews (booking_id, provider_id, user_id, rating, comment) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("
+        INSERT INTO provider_reviews (booking_id, provider_id, user_id, rating, comment)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment), created_at = NOW()
+    ");
     if (!$stmt) {
         echo json_encode(['success' => false, 'message' => 'DB configure error.']);
         exit;
     }
     $stmt->bind_param("iiiis", $booking_id, $provider_id, $uid, $rating, $comment);
     if (!$stmt->execute()) {
-        if ($stmt->errno === 1062) {
-            echo json_encode(['success' => false, 'message' => 'You have already reviewed this booking.']);
-        } else {
-            echo json_encode(['success' => false, 'message' => 'Could not save review: ' . $conn->error]);
-        }
+        echo json_encode(['success' => false, 'message' => 'Could not save review: ' . $conn->error]);
         $stmt->close();
         exit;
     }

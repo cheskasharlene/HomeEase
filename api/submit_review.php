@@ -106,33 +106,18 @@ if (!in_array($status, ['completed', 'done'], true)) {
     exit;
 }
 
-// ── 5. DUPLICATE REVIEW GUARD ────────────────────────────────────────────────
-// The table has a UNIQUE KEY on booking_id, but checking here gives a
-// friendlier error message and avoids an unnecessary INSERT attempt.
-try {
-    $dupStmt = $pdo->prepare("
-        SELECT id FROM provider_reviews
-        WHERE  booking_id = :booking_id
-        LIMIT 1
-    ");
-    $dupStmt->execute([':booking_id' => $bookingId]);
-    if ($dupStmt->fetch()) {
-        echo json_encode(['success' => false, 'message' => 'You have already reviewed this booking.']);
-        exit;
-    }
-} catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => 'Error checking existing review.']);
-    exit;
-}
-
-// ── 6. INSERT REVIEW ─────────────────────────────────────────────────────────
-// All values are bound via named parameters — no raw interpolation.
+// ── 5. INSERT / UPDATE REVIEW ────────────────────────────────────────────────
+// Supports both fresh review submissions and edits via ON DUPLICATE KEY UPDATE.
 try {
     $insertStmt = $pdo->prepare("
         INSERT INTO provider_reviews
             (booking_id, provider_id, user_id, rating, comment, created_at)
         VALUES
             (:booking_id, :provider_id, :user_id, :rating, :comment, NOW())
+        ON DUPLICATE KEY UPDATE
+            rating = VALUES(rating),
+            comment = VALUES(comment),
+            created_at = NOW()
     ");
     $insertStmt->execute([
         ':booking_id'  => $bookingId,
@@ -142,13 +127,7 @@ try {
         ':comment'     => $comment,
     ]);
 } catch (PDOException $e) {
-    // Catch the unique constraint violation (SQLSTATE 23000 / error code 1062)
-    // in case two requests slip through the duplicate check above.
-    if ($e->getCode() === '23000') {
-        echo json_encode(['success' => false, 'message' => 'You have already reviewed this booking.']);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Could not save your review. Please try again.']);
-    }
+    echo json_encode(['success' => false, 'message' => 'Could not save your review. Please try again.']);
     exit;
 }
 

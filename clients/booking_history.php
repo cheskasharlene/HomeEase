@@ -68,19 +68,25 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
   <div class="review-modal-overlay" id="reviewModalOverlay" onclick="closeReviewModal()">
     <div class="review-modal-card" onclick="event.stopPropagation()">
-      <div class="review-modal-close" onclick="closeReviewModal()"><i class="bi bi-x-lg" style="font-size:14px;"></i></div>
+      <button type="button" class="review-modal-close" onclick="closeReviewModal()" aria-label="Close modal"><i class="bi bi-x-lg" style="font-size:14px;"></i></button>
       <div style="text-align:center;margin-bottom:4px;">
         <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#FEF3C7,#FDE68A);display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:10px;">⭐</div>
-        <div style="font-size:18px; font-weight:800; color:var(--td); font-family:'Poppins',sans-serif;">Rate your experience</div>
+        <div style="font-size:18px; font-weight:800; color:var(--td); font-family:'Poppins',sans-serif;" id="revModalTitle">Rate your experience</div>
         <div style="font-size:13px; color:var(--tm); margin-top:4px;">How was the service by <span id="revProvName" style="font-weight:700; color:var(--td);"></span>?</div>
       </div>
 
-      <div class="stars-container" id="starContainer">
-        <i class="bi bi-star-fill star-btn" data-val="1"></i>
-        <i class="bi bi-star-fill star-btn" data-val="2"></i>
-        <i class="bi bi-star-fill star-btn" data-val="3"></i>
-        <i class="bi bi-star-fill star-btn" data-val="4"></i>
-        <i class="bi bi-star-fill star-btn" data-val="5"></i>
+      <div class="stars-container" id="starContainer" role="group" aria-label="Rate from 1 to 5 stars">
+        <i class="bi bi-star star-btn" data-val="1" role="button" tabindex="0" aria-label="1 star"></i>
+        <i class="bi bi-star star-btn" data-val="2" role="button" tabindex="0" aria-label="2 stars"></i>
+        <i class="bi bi-star star-btn" data-val="3" role="button" tabindex="0" aria-label="3 stars"></i>
+        <i class="bi bi-star star-btn" data-val="4" role="button" tabindex="0" aria-label="4 stars"></i>
+        <i class="bi bi-star star-btn" data-val="5" role="button" tabindex="0" aria-label="5 stars"></i>
+      </div>
+      <div class="star-rating-label" id="starRatingLabel">Tap a star to rate</div>
+
+      <div class="review-val-banner" id="reviewValBanner">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span id="reviewValText">Please select a rating before submitting your review.</span>
       </div>
 
       <textarea class="review-textarea" id="revComment" placeholder="Write a short review (optional)..."></textarea>
@@ -236,12 +242,24 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             </div>`
           : '';
 
-        const leaveReviewHint = rawStatus === 'completed' && parseInt(b.has_reviewed || 0) === 0
-          ? `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px;">
-              <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">  
-                <i class="bi bi-star-fill" style="color:#F59E0B;"></i> Rate &amp; Review
-              </button>
-            </div>`
+        const hasReviewed = parseInt(b.has_reviewed || 0) > 0;
+        const leaveReviewHint = rawStatus === 'completed'
+          ? (hasReviewed
+              ? `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                  <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#166534; background:#F0FDF4; padding:6px 12px; border-radius:10px;">
+                    <i class="bi bi-patch-check-fill" style="color:#16A34A;"></i>
+                    <span>Reviewed ${b.review_rating ? '★ ' + b.review_rating : ''}</span>
+                  </div>
+                  <button class="btn-book" style="height:34px;font-size:11px;padding:0 14px;border-radius:10px;background:var(--bg-input);color:var(--td);border:1px solid var(--border-col);box-shadow:none;font-family:'Nunito',sans-serif;font-weight:700;width:auto;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}', ${parseInt(b.review_rating || 0)}, '${(b.review_comment || '').replace(/'/g, "\\'").replace(/\r?\n/g, ' ')}')">  
+                    <i class="bi bi-pencil-square"></i> Edit Review
+                  </button>
+                </div>`
+              : `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px;">
+                  <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">  
+                    <i class="bi bi-star" style="color:#F59E0B;"></i> Rate &amp; Review
+                  </button>
+                </div>`
+            )
           : '';
 
         return `
@@ -292,69 +310,178 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     let currentReviewBooking = 0;
     let currentReviewProvider = 0;
-    let currentRating = 5;
+    let currentRating = 0;
 
-    document.querySelectorAll('.star-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const val = parseInt(this.dataset.val);
-            setRating(val);
-        });
-    });
+    const ratingLabels = {
+      0: 'Tap a star to rate',
+      1: '★ 1.0 – Poor',
+      2: '★ 2.0 – Fair',
+      3: '★ 3.0 – Good',
+      4: '★ 4.0 – Very Good',
+      5: '★ 5.0 – Excellent!'
+    };
 
-    function setRating(val) {
-        currentRating = val;
-        document.querySelectorAll('.star-btn').forEach(btn => {
-            if (parseInt(btn.dataset.val) <= val) {
-                btn.classList.add('active');
-            } else {
-                btn.classList.remove('active');
-            }
-        });
+    function updateStarsDisplay(val, isHover = false) {
+      const lbl = document.getElementById('starRatingLabel');
+      if (lbl) {
+        lbl.textContent = ratingLabels[val] || 'Tap a star to rate';
+        if (val > 0) {
+          lbl.classList.add('active');
+        } else {
+          lbl.classList.remove('active');
+        }
+      }
+
+      document.querySelectorAll('#starContainer .star-btn').forEach(btn => {
+        const starVal = parseInt(btn.dataset.val, 10);
+        if (starVal <= val) {
+          btn.classList.remove('bi-star');
+          btn.classList.add('bi-star-fill');
+          if (isHover) {
+            btn.classList.add('hover-active');
+            btn.classList.remove('active');
+          } else {
+            btn.classList.add('active');
+            btn.classList.remove('hover-active');
+          }
+        } else {
+          btn.classList.remove('bi-star-fill', 'active', 'hover-active');
+          btn.classList.add('bi-star');
+        }
+      });
     }
 
-    function openReviewModal(bId, pId, pName) {
-        currentReviewBooking = bId;
-        currentReviewProvider = pId;
-        document.getElementById('revProvName').textContent = pName;
+    function setRating(val) {
+      currentRating = val;
+      clearValidationError();
+      updateStarsDisplay(val, false);
+    }
+
+    const starContainerEl = document.getElementById('starContainer');
+    document.querySelectorAll('#starContainer .star-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const val = parseInt(this.dataset.val, 10);
+        setRating(val);
+      });
+
+      btn.addEventListener('mouseenter', function() {
+        const hVal = parseInt(this.dataset.val, 10);
+        updateStarsDisplay(hVal, true);
+      });
+
+      btn.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          const val = parseInt(this.dataset.val, 10);
+          setRating(val);
+        }
+      });
+    });
+
+    if (starContainerEl) {
+      starContainerEl.addEventListener('mouseleave', function() {
+        updateStarsDisplay(currentRating, false);
+      });
+    }
+
+    function showValidationError(msg) {
+      const banner = document.getElementById('reviewValBanner');
+      const bannerText = document.getElementById('reviewValText');
+      if (bannerText) bannerText.textContent = msg;
+      if (banner) {
+        banner.style.display = 'flex';
+        banner.classList.remove('shake');
+        void banner.offsetWidth; // trigger reflow
+        banner.classList.add('shake');
+      }
+      if (starContainerEl) {
+        starContainerEl.classList.remove('shake');
+        void starContainerEl.offsetWidth;
+        starContainerEl.classList.add('shake');
+      }
+      toast(msg, 'e');
+    }
+
+    function clearValidationError() {
+      const banner = document.getElementById('reviewValBanner');
+      if (banner) {
+        banner.style.display = 'none';
+        banner.classList.remove('shake');
+      }
+      if (starContainerEl) {
+        starContainerEl.classList.remove('shake');
+      }
+    }
+
+    function openReviewModal(bId, pId, pName, existingRating = 0, existingComment = '') {
+      currentReviewBooking = bId;
+      currentReviewProvider = pId;
+      document.getElementById('revProvName').textContent = pName || 'Provider';
+      clearValidationError();
+
+      const isEditing = existingRating > 0;
+      const titleEl = document.getElementById('revModalTitle');
+      const submitBtn = document.getElementById('btnSubmitReview');
+
+      if (titleEl) {
+        titleEl.textContent = isEditing ? 'Edit your review' : 'Rate your experience';
+      }
+      if (submitBtn) {
+        submitBtn.innerHTML = isEditing ? 'Update Review' : 'Submit Review';
+      }
+
+      if (isEditing) {
+        setRating(existingRating);
+        document.getElementById('revComment').value = existingComment || '';
+      } else {
+        setRating(0); // All 5 stars start empty/unselected!
         document.getElementById('revComment').value = '';
-        setRating(5);
-        document.getElementById('reviewModalOverlay').classList.add('show');
+      }
+
+      document.getElementById('reviewModalOverlay').classList.add('show');
     }
 
     function closeReviewModal() {
-        document.getElementById('reviewModalOverlay').classList.remove('show');
+      clearValidationError();
+      document.getElementById('reviewModalOverlay').classList.remove('show');
     }
 
     async function submitReview() {
-        const btn = document.getElementById('btnSubmitReview');
-        const comment = document.getElementById('revComment').value.trim();
+      if (!currentRating || currentRating < 1 || currentRating > 5) {
+        showValidationError('Please select a star rating before submitting your review.');
+        return;
+      }
 
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Submitting...';
+      const btn = document.getElementById('btnSubmitReview');
+      const comment = document.getElementById('revComment').value.trim();
 
-        const fd = new FormData();
-        fd.append('action', 'add_review');
-        fd.append('booking_id', currentReviewBooking);
-        fd.append('provider_id', currentReviewProvider);
-        fd.append('rating', currentRating);
-        fd.append('comment', comment);
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Submitting...';
 
-        try {
-            const res = await fetch('../api/reviews_api.php', { method: 'POST', body: fd });
-            const data = await res.json();
-            if (data.success) {
-                toast(data.message, 's');
-                closeReviewModal();
-                loadMyBookings();
-            } else {
-                toast(data.message || 'Error saving review', 'e');
-            }
-        } catch (e) {
-            toast('Network error saving review', 'e');
+      const fd = new FormData();
+      fd.append('action', 'add_review');
+      fd.append('booking_id', currentReviewBooking);
+      fd.append('provider_id', currentReviewProvider);
+      fd.append('rating', currentRating);
+      fd.append('comment', comment);
+
+      try {
+        const res = await fetch('../api/reviews_api.php', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (data.success) {
+          toast(data.message || 'Review submitted successfully!', 's');
+          closeReviewModal();
+          loadMyBookings();
+        } else {
+          showValidationError(data.message || 'Error saving review');
         }
+      } catch (e) {
+        showValidationError('Network error saving review');
+      }
 
-        btn.disabled = false;
-        btn.innerHTML = 'Submit Review';
+      btn.disabled = false;
+      const isEditing = document.getElementById('revModalTitle') && document.getElementById('revModalTitle').textContent.includes('Edit');
+      btn.innerHTML = isEditing ? 'Update Review' : 'Submit Review';
     }
 
     function toast(msg, type = 's') {

@@ -243,16 +243,16 @@ if (empty($_SESSION['user_id'])) {
   <div class="rr-overlay" id="rrOverlay" onclick="handleOverlayClick(event)">
     <div class="rr-sheet" id="rrSheet">
       <div class="rr-handle"></div>
-      <div class="rr-sheet-title">Rate Your Experience</div>
+      <div class="rr-sheet-title" id="rrSheetTitle">Rate Your Experience</div>
       <div class="rr-sheet-sub" id="rrSheetSub">How was the service?</div>
-      <div class="rr-stars" id="rrStars">
-        <span class="rr-star" data-v="1" onclick="selectStar(1)">&#9733;</span>
-        <span class="rr-star" data-v="2" onclick="selectStar(2)">&#9733;</span>
-        <span class="rr-star" data-v="3" onclick="selectStar(3)">&#9733;</span>
-        <span class="rr-star" data-v="4" onclick="selectStar(4)">&#9733;</span>
-        <span class="rr-star" data-v="5" onclick="selectStar(5)">&#9733;</span>
+      <div class="rr-stars" id="rrStars" onmouseleave="previewStars(_selectedStar)">
+        <span class="rr-star" data-v="1" onclick="selectStar(1)" onmouseenter="previewStars(1)">&#9733;</span>
+        <span class="rr-star" data-v="2" onclick="selectStar(2)" onmouseenter="previewStars(2)">&#9733;</span>
+        <span class="rr-star" data-v="3" onclick="selectStar(3)" onmouseenter="previewStars(3)">&#9733;</span>
+        <span class="rr-star" data-v="4" onclick="selectStar(4)" onmouseenter="previewStars(4)">&#9733;</span>
+        <span class="rr-star" data-v="5" onclick="selectStar(5)" onmouseenter="previewStars(5)">&#9733;</span>
       </div>
-      <div class="rr-star-label" id="rrStarLabel"></div>
+      <div class="rr-star-label" id="rrStarLabel">Tap a star to rate</div>
       <div class="rr-textarea-wrap">
         <textarea class="rr-textarea" id="rrComment" placeholder="Share your experience (optional)..." maxlength="500"></textarea>
       </div>
@@ -377,22 +377,43 @@ if (empty($_SESSION['user_id'])) {
       try {
         const res  = await fetch('../api/reviews_api.php?action=check_review&booking_id=' + encodeURIComponent(bookingId), { cache: 'no-store' });
         const data = await res.json();
-        if (data.reviewed) showAlreadyReviewed();
+        if (data.reviewed) showAlreadyReviewed(_cachedReviewRating || 0, _cachedReviewComment || '');
       } catch (e) { /* non-critical */ }
     }
 
-    function showAlreadyReviewed() {
+    let _cachedReviewRating = 0;
+    let _cachedReviewComment = '';
+
+    function showAlreadyReviewed(existingRating = 0, existingComment = '') {
+      _cachedReviewRating = existingRating;
+      _cachedReviewComment = existingComment;
       document.getElementById('reviewBtnArea').innerHTML =
-        '<div class="rr-done-badge"><i class="bi bi-patch-check-fill"></i> You already reviewed this booking</div>';
+        `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;">
+          <div class="rr-done-badge" style="margin:0;"><i class="bi bi-patch-check-fill"></i> You reviewed this booking ${existingRating ? '(' + existingRating + ' ★)' : ''}</div>
+          <button type="button" onclick="openReviewSheet(${existingRating}, '${(existingComment || '').replace(/'/g, "\\'")}')" style="background:var(--card,#fff);border:1.5px solid var(--border,#e5e7eb);padding:9px 14px;border-radius:12px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:var(--td,#1a1a2e);cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i class="bi bi-pencil-square"></i> Edit</button>
+        </div>`;
     }
 
     // ── Review Sheet ───────────────────────────────────────────────────────
-    function openReviewSheet() {
-      _selectedStar = 0;
-      document.getElementById('rrComment').value = '';
+    function openReviewSheet(existingRating = 0, existingComment = '') {
       document.getElementById('rrErr').textContent = '';
-      document.getElementById('rrStarLabel').textContent = '';
-      document.querySelectorAll('.rr-star').forEach(s => s.classList.remove('active'));
+      const isEditing = existingRating > 0;
+      const titleEl = document.getElementById('rrSheetTitle');
+      const submitBtn = document.getElementById('rrSubmitBtn');
+
+      if (titleEl) titleEl.textContent = isEditing ? 'Edit Your Review' : 'Rate Your Experience';
+      if (submitBtn) submitBtn.textContent = isEditing ? 'Update Review' : 'Submit Review';
+
+      if (isEditing) {
+        _selectedStar = existingRating;
+        document.getElementById('rrComment').value = existingComment || '';
+        selectStar(existingRating);
+      } else {
+        _selectedStar = 0;
+        document.getElementById('rrComment').value = '';
+        document.getElementById('rrStarLabel').textContent = 'Tap a star to rate';
+        document.querySelectorAll('.rr-star').forEach(s => s.classList.remove('active'));
+      }
       document.getElementById('rrOverlay').classList.add('open');
     }
 
@@ -402,6 +423,13 @@ if (empty($_SESSION['user_id'])) {
 
     function handleOverlayClick(e) {
       if (e.target === document.getElementById('rrOverlay')) closeReviewSheet();
+    }
+
+    function previewStars(val) {
+      document.querySelectorAll('.rr-star').forEach(s => {
+        s.classList.toggle('active', Number(s.dataset.v) <= val);
+      });
+      document.getElementById('rrStarLabel').textContent = starLabels[val] || (val === 0 ? 'Tap a star to rate' : '');
     }
 
     function selectStar(val) {
