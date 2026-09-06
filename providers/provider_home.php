@@ -174,7 +174,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <label class="upload-slot" for="uploadIdDoc">
                     <input type="file" id="uploadIdDoc" accept="image/*,application/pdf" />
                     <i class="bi bi-card-image"></i>
-                    <div>
+                    <div class="upload-slot-text">
                       <span>Valid Government ID <span class="req-asterisk">*</span></span>
                       <small id="fileNameUploadIdDoc">Tap to upload</small>
                     </div>
@@ -188,7 +188,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <label class="upload-slot" for="uploadSelfieDoc">
                     <input type="file" id="uploadSelfieDoc" accept="image/*" />
                     <i class="bi bi-person-bounding-box"></i>
-                    <div>
+                    <div class="upload-slot-text">
                       <span>Selfie Verification <span class="req-asterisk">*</span></span>
                       <small id="fileNameUploadSelfieDoc">Tap to upload</small>
                     </div>
@@ -202,7 +202,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <label class="upload-slot" for="uploadAddressDoc">
                     <input type="file" id="uploadAddressDoc" accept="image/*,application/pdf" />
                     <i class="bi bi-house-check-fill"></i>
-                    <div>
+                    <div class="upload-slot-text">
                       <span>Proof of Address <span class="req-asterisk">*</span></span>
                       <small id="fileNameUploadAddressDoc">Tap to upload</small>
                     </div>
@@ -216,7 +216,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <label class="upload-slot" for="uploadCertification">
                     <input type="file" id="uploadCertification" accept="image/*,application/pdf" />
                     <i class="bi bi-award-fill"></i>
-                    <div>
+                    <div class="upload-slot-text">
                       <span id="serviceCertLabel">Barangay Clearance</span>
                       <small id="fileNameUploadCertification">Tap to upload (optional)</small>
                     </div>
@@ -251,7 +251,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <label class="upload-slot" for="uploadServiceProof">
                     <input type="file" id="uploadServiceProof" accept="image/*,application/pdf" />
                     <i class="bi bi-images"></i>
-                    <div>
+                    <div class="upload-slot-text">
                       <span id="serviceProofLabel">Tools & Kits <span class="req-asterisk">*</span></span>
                       <small id="fileNameUploadServiceProof">Tap to upload</small>
                     </div>
@@ -277,7 +277,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <label class="upload-slot" for="uploadGCashQr">
                     <input type="file" id="uploadGCashQr" accept="image/*" />
                     <i class="bi bi-qr-code"></i>
-                    <div>
+                    <div class="upload-slot-text">
                       <span>GCash QR Code <span class="req-asterisk">*</span></span>
                       <small id="fileNameUploadGCashQr">Tap to upload</small>
                     </div>
@@ -291,7 +291,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <label class="upload-slot" for="uploadBankQr">
                     <input type="file" id="uploadBankQr" accept="image/*" />
                     <i class="bi bi-credit-card-2-front"></i>
-                    <div>
+                    <div class="upload-slot-text">
                       <span>Bank QR Code <span class="req-asterisk">*</span></span>
                       <small id="fileNameUploadBankQr">Tap to upload</small>
                     </div>
@@ -518,6 +518,24 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         <div style="display: flex; gap: 12px;">
           <button type="button" onclick="closeAcceptConfirmModal()" style="flex: 1; padding: 12px; border-radius: 12px; border: 1.5px solid #ede8e0; background: #fff; color: #8e8e93; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: background 0.2s;">Cancel</button>
           <button type="button" id="confirmAcceptBtn" onclick="confirmAcceptHomeBooking()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: linear-gradient(135deg, #e8820c, #f5a623); color: #fff; font-family: 'Poppins', sans-serif; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 6px 16px rgba(232, 130, 12, 0.24); transition: transform 0.2s;">Confirm Accept</button>
+        </div>
+      </div>
+    </div>
+    <!-- Attachment Lightbox Modal for Compact Previews -->
+    <div class="attach-lightbox-overlay" id="attachLightboxModal" onclick="if(event.target===this)closeAttachLightbox()">
+      <div class="attach-lightbox-card" onclick="event.stopPropagation()">
+        <div class="attach-lightbox-header">
+          <div class="attach-lightbox-title" id="attachLightboxTitle">File Preview</div>
+          <button type="button" class="attach-lightbox-close" onclick="closeAttachLightbox()" aria-label="Close preview">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+        <div class="attach-lightbox-body" id="attachLightboxBody">
+          <!-- Dynamically populated -->
+        </div>
+        <div class="attach-lightbox-footer">
+          <span class="attach-lightbox-meta" id="attachLightboxMeta"></span>
+          <button type="button" class="attach-lightbox-btn" onclick="closeAttachLightbox()">Close Preview</button>
         </div>
       </div>
     </div>
@@ -767,8 +785,30 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     // Service selection and tools/skills logic removed
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatFileSize(bytes) {
+      if (!bytes || bytes <= 0) return '';
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function getFileExt(filename) {
+      const parts = (filename || '').split('.');
+      return parts.length > 1 ? parts.pop().toUpperCase() : 'FILE';
+    }
+
     /**
-     * Enhanced upload field handler with preview and success indicators
+     * Enhanced upload field handler with compact preview and success indicators
      */
     function setupUploadFields() {
       // Define all upload fields with their corresponding element IDs
@@ -792,9 +832,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         input.addEventListener('change', function () {
           const file = this.files && this.files[0];
           
-          // Get related elements - construct IDs consistently with HTML (fileNameUploadIdDoc pattern)
-          // Extract suffix after 'upload' (e.g., 'uploadIdDoc' -> 'IdDoc')
-          const suffix = field.inputId.substring(6);  // Remove 'upload' (6 chars)
+          const suffix = field.inputId.substring(6);
           const fileNameId = 'fileNameUpload' + suffix;
           const feedbackId = 'feedbackUpload' + suffix;
           const previewId = 'previewUpload' + suffix;
@@ -806,15 +844,22 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           if (!file) {
             // File cleared
             if (fileNameEl) fileNameEl.textContent = field.isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
-            if (feedbackEl) feedbackEl.classList.remove('success');
+            if (feedbackEl) {
+              feedbackEl.classList.remove('success');
+              feedbackEl.textContent = '';
+            }
             if (previewEl) {
               previewEl.classList.remove('active');
               previewEl.innerHTML = '';
+              delete previewEl.dataset.previewUrl;
+              delete previewEl.dataset.previewName;
+              delete previewEl.dataset.previewType;
+              delete previewEl.dataset.previewSize;
             }
             return;
           }
 
-          // Update filename
+          // Update filename in slot
           if (fileNameEl) fileNameEl.textContent = file.name;
 
           // Show success feedback
@@ -823,14 +868,14 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             feedbackEl.textContent = 'Uploaded successfully';
           }
 
-          // Handle preview
+          // Handle compact preview
           handleFilePreview(file, previewEl, field.inputId);
         });
       });
     }
 
     /**
-     * Generate preview for uploaded file
+     * Generate compact preview for uploaded file
      */
     function handleFilePreview(file, previewEl, fieldId) {
       if (!previewEl) {
@@ -838,51 +883,163 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         return;
       }
 
-      // Check if it's an image
+      // Check file type
       const isImage = file.type.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(file.name.toLowerCase());
-      
+      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+
       if (isImage) {
         try {
           const reader = new FileReader();
           reader.onload = function (e) {
-            previewEl.innerHTML = `<img src="${e.target.result}" alt="${file.name}" />`;
-            previewEl.classList.add('active');
+            renderCompactAttachment(previewEl, fieldId, file, e.target.result, 'image');
           };
           reader.onerror = function () {
             console.error('Failed to read file:', file.name);
-            showFileTypePreview(previewEl, file);
+            renderCompactAttachment(previewEl, fieldId, file, null, 'doc');
           };
           reader.readAsDataURL(file);
         } catch (err) {
           console.error('Error creating preview:', err);
-          showFileTypePreview(previewEl, file);
+          renderCompactAttachment(previewEl, fieldId, file, null, 'doc');
         }
       } else {
-        showFileTypePreview(previewEl, file);
+        renderCompactAttachment(previewEl, fieldId, file, null, isPdf ? 'pdf' : 'doc');
       }
     }
 
     /**
-     * Show file type icon for non-image files
+     * Render compact file attachment component
      */
-    function showFileTypePreview(previewEl, file) {
+    function renderCompactAttachment(previewEl, fieldId, file, dataUrl, type) {
       if (!previewEl) return;
+      const ext = getFileExt(file.name);
+      const sizeStr = formatFileSize(file.size);
+      const isImg = type === 'image' && dataUrl;
+      const isPdf = type === 'pdf' || ext === 'PDF';
+      const pillClass = isPdf ? 'pdf' : isImg ? 'img' : 'doc';
 
-      const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-      let html = '<div style="padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; background: #f3f4f6;justify-content: center;min-height:120px;">';
-      
-      if (isPdf) {
-        html += '<i class="bi bi-file-pdf" style="font-size: 40px; color: #ef4444;"></i>';
-        html += '<div style="font-size: 12px; color: #6b7280; text-align: center; font-weight: 700;">PDF File Uploaded</div>';
-      } else {
-        html += '<i class="bi bi-file-earmark" style="font-size: 40px; color: #6b7280;"></i>';
-        html += '<div style="font-size: 12px; color: #6b7280; text-align: center; font-weight: 700;">File Uploaded</div>';
-      }
-      
-      html += '</div>';
-      previewEl.innerHTML = html;
+      // Store metadata on container for lightbox inspection
+      previewEl.dataset.previewUrl = dataUrl || '';
+      previewEl.dataset.previewName = file.name;
+      previewEl.dataset.previewType = type;
+      previewEl.dataset.previewSize = sizeStr;
+
+      previewEl.innerHTML = `
+        <div class="compact-attach-card" id="attachCard_${fieldId}">
+          <div class="attach-thumb-wrap" onclick="openAttachLightbox('${fieldId}')" role="button" tabindex="0" title="Click to enlarge preview">
+            ${isImg 
+              ? `<img src="${dataUrl}" alt="${escapeHtml(file.name)}" class="attach-thumb-img" />
+                 <div class="attach-thumb-overlay"><i class="bi bi-arrows-fullscreen"></i></div>` 
+              : `<div class="attach-thumb-doc ${pillClass}"><i class="bi ${isPdf ? 'bi-file-earmark-pdf-fill' : 'bi-file-earmark-text-fill'}"></i></div>
+                 <div class="attach-thumb-overlay"><i class="bi bi-eye"></i></div>`
+            }
+          </div>
+          <div class="attach-info" onclick="openAttachLightbox('${fieldId}')" role="button" tabindex="0" title="Click to preview">
+            <div class="attach-filename" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</div>
+            <div class="attach-meta">
+              <span class="attach-type-pill ${pillClass}">${ext}</span>
+              ${sizeStr ? `<span class="attach-size">${sizeStr}</span>` : ''}
+              <span class="attach-view-hint"><i class="bi bi-eye"></i> View</span>
+            </div>
+          </div>
+          <button type="button" class="attach-remove-btn" onclick="removeAttachment('${fieldId}', event)" title="Remove file" aria-label="Remove attachment">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      `;
       previewEl.classList.add('active');
     }
+
+    /**
+     * Remove attachment and reset input state
+     */
+    function removeAttachment(fieldId, event) {
+      if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+      }
+      const input = document.getElementById(fieldId);
+      if (input) {
+        input.value = '';
+      }
+      const suffix = fieldId.substring(6);
+      const fileNameEl = document.getElementById('fileNameUpload' + suffix);
+      const feedbackEl = document.getElementById('feedbackUpload' + suffix);
+      const previewEl = document.getElementById('previewUpload' + suffix);
+
+      const isRequired = ['uploadIdDoc', 'uploadSelfieDoc', 'uploadAddressDoc', 'uploadServiceProof', 'uploadGCashQr', 'uploadBankQr'].includes(fieldId);
+      if (fileNameEl) {
+        fileNameEl.textContent = isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
+      }
+      if (feedbackEl) {
+        feedbackEl.classList.remove('success');
+        feedbackEl.textContent = '';
+      }
+      if (previewEl) {
+        previewEl.classList.remove('active');
+        previewEl.innerHTML = '';
+        delete previewEl.dataset.previewUrl;
+        delete previewEl.dataset.previewName;
+        delete previewEl.dataset.previewType;
+        delete previewEl.dataset.previewSize;
+      }
+
+      if (input) {
+        const evt = new Event('change', { bubbles: true });
+        input.dispatchEvent(evt);
+      }
+    }
+
+    /**
+     * Open lightbox modal for larger preview
+     */
+    function openAttachLightbox(fieldId) {
+      const previewEl = document.getElementById('previewUpload' + fieldId.substring(6)) || document.getElementById(fieldId);
+      if (!previewEl) return;
+      const url = previewEl.dataset.previewUrl;
+      const name = previewEl.dataset.previewName || 'File Preview';
+      const type = previewEl.dataset.previewType;
+      const size = previewEl.dataset.previewSize || '';
+
+      const titleEl = document.getElementById('attachLightboxTitle');
+      const bodyEl = document.getElementById('attachLightboxBody');
+      const metaEl = document.getElementById('attachLightboxMeta');
+      const modalEl = document.getElementById('attachLightboxModal');
+
+      if (titleEl) titleEl.textContent = name;
+      if (metaEl) metaEl.textContent = size ? `${getFileExt(name)} • ${size}` : getFileExt(name);
+
+      if (bodyEl) {
+        if (type === 'image' && url) {
+          bodyEl.innerHTML = `<img src="${url}" alt="${escapeHtml(name)}" class="attach-lightbox-img" />`;
+        } else {
+          const isPdf = type === 'pdf' || getFileExt(name) === 'PDF';
+          bodyEl.innerHTML = `
+            <div class="attach-lightbox-doc">
+              <i class="bi ${isPdf ? 'bi-file-earmark-pdf-fill' : 'bi-file-earmark-text-fill'}" style="font-size: 56px; color: ${isPdf ? '#EF4444' : '#3B82F6'}; margin-bottom: 12px;"></i>
+              <div style="font-size: 15px; font-weight: 800; color: var(--td, #1A1A2E); word-break: break-all; margin-bottom: 6px;">${escapeHtml(name)}</div>
+              <div style="font-size: 12px; color: var(--tm, #6B7280);">${isPdf ? 'PDF Document' : 'Attached Document'}</div>
+            </div>
+          `;
+        }
+      }
+
+      if (modalEl) modalEl.classList.add('show');
+    }
+
+    /**
+     * Close lightbox modal
+     */
+    function closeAttachLightbox() {
+      const modalEl = document.getElementById('attachLightboxModal');
+      if (modalEl) modalEl.classList.remove('show');
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeAttachLightbox();
+      }
+    });
 
     // Initialize upload fields when DOM is ready
     if (document.readyState === 'loading') {

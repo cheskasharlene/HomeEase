@@ -15,8 +15,8 @@ body {
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-width: none;
-      /* Keep only nav-safe clearance so content ends tightly above fixed bottom nav. */
-      padding-bottom: calc(86px + env(safe-area-inset-bottom));
+      /* Clearance so form inputs and submit button scroll cleanly above fixed bottom nav without overlapping. */
+      padding-bottom: calc(140px + env(safe-area-inset-bottom));
     }
 
     .bnav {
@@ -29,7 +29,7 @@ body {
       display: flex;
       padding: 9px 0 calc(12px + env(safe-area-inset-bottom));
       box-shadow: 0 -4px 20px rgba(232, 130, 12, .07);
-      z-index: 50;
+      z-index: 100;
     }
 
     .ni {
@@ -230,7 +230,12 @@ body {
     }
 
     .verify-flow {
-      padding: 18px 12px 0;
+      padding: 18px 12px calc(36px + env(safe-area-inset-bottom));
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      height: auto;
+      min-height: fit-content;
     }
 
     .verify-intro-ol {
@@ -505,7 +510,12 @@ body {
     .verify-panel {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      height: auto;
+      min-height: fit-content;
     }
 
     .verify-card {
@@ -514,6 +524,12 @@ body {
       padding: 16px;
       border: 1.5px solid #EDE8E0;
       box-shadow: 0 4px 14px rgba(232, 130, 12, .08);
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      height: auto;
+      min-height: fit-content;
+      overflow: visible;
     }
 
     .verify-card h2 {
@@ -576,21 +592,34 @@ body {
 
     .upload-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      height: auto;
+      min-height: fit-content;
     }
 
     .upload-slot {
       border: 2px dashed #F5D7A0;
       border-radius: 15px;
-      padding: 16px;
+      padding: 14px 16px;
       background: #FFFBF6;
       display: flex;
       align-items: center;
-      gap: 11px;
+      gap: 12px;
       cursor: pointer;
       transition: all .18s;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      min-height: 64px;
+      height: auto;
+      overflow: hidden;
+      margin: 0;
     }
 
     .upload-slot:hover {
@@ -616,12 +645,28 @@ body {
       flex-shrink: 0;
     }
 
+    .upload-slot > div,
+    .upload-slot .upload-slot-text {
+      flex: 1 1 0%;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
     .upload-slot span {
       display: block;
       font-size: 13px;
       font-weight: 800;
       color: #1A1A2E;
       font-family: 'Poppins', sans-serif;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      line-height: 1.35;
     }
 
     .upload-slot small {
@@ -630,6 +675,11 @@ body {
       font-size: 11px;
       color: #8E8E93;
       font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      line-height: 1.35;
     }
 
     /* Required field indicator */
@@ -643,7 +693,13 @@ body {
     .upload-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      height: auto;
+      min-height: fit-content;
     }
 
     .upload-wrapper .upload-slot {
@@ -655,13 +711,19 @@ body {
       display: none;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
+      padding: 9px 12px;
       border-radius: 10px;
       background: #dcfce7;
       border: 1px solid #86efac;
       font-size: 12px;
       color: #166534;
       font-weight: 700;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      height: auto;
+      margin: 0;
     }
 
     .upload-feedback.success {
@@ -673,57 +735,401 @@ body {
       display: inline-block;
       width: 16px;
       height: 16px;
-      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="<%= "%23166534" %>" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>') center/contain no-repeat;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%23166534" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>') center/contain no-repeat;
       flex-shrink: 0;
     }
 
-    /* Image preview container */
+    /* Compact file attachment preview container */
     .upload-preview {
       display: none;
-      border-radius: 12px;
-      overflow: hidden;
-      background: #f3f4f6;
-      border: 1px solid #e5e7eb;
       width: 100%;
-      margin-top: 0;
-      margin-bottom: 0;
-      min-height: 0;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      height: auto;
+      margin: 0;
     }
 
     .upload-preview.active {
       display: block;
-      animation: slideDown 0.3s ease-out;
+      animation: attachSlideIn 0.25s cubic-bezier(.22,1,.36,1);
     }
 
-    @keyframes slideDown {
+    @keyframes attachSlideIn {
       from {
         opacity: 0;
-        max-height: 0;
+        transform: translateY(-6px);
       }
       to {
         opacity: 1;
-        max-height: 300px;
+        transform: translateY(0);
       }
     }
 
-    .upload-preview img {
+    .compact-attach-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #FFFFFF;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 14px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: border-color 0.2s, box-shadow 0.2s;
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      min-height: 58px;
       height: auto;
-      display: block;
+      overflow: hidden;
       margin: 0;
+    }
+
+    .compact-attach-card:hover {
+      border-color: #CBD5E1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
+    /* Thumbnail element */
+    .attach-thumb-wrap {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      background: #F1F5F9;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .attach-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.2s ease;
+    }
+
+    .attach-thumb-wrap:hover .attach-thumb-img {
+      transform: scale(1.08);
+    }
+
+    .attach-thumb-doc {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .attach-thumb-doc.pdf {
+      color: #EF4444;
+      background: #FEF2F2;
+    }
+
+    .attach-thumb-doc.doc {
+      color: #3B82F6;
+      background: #EFF6FF;
+    }
+
+    .attach-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      backdrop-filter: blur(1px);
+    }
+
+    .attach-thumb-wrap:hover .attach-thumb-overlay {
+      opacity: 1;
+    }
+
+    /* File info element */
+    .attach-info {
+      flex: 1 1 0%;
+      min-width: 0;
+      max-width: 100%;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-right: 4px;
+      overflow: hidden;
+    }
+
+    .attach-filename {
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 800;
+      color: #1E293B;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      display: block;
+      line-height: 1.35;
+      transition: color 0.15s;
+    }
+
+    .attach-info:hover .attach-filename {
+      color: #E8820C;
+    }
+
+    .attach-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748B;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      flex-wrap: nowrap;
+    }
+
+    .attach-type-pill {
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+
+    .attach-type-pill.img {
+      background: #FEF3C7;
+      color: #B45309;
+    }
+
+    .attach-type-pill.pdf {
+      background: #FEE2E2;
+      color: #B91C1C;
+    }
+
+    .attach-type-pill.doc {
+      background: #EFF6FF;
+      color: #1D4ED8;
+    }
+
+    .attach-size {
+      color: #64748B;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .attach-view-hint {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      color: #D97706;
+      font-weight: 700;
+      margin-left: 2px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .attach-info:hover .attach-view-hint {
+      color: #E8820C;
+      text-decoration: underline;
+    }
+
+    /* Remove button */
+    .attach-remove-btn {
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      max-width: 30px;
+      border-radius: 50%;
+      background: #F1F5F9;
+      border: none;
+      color: #64748B;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.18s cubic-bezier(.22,1,.36,1);
+      flex-shrink: 0;
+      margin-left: auto;
       padding: 0;
     }
 
-    .upload-preview .preview-label {
-      padding: 8px 10px;
-      background: #f9fafb;
-      border-top: 1px solid #e5e7eb;
-      font-size: 11px;
-      color: #6b7280;
+    .attach-remove-btn:hover {
+      background: #FEE2E2;
+      color: #DC2626;
+      transform: scale(1.1);
+    }
+
+    .attach-remove-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* Lightbox Modal styles */
+    .attach-lightbox-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .attach-lightbox-overlay.show {
+      display: flex;
+      animation: lightboxFadeIn 0.22s ease-out;
+    }
+
+    @keyframes lightboxFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .attach-lightbox-card {
+      background: #FFFFFF;
+      width: 100%;
+      max-width: 520px;
+      border-radius: 20px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: 88vh;
+      animation: lightboxPop 0.25s cubic-bezier(.22,1,.36,1);
+      box-sizing: border-box;
+    }
+
+    @keyframes lightboxPop {
+      from { transform: scale(0.94) translateY(10px); opacity: 0; }
+      to { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    .attach-lightbox-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid #EDE8E0;
+      background: #FFFFFF;
+    }
+
+    .attach-lightbox-title {
+      font-family: 'Poppins', sans-serif;
+      font-size: 15px;
       font-weight: 700;
+      color: #1A1A2E;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      flex: 1 1 0%;
+      min-width: 0;
+    }
+
+    .attach-lightbox-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #F1F5F9;
+      border: none;
+      color: #64748B;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .attach-lightbox-close:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+      transform: scale(1.06);
+    }
+
+    .attach-lightbox-body {
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #F8FAFC;
+      min-height: 180px;
+    }
+
+    .attach-lightbox-img {
+      max-width: 100%;
+      max-height: 62vh;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+      display: block;
+    }
+
+    .attach-lightbox-doc {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 30px 20px;
+    }
+
+    .attach-lightbox-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 20px;
+      border-top: 1px solid #EDE8E0;
+      background: #FFFFFF;
+    }
+
+    .attach-lightbox-meta {
+      font-size: 12px;
+      color: #64748B;
+      font-weight: 600;
+    }
+
+    .attach-lightbox-btn {
+      padding: 8px 18px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #E8820C, #F5A623);
+      color: #FFFFFF;
+      font-family: 'Poppins', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(232, 130, 12, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    .attach-lightbox-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
     }
 
     /* Validation message */
@@ -1298,16 +1704,30 @@ body {
           margin-bottom: 8px;
         }
 
-        .upload-slot > div {
+        .upload-slot > div,
+        .upload-slot .upload-slot-text {
           min-width: 0;
-          flex: 1;
+          max-width: 100%;
+          flex: 1 1 0%;
+          overflow: hidden;
         }
 
-        .upload-slot small {
+        .upload-slot span {
+          display: block;
+          width: 100%;
+          max-width: 100%;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+        }
+
+        .upload-slot small {
+          display: block;
+          width: 100%;
           max-width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .skill-checks {
@@ -1702,15 +2122,53 @@ body {
       color: #10b981;
     }
 
-    body.dark .upload-preview {
+    body.dark .compact-attach-card {
+      background: var(--bg-card);
+      border-color: var(--border-col);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    body.dark .compact-attach-card:hover {
+      border-color: #64584A;
+    }
+    body.dark .attach-thumb-wrap {
+      background: var(--bg-input);
+      border-color: var(--border-col);
+    }
+    body.dark .attach-filename {
+      color: var(--td);
+    }
+    body.dark .attach-size {
+      color: var(--tm);
+    }
+    body.dark .attach-remove-btn {
+      background: var(--bg-input);
+      color: var(--tm);
+    }
+    body.dark .attach-remove-btn:hover {
+      background: #451A1A;
+      color: #F87171;
+    }
+    body.dark .attach-lightbox-card {
+      background: var(--bg-card);
+    }
+    body.dark .attach-lightbox-header,
+    body.dark .attach-lightbox-footer {
       background: var(--bg-card);
       border-color: var(--border-col);
     }
-
-    body.dark .upload-preview .preview-label {
-      background: rgba(0, 0, 0, 0.1);
-      border-top-color: var(--border-col);
+    body.dark .attach-lightbox-title {
+      color: var(--td);
+    }
+    body.dark .attach-lightbox-body {
+      background: var(--bg-input);
+    }
+    body.dark .attach-lightbox-close {
+      background: var(--bg-input);
       color: var(--tm);
+    }
+    body.dark .attach-lightbox-close:hover {
+      background: #4A3E28;
+      color: #F1F5F9;
     }
 
     /* Validation messages */
