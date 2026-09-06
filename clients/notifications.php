@@ -163,6 +163,11 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
       }
 
+      /* Sync with Home page and other tabs via localStorage */
+      try {
+        localStorage.setItem('he_unread_notifs', String(unreadList.length));
+      } catch (e) {}
+
       /* Hide "mark all" when nothing unread */
       document.getElementById('markAllBtn').style.display = unreadList.length ? '' : 'none';
 

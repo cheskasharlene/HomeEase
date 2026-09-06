@@ -143,7 +143,7 @@
       background: linear-gradient(135deg, #E8820C 0%, #F5A623 35%, #FFB347 65%, #FDECC8 100%) !important;
       border-radius: 0 0 28px 28px !important;
       box-shadow: none !important;
-      padding: 52px 20px 28px !important;
+      padding: 48px 20px 24px !important;
       position: relative !important;
       overflow: hidden !important;
       border-bottom: none !important;
@@ -159,9 +159,9 @@
 
     .h-top {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      margin-bottom: 20px;
+      margin-bottom: 0;
     }
 
     .h-greet {
@@ -183,7 +183,7 @@
     .h-top-right {
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: flex-end;
     }
 
     .dm-btn {
@@ -1989,8 +1989,9 @@
       right: 6px;
       width: 7px;
       height: 7px;
-      background: var(--red);
+      background: var(--red, #EF4444);
       border-radius: 50%;
+      display: none;
     }
 
     #navContainer {

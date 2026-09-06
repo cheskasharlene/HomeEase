@@ -39,7 +39,211 @@ if (isset($_GET['booking_id'])) {
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/main.css">
-  <link rel="stylesheet" href="../assets/css/accepted_booking.css">
+  <link rel="stylesheet" href="../assets/css/accepted_booking.css?v=<?= time() ?>">
+  <style>
+    /* Cancel Booking Confirmation Modal (Inline Fallback for Zero-Cache Dependency) */
+    .cancel-confirm-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(26, 20, 8, 0.58);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+    }
+
+    .cancel-confirm-overlay.show {
+      display: flex !important;
+      animation: cancelConfirmFadeIn 0.22s ease;
+    }
+
+    .cancel-confirm-card {
+      width: min(460px, 100%);
+      background: #fff;
+      border-radius: 24px;
+      border: 1px solid #F3DFC2;
+      box-shadow: 0 24px 54px rgba(26, 20, 8, 0.28);
+      padding: 24px;
+      transform: translateY(14px) scale(0.98);
+      opacity: 0;
+      animation: cancelConfirmPop 0.28s cubic-bezier(.22,1,.36,1) forwards;
+      box-sizing: border-box;
+    }
+
+    .cancel-confirm-head {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .cancel-confirm-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 20px;
+      background: linear-gradient(135deg, #EF4444, #F87171);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
+    }
+
+    .cancel-confirm-head-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cancel-confirm-head h3 {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.3;
+      color: #1A1A2E;
+      font-family: 'Poppins', sans-serif;
+      font-weight: 800;
+    }
+
+    .cancel-confirm-head p {
+      margin: 6px 0 0;
+      font-size: 13.5px;
+      color: #7A7064;
+      font-weight: 600;
+      line-height: 1.45;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .cancel-confirm-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #92400E;
+      background: #FFF9E8;
+      border: 1px solid #F9D47E;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: 'Nunito', sans-serif;
+      box-sizing: border-box;
+    }
+
+    .cancel-confirm-note i {
+      font-size: 15px;
+      color: #D97706;
+      flex-shrink: 0;
+    }
+
+    .cancel-confirm-error {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #B91C1C;
+      background: #FEF2F2;
+      border: 1px solid #FECACA;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-family: 'Nunito', sans-serif;
+      box-sizing: border-box;
+    }
+
+    .cancel-confirm-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .cancel-confirm-btn {
+      border: none;
+      border-radius: 14px;
+      height: 44px;
+      padding: 0 14px;
+      font-size: 13.5px;
+      font-weight: 800;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      white-space: nowrap;
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease, opacity .2s ease;
+      box-sizing: border-box;
+    }
+
+    .cancel-confirm-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .cancel-confirm-btn:active {
+      transform: translateY(0);
+    }
+
+    .cancel-confirm-btn.secondary {
+      color: #7A7064;
+      background: #F7F3EC;
+      border: 1px solid #E6DCCB;
+    }
+
+    .cancel-confirm-btn.secondary:hover {
+      background: #EFE8DC;
+      color: #554A3E;
+    }
+
+    .cancel-confirm-btn.primary {
+      color: #fff;
+      background: linear-gradient(135deg, #EF4444, #F87171);
+      box-shadow: 0 8px 20px rgba(239, 68, 68, 0.28);
+    }
+
+    .cancel-confirm-btn.primary:hover {
+      box-shadow: 0 10px 24px rgba(239, 68, 68, 0.35);
+      filter: brightness(1.02);
+    }
+
+    .cancel-confirm-btn:focus-visible {
+      outline: 2px solid #EF4444;
+      outline-offset: 2px;
+    }
+
+    .cancel-confirm-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    @keyframes cancelConfirmFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes cancelConfirmPop {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (max-width: 480px) {
+      .cancel-confirm-overlay {
+        padding: 12px;
+      }
+      .cancel-confirm-card {
+        border-radius: 20px;
+        padding: 18px;
+      }
+      .cancel-confirm-btn {
+        height: 46px;
+        font-size: 13px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -259,6 +463,46 @@ if (isset($_GET['booking_id'])) {
           </div>
         </div>
       </div>
+
+      <!-- Cancel Booking Confirmation Modal -->
+      <div class="cancel-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" style="display:none;" onclick="closeCancelModal(event)">
+        <div class="cancel-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" onclick="event.stopPropagation()">
+          <div class="cancel-confirm-head">
+            <div class="cancel-confirm-icon"><i class="bi bi-x-circle-fill"></i></div>
+            <div class="cancel-confirm-head-text">
+              <h3 id="cancelConfirmTitle">Cancel Booking?</h3>
+              <p id="cancelConfirmMsg">Are you sure you want to cancel this booking?</p>
+            </div>
+          </div>
+          <div class="cancel-confirm-note" id="cancelConfirmNote">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>Cancelling this booking cannot be undone.</span>
+          </div>
+          <div id="cancelConfirmError" class="cancel-confirm-error" style="display:none;"></div>
+          <div class="cancel-confirm-actions">
+            <button type="button" class="cancel-confirm-btn secondary" id="btnCancelDismiss" onclick="closeCancelModal()">Keep Booking</button>
+            <button type="button" class="cancel-confirm-btn primary" id="btnCancelConfirm" onclick="confirmCancelBooking()">Cancel Booking</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cancel Booking Success Notification Modal -->
+      <div class="cancel-confirm-overlay" id="cancelSuccessOverlay" aria-hidden="true" style="display:none;">
+        <div class="cancel-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelSuccessTitle" onclick="event.stopPropagation()">
+          <div class="cancel-confirm-head" style="flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 20px;">
+            <div class="cancel-confirm-icon" style="background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28); margin: 0 auto;">
+              <i class="bi bi-check-lg"></i>
+            </div>
+            <div class="cancel-confirm-head-text">
+              <h3 id="cancelSuccessTitle">Booking Cancelled</h3>
+              <p>Your booking has been cancelled successfully.</p>
+            </div>
+          </div>
+          <div class="cancel-confirm-actions" style="grid-template-columns: 1fr;">
+            <button type="button" class="cancel-confirm-btn primary" style="background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28);" onclick="window.location.href='booking_history.php'">OK</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -356,12 +600,75 @@ if (isset($_GET['booking_id'])) {
       document.body.classList.add('modal-open');
     }
 
-    async function cancelBooking() {
+    function openCancelModal() {
       const urlParams = new URLSearchParams(window.location.search);
       const id = urlParams.get('booking_id');
       if (!id) return;
 
-      if (!confirm('Are you sure you want to cancel this booking?')) return;
+      const overlay = document.getElementById('cancelConfirmOverlay');
+      if (!overlay) return;
+      const errBox = document.getElementById('cancelConfirmError');
+      if (errBox) {
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+      }
+      const confirmBtn = document.getElementById('btnCancelConfirm');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Cancel Booking';
+      }
+      const dismissBtn = document.getElementById('btnCancelDismiss');
+      if (dismissBtn) {
+        dismissBtn.disabled = false;
+      }
+      overlay.style.display = 'flex';
+      requestAnimationFrame(() => {
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
+    }
+
+    function closeCancelModal(event) {
+      if (event && event.target && event.target !== document.getElementById('cancelConfirmOverlay')) return;
+      const overlay = document.getElementById('cancelConfirmOverlay');
+      if (!overlay) return;
+      overlay.classList.remove('show');
+      overlay.setAttribute('aria-hidden', 'true');
+      setTimeout(() => { overlay.style.display = 'none'; }, 220);
+      document.body.classList.remove('modal-open');
+    }
+
+    function showCancelSuccessModal() {
+      const modal = document.getElementById('cancelSuccessOverlay');
+      if (!modal) return;
+      modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        modal.classList.add('show');
+        modal.setAttribute('aria-hidden', 'false');
+      });
+      document.body.classList.add('modal-open');
+    }
+
+    async function confirmCancelBooking() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('booking_id');
+      if (!id) return;
+
+      const confirmBtn = document.getElementById('btnCancelConfirm');
+      const dismissBtn = document.getElementById('btnCancelDismiss');
+      const errBox = document.getElementById('cancelConfirmError');
+
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cancelling…';
+      }
+      if (dismissBtn) dismissBtn.disabled = true;
+      if (errBox) {
+        errBox.style.display = 'none';
+        errBox.textContent = '';
+      }
+
       try {
         const fd = new FormData();
         fd.append('action', 'cancel');
@@ -369,14 +676,42 @@ if (isset($_GET['booking_id'])) {
         const res = await fetch('../api/bookings_api.php', { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {
-          alert('Booking cancelled successfully.');
-          window.location.href = 'booking_history.php';
+          const overlay = document.getElementById('cancelConfirmOverlay');
+          if (overlay) {
+            overlay.classList.remove('show');
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.style.display = 'none';
+          }
+          showCancelSuccessModal();
+          setTimeout(() => {
+            window.location.href = 'booking_history.php';
+          }, 1500);
         } else {
-          alert(data.message || 'Could not cancel booking.');
+          if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Cancel Booking';
+          }
+          if (dismissBtn) dismissBtn.disabled = false;
+          if (errBox) {
+            errBox.textContent = data.message || 'Could not cancel booking.';
+            errBox.style.display = 'flex';
+          }
         }
       } catch (err) {
-        alert('An error occurred. Please try again.');
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = 'Cancel Booking';
+        }
+        if (dismissBtn) dismissBtn.disabled = false;
+        if (errBox) {
+          errBox.textContent = 'An error occurred. Please try again.';
+          errBox.style.display = 'flex';
+        }
       }
+    }
+
+    function cancelBooking() {
+      openCancelModal();
     }
 
     function showPaymentExpiredModal(message) {
@@ -721,6 +1056,15 @@ if (isset($_GET['booking_id'])) {
     document.getElementById('paymentSuccessOk').addEventListener('click', closePaymentSuccessModal);
     document.getElementById('paymentSuccessOverlay').addEventListener('click', function (e) {
       if (e.target === this) closePaymentSuccessModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        const cancelOverlay = document.getElementById('cancelConfirmOverlay');
+        if (cancelOverlay && cancelOverlay.classList.contains('show')) {
+          closeCancelModal();
+        }
+      }
     });
 
     loadAcceptedBooking().then((shouldContinue) => {

@@ -14,6 +14,20 @@ else
   $greeting = 'Good Evening';
 
 $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
+
+require_once __DIR__ . '/api/db.php';
+$unreadNotifsCount = 0;
+$uid = (int) ($_SESSION['user_id'] ?? 0);
+if ($uid > 0) {
+  $stmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ? AND is_read = 0");
+  if ($stmt) {
+    $stmt->bind_param("i", $uid);
+    $stmt->execute();
+    $res = $stmt->get_result()->fetch_assoc();
+    $unreadNotifsCount = (int) ($res['cnt'] ?? 0);
+    $stmt->close();
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -29,7 +43,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link href="assets/css/main.css?v=2.0" rel="stylesheet">
-  <link href="assets/css/home.css?v=2.0" rel="stylesheet">
+  <link href="assets/css/home.css?v=<?= time() ?>" rel="stylesheet">
 </head>
 
 <body>
@@ -65,10 +79,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                 <div
                   style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#f59e0b;border-radius:50%;">
                 </div>
-              </div>
-              <div class="h-bell" onclick="goPage('clients/notifications.php')" style="position:relative;">
-                <i class="bi bi-bell-fill"></i>
-                <div class="h-bell-dot" id="bellDot" style="display:none;"></div>
               </div>
             </div>
           </div>
@@ -177,6 +187,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
   <script src="assets/js/app.js"></script>
   <script>
     window.HE = window.HE || {};
+    window.HE.unreadNotifs = <?= (int) $unreadNotifsCount ?>;
     window.HE.user = {
       name: <?= json_encode($_SESSION['user_name'] ?? '') ?>,
       email: <?= json_encode($_SESSION['user_email'] ?? '') ?>,
@@ -188,14 +199,42 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     window._recentPros = [];
     window._allPros = [];
 
-    fetch('api/notifications_api.php')
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          const unread = data.notifications.filter(n => n.is_read == 0);
-          if (unread.length > 0) document.getElementById('bellDot').style.display = 'block';
+    function updateNotificationDot(unreadCount) {
+      window.HE.unreadNotifs = Number(unreadCount) || 0;
+      const dot = document.getElementById('navNotifDot') || document.querySelector('.bnav .ndot');
+      if (dot) {
+        dot.style.display = window.HE.unreadNotifs > 0 ? 'block' : 'none';
+      }
+      try {
+        localStorage.setItem('he_unread_notifs', String(window.HE.unreadNotifs));
+      } catch (e) {}
+    }
+
+    async function checkUnreadNotifications() {
+      try {
+        const res = await fetch('api/notifications_api.php?t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.notifications)) {
+          const unread = data.notifications.filter(n => Number(n.is_read) === 0);
+          updateNotificationDot(unread.length);
         }
-      }).catch(() => { });
+      } catch (e) {}
+    }
+
+    checkUnreadNotifications();
+    setInterval(checkUnreadNotifications, 6000);
+    window.addEventListener('focus', checkUnreadNotifications);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkUnreadNotifications();
+      }
+    });
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'he_unread_notifs') {
+        const count = parseInt(e.newValue || '0', 10);
+        updateNotificationDot(count);
+      }
+    });
 
     // ── AD-STYLE SERVICE CARDS (names & prices match booking system exactly)
     const svcAdData = [{
@@ -522,12 +561,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       document.getElementById('proProfileOverlay').classList.remove('on');
       document.body.style.overflow = '';
     }
+    const notifDotStyle = (window.HE.unreadNotifs || 0) > 0 ? 'display:block;' : 'display:none;';
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('clients/booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('clients/service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage('clients/notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot"></div></div>
+        <div class="ni" onclick="goPage('clients/notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot" id="navNotifDot" style="${notifDotStyle}"></div></div>
         <div class="ni" onclick="goPage('clients/profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
 

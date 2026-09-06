@@ -665,22 +665,23 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       </div>
     </div>
 
-    <div class="wfp-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" onclick="closeCancelModal(event)">
+    <div class="wfp-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" style="display:none;" onclick="closeCancelModal(event)">
       <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" onclick="event.stopPropagation()">
         <div class="wfp-confirm-head">
           <div class="wfp-confirm-icon"><i class="bi bi-x-circle-fill"></i></div>
           <div>
-            <h3 id="cancelConfirmTitle">Confirm Cancellation</h3>
-            <p>Cancel Booking?</p>
+            <h3 id="cancelConfirmTitle">Cancel Booking?</h3>
+            <p>Are you sure you want to cancel this booking?</p>
           </div>
         </div>
-        <div class="wfp-confirm-note">
+        <div class="wfp-confirm-note" id="cancelConfirmNote">
           <i class="bi bi-exclamation-triangle-fill"></i>
           Cancelling this booking may affect your request and cannot be undone.
         </div>
+        <div id="cancelConfirmError" style="display:none;align-items:center;gap:8px;margin-bottom:16px;font-size:12px;font-weight:700;color:#B91C1C;background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;padding:10px 12px;font-family:'Nunito',sans-serif;"></div>
         <div class="wfp-confirm-actions">
-          <button type="button" class="wfp-confirm-btn secondary" id="btnCancelDismiss">No, Keep Booking</button>
-          <button type="button" class="wfp-confirm-btn primary" id="btnCancelConfirm">Yes, Cancel Booking</button>
+          <button type="button" class="wfp-confirm-btn secondary" id="btnCancelDismiss">Keep Booking</button>
+          <button type="button" class="wfp-confirm-btn primary" id="btnCancelConfirm">Cancel Booking</button>
         </div>
       </div>
     </div>
@@ -1393,6 +1394,15 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     function openCancelModal() {
       const overlay = document.getElementById('cancelConfirmOverlay');
+      const errBox = document.getElementById('cancelConfirmError');
+      if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+      const confirmBtn = document.getElementById('btnCancelConfirm');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.innerHTML = 'Cancel Booking';
+      }
+      const dismissBtn = document.getElementById('btnCancelDismiss');
+      if (dismissBtn) dismissBtn.disabled = false;
       overlay.classList.add('show');
       overlay.setAttribute('aria-hidden', 'false');
       document.body.classList.add('modal-open');
@@ -1407,10 +1417,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     async function confirmCancelBooking() {
-      closeCancelModal();
+      const confirmBtn = document.getElementById('btnCancelConfirm');
+      const dismissBtn = document.getElementById('btnCancelDismiss');
+      const errBox = document.getElementById('cancelConfirmError');
       const btn = document.getElementById('btnCancel');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cancelling…';
+
+      if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cancelling…';
+      }
+      if (dismissBtn) dismissBtn.disabled = true;
+      if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Cancelling…';
+      }
 
       try {
         const fd = new FormData();
@@ -1419,18 +1440,39 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const res = await fetch(CANCEL_API, { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {
+          closeCancelModal();
           stopPolling();
           renderUI({ ...currentData, status: 'cancelled' });
           setTimeout(() => goBack(), 2000);
         } else {
-          alert(data.message || 'Could not cancel booking.');
+          if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = 'Cancel Booking';
+          }
+          if (dismissBtn) dismissBtn.disabled = false;
+          if (errBox) {
+            errBox.textContent = data.message || 'Could not cancel booking.';
+            errBox.style.display = 'flex';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-x-circle-fill"></i> Cancel Booking';
+          }
+        }
+      } catch (e) {
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.innerHTML = 'Cancel Booking';
+        }
+        if (dismissBtn) dismissBtn.disabled = false;
+        if (errBox) {
+          errBox.textContent = 'Network error. Please try again.';
+          errBox.style.display = 'flex';
+        }
+        if (btn) {
           btn.disabled = false;
           btn.innerHTML = '<i class="bi bi-x-circle-fill"></i> Cancel Booking';
         }
-      } catch (e) {
-        alert('Network error. Please try again.');
-        btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-x-circle-fill"></i> Cancel Booking';
       }
     }
 

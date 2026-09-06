@@ -887,6 +887,7 @@ body {
   border-radius: 50%;
   position: absolute;
   top: -2px; right: -4px;
+  display: none;
 }
 
 .nb-c {
