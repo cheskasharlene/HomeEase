@@ -50,8 +50,12 @@ if ($section === 'auth' && $action === 'logout') {
     respond(true, 'Logged out.');
 }
 
-if ($section === 'stats') {
-    // Sync remittances first to ensure database calculations are accurate
+/**
+ * Shared revenue computation logic for Revenue Analytics and Admin Overview.
+ * Single source of truth for platform revenue.
+ */
+function getRevenueAnalyticsSummaryData($conn) {
+    // Sync remittances first to ensure database calculations are accurate for all providers
     $provRes = $conn->query("SELECT provider_id FROM service_providers");
     if ($provRes) {
         while ($prow = $provRes->fetch_assoc()) {
@@ -59,26 +63,73 @@ if ($section === 'stats') {
         }
     }
 
-    $stats = [];
+    $currentMonth = date('Y-m');
+    $lastMonth = date('Y-m', strtotime('first day of last month'));
+    $todayDate = date('Y-m-d');
+    
+    $mondayStr = date('Y-m-d', strtotime('monday this week'));
+    $sundayStr = date('Y-m-d', strtotime('sunday this week'));
 
-    $r = $conn->query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
-    $stats['total_users'] = (int)($r ? $r->fetch_row()[0] : 0);
+    $totalReceived = 0.00;
+    $outstanding = 0.00;
+    $monthReceived = 0.00;
+    $lastMonthReceived = 0.00;
+    $weekReceived = 0.00;
+    $todayReceived = 0.00;
 
-    $r = $conn->query("SELECT COUNT(*) FROM bookings");
-    $stats['total_bookings'] = (int)($r ? $r->fetch_row()[0] : 0);
+    $statsRes = $conn->query("SELECT status, amount_due, amount_paid, date_remitted FROM remittances");
+    if ($statsRes) {
+        while ($st = $statsRes->fetch_assoc()) {
+            $amtDue = (float)$st['amount_due'];
+            $amtPaid = (float)$st['amount_paid'];
+            $dateRem = $st['date_remitted'];
+             
+            if ($st['status'] === 'paid') {
+                $totalReceived += $amtPaid;
+                if ($dateRem) {
+                    if (strpos($dateRem, $currentMonth) === 0) {
+                        $monthReceived += $amtPaid;
+                    }
+                    if (strpos($dateRem, $lastMonth) === 0) {
+                        $lastMonthReceived += $amtPaid;
+                    }
+                    $dateRemOnly = substr($dateRem, 0, 10);
+                    if ($dateRemOnly >= $mondayStr && $dateRemOnly <= $sundayStr) {
+                        $weekReceived += $amtPaid;
+                    }
+                    if ($dateRemOnly === $todayDate) {
+                        $todayReceived += $amtPaid;
+                    }
+                }
+            } else {
+                $outstanding += $amtDue;
+            }
+        }
+    }
 
-    // Reuse the exact same query from Revenue Analytics (paid remittances)
-    $r = $conn->query("SELECT COALESCE(SUM(amount_paid),0) FROM remittances WHERE status='paid'");
-    $stats['total_revenue'] = (float)($r ? $r->fetch_row()[0] : 0);
+    // Query total completed bookings included in platform revenue calculation
+    $bkRes = $conn->query("SELECT COUNT(*) AS total_completed FROM bookings WHERE status IN ('completed', 'done')");
+    $bkRow = $bkRes ? $bkRes->fetch_assoc() : ['total_completed' => 0];
+    $completedBookings = (int)($bkRow['total_completed'] ?? 0);
 
-    $r = $conn->query("SELECT COUNT(*) FROM service_providers WHERE status='active'");
-    $stats['active_workers'] = (int)($r ? $r->fetch_row()[0] : 0);
+    // Calculate Average HomeEase Revenue earned per completed booking
+    $avgRevenuePerBooking = ($completedBookings > 0 && $totalReceived > 0) ? round($totalReceived / $completedBookings, 2) : 0.00;
 
-    $r = $conn->query("SELECT COUNT(*) FROM bookings WHERE status='pending'");
-    $stats['pending_bookings'] = (int)($r ? $r->fetch_row()[0] : 0);
+    // Month-over-Month Revenue Growth calculation
+    $growthDiff = $monthReceived - $lastMonthReceived;
+    $growthPct = 0.0;
+    $growthDirection = 'flat';
 
-    $r = $conn->query("SELECT COUNT(*) FROM bookings WHERE status='progress'");
-    $stats['in_progress'] = (int)($r ? $r->fetch_row()[0] : 0);
+    if ($lastMonthReceived > 0) {
+        $growthPct = round(($growthDiff / $lastMonthReceived) * 100, 1);
+        $growthDirection = ($growthPct > 0) ? 'up' : (($growthPct < 0) ? 'down' : 'flat');
+    } elseif ($monthReceived > 0) {
+        $growthPct = 100.0;
+        $growthDirection = 'up';
+    } else {
+        $growthPct = 0.0;
+        $growthDirection = 'flat';
+    }
 
     // Reuse the exact same chart data logic from Revenue Analytics (paid remittances in the last 6 months)
     $revRows = [];
@@ -88,7 +139,49 @@ if ($section === 'stats') {
         GROUP BY YEAR(date_remitted), MONTH(date_remitted), mo 
         ORDER BY YEAR(date_remitted), MONTH(date_remitted)");
     if ($res) while ($rr = $res->fetch_assoc()) $revRows[] = $rr;
-    $stats['revenue_chart'] = $revRows;
+
+    return [
+        'total_revenue' => $totalReceived,
+        'month_revenue' => $monthReceived,
+        'last_month_revenue' => $lastMonthReceived,
+        'week_revenue' => $weekReceived,
+        'today_revenue' => $todayReceived,
+        'pending_remittance' => $outstanding,
+        'completed_bookings' => $completedBookings,
+        'avg_revenue_per_booking' => $avgRevenuePerBooking,
+        'growth_pct' => abs($growthPct),
+        'growth_diff' => $growthDiff,
+        'growth_direction' => $growthDirection,
+        'revenue_chart' => $revRows
+    ];
+}
+
+if ($section === 'stats') {
+    $revSummary = getRevenueAnalyticsSummaryData($conn);
+
+    $stats = [];
+
+    $r = $conn->query("SELECT COUNT(*) FROM users WHERE role != 'admin'");
+    $stats['total_users'] = (int)($r ? $r->fetch_row()[0] : 0);
+
+    $r = $conn->query("SELECT COUNT(*) FROM bookings");
+    $stats['total_bookings'] = (int)($r ? $r->fetch_row()[0] : 0);
+
+    // Reuse the exact same query and data from Revenue Analytics (single source of truth)
+    $stats['total_revenue'] = $revSummary['total_revenue'];
+    $stats['month_revenue'] = $revSummary['month_revenue'];
+    $stats['pending_remittance'] = $revSummary['pending_remittance'];
+    $stats['revenue_chart'] = $revSummary['revenue_chart'];
+    $stats['revenue_summary'] = $revSummary;
+
+    $r = $conn->query("SELECT COUNT(*) FROM service_providers WHERE status='active'");
+    $stats['active_workers'] = (int)($r ? $r->fetch_row()[0] : 0);
+
+    $r = $conn->query("SELECT COUNT(*) FROM bookings WHERE status='pending'");
+    $stats['pending_bookings'] = (int)($r ? $r->fetch_row()[0] : 0);
+
+    $r = $conn->query("SELECT COUNT(*) FROM bookings WHERE status='progress'");
+    $stats['in_progress'] = (int)($r ? $r->fetch_row()[0] : 0);
 
     $breakdown = [];
     $res = $conn->query("SELECT status, COUNT(*) AS cnt FROM bookings GROUP BY status");
@@ -936,7 +1029,7 @@ if ($section === 'remittances') {
         $dueDate = date('M d, Y', strtotime($remit['due_date']));
 
         if ($verifyAction === 'approve') {
-            $stmt = $conn->prepare("UPDATE remittances SET status = 'paid', date_remitted = NOW() WHERE id = ?");
+            $stmt = $conn->prepare("UPDATE remittances SET status = 'paid', amount_paid = CASE WHEN amount_paid > 0 THEN amount_paid ELSE amount_due END, date_remitted = NOW() WHERE id = ?");
             $stmt->bind_param("i", $remitId);
             $stmt->execute();
             $stmt->close();
@@ -965,95 +1058,8 @@ if ($section === 'remittances') {
 
 if ($section === 'revenue') {
     if ($method === 'GET' && $action === 'summary') {
-        // Sync remittances first to ensure database calculations are accurate
-        $provRes = $conn->query("SELECT provider_id FROM service_providers");
-        if ($provRes) {
-            while ($prow = $provRes->fetch_assoc()) {
-                ensureRemittancesForProvider($conn, (int)$prow['provider_id']);
-            }
-        }
-
-        $currentMonth = date('Y-m');
-        $lastMonth = date('Y-m', strtotime('first day of last month'));
-        $todayDate = date('Y-m-d');
-        
-        $mondayStr = date('Y-m-d', strtotime('monday this week'));
-        $sundayStr = date('Y-m-d', strtotime('sunday this week'));
-
-        $totalReceived = 0.00;
-        $outstanding = 0.00;
-        $monthReceived = 0.00;
-        $lastMonthReceived = 0.00;
-        $weekReceived = 0.00;
-        $todayReceived = 0.00;
-
-        $statsRes = $conn->query("SELECT status, amount_due, amount_paid, date_remitted FROM remittances");
-        if ($statsRes) {
-            while ($st = $statsRes->fetch_assoc()) {
-                $amtDue = (float)$st['amount_due'];
-                $amtPaid = (float)$st['amount_paid'];
-                $dateRem = $st['date_remitted'];
-                 
-                if ($st['status'] === 'paid') {
-                    $totalReceived += $amtPaid;
-                    if ($dateRem) {
-                        if (strpos($dateRem, $currentMonth) === 0) {
-                            $monthReceived += $amtPaid;
-                        }
-                        if (strpos($dateRem, $lastMonth) === 0) {
-                            $lastMonthReceived += $amtPaid;
-                        }
-                        $dateRemOnly = substr($dateRem, 0, 10);
-                        if ($dateRemOnly >= $mondayStr && $dateRemOnly <= $sundayStr) {
-                            $weekReceived += $amtPaid;
-                        }
-                        if ($dateRemOnly === $todayDate) {
-                            $todayReceived += $amtPaid;
-                        }
-                    }
-                } else {
-                    $outstanding += $amtDue;
-                }
-            }
-        }
-
-        // Query total completed bookings included in platform revenue calculation
-        $bkRes = $conn->query("SELECT COUNT(*) AS total_completed FROM bookings WHERE status IN ('completed', 'done')");
-        $bkRow = $bkRes ? $bkRes->fetch_assoc() : ['total_completed' => 0];
-        $completedBookings = (int)($bkRow['total_completed'] ?? 0);
-
-        // Calculate Average HomeEase Revenue earned per completed booking
-        $avgRevenuePerBooking = ($completedBookings > 0 && $totalReceived > 0) ? round($totalReceived / $completedBookings, 2) : 0.00;
-
-        // Month-over-Month Revenue Growth calculation
-        $growthDiff = $monthReceived - $lastMonthReceived;
-        $growthPct = 0.0;
-        $growthDirection = 'flat';
-
-        if ($lastMonthReceived > 0) {
-            $growthPct = round(($growthDiff / $lastMonthReceived) * 100, 1);
-            $growthDirection = ($growthPct > 0) ? 'up' : (($growthPct < 0) ? 'down' : 'flat');
-        } elseif ($monthReceived > 0) {
-            $growthPct = 100.0;
-            $growthDirection = 'up';
-        } else {
-            $growthPct = 0.0;
-            $growthDirection = 'flat';
-        }
-
-        respond(true, '', [
-            'total_revenue' => $totalReceived,
-            'month_revenue' => $monthReceived,
-            'last_month_revenue' => $lastMonthReceived,
-            'week_revenue' => $weekReceived,
-            'today_revenue' => $todayReceived,
-            'pending_remittance' => $outstanding,
-            'completed_bookings' => $completedBookings,
-            'avg_revenue_per_booking' => $avgRevenuePerBooking,
-            'growth_pct' => abs($growthPct),
-            'growth_diff' => $growthDiff,
-            'growth_direction' => $growthDirection
-        ]);
+        $revSummary = getRevenueAnalyticsSummaryData($conn);
+        respond(true, '', $revSummary);
     }
 
     if ($method === 'GET' && $action === 'chart') {

@@ -76,16 +76,22 @@ include __DIR__ . '/includes/sidebar.php';
 <script>
 async function loadOverview() {
   try {
-    const res = await fetch('../api/admin_api.php?section=stats');
-    const data = await res.json();
-    if (!data.success) return;
-    const s = data.stats;
+    const [resStats, resRev] = await Promise.all([
+      fetch('../api/admin_api.php?section=stats').then(r => r.json()).catch(() => null),
+      fetch('../api/admin_api.php?section=revenue&action=summary').then(r => r.json()).catch(() => null)
+    ]);
+    if (!resStats || !resStats.success) return;
+    const s = resStats.stats;
 
     document.getElementById('st-users').textContent = s.total_users;
     document.getElementById('st-bookings').textContent = s.total_bookings;
     
+    const totalRev = (resRev && resRev.success && resRev.total_revenue !== undefined)
+      ? resRev.total_revenue
+      : (s.total_revenue || 0);
+
     // Revenue formatting: e.g. ₱42.1k or ₱0.00
-    const floatVal = parseFloat(s.total_revenue) || 0;
+    const floatVal = parseFloat(totalRev) || 0;
     if (floatVal >= 1000) {
       document.getElementById('st-revenue').textContent = '₱' + (floatVal / 1000).toFixed(1) + 'k';
     } else {

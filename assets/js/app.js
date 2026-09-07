@@ -56,9 +56,14 @@ async function loadOverview() {
     const s = data.stats;
     document.getElementById('st-users').textContent = s.total_users;
     document.getElementById('st-bookings').textContent = s.total_bookings;
-    document.getElementById('st-revenue').textContent = '₱' + (s.total_revenue / 1000).toFixed(1) + 'k';
+    const floatVal = parseFloat(s.total_revenue) || 0;
+    if (floatVal >= 1000) {
+      document.getElementById('st-revenue').textContent = '₱' + (floatVal / 1000).toFixed(1) + 'k';
+    } else {
+      document.getElementById('st-revenue').textContent = '₱' + floatVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
     document.getElementById('st-workers').textContent = s.active_workers;
-    document.getElementById('revTotal').textContent = php(s.total_revenue);
+    document.getElementById('revTotal').textContent = php(floatVal);
     // Revenue chart
     const chart = document.getElementById('revChart');
     const revRows = s.revenue_chart || [];

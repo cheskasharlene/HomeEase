@@ -1765,7 +1765,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       let curTab = 'overview';
       const tabMap = { overview: 'sc-overview', revenue: 'sc-revenue', bookings: 'sc-bookings', workers: 'sc-workers', users: 'sc-users', more: 'sc-more' };
-      const loadMap = { revenue: loadRevenue, bookings: loadBookings, workers: loadWorkers, users: loadUsers, more: loadMore };
+      const loadMap = { overview: loadOverview, revenue: loadRevenue, bookings: loadBookings, workers: loadWorkers, users: loadUsers, more: loadMore };
 
       function showTab(tab) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1780,20 +1780,34 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       setInterval(() => {
         const workerSheetOpen = document.getElementById('wkSheetOl')?.classList.contains('on') && currentWorkerDetailId;
         if (curTab === 'workers' || workerSheetOpen) loadWorkers();
+        else if (curTab === 'overview') loadOverview();
+        else if (curTab === 'revenue') loadRevenue();
       }, 15000);
 
       let revenueChartInstance = null;
 
       async function loadRevenue() {
         try {
-          // 1. Load summary metrics
+          // 1. Load summary metrics directly from Revenue Analytics
           const summaryData = await api('revenue', 'summary');
           if (summaryData.success) {
-            document.getElementById('total-revenue-val').textContent = formatMetric(summaryData.total_revenue, true);
+            const formattedTotal = formatMetric(summaryData.total_revenue, true);
+            const fullTotal = php(summaryData.total_revenue);
+
+            // Update Revenue Analytics screen elements
+            const totalRevVal = document.getElementById('total-revenue-val');
+            if (totalRevVal) totalRevVal.textContent = formattedTotal;
+
             document.getElementById('month-revenue-val').textContent = formatMetric(summaryData.month_revenue, true);
             document.getElementById('week-revenue-val').textContent = formatMetric(summaryData.week_revenue, true);
             document.getElementById('today-revenue-val').textContent = formatMetric(summaryData.today_revenue, false);
             document.getElementById('pending-remittance-val').textContent = formatMetric(summaryData.pending_remittance, false);
+
+            // Keep Admin Overview Revenue in exact lockstep
+            const stRevEl = document.getElementById('st-revenue');
+            if (stRevEl) stRevEl.textContent = formattedTotal;
+            const revTotalEl = document.getElementById('revTotal');
+            if (revTotalEl) revTotalEl.textContent = fullTotal;
 
             // Populate breakdown dynamically
             const total = summaryData.total_revenue;
@@ -2029,26 +2043,37 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       async function loadOverview() {
         try {
-          const data = await api('stats');
-          if (!data.success) return;
-          const s = data.stats;
+          // Fetch stats and revenue analytics summary in parallel to guarantee complete synchronization
+          const [statsData, revenueData] = await Promise.all([
+            api('stats'),
+            api('revenue', 'summary').catch(() => null)
+          ]);
+          if (!statsData || !statsData.success) return;
+          const s = statsData.stats;
+
+          // Prefer revenueData if successfully returned, otherwise fallback to stats.total_revenue (which shares same calculation)
+          const totalRev = (revenueData && revenueData.success && revenueData.total_revenue !== undefined)
+            ? revenueData.total_revenue
+            : (s.total_revenue || 0);
 
           document.getElementById('st-users').textContent = s.total_users;
           document.getElementById('st-bookings').textContent = s.total_bookings;
           
-          const floatVal = parseFloat(s.total_revenue) || 0;
-          if (floatVal >= 1000) {
-            document.getElementById('st-revenue').textContent = '₱' + (floatVal / 1000).toFixed(1) + 'k';
-          } else {
-            document.getElementById('st-revenue').textContent = '₱' + floatVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-          }
-          
+          const floatVal = parseFloat(totalRev) || 0;
+          const formattedRev = formatMetric(floatVal, true);
+          const fullRev = php(floatVal);
+
+          document.getElementById('st-revenue').textContent = formattedRev;
           document.getElementById('st-workers').textContent = s.active_workers;
-          document.getElementById('revTotal').textContent = php(s.total_revenue);
+          document.getElementById('revTotal').textContent = fullRev;
+
+          // Keep Revenue Analytics total element in sync as well
+          const totalRevVal = document.getElementById('total-revenue-val');
+          if (totalRevVal) totalRevVal.textContent = formattedRev;
 
           // Revenue chart
           const chart = document.getElementById('revChart');
-          const revRows = s.revenue_chart || [];
+          const revRows = (revenueData && revenueData.revenue_chart) ? revenueData.revenue_chart : (s.revenue_chart || []);
           if (revRows.length) {
             const max = Math.max(...revRows.map(r => parseFloat(r.rev)), 1);
             chart.innerHTML = revRows.map(r => {
@@ -2308,7 +2333,13 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       async function updateBkStatus(id, status) {
         try {
           const data = await api('bookings', 'update_status', fd({ id, status }));
-          if (data.success) { toast('Status updated to ' + status); closeSheet('bkDetailOl'); loadBookings(); }
+          if (data.success) {
+            toast('Status updated to ' + status);
+            closeSheet('bkDetailOl');
+            loadBookings();
+            loadRevenue();
+            loadOverview();
+          }
           else toast(data.message || 'Failed', 'e');
         } catch (e) { toast('Error', 'e'); }
       }
@@ -4115,6 +4146,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         toast(response.message || 'Remittance approved successfully.', 's');
         closeSheet('remitDetailOl');
         loadAdminRemittances();
+        loadRevenue();
+        loadOverview();
       } else {
         toast(response.message || 'Approval failed.', 'e');
       }
@@ -4150,6 +4183,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         toast(response.message || 'Remittance rejected.', 'r');
         closeSheet('remitDetailOl');
         loadAdminRemittances();
+        loadRevenue();
+        loadOverview();
       } else {
         toast(response.message || 'Rejection failed.', 'e');
       }
