@@ -33,6 +33,18 @@ if ($isVerified) {
   }
 }
 
+$rejectionReason = '';
+if ($providerId > 0 && $conn instanceof mysqli) {
+  $rejStmt = $conn->prepare("SELECT rejection_reason FROM service_providers WHERE provider_id = ? LIMIT 1");
+  if ($rejStmt) {
+    $rejStmt->bind_param('i', $providerId);
+    $rejStmt->execute();
+    $rejRow = $rejStmt->get_result()->fetch_assoc();
+    $rejStmt->close();
+    $rejectionReason = trim((string) ($rejRow['rejection_reason'] ?? ''));
+  }
+}
+
 require_once __DIR__ . '/provider_dashboard_data.php';
 
 // Initialize earnings variables with strict null-coalescing defaults
@@ -145,6 +157,23 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
         <div class="verify-flow" id="verifyFlow">
           <section class="verify-panel not-verified" id="panelNotVerified">
+            <?php if ($verificationState === 'rejected'): ?>
+              <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:16px;padding:16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 4px 14px rgba(239,68,68,0.12);">
+                <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:15px;font-weight:800;color:#991b1b;margin-bottom:4px;">Verification Approval Rejected</div>
+                  <div style="font-size:13px;color:#7f1d1d;line-height:1.5;margin-bottom:8px;">
+                    <?= !empty($rejectionReason) ? '<strong>Reason from Admin:</strong> ' . htmlspecialchars($rejectionReason) : 'Your previous document submission was rejected by the admin.' ?>
+                  </div>
+                  <div style="font-size:12px;color:#991b1b;font-weight:600;">
+                    Please update your verification documents below and click <strong>Submit Requirements</strong> to re-submit for approval.
+                  </div>
+                </div>
+              </div>
+            <?php endif; ?>
+
             <div class="verify-card">
               <div class="verify-card-icon"><i class="bi bi-shield-lock-fill"></i></div>
               <h2>Become a Verified Provider</h2>
@@ -1043,9 +1072,56 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     // Initialize upload fields when DOM is ready
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', setupUploadFields);
+      document.addEventListener('DOMContentLoaded', () => {
+        setupUploadFields();
+        loadExistingDocumentsForProvider();
+      });
     } else {
       setupUploadFields();
+      loadExistingDocumentsForProvider();
+    }
+
+    async function loadExistingDocumentsForProvider() {
+      if (backendVerificationState === 'verified') return;
+      try {
+        const res = await fetch('../api/provider_documents_api.php?action=get_documents', { cache: 'no-store' });
+        const data = await res.json();
+        if (!data || !data.success || !data.documents) return;
+
+        const docMap = {
+          valid_id: { inputId: 'uploadIdDoc', previewId: 'previewUploadIdDoc', nameId: 'fileNameUploadIdDoc', feedbackId: 'feedbackUploadIdDoc' },
+          selfie_verification: { inputId: 'uploadSelfieDoc', previewId: 'previewUploadSelfieDoc', nameId: 'fileNameUploadSelfieDoc', feedbackId: 'feedbackUploadSelfieDoc' },
+          selfie: { inputId: 'uploadSelfieDoc', previewId: 'previewUploadSelfieDoc', nameId: 'fileNameUploadSelfieDoc', feedbackId: 'feedbackUploadSelfieDoc' },
+          proof_of_address: { inputId: 'uploadAddressDoc', previewId: 'previewUploadAddressDoc', nameId: 'fileNameUploadAddressDoc', feedbackId: 'feedbackUploadAddressDoc' },
+          barangay_clearance: { inputId: 'uploadCertification', previewId: 'previewUploadCertification', nameId: 'fileNameUploadCertification', feedbackId: 'feedbackUploadCertification' },
+          tools_kits: { inputId: 'uploadServiceProof', previewId: 'previewUploadServiceProof', nameId: 'fileNameUploadServiceProof', feedbackId: 'feedbackUploadServiceProof' },
+          gcash_qr: { inputId: 'uploadGCashQr', previewId: 'previewUploadGCashQr', nameId: 'fileNameUploadGCashQr', feedbackId: 'feedbackUploadGCashQr' },
+          bank_qr: { inputId: 'uploadBankQr', previewId: 'previewUploadBankQr', nameId: 'fileNameUploadBankQr', feedbackId: 'feedbackUploadBankQr' }
+        };
+
+        Object.keys(docMap).forEach(key => {
+          const doc = data.documents[key];
+          if (!doc || !doc.file_path) return;
+          const conf = docMap[key];
+          const previewEl = document.getElementById(conf.previewId);
+          const fileNameEl = document.getElementById(conf.nameId);
+          const feedbackEl = document.getElementById(conf.feedbackId);
+
+          const fullUrl = doc.file_path.startsWith('http') ? doc.file_path : ('../' + doc.file_path);
+          const filename = doc.file_path.split('/').pop() || (key + '_file');
+
+          if (fileNameEl) fileNameEl.textContent = filename;
+          if (feedbackEl) {
+            feedbackEl.classList.add('success');
+            feedbackEl.textContent = 'Existing document uploaded';
+          }
+          if (previewEl) {
+            renderCompactAttachment(previewEl, conf.inputId, { name: filename, size: 0 }, fullUrl, 'image');
+          }
+        });
+      } catch (e) {
+        // ignore error
+      }
     }
 
     const toggle = document.getElementById('availToggle');
@@ -1265,6 +1341,14 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         .catch(() => renderTodaySchedule([]));
     }
 
+    function isDocProvided(inputId, previewId) {
+      const input = document.getElementById(inputId);
+      if (input && input.files && input.files[0]) return true;
+      const preview = document.getElementById(previewId);
+      if (preview && (preview.dataset.previewUrl || preview.dataset.previewName || preview.classList.contains('active'))) return true;
+      return false;
+    }
+
     /**
      * Validate form and show validation messages
      * Returns true if valid, false otherwise
@@ -1273,35 +1357,27 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       let isValid = true;
       const errors = [];
 
-      // Check required uploads
-      const idDoc = document.getElementById('uploadIdDoc').files[0];
-      const selfieDoc = document.getElementById('uploadSelfieDoc').files[0];
-      const addressDoc = document.getElementById('uploadAddressDoc').files[0];
-      const serviceProof = document.getElementById('uploadServiceProof').files[0];
-      const gcashQr = document.getElementById('uploadGCashQr').files[0];
-      const bankQr = document.getElementById('uploadBankQr').files[0];
-
-      if (!idDoc) {
+      if (!isDocProvided('uploadIdDoc', 'previewUploadIdDoc')) {
         errors.push('Valid Government ID is required');
         isValid = false;
       }
-      if (!selfieDoc) {
+      if (!isDocProvided('uploadSelfieDoc', 'previewUploadSelfieDoc')) {
         errors.push('Selfie Verification is required');
         isValid = false;
       }
-      if (!addressDoc) {
+      if (!isDocProvided('uploadAddressDoc', 'previewUploadAddressDoc')) {
         errors.push('Proof of Address is required');
         isValid = false;
       }
-      if (!serviceProof) {
+      if (!isDocProvided('uploadServiceProof', 'previewUploadServiceProof')) {
         errors.push('Tools & Kits image is required');
         isValid = false;
       }
-      if (!gcashQr) {
+      if (!isDocProvided('uploadGCashQr', 'previewUploadGCashQr')) {
         errors.push('GCash QR Code is required');
         isValid = false;
       }
-      if (!bankQr) {
+      if (!isDocProvided('uploadBankQr', 'previewUploadBankQr')) {
         errors.push('Bank QR Code is required');
         isValid = false;
       }
@@ -1309,7 +1385,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       // Check experience textarea
       const experienceField = document.getElementById('experienceDescription');
       const experienceValidation = document.getElementById('experienceValidation');
-      const experienceValue = (experienceField.value || '').trim();
+      const experienceValue = (experienceField ? experienceField.value : '').trim();
 
       if (!experienceValue) {
         errors.push('Working Experience description is required');

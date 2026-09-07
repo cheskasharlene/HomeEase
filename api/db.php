@@ -346,6 +346,12 @@ function ensureNormalizationSchema($conn)
         $conn->query("ALTER TABLE service_providers ADD CONSTRAINT fk_sp_service_id FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL");
     }
 
+    // Add rejection_reason column to service_providers if not exists
+    $resRej = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'rejection_reason'");
+    if ($resRej && $resRej->num_rows === 0) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN rejection_reason TEXT NULL");
+    }
+
     // Standardize existing service_category text if the column still exists, and migrate data to service_id
     $resCat = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'service_category'");
     if ($resCat && $resCat->num_rows > 0) {

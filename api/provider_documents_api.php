@@ -117,6 +117,9 @@ function initializeTables($conn) {
     if (!in_array('qr_bank', $columns)) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN qr_bank VARCHAR(500)");
     }
+    if (!in_array('rejection_reason', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN rejection_reason TEXT NULL");
+    }
 }
 
 /**
@@ -346,6 +349,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     // Process required documents
     foreach ($required_docs as $doc_type) {
         if (!isset($_FILES[$doc_type]) || $_FILES[$doc_type]['error'] === UPLOAD_ERR_NO_FILE) {
+            // Check if document was previously uploaded for this provider
+            $colName = getColumnNameForDocType($doc_type);
+            $hasExisting = false;
+            if ($colName) {
+                $chkStmt = $conn->prepare("SELECT `" . $colName . "` FROM service_providers WHERE provider_id = ? LIMIT 1");
+                if ($chkStmt) {
+                    $chkStmt->bind_param('i', $provider_id);
+                    $chkStmt->execute();
+                    $r = $chkStmt->get_result()->fetch_assoc();
+                    $chkStmt->close();
+                    if (!empty($r[$colName])) {
+                        $hasExisting = true;
+                    }
+                }
+            }
+            if ($hasExisting) {
+                $uploaded_docs[] = $doc_type;
+                continue;
+            }
             $errors[] = $DOCUMENT_TYPES[$doc_type]['label'] . ' is required';
             continue;
         }
@@ -409,12 +431,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
         respond(false, 'Upload failed. ' . implode(' | ', $errors));
     }
 
-    // Update provider verification status to 'pending' so admin can see it in "For Verification"
+    // Update provider verification status to 'pending' and clear rejection_reason so admin can re-review
     $verification_status = count($uploaded_docs) >= count($required_docs) ? 'pending' : 'partial';
-    $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW() WHERE provider_id = ?");
+    $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0 WHERE provider_id = ?");
     $stmt->bind_param('si', $verification_status, $provider_id);
     $stmt->execute();
     $stmt->close();
+
+    // Reset normalized provider_documents status to submitted
+    $conn->query("UPDATE provider_documents SET verified_status = 'submitted', verified_at = NULL WHERE provider_id = " . (int)$provider_id);
 
     // Notify admin
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (

@@ -6,6 +6,8 @@
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
+ini_set('display_errors', 0);
+error_reporting(0);
 require_once __DIR__ . '/db.php';
 ensureNormalizationSchema($conn);
 
@@ -295,18 +297,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_provider') {
         respond(false, 'Provider ID required');
     }
 
-    // Update service_providers verification status to rejected
+    // Ensure rejection_reason column exists
+    $chkCol = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'rejection_reason'");
+    if ($chkCol && $chkCol->num_rows === 0) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN rejection_reason TEXT NULL");
+    }
+
+    // Update service_providers verification status to rejected & set is_verified to 0
     $update_stmt = $conn->prepare(
         "UPDATE service_providers 
-         SET verification_status = 'rejected', rejection_reason = ?
+         SET verification_status = 'rejected', rejection_reason = ?, is_verified = 0, verification_approved_at = NULL
          WHERE provider_id = ?"
     );
+    if (!$update_stmt) {
+        respond(false, 'Database error: ' . $conn->error);
+    }
     $update_stmt->bind_param('si', $reason, $provider_id);
     
     if (!$update_stmt->execute()) {
-        respond(false, 'Failed to reject documents');
+        $update_stmt->close();
+        respond(false, 'Failed to reject documents: ' . $conn->error);
     }
     $update_stmt->close();
+
+    // Also update normalized provider_documents table
+    $docUpdate = $conn->prepare("UPDATE provider_documents SET verified_status='rejected', verified_at=NOW(), verification_notes=? WHERE provider_id=?");
+    if ($docUpdate) {
+        $docUpdate->bind_param('si', $reason, $provider_id);
+        $docUpdate->execute();
+        $docUpdate->close();
+    }
+
+    // Send notification to worker
+    sendProviderNotification($conn, $provider_id, 'warning', 'Verification Rejected', 'Your document verification was rejected. Reason: ' . $reason, 'bi-x-circle', $provider_id);
 
     respond(true, 'Provider verification rejected');
 }
