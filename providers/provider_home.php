@@ -160,7 +160,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             <?php if ($verificationState === 'rejected'): ?>
               <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:16px;padding:16px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 4px 14px rgba(239,68,68,0.12);">
                 <div style="width:40px;height:40px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">
-                  <i class="bi bi-exclamation-triangle-fill"></i>
+                  <i class="bi bi-x-circle-fill"></i>
                 </div>
                 <div style="flex:1;">
                   <div style="font-size:15px;font-weight:800;color:#991b1b;margin-bottom:4px;">Verification Approval Rejected</div>
@@ -345,9 +345,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
               <div class="status-icon pending"><i class="bi bi-hourglass-split"></i></div>
               <h2>Verification in Progress</h2>
               <p id="pendingMessage">Please wait for admin approval.</p>
-              <div class="pending-actions">
-                <button class="verify-primary-btn" id="simulateApprovalBtn" onclick="simulateApprovalNotification()">Simulate Approval Notification</button>
-              </div>
             </div>
           </section>
         </div>
@@ -731,6 +728,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     }
 
     const backendVerificationState = <?= json_encode($verificationState) ?>;
+    const backendRejectionReason = <?= json_encode($rejectionReason) ?>;
     const backendIsVerified = <?= json_encode($isVerified) ?>;
     const backendAvailability = <?= json_encode($availabilityStatus) ?>;
     const providerId = <?= json_encode($providerId) ?>;
@@ -836,6 +834,35 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       return parts.length > 1 ? parts.pop().toUpperCase() : 'FILE';
     }
 
+    const uploadFeedbackTimers = {};
+
+    /**
+     * Display temporary success feedback that automatically hides after durationMs
+     */
+    function showUploadFeedback(feedbackEl, message, durationMs = 2500) {
+      if (!feedbackEl) return;
+      const key = feedbackEl.id || ('fb_' + Math.random().toString(36).substring(2, 9));
+
+      // Clear any running timer for this feedback element
+      if (uploadFeedbackTimers[key]) {
+        clearTimeout(uploadFeedbackTimers[key]);
+        delete uploadFeedbackTimers[key];
+      }
+
+      feedbackEl.textContent = message || 'Uploaded successfully';
+      feedbackEl.classList.remove('fade-out');
+      feedbackEl.classList.add('success');
+
+      uploadFeedbackTimers[key] = setTimeout(() => {
+        feedbackEl.classList.add('fade-out');
+        uploadFeedbackTimers[key] = setTimeout(() => {
+          feedbackEl.classList.remove('success', 'fade-out');
+          feedbackEl.textContent = '';
+          delete uploadFeedbackTimers[key];
+        }, 350); // allow fade-out animation to complete
+      }, durationMs);
+    }
+
     /**
      * Enhanced upload field handler with compact preview and success indicators
      */
@@ -873,8 +900,13 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           if (!file) {
             // File cleared
             if (fileNameEl) fileNameEl.textContent = field.isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
+            const feedbackKey = feedbackId;
+            if (uploadFeedbackTimers[feedbackKey]) {
+              clearTimeout(uploadFeedbackTimers[feedbackKey]);
+              delete uploadFeedbackTimers[feedbackKey];
+            }
             if (feedbackEl) {
-              feedbackEl.classList.remove('success');
+              feedbackEl.classList.remove('success', 'fade-out');
               feedbackEl.textContent = '';
             }
             if (previewEl) {
@@ -891,11 +923,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           // Update filename in slot
           if (fileNameEl) fileNameEl.textContent = file.name;
 
-          // Show success feedback
-          if (feedbackEl) {
-            feedbackEl.classList.add('success');
-            feedbackEl.textContent = 'Uploaded successfully';
-          }
+          // Show success feedback temporarily (automatically disappears after 2.5 seconds)
+          showUploadFeedback(feedbackEl, 'Uploaded successfully', 2500);
 
           // Handle compact preview
           handleFilePreview(file, previewEl, field.inputId);
@@ -995,13 +1024,19 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       const fileNameEl = document.getElementById('fileNameUpload' + suffix);
       const feedbackEl = document.getElementById('feedbackUpload' + suffix);
       const previewEl = document.getElementById('previewUpload' + suffix);
+      const feedbackKey = 'feedbackUpload' + suffix;
 
       const isRequired = ['uploadIdDoc', 'uploadSelfieDoc', 'uploadAddressDoc', 'uploadServiceProof', 'uploadGCashQr', 'uploadBankQr'].includes(fieldId);
       if (fileNameEl) {
         fileNameEl.textContent = isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
       }
+
+      if (uploadFeedbackTimers[feedbackKey]) {
+        clearTimeout(uploadFeedbackTimers[feedbackKey]);
+        delete uploadFeedbackTimers[feedbackKey];
+      }
       if (feedbackEl) {
-        feedbackEl.classList.remove('success');
+        feedbackEl.classList.remove('success', 'fade-out');
         feedbackEl.textContent = '';
       }
       if (previewEl) {
@@ -1112,8 +1147,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
           if (fileNameEl) fileNameEl.textContent = filename;
           if (feedbackEl) {
-            feedbackEl.classList.add('success');
-            feedbackEl.textContent = 'Existing document uploaded';
+            showUploadFeedback(feedbackEl, 'Existing document uploaded', 2500);
           }
           if (previewEl) {
             renderCompactAttachment(previewEl, conf.inputId, { name: filename, size: 0 }, fullUrl, 'image');
@@ -1248,6 +1282,24 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         time: getTimestampLabel(createdAt),
         read: false,
         icon: 'verified'
+      });
+      saveStoredProviderNotifs(notifs);
+    }
+
+    function ensureVerificationRejectedNotification(reasonText) {
+      const notifs = getStoredProviderNotifs();
+      const existing = notifs.find(n => n && (n.id === 'verification_rejected' || n.type === 'verification_rejected'));
+      if (existing) return;
+      const createdAt = new Date().toISOString();
+      notifs.unshift({
+        id: 'verification_rejected',
+        type: 'verification_rejected',
+        title: 'Worker Application Rejected',
+        msg: reasonText ? ('Reason: ' + reasonText) : 'Your worker verification application was rejected by the admin.',
+        createdAt,
+        time: getTimestampLabel(createdAt),
+        read: false,
+        icon: 'bi-x-circle'
       });
       saveStoredProviderNotifs(notifs);
     }
@@ -1482,31 +1534,12 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
     function updatePendingStateDetails() {
       const pendingMessage = document.getElementById('pendingMessage');
-      const simulateApprovalBtn = document.getElementById('simulateApprovalBtn');
-      if (!pendingMessage || !simulateApprovalBtn) return;
+      if (!pendingMessage) return;
 
       if (backendVerificationState === 'approval_ready') {
         pendingMessage.textContent = 'Admin approved your application. Your dashboard has been unlocked.';
-        simulateApprovalBtn.style.display = 'none';
       } else {
         pendingMessage.textContent = 'Please wait for admin approval.';
-        simulateApprovalBtn.style.display = 'block';
-      }
-    }
-
-    async function simulateApprovalNotification() {
-      try {
-        const fd = new FormData();
-        fd.append('action', 'simulate_approval_ready');
-        const res = await fetch('../api/provider_verification.php', { method: 'POST', body: fd });
-        const data = await res.json();
-        if (!data.success) {
-          showNotice(data.message || 'Could not simulate approval.');
-          return;
-        }
-        goPage('provider_home.php');
-      } catch (error) {
-        showNotice('Could not simulate approval right now.');
       }
     }
 
@@ -1535,6 +1568,8 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     if (backendVerificationState === 'verified' && (justBecameVerified || !onboardingSeen)) {
       ensureAccountVerifiedNotification();
       openVerifiedIntro();
+    } else if (backendVerificationState === 'rejected') {
+      ensureVerificationRejectedNotification(backendRejectionReason);
     }
 
     // Today's Schedule removed from home — no periodic schedule fetch required.

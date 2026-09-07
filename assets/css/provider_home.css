@@ -724,10 +724,31 @@ body {
       box-sizing: border-box;
       height: auto;
       margin: 0;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.35s ease, transform 0.35s ease;
     }
 
     .upload-feedback.success {
       display: flex;
+      animation: feedbackFadeIn 0.25s cubic-bezier(.22,1,.36,1);
+    }
+
+    .upload-feedback.fade-out {
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+    }
+
+    @keyframes feedbackFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .upload-feedback.success::before {
@@ -1180,13 +1201,14 @@ body {
 
     .status-card {
       text-align: center;
+      padding: 28px 20px;
     }
 
     .status-icon {
       width: 56px;
       height: 56px;
       border-radius: 16px;
-      margin: 0 auto 11px;
+      margin: 0 auto 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1197,13 +1219,6 @@ body {
       background: #FFF1D7;
       color: #D97706;
       animation: pulseIcon 1.3s ease-in-out infinite;
-    }
-
-    .pending-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 14px;
     }
 
     .disabled-modules {

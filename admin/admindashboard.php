@@ -314,10 +314,21 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     }
 
     /* Toast notifications */
-    #toastBox { position:absolute; top:16px; left:50%; transform:translateX(-50%); z-index:999; display:flex; flex-direction:column; gap:6px; width:90%; max-width:340px; }
     .toast-n { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:14px; font-size:13px; font-weight:700; color:#fff; animation:slideDown .35s forwards; }
     .toast-n.s { background:#10b981; }
     .toast-n.e { background:#ef4444; }
+    .toast-n.r,
+    .toast-n.rejected {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      color: #991b1b;
+      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.18);
+    }
+    .toast-n.r i,
+    .toast-n.rejected i {
+      color: #dc2626;
+      font-size: 16px;
+    }
 
     /* Workers filter row */
     .wk-filter-row {
@@ -1614,10 +1625,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       function toast(msg, type = 's') {
+        const isRejection = type === 'r' || type === 'rejected' || (typeof msg === 'string' && /reject|decline/i.test(msg));
+        const resolvedType = isRejection ? 'r' : type;
         const box = document.getElementById('toastBox');
+        if (!box) return;
         const t = document.createElement('div');
-        t.className = `toast-n ${type}`;
-        t.innerHTML = `<i class="bi bi-${type === 's' ? 'check-circle-fill' : 'exclamation-circle-fill'}"></i>${msg}`;
+        t.className = `toast-n ${resolvedType}`;
+        const iconClass = resolvedType === 's'
+          ? 'check-circle-fill'
+          : (resolvedType === 'r' ? 'x-circle-fill' : 'exclamation-circle-fill');
+        t.innerHTML = `<i class="bi bi-${iconClass}"></i>${msg}`;
         box.appendChild(t);
         setTimeout(() => t.remove(), 3200);
       }
@@ -1648,12 +1665,20 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           sub.textContent = 'Provide a reason so the worker knows what to fix before resubmitting.';
           okBtn.textContent = 'Submit Rejection';
           icon.innerHTML = '<i class="bi bi-shield-x"></i>';
+          icon.style.background = 'linear-gradient(135deg, #fee2e2, #fecaca)';
+          icon.style.color = '#dc2626';
+          okBtn.style.background = '#ef4444';
+          okBtn.style.boxShadow = '0 8px 16px rgba(239,68,68,.28)';
           reasonWrap.style.display = 'block';
         } else {
           title.textContent = 'Approve worker verification?';
           sub.textContent = 'This will verify the worker and allow them to accept jobs.';
           okBtn.textContent = 'Approve';
           icon.innerHTML = '<i class="bi bi-shield-check"></i>';
+          icon.style.background = 'linear-gradient(135deg, #d1fae5, #a7f3d0)';
+          icon.style.color = '#059669';
+          okBtn.style.background = '';
+          okBtn.style.boxShadow = '';
           reasonWrap.style.display = 'none';
         }
 
@@ -2601,7 +2626,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           });
           const data = await response.json();
           if (data.success) {
-            toast('Worker verification rejected');
+            toast('Worker verification rejected', 'r');
             closeSheet('wkSheetOl');
             loadWorkers();
           } else {
@@ -3526,7 +3551,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         try {
           const res = await api('incidents', 'update_status', fd({ id: reportId, status: 'rejected' }));
           if (res.success) {
-            toast('Incident report rejected');
+            toast('Incident report rejected', 'r');
             await fetchIncidents();
             const inc = _incidents.find(i => i.reportId === reportId);
             if (inc) renderIncidentDetail(inc);
@@ -3817,7 +3842,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         btn.disabled = false; btn.textContent = 'Reject';
         closeQrRejectConfirm();
         if (data.success) {
-          toast('QR change request rejected. Provider notified.', 's');
+          toast('QR change request rejected. Provider notified.', 'r');
           loadQrRequests();
           pollQrRequestCount();
         } else {
@@ -4122,7 +4147,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       btn.textContent = 'Reject';
       closeRemitRejectConfirm();
       if (response.success) {
-        toast(response.message || 'Remittance rejected.', 's');
+        toast(response.message || 'Remittance rejected.', 'r');
         closeSheet('remitDetailOl');
         loadAdminRemittances();
       } else {

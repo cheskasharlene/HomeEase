@@ -572,6 +572,18 @@
     }
     .toast-n.s { background: #10b981; }
     .toast-n.e { background: #ef4444; }
+    .toast-n.r,
+    .toast-n.rejected {
+      background: #fef2f2;
+      border: 1.5px solid #fca5a5;
+      color: #991b1b;
+      box-shadow: 0 4px 20px rgba(239, 68, 68, 0.18);
+    }
+    .toast-n.r i,
+    .toast-n.rejected i {
+      color: #dc2626;
+      font-size: 16px;
+    }
 
     @keyframes slideDown {
       from { opacity: 0; transform: translateY(-12px); }

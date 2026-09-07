@@ -1765,6 +1765,16 @@ body {
 .toast-n.s i { color: var(--success); }
 .toast-n.e { border-left: 4px solid var(--danger); }
 .toast-n.e i { color: var(--danger); }
+.toast-n.r,
+.toast-n.rejected {
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  color: #991b1b;
+}
+.toast-n.r i,
+.toast-n.rejected i {
+  color: #dc2626;
+}
 
 
 .pill {

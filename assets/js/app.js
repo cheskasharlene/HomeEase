@@ -1,10 +1,16 @@
 
 // ────────────── Shared Utilities ──────────────
 function toast(msg, type = 's') {
+  const isRejection = type === 'r' || type === 'rejected' || (typeof msg === 'string' && /reject|decline/i.test(msg));
+  const resolvedType = isRejection ? 'r' : type;
   const box = document.getElementById('toastBox');
+  if (!box) return;
   const t = document.createElement('div');
-  t.className = `toast-n ${type}`;
-  t.innerHTML = `<i class="bi bi-${type === 's' ? 'check-circle-fill' : 'exclamation-circle-fill'}"></i>${msg}`;
+  t.className = `toast-n ${resolvedType}`;
+  const iconClass = resolvedType === 's'
+    ? 'check-circle-fill'
+    : (resolvedType === 'r' ? 'x-circle-fill' : 'exclamation-circle-fill');
+  t.innerHTML = `<i class="bi bi-${iconClass}"></i>${msg}`;
   box.appendChild(t);
   setTimeout(() => t.remove(), 3200);
 }

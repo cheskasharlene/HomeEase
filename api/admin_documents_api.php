@@ -329,7 +329,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_provider') {
     }
 
     // Send notification to worker
-    sendProviderNotification($conn, $provider_id, 'warning', 'Verification Rejected', 'Your document verification was rejected. Reason: ' . $reason, 'bi-x-circle', $provider_id);
+    sendProviderNotification($conn, $provider_id, 'verification_rejected', 'Verification Rejected', 'Your document verification was rejected. Reason: ' . $reason, 'bi-x-circle', $provider_id);
 
     respond(true, 'Provider verification rejected');
 }

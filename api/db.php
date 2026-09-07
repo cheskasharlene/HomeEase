@@ -632,7 +632,7 @@ function sendProviderNotification($conn, $providerId, $type, $title, $message, $
 {
     ensureNormalizationSchema($conn);
     
-    $validTypes = ['remittance', 'warning', 'report', 'account_verified', 'general'];
+    $validTypes = ['remittance', 'warning', 'report', 'account_verified', 'verification_rejected', 'rejected', 'general'];
     if (!in_array($type, $validTypes)) {
         return false;
     }

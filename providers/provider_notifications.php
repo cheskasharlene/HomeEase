@@ -22,7 +22,19 @@ function providerTimeAgo($ts)
   return floor($diff / 86400) . 'd ago';
 }
 
-$stmt = $conn->prepare("SELECT id, title, message, icon, is_read, created_at FROM provider_notifications WHERE provider_id = ? ORDER BY created_at DESC LIMIT 100");
+$rejectionReason = '';
+if ($verificationState === 'rejected' && $providerId > 0 && $conn instanceof mysqli) {
+  $rejStmt = $conn->prepare("SELECT rejection_reason FROM service_providers WHERE provider_id = ? LIMIT 1");
+  if ($rejStmt) {
+    $rejStmt->bind_param('i', $providerId);
+    $rejStmt->execute();
+    $rejRow = $rejStmt->get_result()->fetch_assoc();
+    $rejStmt->close();
+    $rejectionReason = trim((string) ($rejRow['rejection_reason'] ?? ''));
+  }
+}
+
+$stmt = $conn->prepare("SELECT id, type, title, message, icon, is_read, created_at FROM provider_notifications WHERE provider_id = ? ORDER BY created_at DESC LIMIT 100");
 if ($stmt) {
   $stmt->bind_param('i', $providerId);
   $stmt->execute();
@@ -31,6 +43,7 @@ if ($stmt) {
   $notifs = array_map(function ($n) {
     return [
       'id'         => (int) $n['id'],
+      'type'       => $n['type'] ?? 'general',
       'title'      => $n['title'],
       'msg'        => $n['message'],
       'time'       => providerTimeAgo($n['created_at']),
@@ -115,6 +128,7 @@ if ($stmt) {
     window.HE = window.HE || {};
     window.HE.notifications    = <?= json_encode(array_values($notifs)) ?>;
     window.HE.verificationState = <?= json_encode($verificationState) ?>;
+    window.HE.rejectionReason  = <?= json_encode($rejectionReason) ?>;
     window.HE.providerId       = <?= json_encode($providerId) ?>;
 
     const localNotifKey = 'he_provider_notifs_' + String(window.HE.providerId || 'default');
@@ -182,6 +196,27 @@ if ($stmt) {
       window.HE.notifications.forEach(item => {
         if (!byId.has(String(item.id))) byId.set(String(item.id), item);
       });
+
+      /* If provider is rejected, ensure a rejection notification is present */
+      if (window.HE.verificationState === 'rejected') {
+        const hasRej = Array.from(byId.values()).some(n => 
+          n && (n.type === 'verification_rejected' || n.type === 'rejected' || (String(n.id) === 'verification_rejected'))
+        );
+        if (!hasRej) {
+          const createdAt = new Date().toISOString();
+          byId.set('verification_rejected', {
+            id: 'verification_rejected',
+            type: 'verification_rejected',
+            title: 'Worker Application Rejected',
+            msg: window.HE.rejectionReason ? ('Reason: ' + window.HE.rejectionReason) : 'Your worker verification application was rejected by the admin. Please update your requirements.',
+            time: 'Recently',
+            created_at: createdAt,
+            read: false,
+            icon: 'bi-x-circle'
+          });
+        }
+      }
+
       window.HE.notifications = Array.from(byId.values())
         .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     }
@@ -231,6 +266,32 @@ if ($stmt) {
     }
 
     function notifCard(n) {
+      /* Special: rejected worker application card (Red-themed) */
+      const isRejection = n.type === 'verification_rejected' || 
+                          n.type === 'rejected' || 
+                          (n.title && /reject|decline/i.test(n.title)) || 
+                          (n.msg && /rejected|declined/i.test(n.msg) && /verification|application|document|requirement/i.test(n.msg));
+
+      if (isRejection) {
+        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead('${String(n.id)}')" style="background:#fef2f2;border:1.5px solid #fca5a5;">
+          <div class="n-read-ripple"></div>
+          ${!n.read ? '<div class="n-unread-bar" style="background:#dc2626;"></div>' : ''}
+          <div class="n-ic" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-x-circle-fill"></i></div>
+          <div class="n-content">
+            <div class="n-title" style="color:#991b1b;font-weight:800;">${escHtml(n.title)}</div>
+            <div class="n-msg" style="color:#7f1d1d;line-height:1.45;">${escHtml(n.msg)}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+              <span style="font-size:11px;font-weight:800;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;padding:3px 10px;border-radius:999px;">Rejected</span>
+              <button onclick="event.stopPropagation(); goPage('provider_home.php');" style="border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(220,38,38,0.25);">Update Requirements</button>
+            </div>
+            <div class="n-time" style="margin-top:7px;color:#991b1b;">
+              ${!n.read ? '<div class="n-dot" style="background:#dc2626;"></div>' : '<i class="bi bi-check2-all n-read-check" style="color:#dc2626;"></i>'}
+              ${escHtml(n.time || 'Now')}
+            </div>
+          </div>
+        </div>`;
+      }
+
       /* Special: account verified card */
       if (n.type === 'account_verified') {
         return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead('${String(n.id)}')">
@@ -402,6 +463,7 @@ if ($stmt) {
 
         const next = data.notifications.map(n => ({
           id:         Number(n.id),
+          type:       n.type || 'general',
           title:      n.title,
           msg:        n.message,
           time:       providerTimeAgo(n.created_at),
@@ -417,7 +479,9 @@ if ($stmt) {
         renderNotifs();
 
         if (showNewToast && newItems.length) {
-          showToast(newItems[0].title || 'New notification', 'success');
+          const first = newItems[0];
+          const isRej = first.type === 'verification_rejected' || first.type === 'rejected' || (first.title && /reject|decline/i.test(first.title));
+          showToast(first.title || 'New notification', isRej ? 'error' : 'success');
         }
       } catch (e) { /* keep existing state if refresh fails */ }
     }
