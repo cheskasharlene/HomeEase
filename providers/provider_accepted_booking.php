@@ -281,6 +281,18 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
     </div>
   </div>
 
+  <!-- Provider Payment Confirmed Modal -->
+  <div id="paymentConfirmedOverlay" onclick="closePaymentConfirmedModal(event)" style="position:absolute;inset:0;z-index:950;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .22s;padding:20px;">
+    <div style="width:100%;max-width:340px;background:#fff;border-radius:20px;padding:24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.35);transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);" onclick="event.stopPropagation()">
+      <div style="width:52px;height:52px;background:linear-gradient(135deg,#059669,#10B981);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;margin:0 auto 14px;box-shadow:0 8px 20px rgba(16,185,129,0.3);">
+        <i class="bi bi-check-lg"></i>
+      </div>
+      <h3 style="font-family:'Poppins',sans-serif;font-size:17px;font-weight:800;color:#1A1A2E;margin:0 0 6px;">Payment Confirmed</h3>
+      <p style="font-size:13px;color:#7A7064;line-height:1.45;margin:0 0 18px;">Payment has been verified. You can now proceed to the client's location and start the service.</p>
+      <button class="mark-done-btn" style="background:linear-gradient(135deg,#059669,#10B981);width:100%;margin-top:0;font-size:13px;height:42px;" onclick="closePaymentConfirmedModal()">OK</button>
+    </div>
+  </div>
+
   </div><!-- /.wfp-shell -->
 
   <script src="../assets/js/app.js"></script>
@@ -454,20 +466,20 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       const modal = document.getElementById('paymentConfirmedOverlay');
       if (!modal) return;
       modal.style.display = 'flex';
-      requestAnimationFrame(() => {
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-      });
-      document.body.classList.add('modal-open');
+      void modal.offsetWidth;
+      modal.style.opacity = '1';
+      const card = modal.firstElementChild;
+      if (card) card.style.transform = 'scale(1)';
     }
 
-    function closePaymentConfirmedModal() {
+    function closePaymentConfirmedModal(e) {
+      if (e && e.target !== document.getElementById('paymentConfirmedOverlay')) return;
       const modal = document.getElementById('paymentConfirmedOverlay');
       if (!modal) return;
-      modal.classList.remove('show');
-      modal.setAttribute('aria-hidden', 'true');
+      modal.style.opacity = '0';
+      const card = modal.firstElementChild;
+      if (card) card.style.transform = 'scale(0.88)';
       setTimeout(() => { modal.style.display = 'none'; }, 220);
-      document.body.classList.remove('modal-open');
     }
 
     async function confirmPayment() {
@@ -476,6 +488,7 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
       const res = await fetch('../api/payments_api.php?action=provider_confirm', { method: 'POST', body: fd });
       const j = await res.json();
       if (j.success) {
+        closeProviderPaymentModal();
         await loadProviderPayment();
         showPaymentConfirmedModal();
       } else {

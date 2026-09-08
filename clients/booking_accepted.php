@@ -464,6 +464,26 @@ if (isset($_GET['booking_id'])) {
         </div>
       </div>
 
+      <!-- Payment Confirmed / Received Acknowledgment Overlay -->
+      <div class="payment-success-overlay" id="paymentReceivedOverlay" aria-hidden="true" style="display:none;">
+        <div class="payment-success-card" role="dialog" aria-modal="true" aria-labelledby="paymentReceivedTitle">
+          <div class="payment-success-head">
+            <div class="payment-success-icon" style="background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28);"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+              <h3 id="paymentReceivedTitle">Payment Received & Verified!</h3>
+              <p>Your payment has been confirmed by the worker. Proceeding to provider tracking...</p>
+            </div>
+          </div>
+          <div class="payment-success-note" style="background: #ECFDF5; border-color: #6EE7B7; color: #065F46;">
+            <i class="bi bi-geo-alt-fill" style="color: #059669;"></i>
+            Worker is preparing to start the service.
+          </div>
+          <div class="payment-success-actions">
+            <button type="button" class="payment-success-btn primary" style="background: linear-gradient(135deg, #10B981, #34D399); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28);" id="paymentReceivedOk" onclick="goToTracking()">Track Provider Now</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Cancel Booking Confirmation Modal -->
       <div class="cancel-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" style="display:none;" onclick="closeCancelModal(event)">
         <div class="cancel-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" onclick="event.stopPropagation()">
@@ -598,6 +618,25 @@ if (isset($_GET['booking_id'])) {
         modal.setAttribute('aria-hidden', 'false');
       });
       document.body.classList.add('modal-open');
+    }
+
+    function showPaymentReceivedModal() {
+      if (window.__paymentReceivedModalShown) return;
+      window.__paymentReceivedModalShown = true;
+      closeUserPaymentModal();
+      closePaymentSuccessModal();
+      const modal = document.getElementById('paymentReceivedOverlay');
+      if (modal) {
+        modal.style.display = 'flex';
+        requestAnimationFrame(() => {
+          modal.classList.add('show');
+          modal.setAttribute('aria-hidden', 'false');
+        });
+        document.body.classList.add('modal-open');
+      }
+      setTimeout(() => {
+        goToTracking();
+      }, 1600);
     }
 
     function openCancelModal() {
@@ -874,6 +913,13 @@ if (isset($_GET['booking_id'])) {
         const data = await res.json();
         if (!data.success) return;
         const status = String(data.status || '').toLowerCase();
+        if (status === 'progress' || status === 'active') {
+          stopBookingStatusPolling();
+          stopPaymentPolling();
+          stopPaymentExpiryTimer();
+          showPaymentReceivedModal();
+          return;
+        }
         if (status === 'done' || status === 'completed') {
           stopBookingStatusPolling();
           goPage('booking_detail.php?booking_id=' + encodeURIComponent(bookingId));
@@ -950,12 +996,16 @@ if (isset($_GET['booking_id'])) {
 
       if (status === 'completed') {
         document.getElementById('paymentCompletedNote').classList.remove('ab-hide');
+        closeUserPaymentModal();
+        closePaymentSuccessModal();
         stopPaymentExpiryTimer();
         stopPaymentPolling();
+        showPaymentReceivedModal();
         return;
       }
 
       if (status === 'submitted') {
+        closeUserPaymentModal();
         document.getElementById('paymentWaitingNote').classList.remove('ab-hide');
         stopPaymentExpiryTimer();
         startPaymentPolling();
@@ -1032,6 +1082,7 @@ if (isset($_GET['booking_id'])) {
         const res = await fetch('../api/payments_api.php?action=submit', { method: 'POST', body: fd });
         const j = await res.json();
         if (j.success) {
+          closeUserPaymentModal();
           showPaymentSuccessModal();
           await loadPaymentDetails();
         } else {
