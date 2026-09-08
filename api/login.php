@@ -17,7 +17,11 @@ if (!$email || !$pass) {
 }
 
 
-$stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role FROM users WHERE email = ?");
+$colRes = $conn->query("SHOW COLUMNS FROM users LIKE 'disabled'");
+$hasDisabled = $colRes && $colRes->num_rows > 0;
+$disabledCol = $hasDisabled ? ", disabled" : "";
+
+$stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role $disabledCol FROM users WHERE email = ?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
@@ -26,7 +30,9 @@ $stmt->close();
 if ($user) {
     $pwOk = password_verify($pass, $user['password']) || $pass === $user['password'];
     if ($pwOk) {
-       
+        if (!empty($user['disabled'])) {
+            respond(false, 'Your account has been suspended by the administrator. Please contact support.');
+        }
         if ($pass === $user['password'] && strpos($user['password'], '$2y$') !== 0) {
             $hashed = password_hash($pass, PASSWORD_BCRYPT);
             $upd = $conn->prepare("UPDATE users SET password=? WHERE id=?");
@@ -58,7 +64,7 @@ if ($user) {
     }
 }
 
-$stmt2 = $conn->prepare("SELECT sp.provider_id, sp.full_name, sp.email, sp.password, s.name AS service_category, sp.contact_number, sp.address FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.email = ?");
+$stmt2 = $conn->prepare("SELECT sp.provider_id, sp.full_name, sp.email, sp.password, s.name AS service_category, sp.contact_number, sp.address, sp.status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.email = ?");
 $stmt2->bind_param("s", $email);
 $stmt2->execute();
 $provider = $stmt2->get_result()->fetch_assoc();
@@ -67,7 +73,11 @@ $stmt2->close();
 if ($provider) {
     $pwOk = password_verify($pass, $provider['password']) || $pass === $provider['password'];
     if ($pwOk) {
-     
+        $pStatus = strtolower(trim((string)($provider['status'] ?? 'active')));
+        if (in_array($pStatus, ['suspended', 'inactive', 'paused'], true)) {
+            respond(false, 'Your worker account has been suspended by the administrator. Please contact support.');
+        }
+
         if ($pass === $provider['password'] && strpos($provider['password'], '$2y$') !== 0) {
             $hashed = password_hash($pass, PASSWORD_BCRYPT);
             $upd = $conn->prepare("UPDATE service_providers SET password=? WHERE provider_id=?");

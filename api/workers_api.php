@@ -8,6 +8,8 @@ if (empty($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/db.php';
+ensureNormalizationSchema($conn);
+syncProviderJobsDone($conn);
 
 header('Content-Type: application/json; charset=utf-8');
 

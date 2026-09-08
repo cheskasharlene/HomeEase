@@ -791,7 +791,7 @@ if (isset($_GET['booking_id'])) {
     }
 
     function renderStars(rating) {
-      let r = parseFloat(rating || 5);
+      let r = (rating !== undefined && rating !== null && !isNaN(rating)) ? parseFloat(rating) : 0;
       let html = '';
       for (let i = 1; i <= 5; i++) {
         if (r >= i) {
@@ -845,9 +845,9 @@ if (isset($_GET['booking_id'])) {
         document.getElementById('providerService').textContent = b.provider_specialty || b.service || 'Worker';
         document.getElementById('providerPhone').textContent = b.provider_phone || 'No contact info';
 
-        const ratingVal = parseFloat(b.provider_rating || 5);
+        const ratingVal = (b.provider_rating !== undefined && b.provider_rating !== null && !isNaN(b.provider_rating)) ? parseFloat(b.provider_rating) : 0;
         const jobsDone = parseInt(b.provider_jobs_done || 0);
-        const ratingText = ratingVal.toFixed(1) + ' (' + jobsDone + ' jobs)';
+        const ratingText = ratingVal > 0 ? ratingVal.toFixed(1) + ' (' + jobsDone + ' jobs)' : 'No ratings yet (' + jobsDone + ' jobs)';
 
         document.getElementById('providerStars').innerHTML = renderStars(ratingVal);
         document.getElementById('providerRatingText').textContent = ratingText;

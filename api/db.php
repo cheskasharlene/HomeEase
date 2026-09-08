@@ -476,6 +476,35 @@ function ensureNormalizationSchema($conn)
     // Backfill existing rows if they are empty
     @$conn->query("UPDATE admin_notifications SET provider_id = reference_id WHERE type = 'verification' AND provider_id IS NULL");
     @$conn->query("UPDATE admin_notifications SET qr_change_request_id = reference_id WHERE type = 'qr_change' AND qr_change_request_id IS NULL");
+
+    // Synchronize provider jobs_done count with database completed bookings
+    syncProviderJobsDone($conn);
+}
+
+/**
+ * Synchronize jobs_done count and average rating for service providers with actual completed bookings and reviews from database
+ */
+function syncProviderJobsDone($conn, $providerId = null)
+{
+    if (!$conn instanceof mysqli) return;
+    $where = "";
+    if ($providerId > 0) {
+        $where = "WHERE sp.provider_id = " . intval($providerId);
+    }
+    $sql = "UPDATE service_providers sp SET
+        jobs_done = (
+            SELECT COUNT(DISTINCT b.id)
+            FROM bookings b
+            LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = sp.provider_id
+            WHERE (b.provider_id = sp.provider_id OR (br.provider_id = sp.provider_id AND br.status IN ('accepted','completed','done')))
+              AND LOWER(b.status) IN ('done', 'completed')
+        ),
+        rating = COALESCE(
+            (SELECT ROUND(AVG(pr.rating), 1) FROM provider_reviews pr WHERE pr.provider_id = sp.provider_id),
+            0.0
+        )
+        {$where}";
+    @$conn->query($sql);
 }
 
 function ensureBookingStatusLogsTable($conn)
@@ -505,6 +534,9 @@ function logBookingStatusChange($conn, $bookingId, $oldStatus, $newStatus, $chan
     $stmt->bind_param('isssis', $bookingId, $oldStatus, $newStatus, $changedByRole, $changedById, $notes);
     $ok = $stmt->execute();
     $stmt->close();
+    if ($ok && in_array(strtolower((string)$newStatus), ['done', 'completed', 'cancelled'])) {
+        syncProviderJobsDone($conn);
+    }
     return $ok;
 }
 

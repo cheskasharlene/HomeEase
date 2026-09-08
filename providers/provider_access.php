@@ -40,6 +40,7 @@ if (!function_exists('providerGetVerificationState')) {
 
         $hasVerificationStatus = in_array('verification_status', $columns, true);
         $hasIsVerified = in_array('is_verified', $columns, true);
+        $hasStatus = in_array('status', $columns, true);
 
         $selectParts = [];
         if ($hasVerificationStatus) {
@@ -47,6 +48,9 @@ if (!function_exists('providerGetVerificationState')) {
         }
         if ($hasIsVerified) {
             $selectParts[] = 'is_verified';
+        }
+        if ($hasStatus) {
+            $selectParts[] = 'status';
         }
 
         $fallbackDocs = ['valid_id', 'selfie_verification', 'proof_of_address', 'barangay_clearance', 'tools_&_kits'];
@@ -73,6 +77,14 @@ if (!function_exists('providerGetVerificationState')) {
 
         if (!$row) {
             return 'not_verified';
+        }
+
+        if ($hasStatus) {
+            $accountStatus = strtolower(trim((string) ($row['status'] ?? 'active')));
+            if (in_array($accountStatus, ['suspended', 'inactive', 'paused'], true)) {
+                $_SESSION['provider_verification_state'] = 'suspended';
+                return 'suspended';
+            }
         }
 
         $state = 'not_verified';
@@ -140,6 +152,13 @@ if (!function_exists('enforceProviderSectionAccess')) {
     {
         $providerId = (int) ($_SESSION['provider_id'] ?? 0);
         $state = providerGetVerificationState($existingConn, $providerId);
+
+        if ($state === 'suspended') {
+            unset($_SESSION['provider_id'], $_SESSION['provider_name'], $_SESSION['provider_email'], $_SESSION['provider_phone'], $_SESSION['provider_address'], $_SESSION['provider_specialty'], $_SESSION['provider_is_verified'], $_SESSION['provider_verification_state']);
+            header('Location: ../index.php?suspended=1');
+            exit;
+        }
+
         $isVerified = ($state === 'verified');
 
         if (!providerCanAccessSection($section, $isVerified)) {

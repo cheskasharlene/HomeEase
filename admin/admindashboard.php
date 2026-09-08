@@ -1742,8 +1742,14 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         return `<span class="${map[key] || 'badge-gray'}">${label}</span>`;
       }
 
+      function isWorkerSuspended(worker) {
+        if (!worker) return false;
+        const status = String(worker.status || worker || '').toLowerCase().trim();
+        return status === 'suspended' || status === 'inactive' || status === 'paused' || isWorkerUiPaused(worker.id || worker);
+      }
+
       function getWorkerVerificationBadgeState(worker) {
-        if (isWorkerUiPaused(worker?.id)) return 'paused';
+        if (isWorkerSuspended(worker)) return 'paused';
         const verificationStatus = String(worker?.verification_status || '').toLowerCase().trim();
         const isVerified = Number(worker?.is_verified) === 1 || verificationStatus === 'approved' || verificationStatus === 'verified';
         return isVerified ? 'active' : 'inactive';
@@ -1753,12 +1759,19 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         return !!(workerUiState[String(workerId)] && workerUiState[String(workerId)].paused);
       }
 
-      function toggleWorkerPause(workerId) {
-        const key = String(workerId);
-        const currentlyPaused = isWorkerUiPaused(workerId);
-        workerUiState[key] = { paused: !currentlyPaused };
-        toast(!currentlyPaused ? 'Worker temporarily suspended (UI only)' : 'Worker reactivated (UI only)');
-        loadWorkers();
+      async function toggleWorkerPause(workerId) {
+        try {
+          const data = await api('workers', 'toggle_suspend', fd({ id: workerId }));
+          if (data.success) {
+            if (workerUiState[String(workerId)]) delete workerUiState[String(workerId)];
+            toast(data.message || (data.status === 'suspended' ? 'Worker account suspended' : 'Worker account reactivated'));
+            loadWorkers();
+          } else {
+            toast(data.message || 'Failed to update worker status', 'e');
+          }
+        } catch (e) {
+          toast('Error updating worker status', 'e');
+        }
       }
 
       function php(n) { return '₱' + parseFloat(n || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -2411,7 +2424,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       function getWorkerDisplayStatus(worker) {
-        if (isWorkerUiPaused(worker?.id)) return 'paused';
+        if (isWorkerSuspended(worker)) return 'paused';
         const verificationStatus = String(worker?.verification_status || '').toLowerCase().trim();
         if (Number(worker?.is_verified) === 1 || verificationStatus === 'approved' || verificationStatus === 'verified') return 'verified';
         if (verificationStatus === 'rejected') return 'rejected';
@@ -2497,12 +2510,13 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           const wkPageItems = workers.slice(wkStart, wkStart + PAGE_SIZE);
 
           document.getElementById('wkList').innerHTML = wkPageItems.map(w => {
-            const isLow = w.rating > 0 && w.rating < 3.0;
-            const starHtml = isLow ? `<span style="color:#ef4444;font-weight:800;">⭐ ${parseFloat(w.rating).toFixed(1)}</span>` : `⭐ ${parseFloat(w.rating || 0).toFixed(1)}`;
-            const isPaused = isWorkerUiPaused(w.id);
+            const ratingVal = parseFloat(w.rating || 0);
+            const isLow = ratingVal > 0 && ratingVal < 3.0;
+            const starHtml = ratingVal > 0 ? (isLow ? `<span style="color:#ef4444;font-weight:800;">⭐ ${ratingVal.toFixed(1)}</span>` : `⭐ ${ratingVal.toFixed(1)}`) : `<span style="color:var(--txt-muted);">⭐ 0.0</span>`;
+            const isPaused = isWorkerSuspended(w);
             const pauseBtnClass = isPaused ? 'resume' : 'pause';
             const pauseIcon = isPaused ? 'bi-play-fill' : 'bi-pause-fill';
-            const pauseTooltip = isPaused ? 'Reactivate Worker' : 'Suspend Worker';
+            const pauseTooltip = isPaused ? 'Unsuspend Worker' : 'Suspend Worker';
             return `
       <div class="list-item" onclick='openWorkerSheet(${JSON.stringify(w).replace(/'/g, "&#39;")})' style="cursor:pointer;">
         <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(w.name)}&background=FDECC8&color=F5A623&size=80" style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="">

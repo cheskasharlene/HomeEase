@@ -58,7 +58,7 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
-    $checkStmt = $conn->prepare('SELECT COALESCE(is_verified, 0) AS is_verified FROM service_providers WHERE provider_id = ? LIMIT 1');
+    $checkStmt = $conn->prepare('SELECT COALESCE(is_verified, 0) AS is_verified, COALESCE(status, "active") AS status FROM service_providers WHERE provider_id = ? LIMIT 1');
     if (!$checkStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
@@ -70,6 +70,12 @@ if ($method === 'POST') {
 
     if (!$checkRow) {
         echo json_encode(['success' => false, 'message' => 'Provider not found.']);
+        exit;
+    }
+
+    $accountStatus = strtolower(trim((string) ($checkRow['status'] ?? 'active')));
+    if (in_array($accountStatus, ['suspended', 'inactive', 'paused'], true)) {
+        echo json_encode(['success' => false, 'message' => 'Your account is suspended. You cannot set availability to online.']);
         exit;
     }
 

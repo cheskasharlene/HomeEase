@@ -273,6 +273,7 @@ if ($section === 'users') {
 
 if ($section === 'workers') {
     if ($method === 'GET' && $action === 'list') {
+        syncProviderJobsDone($conn);
         $search = trim($_GET['search'] ?? '');
         $filter = trim($_GET['filter'] ?? '');
         $verificationFilter = trim($_GET['verification_filter'] ?? '');
@@ -346,14 +347,21 @@ if ($section === 'workers') {
         respond($ok, $ok ? 'Worker deleted.' : 'Not found.');
     }
 
-    if ($method === 'POST' && $action === 'toggle_status') {
+    if ($method === 'POST' && ($action === 'toggle_suspend' || $action === 'toggle_status')) {
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) respond(false, 'Invalid ID.');
         $r = $conn->query("SELECT status FROM service_providers WHERE provider_id=$id");
-        $cur = $r ? $r->fetch_row()[0] : '';
-        $new = $cur === 'active' ? 'inactive' : 'active';
-        $conn->query("UPDATE service_providers SET status='$new' WHERE provider_id=$id");
-        respond(true, $new === 'active' ? 'Worker activated.' : 'Worker deactivated.', ['status' => $new]);
+        $cur = $r ? strtolower(trim((string)$r->fetch_row()[0])) : '';
+        $isSuspended = ($cur === 'suspended' || $cur === 'inactive' || $cur === 'paused');
+        $newStatus = $isSuspended ? 'active' : 'suspended';
+        
+        if ($newStatus === 'suspended') {
+            $conn->query("UPDATE service_providers SET status='suspended', availability_status='offline' WHERE provider_id=$id");
+        } else {
+            $conn->query("UPDATE service_providers SET status='active' WHERE provider_id=$id");
+        }
+        
+        respond(true, $newStatus === 'suspended' ? 'Worker account suspended successfully.' : 'Worker account unsuspended successfully.', ['status' => $newStatus, 'id' => $id]);
     }
 
     if ($method === 'POST' && $action === 'toggle_verification') {
@@ -877,7 +885,7 @@ if ($section === 'incidents') {
                 respond(true, 'Client suspended successfully.');
             }
         } else if ($role === 'provider' || $role === 'service provider') {
-            $stmt = $conn->prepare("UPDATE service_providers SET status = 'inactive' WHERE provider_id = ?");
+            $stmt = $conn->prepare("UPDATE service_providers SET status = 'suspended', availability_status = 'offline' WHERE provider_id = ?");
             $stmt->bind_param("i", $reporter_id);
             if ($stmt->execute()) {
                 respond(true, 'Service Provider suspended successfully.');

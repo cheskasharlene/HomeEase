@@ -452,7 +452,7 @@ if ($uid > 0) {
         'Carpentry':     { g:'linear-gradient(135deg,#431407,#C2410C)', light:'#FEF2E7', text:'#9A3412' },
       };
       const sc = specialtyColors[w.specialty] || { g:'linear-gradient(135deg,#E8820C,#F5A623)', light:'#FFF3E0', text:'#B45309' };
-      const stars = parseFloat(w.rating || 4.8);
+      const stars = (w.rating !== undefined && w.rating !== null && !isNaN(w.rating)) ? parseFloat(w.rating) : 0;
       const starsHtml = Array.from({length:5},(_,i)=>`<i class="bi ${i<Math.floor(stars)?'bi-star-fill':(i<stars?'bi-star-half':'bi-star')}" style="color:#F5A623;font-size:10px;"></i>`).join('');
       return `<div class="pro-card" onclick="openProviderProfile(${w._allIdx}, 'all')">
         ${w.top?'<div class="pro-top-badge"><i class="bi bi-trophy-fill"></i> TOP PRO</div>':''}
@@ -517,7 +517,7 @@ if ($uid > 0) {
       if (!w) return;
       
       const sc = proSpecColors[w.specialty] || { g: 'linear-gradient(135deg,#E8820C,#F5A623)', light: '#FFF3E0', text: '#C2410C' };
-      const stars = parseFloat(w.rating || 4.8);
+      const stars = (w.rating !== undefined && w.rating !== null && !isNaN(w.rating)) ? parseFloat(w.rating) : 0;
       const initials = w.name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
       
       const overlay = document.getElementById('proProfileOverlay');
