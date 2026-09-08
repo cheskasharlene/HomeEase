@@ -73,14 +73,7 @@ if ($uid > 0) {
               <div class="h-greet"><?= $greeting ?></div>
               <div class="h-name" id="hUserName"><?= $userName ?></div>
             </div>
-            <div class="h-top-right">
-              <div class="h-bell" onclick="openChat('support')" title="Chat with us" style="position:relative;">
-                <i class="bi bi-chat-dots-fill"></i>
-                <div
-                  style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:#f59e0b;border-radius:50%;">
-                </div>
-              </div>
-            </div>
+
           </div>
         </div>
 

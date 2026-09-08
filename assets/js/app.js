@@ -443,267 +443,7 @@ function submitContact() {
   );
 }
 
-let _chatTab = "support"; // single channel now
-let _chatHistory = {
-  support: [
-    {
-      from: "bot",
-      time: _chatNow(),
-      text: "Kumusta! Ako ang HomeEase AI Assistant. Paano kita matutulungan ngayon?\n\nHello! I'm the HomeEase AI Assistant. How can I help you today?",
-    },
-  ],
-};
-let _chatTyping = false;
 
-function _chatNow() {
-  const d = new Date();
-  return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-}
-
-// _chatAutoReplies removed — using Gemini AI for all responses
-
-const _chatQuickReplies = {
-  support: [
-    "Ipakita ang aking mga booking",
-    "Mag-cancel ng booking",
-    "Mag-book ng serbisyo",
-    "Ano ang mga available na serbisyo?",
-  ],
-};
-
-function openChat(tab) {
-  _chatTab = tab || "support";
-  const m = document.getElementById("chatModal");
-  if (m) {
-    m.classList.add("on");
-    _renderChatTab();
-    // Hide the badge
-    const badge = document.querySelector(".chat-badge");
-    if (badge) badge.style.display = "none";
-    setTimeout(() => {
-      const i = document.getElementById("chatInp");
-      if (i) i.focus();
-    }, 400);
-  }
-}
-function closeChat() {
-  const m = document.getElementById("chatModal");
-  if (m) m.classList.remove("on");
-}
-function switchChatTab(tab) {
-  // Single chat channel — no tab switching needed
-  _renderChatMsgs();
-  _renderChatQuick();
-}
-function _renderChatTab() {
-  _renderChatMsgs();
-  _renderChatQuick();
-}
-function _renderChatMsgs() {
-  const box = document.getElementById("chatMsgs");
-  if (!box) return;
-  const msgs = _chatHistory[_chatTab] || [];
-  box.innerHTML =
-    `<div class="chat-date-div">Today</div>` +
-    msgs
-      .map((m) => {
-        const mine = m.from === "me";
-        // Allow HTML in bot messages (for booking cards etc)
-        const bubbleContent =
-          !mine && m.html ? m.html : m.text.replace(/\n/g, "<br>");
-        return `<div class="chat-msg${mine ? " mine" : ""}">
-        ${!mine ? `<div class="chat-msg-av"><i class="bi bi-headset"></i></div>` : ""}
-        <div style="max-width:85%;">
-          <div class="chat-bubble" style="${
-            mine
-              ? "background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;border-radius:18px;border-bottom-right-radius:6px;box-shadow:0 4px 14px rgba(232,130,12,.3);padding:10px 14px;"
-              : "background:#FFF3E0;color:#1a1a2e;border:1.5px solid #FDECC8;border-radius:18px;border-bottom-left-radius:6px;padding:10px 14px;"
-          }">${bubbleContent}<span class="chat-bubble-time" style="display:block;font-size:10px;margin-top:3px;text-align:right;color:${mine ? "rgba(255,255,255,.65)" : "#FDBA74"};">${m.time}</span></div>
-        </div>
-      </div>`;
-      })
-      .join("");
-  box.scrollTop = box.scrollHeight;
-}
-function _renderChatQuick() {
-  const qr = document.getElementById("chatQuick");
-  if (!qr) return;
-  const reps = _chatQuickReplies[_chatTab] || [];
-  qr.innerHTML = reps
-    .map(
-      (r) =>
-        `<span class="chat-qr" onclick="sendQuickReply('${r}')">${r}</span>`,
-    )
-    .join("");
-}
-function sendQuickReply(text) {
-  const inp = document.getElementById("chatInp");
-  if (inp) inp.value = text;
-  sendChat();
-}
-function sendChat() {
-  const inp = document.getElementById("chatInp");
-  if (!inp) return;
-  const text = inp.value.trim();
-  if (!text) return;
-  inp.value = "";
-  inp.style.height = "auto";
-
-  _chatHistory[_chatTab].push({ from: "me", time: _chatNow(), text });
-  _renderChatMsgs();
-  _showChatTyping();
-
-  // Pass last 12 messages as context
-  const history = _chatHistory[_chatTab]
-    .slice(-13, -1)
-    .filter((m) => m.from === "me" || m.from === "bot")
-    .map((m) => ({ role: m.from === "me" ? "user" : "model", text: m.text }));
-
-  fetch("api/gemini_chat.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, history: history }),
-  })
-    .then((r) => r.json())
-    .then((data) => {
-      _hideChatTyping();
-      if (!data.success && !data.reply) {
-        _chatHistory[_chatTab].push({
-          from: "bot",
-          time: _chatNow(),
-          text:
-            data.message ||
-            "Sorry, I could not get a response. Please try again.",
-        });
-        _renderChatMsgs();
-        return;
-      }
-
-      const reply = data.reply || "Sorry, I could not get a response.";
-
-      // Handle successful cancel action
-      if (data.action_result === "cancelled" && data.booking_id) {
-        const successHtml = `
-          <div style="background:#d1fae5;border-radius:12px;padding:12px;margin-bottom:6px;border:1.5px solid #6ee7b7;">
-            <div style="font-size:13px;font-weight:700;color:#059669;margin-bottom:4px;">✅ Booking Cancelled</div>
-            <div style="font-size:12px;color:#E8960F;">Booking #${data.booking_id} has been successfully cancelled.</div>
-          </div>
-          <div style="font-size:13px;color:#1a1a2e;">${reply}</div>`;
-        _chatHistory[_chatTab].push({
-          from: "bot",
-          time: _chatNow(),
-          text: reply,
-          html: successHtml,
-        });
-      } else if (data.action_result === "booking_created" && data.booking_id) {
-        // Handle successful booking creation
-        const priceStr = data.price ? "₱" + parseFloat(data.price).toLocaleString() : "";
-        const waitUrl  = `clients/waiting_for_provider.php?booking_id=${data.booking_id}`;
-        const bookingHtml = `
-          <div onclick="closeChat();goPage('${waitUrl}')" style="background:#e0f2fe;border-radius:12px;padding:12px;margin-bottom:6px;border:1.5px solid #7dd3fc;cursor:pointer;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='0 4px 16px rgba(3,105,161,.25)'" onmouseout="this.style.boxShadow='none'">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-              <div style="font-size:13px;font-weight:700;color:#0369a1;">📋 Booking Created!</div>
-              <div style="font-size:11px;color:#0ea5e9;font-weight:600;">Tap to track →</div>
-            </div>
-            <div style="font-size:12px;color:#0369a1;font-weight:600;">Booking #${data.booking_id} — ${data.service || ""} ${priceStr}</div>
-            <div style="font-size:11px;color:#0ea5e9;margin-top:4px;">Naghihintay ng provider… / Waiting for a provider to accept…</div>
-          </div>
-          <div style="font-size:13px;color:#1a1a2e;">${reply}</div>`;
-        _chatHistory[_chatTab].push({
-          from: "bot",
-          time: _chatNow(),
-          text: reply,
-          html: bookingHtml,
-        });
-      } else {
-        _chatHistory[_chatTab].push({
-          from: "bot",
-          time: _chatNow(),
-          text: reply,
-        });
-      }
-
-      // Update quick replies based on context
-      _updateSmartQuickReplies(reply);
-      _renderChatMsgs();
-    })
-    .catch(() => {
-      _hideChatTyping();
-      _chatHistory[_chatTab].push({
-        from: "bot",
-        time: _chatNow(),
-        text: "Sorry, I am having trouble connecting right now. Please try again in a moment.",
-      });
-      _renderChatMsgs();
-    });
-}
-
-function _updateSmartQuickReplies(lastReply) {
-  const qr = document.getElementById("chatQuick");
-  if (!qr) return;
-  const lower = lastReply.toLowerCase();
-  let suggestions = [];
-
-  if (
-    (lower.includes("cancel") || lower.includes("kansela")) &&
-    (lower.includes("yes") || lower.includes("confirm") || lower.includes("sigurado"))
-  ) {
-    // Awaiting cancel confirmation
-    suggestions = ["YES, i-cancel na", "Hindi, ituloy pa"];
-  } else if (
-    lower.includes("anong serbisyo") ||
-    lower.includes("what service") ||
-    lower.includes("anong address") ||
-    lower.includes("what address")
-  ) {
-    // Gathering booking info
-    suggestions = ["House Cleaner", "Plumber", "Helper", "Appliance Technician"];
-  } else if (lower.includes("booking") && (lower.includes("status") || lower.includes("cancelled") || lower.includes("created"))) {
-    suggestions = ["Ipakita lahat ng booking", "Mag-cancel ng booking", "Mag-book pa"];
-  } else if (lower.includes("book") || lower.includes("service") || lower.includes("serbisyo")) {
-    suggestions = [
-      "Ipakita ang aking mga booking",
-      "Ano ang mga serbisyo?",
-      "Mag-book ng House Cleaner",
-    ];
-  } else {
-    suggestions = [
-      "Ipakita ang aking mga booking",
-      "Mag-cancel ng booking",
-      "Mag-book ng serbisyo",
-      "Mga available na serbisyo",
-    ];
-  }
-
-  qr.innerHTML = suggestions
-    .map(
-      (s) =>
-        `<span class="chat-qr" onclick="sendQuickReply('${s}')">${s}</span>`,
-    )
-    .join("");
-}
-function _showChatTyping() {
-  if (_chatTyping) return;
-  _chatTyping = true;
-  const box = document.getElementById("chatMsgs");
-  if (!box) return;
-  const el = document.createElement("div");
-  el.className = "chat-msg";
-  el.id = "chatTypingEl";
-  el.innerHTML = `<div class="chat-msg-av"><i class="bi bi-headset"></i></div>
-    <div class="chat-typing">
-      <div class="chat-bubble">
-        <div class="type-dot"></div><div class="type-dot"></div><div class="type-dot"></div>
-      </div>
-    </div>`;
-  box.appendChild(el);
-  box.scrollTop = box.scrollHeight;
-}
-function _hideChatTyping() {
-  _chatTyping = false;
-  const el = document.getElementById("chatTypingEl");
-  if (el) el.remove();
-}
 
 const ALL_OFFERS = [
   {
@@ -1022,16 +762,6 @@ function injectGlobalModals() {
         <div class="sup-txt"><div class="sup-nm">Contact Us</div><div class="sup-ds">Send us a message</div></div>
         <i class="bi bi-chevron-right sup-arr"></i>
       </div>
-      <div class="sup-item" onclick="closeSupport();openChat('support')">
-        <div class="sup-ic">🎧</div>
-        <div class="sup-txt"><div class="sup-nm">Live Chat — Support</div><div class="sup-ds">Chat with customer support now</div></div>
-        <i class="bi bi-chevron-right sup-arr"></i>
-      </div>
-      <div class="sup-item" onclick="closeSupport();openChat('admin')">
-        <div class="sup-ic">🏠</div>
-        <div class="sup-txt"><div class="sup-nm">Live Chat — Admin</div><div class="sup-ds">Message the HomeEase admin team</div></div>
-        <i class="bi bi-chevron-right sup-arr"></i>
-      </div>
       <div class="sup-item" onclick="openRating()">
         <div class="sup-ic">⭐</div>
         <div class="sup-txt"><div class="sup-nm">Rate HomeEase</div><div class="sup-ds">Share your experience</div></div>
@@ -1074,10 +804,6 @@ function injectGlobalModals() {
       "How do I use bookmarks?",
       "Tap the 🔖 bookmark icon on any booking card to save it. Access all saved bookings from your Profile → Saved Bookings.",
     ],
-    [
-      "How does Live Chat work?",
-      "Open Support → Live Chat to instantly message our support team or admin. We reply within minutes during business hours.",
-    ],
   ];
   help.innerHTML = `
     <div class="help-sheet">
@@ -1107,10 +833,7 @@ function injectGlobalModals() {
       <div class="cont-hand"></div>
       <div style="font-family:'Poppins',sans-serif;font-size:18px;font-weight:800;color:var(--txt-primary);margin-bottom:4px;">Contact Us</div>
       <div style="font-size:13px;color:var(--txt-muted);margin-bottom:18px;">Reach us through any channel</div>
-      <div class="cont-channel" onclick="closeContact();openChat('support')">
-        <div class="cont-ch-ic"><i class="bi bi-chat-dots-fill"></i></div>
-        <div><div class="cont-ch-nm">Live Chat</div><div class="cont-ch-ds">Instant messaging with support</div></div>
-      </div>
+
       <div class="cont-channel" onclick="showToast('Opening Messenger...')">
         <div class="cont-ch-ic"><i class="bi bi-messenger"></i></div>
         <div><div class="cont-ch-nm">Facebook Messenger</div><div class="cont-ch-ds">Usually replies within minutes</div></div>
@@ -1240,39 +963,7 @@ function injectGlobalModals() {
     </div>`;
   shell.appendChild(offers);
 
-  const chat = document.createElement("div");
-  chat.id = "chatModal";
-  chat.onclick = function (e) {
-    if (e.target === this) closeChat();
-  };
-  chat.innerHTML = `
-    <div class="chat-sheet">
-      <div style="position:relative;">
-        <div class="chat-hdr-hand"></div>
-      </div>
-      <div class="chat-hdr">
-        <div class="chat-av">
-          <i class="bi bi-headset"></i>
-          <div class="chat-av-dot"></div>
-        </div>
-        <div class="chat-hdr-info">
-          <div class="chat-hdr-nm" id="chatAgentNm">HomeEase AI Assistant</div>
-          <div class="chat-hdr-st">● Online · Gemini AI</div>
-        </div>
-        <button style="background:none;border:none;color:var(--txt-muted);font-size:22px;cursor:pointer;" onclick="closeChat()">
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-      <div class="chat-msgs" id="chatMsgs"></div>
-      <div class="chat-quick" id="chatQuick"></div>
-      <div class="chat-inp-bar">
-        <textarea class="chat-inp" id="chatInp" placeholder="Mag-type ng mensahe... / Type your message..." rows="1"
-          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"
-          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>
-        <button class="chat-send" onclick="sendChat()"><i class="bi bi-send-fill"></i></button>
-      </div>
-    </div>`;
-  shell.appendChild(chat);
+
 }
 
 let pinStep = "set",
