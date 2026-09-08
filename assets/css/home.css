@@ -1914,6 +1914,10 @@
       transform: translateY(-2px);
     }
 
+    .ni:has(.nb-c):hover {
+      transform: none !important;
+    }
+
     .ni:active {
       transform: scale(0.95);
     }
@@ -1927,6 +1931,11 @@
     .ni:hover i {
       color: #F5A623;
       transform: scale(1.1);
+    }
+
+    .ni:has(.nb-c):hover i {
+      transform: none !important;
+      color: #fff !important;
     }
 
     .ni.on i {
@@ -1960,13 +1969,13 @@
       justify-content: center;
       box-shadow: 0 6px 20px rgba(245, 166, 35, .4);
       margin-top: -28px;
-      transition: all 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      transition: transform 0.15s ease;
       border: none;
     }
 
     .nb-c:hover {
-      transform: scale(1.08);
-      box-shadow: 0 8px 28px rgba(245, 166, 35, .5);
+      transform: none !important;
+      box-shadow: 0 6px 20px rgba(245, 166, 35, .4) !important;
     }
 
     .nb-c:active {
@@ -1976,11 +1985,12 @@
     .nb-c i {
       color: #fff !important;
       font-size: 26px;
-      transition: transform 0.2s ease;
+      transition: none;
     }
 
     .nb-c:hover i {
-      transform: scale(1.1) rotate(90deg);
+      transform: none !important;
+      color: #fff !important;
     }
 
     .ndot {

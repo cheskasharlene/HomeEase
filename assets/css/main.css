@@ -903,12 +903,19 @@ body {
     0 6px 20px rgba(232,130,12,0.45),
     0 2px 8px rgba(0,0,0,0.12),
     inset 0 1px 0 rgba(255,255,255,0.25);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.15s ease;
 }
 
 .nb-c:hover {
-  transform: scale(1.08) translateY(-2px);
-  box-shadow: 0 10px 28px rgba(232,130,12,0.5), 0 4px 12px rgba(0,0,0,0.15);
+  transform: none;
+}
+
+.nb-c:active {
+  transform: scale(0.95);
+}
+
+.ni:has(.nb-c):hover {
+  transform: none;
 }
 
 
