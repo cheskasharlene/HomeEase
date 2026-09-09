@@ -19,7 +19,7 @@ $address = trim($input['address'] ?? '');
 $specialty = trim($input['specialty'] ?? '');
 $pass = trim($input['password'] ?? '');
 
-if (!$first || !$last || !$email || !$pass) {
+if (!$first || !$last || !$email || !$address || !$pass) {
     respond(false, 'Please fill in all required fields.');
 }
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {

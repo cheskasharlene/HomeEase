@@ -325,6 +325,13 @@ if (!empty($_SESSION['provider_id'])) {
             <i class="bi bi-telephone-fill fi-icon"></i>
           </div>
         </div>
+        <div class="fg">
+          <label class="fl">Address</label>
+          <div class="fi-wrap">
+            <input type="text" class="fi" id="regAddress" placeholder="e.g. 123 Mauban, Quezon" autocomplete="street-address" />
+            <i class="bi bi-geo-alt-fill fi-icon"></i>
+          </div>
+        </div>
 
 
 
@@ -503,11 +510,12 @@ if (!empty($_SESSION['provider_id'])) {
       const last = document.getElementById('regLast').value.trim();
       const email = document.getElementById('regEmail').value.trim();
       const phone = document.getElementById('regPhone').value.trim();
+      const address = document.getElementById('regAddress').value.trim();
       const specialty = document.getElementById('regSpecialty').value.trim();
       const pwd = document.getElementById('regPwd').value;
       const pwd2 = document.getElementById('regPwd2').value;
 
-      if (!first || !last || !email || !phone || !pwd || !pwd2) { showAlert('regErr', 'regErrTxt', 'Please fill in all fields.', 'error'); return; }
+      if (!first || !last || !email || !phone || !address || !pwd || !pwd2) { showAlert('regErr', 'regErrTxt', 'Please fill in all fields.', 'error'); return; }
       if (accountType === 'provider' && !specialty) { showAlert('regErr', 'regErrTxt', 'Please select your specialty.', 'error'); return; }
       if (pwd !== pwd2) { showAlert('regErr', 'regErrTxt', 'Passwords do not match.', 'error'); return; }
       if (pwd.length < 8) { showAlert('regErr', 'regErrTxt', 'Password must be at least 8 characters long.', 'error'); return; }
@@ -520,7 +528,7 @@ if (!empty($_SESSION['provider_id'])) {
       fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ first, last, email, phone, specialty, password: pwd, account_type: accountType })
+        body: JSON.stringify({ first, last, email, phone, address, specialty, password: pwd, account_type: accountType })
       })
         .then(async (r) => {
           const result = await parseApiResponse(r);
