@@ -346,13 +346,7 @@
       opacity: 0;
       transform: translateY(20px) scale(0.96);
       animation: sacIn .5s cubic-bezier(.22,1,.36,1) forwards;
-      transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease;
     }
-    .svc-ad-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 24px 48px rgba(245,166,35,.38), 0 8px 20px rgba(0,0,0,.18);
-    }
-    .svc-ad-card:active { transform: translateY(-4px) scale(.98); }
 
     @keyframes sacIn {
       to { opacity: 1; transform: translateY(0) scale(1); }
@@ -374,11 +368,6 @@
       background-position: center;
       background-repeat: no-repeat;
       filter: brightness(0.7) saturate(1.1);
-      transition: transform .45s cubic-bezier(.22,1,.36,1), filter .3s ease;
-    }
-    .svc-ad-card:hover .sac-img {
-      transform: scale(1.06);
-      filter: brightness(0.6) saturate(1.2);
     }
     .sac-pattern {
       position: absolute;
@@ -418,11 +407,6 @@
       opacity: .30;
       pointer-events: none;
       filter: drop-shadow(0 4px 8px rgba(0,0,0,.2));
-      transition: opacity .25s ease, transform .25s ease;
-    }
-    .svc-ad-card:hover .sac-emoji {
-      opacity: .45;
-      transform: scale(1.12) rotate(-6deg);
     }
 
     .sac-body {
@@ -600,13 +584,7 @@
     .sdp-feat-item i { font-size: 16px; flex-shrink: 0; }
 
     .sdp-stats {
-      display: flex;
-      align-items: center;
-      background: var(--teal-xlt);
-      border-radius: 16px;
-      padding: 14px 10px;
-      margin-bottom: 22px;
-      gap: 0;
+      display: none !important;
     }
     .sdp-stat {
       flex: 1;
@@ -660,14 +638,8 @@
       min-width: 260px !important;
       height: 220px !important;
       border-radius: 24px !important;
-      transition: transform .32s cubic-bezier(.22,1,.36,1), box-shadow .32s ease !important;
-      will-change: transform, box-shadow;
+      transition: none !important;
     }
-    .svc-ad-card:hover {
-      transform: translateY(-10px) !important;
-      box-shadow: 0 28px 52px rgba(245,166,35,.40), 0 8px 22px rgba(0,0,0,.16) !important;
-    }
-    .svc-ad-card:active { transform: translateY(-3px) scale(.97) !important; }
 
     .sac-top {
       position: relative;
@@ -725,10 +697,6 @@
       align-items: center;
       gap: 5px;
       white-space: nowrap;
-      transition: background .2s ease;
-    }
-    .svc-ad-card:hover .sac-cta {
-      background: rgba(255,255,255,.4);
     }
     .sac-cta i { font-size: 11px; }
 
@@ -814,12 +782,7 @@
 
     /* Stats row */
     .sdp-stats {
-      display: flex;
-      align-items: center;
-      background: var(--teal-xlt);
-      border-radius: 14px;
-      padding: 12px 8px;
-      margin-bottom: 14px;
+      display: none !important;
     }
 
     /* Price chips */
@@ -2412,7 +2375,7 @@
       color: #EBCB93;
     }
 
-    /* ─── Our Services Grid Layout ─── */
+    /* ─── Our Services Grid Layout (2-Column Grid matching reference) ─── */
     .svc-ads-grid {
       display: grid !important;
       grid-template-columns: repeat(2, 1fr) !important;
@@ -2430,26 +2393,38 @@
       display: flex !important;
       flex-direction: column !important;
       justify-content: space-between !important;
+      position: relative !important;
+      overflow: hidden !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14) !important;
+      transform: none !important;
+      transition: none !important;
+      box-sizing: border-box !important;
     }
 
     .svc-ads-grid .sac-top {
       display: flex !important;
       justify-content: flex-start !important;
       align-items: center !important;
+      position: relative !important;
+      z-index: 3 !important;
     }
 
     .svc-ads-grid .sac-badge {
-      font-size: 8px !important;
+      font-family: 'Poppins', sans-serif !important;
+      font-size: 8.5px !important;
       font-weight: 700 !important;
       padding: 3px 8px !important;
       border-radius: 20px !important;
       background: rgba(255, 255, 255, 0.22) !important;
+      backdrop-filter: blur(4px) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
       border: 1px solid rgba(255, 255, 255, 0.4) !important;
       text-shadow: none !important;
       color: #fff !important;
+      white-space: nowrap !important;
     }
 
-    /* Hide promo label in grid view to prevent clutter */
     .svc-ads-grid .sac-promo {
       display: none !important;
     }
@@ -2467,19 +2442,49 @@
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
+      position: relative !important;
+      z-index: 3 !important;
     }
 
     .svc-ads-grid .sac-tagline {
+      font-family: 'Poppins', sans-serif !important;
       font-size: 14px !important;
       font-weight: 800 !important;
       line-height: 1.25 !important;
-      white-space: normal !important;
+      white-space: pre-line !important;
       color: #fff !important;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15) !important;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.2) !important;
+      letter-spacing: -0.2px !important;
     }
 
-    /* Hide subline and rating to reduce vertical clutter */
-    .svc-ads-grid .sac-subline,
+    .svc-ads-grid .sac-subline {
+      display: block !important;
+      font-family: 'Nunito', sans-serif !important;
+      font-size: 10px !important;
+      font-weight: 700 !important;
+      line-height: 1.25 !important;
+      color: rgba(255, 255, 255, 0.95) !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+      margin-top: 3px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
+    .svc-ads-grid .sac-details {
+      display: block !important;
+      font-family: 'Nunito', sans-serif !important;
+      font-size: 9px !important;
+      font-weight: 600 !important;
+      line-height: 1.2 !important;
+      color: rgba(255, 255, 255, 0.82) !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+      margin-top: 2px !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      white-space: nowrap !important;
+    }
+
     .svc-ads-grid .sac-rating {
       display: none !important;
     }
@@ -2491,6 +2496,8 @@
       padding-top: 8px !important;
       margin-top: auto !important;
       border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+      position: relative !important;
+      z-index: 3 !important;
     }
 
     .svc-ads-grid .sac-footer-left {
@@ -2499,10 +2506,13 @@
     }
 
     .svc-ads-grid .sac-price {
-      font-size: 12px !important;
+      font-family: 'Poppins', sans-serif !important;
+      font-size: 11px !important;
       font-weight: 800 !important;
       color: #fff !important;
-      margin-top: 0 !important;
+      margin: 0 !important;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+      white-space: nowrap !important;
     }
 
     .svc-ads-grid .sac-price span {
@@ -2514,6 +2524,8 @@
     /* Redesign CTA button into a clean circular arrow button */
     .svc-ads-grid .sac-cta {
       background: rgba(255, 255, 255, 0.25) !important;
+      backdrop-filter: blur(4px) !important;
+      -webkit-backdrop-filter: blur(4px) !important;
       border: 1px solid rgba(255, 255, 255, 0.45) !important;
       color: #fff !important;
       width: 26px !important;
@@ -2523,23 +2535,75 @@
       align-items: center !important;
       justify-content: center !important;
       padding: 0 !important;
-      font-size: 0 !important; /* Hide text "See Details" */
-      transition: background 0.2s, transform 0.15s !important;
+      font-size: 0 !important;
+      transition: none !important;
       box-shadow: none !important;
+      flex-shrink: 0 !important;
     }
 
     .svc-ads-grid .sac-cta::after {
-      content: "\F138" !important; /* bootstrap icon bi-chevron-right */
+      content: "\F138" !important; /* bi-arrow-right */
       font-family: "bootstrap-icons" !important;
       font-size: 11px !important;
       font-weight: 800 !important;
+      color: #fff !important;
     }
 
     .svc-ads-grid .sac-cta i {
       display: none !important;
     }
 
-    .svc-ads-grid .svc-ad-card:hover .sac-cta {
-      background: rgba(255, 255, 255, 0.4) !important;
-      transform: scale(1.08) !important;
+    /* Worker ads remain completely visually static on hover and click */
+    .svc-ad-card:hover,
+    .svc-ad-card:active,
+    .svc-ads-grid .svc-ad-card:hover,
+    .svc-ads-grid .svc-ad-card:active {
+      transform: none !important;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14) !important;
+    }
+
+    .svc-ad-card:hover .sac-img,
+    .svc-ad-card:active .sac-img,
+    .svc-ads-grid .svc-ad-card:hover .sac-img,
+    .svc-ads-grid .svc-ad-card:active .sac-img {
+      transform: none !important;
+      filter: brightness(0.7) saturate(1.1) !important;
+    }
+
+    .svc-ad-card:hover .sac-cta,
+    .svc-ad-card:active .sac-cta,
+    .svc-ads-grid .svc-ad-card:hover .sac-cta,
+    .svc-ads-grid .svc-ad-card:active .sac-cta {
+      transform: none !important;
+      background: rgba(255, 255, 255, 0.25) !important;
+    }
+
+    @media (max-width: 340px) {
+      .svc-ads-grid {
+        gap: 8px !important;
+      }
+      .svc-ads-grid .svc-ad-card {
+        height: 165px !important;
+        padding: 12px 10px 10px !important;
+      }
+      .svc-ads-grid .sac-tagline {
+        font-size: 12.5px !important;
+      }
+      .svc-ads-grid .sac-badge {
+        font-size: 7.5px !important;
+        padding: 2px 6px !important;
+      }
+      .svc-ads-grid .sac-subline {
+        font-size: 9px !important;
+      }
+      .svc-ads-grid .sac-details {
+        font-size: 8px !important;
+      }
+      .svc-ads-grid .sac-price {
+        font-size: 10px !important;
+      }
+      .svc-ads-grid .sac-cta {
+        width: 24px !important;
+        height: 24px !important;
+      }
     }

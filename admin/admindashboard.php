@@ -1287,6 +1287,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <div id="wkName" style="font-size:18px;font-weight:800;color:var(--txt-primary);">Worker Name</div>
             <div id="wkSpecialty" style="font-size:12px;color:var(--txt-muted);margin-top:2px;">Specialty</div>
           </div>
+          <div class="detail-row"><span class="detail-lbl">Gmail</span><span class="detail-val" id="wkEmail" style="word-break:break-all;max-width:65%;">–</span></div>
+          <div class="detail-row"><span class="detail-lbl">Address</span><span class="detail-val" id="wkAddress" style="word-break:break-word;max-width:65%;">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Phone</span><span class="detail-val" id="wkPhone">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Availability</span><span class="detail-val" id="wkAvail">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val" id="wkStatus">–</span></div>
@@ -2551,11 +2553,20 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('wkAvatar').textContent = (w.name || '?')[0].toUpperCase();
         document.getElementById('wkName').textContent = w.name || '–';
         document.getElementById('wkSpecialty').textContent = w.specialty || '–';
-        document.getElementById('wkPhone').textContent = w.phone || '–';
-        document.getElementById('wkAvail').innerHTML = workerStateBadge('availability', w.availability || 'offline');
-        document.getElementById('wkStatus').innerHTML = workerStateBadge('status', getWorkerVerificationBadgeState(w));
-        document.getElementById('wkRating').textContent = parseFloat(w.rating || 0).toFixed(1);
-        document.getElementById('wkJobs').textContent = w.jobs_done || 0;
+        const wkEmail = document.getElementById('wkEmail');
+        if (wkEmail) wkEmail.textContent = w.email || '–';
+        const wkAddress = document.getElementById('wkAddress');
+        if (wkAddress) wkAddress.textContent = w.address || '–';
+        const wkPhone = document.getElementById('wkPhone');
+        if (wkPhone) wkPhone.textContent = w.phone || '–';
+        const wkAvail = document.getElementById('wkAvail');
+        if (wkAvail) wkAvail.innerHTML = workerStateBadge('availability', w.availability || 'offline');
+        const wkStatus = document.getElementById('wkStatus');
+        if (wkStatus) wkStatus.innerHTML = workerStateBadge('status', getWorkerVerificationBadgeState(w));
+        const wkRating = document.getElementById('wkRating');
+        if (wkRating) wkRating.textContent = parseFloat(w.rating || 0).toFixed(1);
+        const wkJobs = document.getElementById('wkJobs');
+        if (wkJobs) wkJobs.textContent = w.jobs_done || 0;
         const wkVdocs = document.getElementById('wkVdocs');
         if (wkVdocs) {
           wkVdocs.innerHTML = '<span style="color:var(--txt-muted);">Loading documents...</span>';
@@ -2616,10 +2627,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         }
       }
 
-      function openWorkerSheet(w) {
+      async function openWorkerSheet(w) {
         if (!w) return;
         fillWorkerSheet(w);
         openSheet('wkSheetOl');
+        try {
+          const detailRes = await api('workers', 'get', null, `&id=${encodeURIComponent(w.id)}`);
+          if (detailRes && detailRes.success && detailRes.worker && currentWorkerDetailId === w.id) {
+            fillWorkerSheet(detailRes.worker);
+          }
+        } catch (e) {}
       }
 
       async function deleteWorkerById(id) {

@@ -272,16 +272,19 @@ if ($section === 'users') {
 
 
 if ($section === 'workers') {
+    $hasVerificationStatus = false;
+    $colCheck = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'verification_status'");
+    if ($colCheck && $colCheck->num_rows > 0) $hasVerificationStatus = true;
+    $verificationSelect = $hasVerificationStatus
+        ? "CASE WHEN sp.verification_status='pending_review' THEN 'pending' WHEN sp.verification_status IS NULL OR sp.verification_status='' THEN CASE WHEN sp.is_verified=1 THEN 'verified' ELSE 'pending' END ELSE sp.verification_status END AS verification_status"
+        : "CASE WHEN sp.is_verified=1 THEN 'verified' ELSE 'pending' END AS verification_status";
+
     if ($method === 'GET' && $action === 'list') {
         syncProviderJobsDone($conn);
         $search = trim($_GET['search'] ?? '');
         $filter = trim($_GET['filter'] ?? '');
         $verificationFilter = trim($_GET['verification_filter'] ?? '');
         $where  = []; $params = []; $types = '';
-
-        $hasVerificationStatus = false;
-        $colCheck = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'verification_status'");
-        if ($colCheck && $colCheck->num_rows > 0) $hasVerificationStatus = true;
         
         if ($search) {
             $like = "%$search%";
@@ -299,10 +302,16 @@ if ($section === 'workers') {
         }
         
         $whereClause = count($where) ? "WHERE " . implode(" AND ", $where) : "";
-        $verificationSelect = $hasVerificationStatus
-            ? "CASE WHEN sp.verification_status='pending_review' THEN 'pending' WHEN sp.verification_status IS NULL OR sp.verification_status='' THEN CASE WHEN sp.is_verified=1 THEN 'verified' ELSE 'pending' END ELSE sp.verification_status END AS verification_status"
-            : "CASE WHEN sp.is_verified=1 THEN 'verified' ELSE 'pending' END AS verification_status";
-        $stmt = $conn->prepare("SELECT sp.provider_id AS id, sp.full_name AS name, s.name AS specialty, sp.contact_number AS phone, sp.availability_status AS availability, sp.status, sp.rating, sp.jobs_done, sp.is_verified, $verificationSelect, sp.valid_id, sp.selfie_verification, sp.proof_of_address, sp.barangay_clearance, sp.`tools_&_kits` FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id $whereClause ORDER BY sp.provider_id DESC");
+        $stmt = $conn->prepare("SELECT sp.provider_id AS id, sp.full_name AS name, s.name AS specialty,
+            COALESCE(NULLIF(TRIM(sp.email), ''), u.email, '') AS email,
+            COALESCE(NULLIF(TRIM(sp.address), ''), u.address, '') AS address,
+            sp.contact_number AS phone, sp.availability_status AS availability, sp.status, sp.rating, sp.jobs_done, sp.is_verified,
+            $verificationSelect, sp.valid_id, sp.selfie_verification, sp.proof_of_address, sp.barangay_clearance, sp.`tools_&_kits`,
+            sp.gcash_qr, sp.bank_qr
+            FROM service_providers sp
+            LEFT JOIN services s ON s.id = sp.service_id
+            LEFT JOIN users u ON (u.email = sp.email AND sp.email != '')
+            $whereClause ORDER BY sp.provider_id DESC");
         
         if (!$stmt) respond(false, $conn->error);
         if ($params) $stmt->bind_param($types, ...$params);
@@ -310,6 +319,27 @@ if ($section === 'workers') {
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
         respond(true, '', ['workers' => $rows]);
+    }
+
+    if ($method === 'GET' && ($action === 'get' || $action === 'detail')) {
+        $id = (int)($_GET['id'] ?? 0);
+        if (!$id) respond(false, 'Worker ID required.');
+        $stmt = $conn->prepare("SELECT sp.provider_id AS id, sp.full_name AS name, s.name AS specialty,
+            COALESCE(NULLIF(TRIM(sp.email), ''), u.email, '') AS email,
+            COALESCE(NULLIF(TRIM(sp.address), ''), u.address, '') AS address,
+            sp.contact_number AS phone, sp.availability_status AS availability, sp.status, sp.rating, sp.jobs_done, sp.is_verified,
+            $verificationSelect, sp.valid_id, sp.selfie_verification, sp.proof_of_address, sp.barangay_clearance, sp.`tools_&_kits`,
+            sp.gcash_qr, sp.bank_qr
+            FROM service_providers sp
+            LEFT JOIN services s ON s.id = sp.service_id
+            LEFT JOIN users u ON (u.email = sp.email AND sp.email != '')
+            WHERE sp.provider_id = ? LIMIT 1");
+        $stmt->bind_param("i", $id);
+        $stmt->execute();
+        $worker = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$worker) respond(false, 'Worker not found.');
+        respond(true, '', ['worker' => $worker]);
     }
 
     if ($method === 'POST' && ($action === 'edit')) {

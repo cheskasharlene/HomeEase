@@ -97,9 +97,6 @@ if ($uid > 0) {
             <div class="sdp-hero-close" onclick="closeSvcDetail()"><i class="bi bi-x"></i></div>
           </div>
 
-          <!-- Stats row -->
-          <div class="sdp-stats" id="sdpStats"></div>
-
           <!-- Price + Duration chips -->
           <div class="sdp-chips" id="sdpChips"></div>
 
@@ -229,122 +226,240 @@ if ($uid > 0) {
       }
     });
 
-    // ── AD-STYLE SERVICE CARDS (names & prices match booking system exactly)
-    const svcAdData = [{
+    // ── AD-STYLE SERVICE CARDS (2-column grid layout matching reference)
+    const svcAdData = [
+      {
         key: 'House Cleaner',
+        displayName: 'House Cleaning',
+        bookingKey: 'House Cleaner',
         icon: 'bi-stars',
         gradient: 'linear-gradient(145deg,#E8820C 0%,#F5A623 55%,#FFB347 100%)',
         accentColor: '#E8820C',
         lightColor: '#FFF3E0',
-        badge: '⭐ #1 Top Rated',
-        tagline: 'Spotless Home,\nGuaranteed',
-        subline: 'Home & office cleaning — done right',
-        emoji: '🧹',
-        promoLabel: 'MOST BOOKED',
-        price: 500, priceNote: 'Base rate — final price set on booking',
-        duration: '2–4 hrs', rating: '4.9', jobs: '1.2k+', repeat: '89%',
-        desc: 'Professional home & office cleaners who deep-clean every room — scrubbing grout, degreasing kitchens, sanitizing bathrooms, and leaving your space spotless and fresh. Background-checked and satisfaction-guaranteed.',
-        features: ['Full room deep-clean (all floors)', 'Kitchen degreasing & appliance wipe-down', 'Bathroom scrub & toilet disinfection', 'Window sills, baseboards & surface polish', 'Vacuuming & mopping all floor types', 'Bed linen change (on request)'],
-        steps: ['Book your slot in 60 seconds', 'A vetted cleaner arrives on time', 'We clean top-to-bottom, room by room', 'You inspect — we fix anything you flag'],
-        highlights: [{ icon: 'bi-shield-check', text: 'Background-checked cleaners' }, { icon: 'bi-clock', text: 'On-time or your next session is free' }, { icon: 'bi-recycle', text: 'Eco-friendly cleaning products' }],
-        guarantee: 'Not satisfied? We re-clean within 24 hours — free of charge.',
+        badge: '⭐ Top Rated',
+        optionsSummary: 'General · Deep · Move-in/out',
+        detailsSummary: 'Condo/Apartment & House',
+        startsAt: 'Starts at ₱750',
+        price: 750,
+        extraChip: 'Add-ons: +₱100/room • +₱150/bath',
+        duration: '2–4 hrs',
+        desc: 'Professional house cleaning services. Choose from General Cleaning, Deep Cleaning, or Move-in/Move-out turnovers for Condo/Apartment and House properties. Convenient add-ons for additional rooms and bathrooms.',
+        features: [
+          'General Cleaning for living areas & bedrooms',
+          'Deep Cleaning & sanitization',
+          'Move-in / Move-out property turnovers',
+          'Property types: Condo/Apartment & House',
+          'Add-ons: +₱100/additional room',
+          'Add-ons: +₱150/additional bathroom',
+          'Basic cleaning supplies provided by cleaner'
+        ],
+        steps: [
+          'Choose cleaning type, property type & rooms',
+          'A vetted cleaner arrives on time with supplies',
+          'Thorough cleaning from room to room',
+          'You inspect — satisfaction guaranteed'
+        ],
+        highlights: [
+          { icon: 'bi-shield-check', text: 'Background-checked cleaners' },
+          { icon: 'bi-building', text: 'Condo/Apartment & House' },
+          { icon: 'bi-tag-fill', text: 'Starts at ₱750' }
+        ],
+        guarantee: 'Not satisfied? We re-clean within 24 hours free of charge.',
         bgImg: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=75&auto=format&fit=crop'
-      },{
+      },
+      {
         key: 'Plumber',
+        displayName: 'Plumbing',
+        bookingKey: 'Plumber',
         icon: 'bi-wrench-adjustable-circle',
         gradient: 'linear-gradient(135deg,#D97706 0%,#F5A623 55%,#FBB73C 100%)',
         accentColor: '#D97706',
         lightColor: '#FEF9E7',
         badge: '🔧 Licensed & Insured',
-        tagline: 'Leaks Fixed,\nNo Mess Left',
-        subline: 'Pipes, leaks & fixtures — same day',
-        emoji: '🚰',
-        promoLabel: 'FREE DIAGNOSIS',
-        price: 500, priceNote: 'Base rate — diagnosis included',
-        duration: '1–3 hrs', rating: '4.8', jobs: '980+', repeat: '82%',
-        desc: 'From dripping faucets to burst pipes, our licensed plumbers handle it all. We diagnose the root cause — not just the symptom — and fix it right the first time. Transparent pricing, no surprise charges.',
-        features: ['Leak detection & pipe repair', 'Drain & toilet unclogging', 'Faucet & fixture installation', 'Water heater service & installation', 'Shower & bathtub repairs', 'Water pressure diagnosis & fix'],
-        steps: ['Describe your issue when booking', 'Licensed plumber arrives with full toolkit', 'Free on-site diagnosis before work starts', 'Problem fixed, area cleaned, parts warrantied'],
-        highlights: [{ icon: 'bi-award', text: 'Licensed & insured plumbers' }, { icon: 'bi-currency-dollar', text: 'Transparent pricing — no hidden fees' }, { icon: 'bi-tools', text: 'Parts warranted for 30 days' }],
-        guarantee: 'All repair work is guaranteed for 30 days. If the same issue recurs, we fix it free.',
+        optionsSummary: 'Leak Repair · Clog · Installation',
+        detailsSummary: 'Kitchen · Bathroom · Outdoor',
+        startsAt: 'Starts at ₱800',
+        price: 800,
+        extraChip: 'Kitchen • Bath • Outdoor',
+        duration: '1–3 hrs',
+        desc: 'Professional plumbing services. Expert diagnosis and repairs for water leaks, drain and toilet clogs, and fixture installations across kitchen, bathroom, and outdoor locations.',
+        features: [
+          'Water leak detection & pipe repair',
+          'Drain & toilet clog removal',
+          'Faucet & fixture installation',
+          'Locations: Kitchen, Bathroom & Outdoor',
+          'Licensed & insured plumbing professionals',
+          'Basic tools & supplies provided by plumber'
+        ],
+        steps: [
+          'Select issue type and fixture location',
+          'Licensed plumber arrives with full toolkit',
+          'Diagnosis & transparent quote before work begins',
+          'Problem fixed, area cleaned, parts warrantied'
+        ],
+        highlights: [
+          { icon: 'bi-award', text: 'Licensed & insured plumbers' },
+          { icon: 'bi-geo-alt', text: 'Kitchen, Bathroom & Outdoor' },
+          { icon: 'bi-tag-fill', text: 'Starts at ₱800' }
+        ],
+        guarantee: 'All repair work guaranteed for 30 days. Recurring issues fixed free.',
         bgImg: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=500&q=75&auto=format&fit=crop'
-      },{
+      },
+      {
         key: 'Helper',
+        displayName: 'Helper',
+        bookingKey: 'Helper',
         icon: 'bi-person-arms-up',
         gradient: 'linear-gradient(120deg,#F97316 0%,#F5A623 50%,#FCD34D 100%)',
         accentColor: '#F97316',
         lightColor: '#FFF7E6',
         badge: '💪 Most Flexible',
-        tagline: 'Extra Hands,\nWhen You Need',
-        subline: 'All-around household help — book hourly',
-        emoji: '🙌',
-        promoLabel: 'NO MIN. HOURS',
-        price: 400, priceNote: 'Base rate — final price set on booking',
-        duration: '1–8 hrs', rating: '4.7', jobs: '2.1k+', repeat: '76%',
-        desc: 'Need a reliable extra pair of hands? Our helpers are trustworthy, physically fit, and ready for almost anything — moving furniture, grocery errands, packing boxes, or general household tasks. Book hourly, no commitment.',
-        features: ['Moving & heavy lifting', 'Grocery & errand runs', 'Event set-up & pack-down', 'Home organizing & decluttering', 'Garden & outdoor clean-up', 'Office & storage room sorting'],
-        steps: ['Choose your task type when booking', 'Helper arrives at your scheduled time', 'Work together or let them handle it solo', 'Pay only for the hours used'],
-        highlights: [{ icon: 'bi-person-check', text: 'Background-checked & ID-verified' }, { icon: 'bi-stopwatch', text: 'Book for as little as 1 hour' }, { icon: 'bi-bag-check', text: 'No task too big or too small' }],
-        guarantee: 'Not satisfied with your helper? We reassign a new one the same day at no extra cost.',
+        optionsSummary: 'Cooking · Errands · Childcare',
+        detailsSummary: 'Combined tasks · +₱100/hr',
+        startsAt: 'Starts at ₱500',
+        price: 500,
+        extraChip: '+₱100/additional hour',
+        duration: '4–8 hrs',
+        desc: 'Reliable household assistance for cooking, general errands, and childcare supervision. Combine multiple tasks to fit your daily needs. Flexible hourly booking starting from 4 hours.',
+        features: [
+          'Home cooking & meal preparation',
+          'General errands & grocery shopping',
+          'Childcare supervision & basic care',
+          'Combined task options available',
+          'Starting duration: 4 hours (Starts at ₱500)',
+          'Additional hour: +₱100/hour',
+          'Background-checked & ID-verified helpers'
+        ],
+        steps: [
+          'Select task combination and required hours',
+          'Helper arrives promptly at scheduled time',
+          'Tasks completed attentively and neatly',
+          'Transparent pricing based on hours selected'
+        ],
+        highlights: [
+          { icon: 'bi-person-check', text: 'Background-checked & verified' },
+          { icon: 'bi-layers', text: 'Combined task options' },
+          { icon: 'bi-clock', text: 'Starts at ₱500 · +₱100/hr' }
+        ],
+        guarantee: 'Not satisfied with your helper? We reassign a new one promptly at no extra cost.',
         bgImg: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=75&auto=format&fit=crop'
-      },{
+      },
+      {
         key: 'Appliance Technician',
+        displayName: 'Appliance Repair',
+        bookingKey: 'Appliance Technician',
         icon: 'bi-tools',
         gradient: 'linear-gradient(150deg,#C2410C 0%,#E8820C 50%,#F5A623 100%)',
         accentColor: '#C2410C',
         lightColor: '#FFF0E0',
         badge: '⚡ Certified Experts',
-        tagline: 'Appliances Fixed\nSame Day',
-        subline: 'Fix home appliances — all major brands',
-        emoji: '🔌',
-        promoLabel: 'SAME-DAY SLOTS',
-        price: 500, priceNote: 'Base rate — parts quoted separately',
-        duration: '1–3 hrs', rating: '4.8', jobs: '750+', repeat: '85%',
-        desc: 'Certified technicians trained to service all major brands — LG, Samsung, Carrier, Panasonic and more. We carry common replacement parts and can often fix your appliance in a single visit.',
-        features: ['Air conditioner cleaning, repair & regas', 'Refrigerator & chest freezer repair', 'Washing machine & dryer diagnostics', 'Microwave, oven & stove repair', 'Television & electronics troubleshooting', 'General electrical appliance servicing'],
-        steps: ['Describe the appliance & symptom', 'Technician arrives with diagnostic tools', 'Transparent quote before any work begins', 'Repair done, appliance tested & signed off'],
-        highlights: [{ icon: 'bi-patch-check', text: 'Certified by major appliance brands' }, { icon: 'bi-box-seam', text: 'Common parts on hand — faster fix' }, { icon: 'bi-calendar2-check', text: 'Same-day & next-day slots available' }],
-        guarantee: 'All repair work covered by a 14-day service warranty. Parts warranty varies by manufacturer.',
+        optionsSummary: 'Aircon · Ref · Washer · TV',
+        detailsSummary: 'Minor & Major Service Details',
+        startsAt: 'Starts at ₱800',
+        price: 800,
+        extraChip: 'Minor & Major repairs',
+        duration: '1–3 hrs',
+        desc: 'Certified technician service for major household appliances: Aircon, Refrigerator, Washing Machine, and TV. Professional troubleshooting and repairs for both Minor and Major problem severity.',
+        features: [
+          'Aircon servicing & repair',
+          'Refrigerator & freezer troubleshooting',
+          'Washing machine diagnostics & fix',
+          'Television repair & electronics servicing',
+          'Service details: Minor & Major severity',
+          'Basic tools & supplies provided by technician'
+        ],
+        steps: [
+          'Select appliance type & problem severity',
+          'Technician arrives with diagnostic tools',
+          'Clear inspection and quote before repair starts',
+          'Repair completed, tested & demonstrated'
+        ],
+        highlights: [
+          { icon: 'bi-patch-check', text: 'Certified technicians' },
+          { icon: 'bi-tv', text: 'Aircon, Ref, Washer & TV' },
+          { icon: 'bi-tag-fill', text: 'Starts at ₱800' }
+        ],
+        guarantee: 'All repair work covered by a 14-day service warranty.',
         bgImg: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?w=500&q=75&auto=format&fit=crop'
-      },{
+      },
+      {
         key: 'Laundry Worker',
+        displayName: 'Laundry',
+        bookingKey: 'Laundry Worker',
         icon: 'bi-basket2-fill',
         gradient: 'linear-gradient(125deg,#F59E0B 0%,#F5B942 50%,#FBBF24 100%)',
         accentColor: '#F59E0B',
         lightColor: '#FFFCE6',
         badge: '✨ Most Popular',
-        tagline: 'Fresh Clothes,\nZero Effort',
-        subline: 'Washing & ironing — done at your home',
-        emoji: '👕',
-        promoLabel: 'FREE IRONING',
-        price: 300, priceNote: 'Base rate — final price set on booking',
-        duration: '2–6 hrs', rating: '4.9', jobs: '1.5k+', repeat: '91%',
-        desc: 'Our trained laundry workers handle your clothes with care — separating colours, choosing the right wash cycle, and returning everything neatly pressed and folded. Delicates washed by hand. Stain treatment included.',
-        features: ['Machine wash & dry', 'Hand wash for delicates & woollens', 'Stain pre-treatment & odour removal', 'Ironing & pressing (shirts, uniforms, linens)', 'Fold, sort & organise by type', 'Linen, bedsheets & curtain washing'],
-        steps: ['Book a time slot that suits you', 'Worker arrives with supplies (or uses yours)', 'Laundry sorted, washed, dried & ironed', 'Everything neatly returned to your wardrobe'],
-        highlights: [{ icon: 'bi-droplet', text: 'Hypoallergenic detergent options' }, { icon: 'bi-heart', text: 'Gentle care for delicates & silk' }, { icon: 'bi-check2-all', text: 'Highest customer repeat rate — 91%' }],
-        guarantee: 'If any item is damaged in our care, we compensate up to the replacement value.',
+        optionsSummary: 'Wash & Dry · Iron · Fold',
+        detailsSummary: 'Weight-based • Combinations',
+        startsAt: 'Starts at ₱450',
+        price: 450,
+        extraChip: 'Weight-based pricing',
+        duration: '2–6 hrs',
+        desc: 'Convenient at-home laundry care. Select from Wash & Dry, Iron, Fold, or combined laundry services. Simple weight-based pricing based on Under 5kg, 5–10kg, or Over 10kg.',
+        features: [
+          'Wash & Dry machine cycles',
+          'Professional clothing ironing & pressing',
+          'Neat folding & organizing',
+          'Combination services available',
+          'Weight-based pricing structure',
+          'Care for delicates, linens & uniforms',
+          'Equipment provided by laundry worker'
+        ],
+        steps: [
+          'Select laundry service combo & weight bracket',
+          'Worker arrives and handles laundry at your home',
+          'Clothes washed, dried, ironed and folded',
+          'Everything neatly returned and organized'
+        ],
+        highlights: [
+          { icon: 'bi-droplet', text: 'Gentle fabric care' },
+          { icon: 'bi-layers', text: 'Combo services available' },
+          { icon: 'bi-tag-fill', text: 'Starts at ₱450' }
+        ],
+        guarantee: 'Careful handling guaranteed for all fabrics and clothing.',
         bgImg: 'https://images.unsplash.com/photo-1545173168-9f1947eebb7f?w=500&q=75&auto=format&fit=crop'
-      },{
+      },
+      {
         key: 'Carpenter',
+        displayName: 'Carpentry',
+        bookingKey: 'Carpenter',
         icon: 'bi-hammer',
         gradient: 'linear-gradient(160deg,#EA580C 0%,#F5A623 55%,#FBA94C 100%)',
         accentColor: '#EA580C',
         lightColor: '#FFF1E6',
         badge: '🪚 Skilled Craftsmen',
-        tagline: 'Build It Right,\nMake It Last',
-        subline: 'Furniture & woodwork — custom builds',
-        emoji: '🪑',
-        promoLabel: 'FREE ESTIMATE',
-        price: 600, priceNote: 'Base rate — free on-site estimate first',
-        duration: '2–8 hrs', rating: '4.8', jobs: '620+', repeat: '80%',
-        desc: 'Our skilled carpenters bring years of experience to every project — from flat-pack furniture assembly to custom built-in shelves and cabinet installations. We work cleanly, finish neatly, and clean up after.',
-        features: ['Furniture assembly (IKEA, local brands, etc.)', 'Cabinet, shelf & wardrobe installation', 'Door & window frame repair or replacement', 'Flooring & decking installation', 'Custom built-in shelving & storage', 'Wood repair, sanding & refinishing'],
-        steps: ['Describe the job & share photos if possible', 'Carpenter visits for a free on-site estimate', 'Work scheduled at your convenience', 'Job completed, area swept clean'],
-        highlights: [{ icon: 'bi-rulers', text: 'Precision measurements, clean finish' }, { icon: 'bi-file-earmark-check', text: 'Free estimate — no obligation' }, { icon: 'bi-recycle', text: 'Responsible wood sourcing & waste disposal' }],
-        guarantee: 'Structural work guaranteed for 60 days. We fix any joint or fitting issues free of charge.',
+        optionsSummary: 'Repair · Installation',
+        detailsSummary: 'Simple & Complex Tasks',
+        startsAt: 'Starts at ₱800',
+        price: 800,
+        extraChip: 'Simple & Complex tasks',
+        duration: '2–8 hrs',
+        desc: 'Skilled carpentry services for woodwork repair and custom installation. From simple door, hinge, and furniture fixes to complex cabinetry and custom shelving installations.',
+        features: [
+          'Woodwork repairs & restoration',
+          'Cabinet & shelving installation',
+          'Door, window frame & hinge fittings',
+          'Task complexity: Simple & Complex',
+          'Furniture assembly & custom builds',
+          'Basic tools & supplies provided by carpenter'
+        ],
+        steps: [
+          'Select carpentry task & complexity level',
+          'Carpenter arrives with professional tools',
+          'Work executed cleanly and accurately',
+          'Job completed, inspected & work area swept clean'
+        ],
+        highlights: [
+          { icon: 'bi-rulers', text: 'Precision craftsmanship' },
+          { icon: 'bi-hammer', text: 'Repair & Installation' },
+          { icon: 'bi-tag-fill', text: 'Starts at ₱800' }
+        ],
+        guarantee: 'Structural work guaranteed for 60 days. Joint or fitting issues fixed free.',
         bgImg: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=500&q=75&auto=format&fit=crop'
-      }];
+      }
+    ];
 
     // ── OPEN DETAIL PANEL
     function openSvcDetail(svc) {
@@ -355,21 +470,13 @@ if ($uid > 0) {
       hero.style.background = svc.gradient;
       document.getElementById('sdpIcon').className = `bi ${svc.icon}`;
       document.getElementById('sdpTag').textContent = svc.badge;
-      document.getElementById('sdpTitle').textContent = svc.key;
-      // Stats
-      document.getElementById('sdpStats').innerHTML = `
-        <div class="sdp-stat"><span class="sdp-stat-val" style="color:${svc.accentColor}">${svc.rating}★</span><span class="sdp-stat-lbl">Rating</span></div>
-        <div class="sdp-stat-div"></div>
-        <div class="sdp-stat"><span class="sdp-stat-val" style="color:${svc.accentColor}">${svc.jobs}</span><span class="sdp-stat-lbl">Jobs Done</span></div>
-        <div class="sdp-stat-div"></div>
-        <div class="sdp-stat"><span class="sdp-stat-val" style="color:${svc.accentColor}">${svc.repeat}</span><span class="sdp-stat-lbl">Repeat Clients</span></div>
-        <div class="sdp-stat-div"></div>
-        <div class="sdp-stat"><span class="sdp-stat-val" style="color:${svc.accentColor}">${svc.duration}</span><span class="sdp-stat-lbl">Avg. Time</span></div>`;
+      document.getElementById('sdpTitle').textContent = svc.displayName || svc.key;
       // Chips
       document.getElementById('sdpChips').innerHTML = `
-        <div class="sdp-chip" style="background:${svc.lightColor};color:${svc.accentColor}"><i class="bi bi-tag-fill"></i> from ₱${svc.price.toLocaleString()}/hr</div>
+        <div class="sdp-chip" style="background:${svc.lightColor};color:${svc.accentColor}"><i class="bi bi-tag-fill"></i> ${svc.startsAt}</div>
+        ${svc.extraChip ? `<div class="sdp-chip" style="background:${svc.lightColor};color:${svc.accentColor}"><i class="bi bi-info-circle-fill"></i> ${svc.extraChip}</div>` : ''}
         <div class="sdp-chip" style="background:${svc.lightColor};color:${svc.accentColor}"><i class="bi bi-clock"></i> ${svc.duration}</div>
-        <div class="sdp-chip sdp-chip-note">${svc.priceNote}</div>`;
+        ${svc.priceNote ? `<div class="sdp-chip sdp-chip-note">${svc.priceNote}</div>` : ''}`;
       // Desc
       document.getElementById('sdpDesc').textContent = svc.desc;
       // Features
@@ -388,7 +495,7 @@ if ($uid > 0) {
       document.getElementById('sdpGuarantee').innerHTML = `<i class="bi bi-shield-fill-check" style="color:${svc.accentColor}"></i><span>${svc.guarantee}</span>`;
       // Book button
       document.getElementById('sdpBookBtn').style.background = svc.gradient;
-      document.getElementById('sdpBookBtn').onclick = () => goPage(`clients/booking_form.php?svc=${encodeURIComponent(svc.key)}&newbooking=1`);
+      document.getElementById('sdpBookBtn').onclick = () => goPage(`clients/booking_form.php?svc=${encodeURIComponent(svc.bookingKey || svc.key)}&newbooking=1`);
       overlay.classList.add('on');
       requestAnimationFrame(() => panel.classList.add('on'));
       document.body.style.overflow = 'hidden';
@@ -407,26 +514,24 @@ if ($uid > 0) {
     svcAdData.forEach((svc, i) => {
       const card = document.createElement('div');
       card.className = 'svc-ad-card';
-      card.style.animationDelay = `${i * 0.09}s`;
+      card.style.animationDelay = `${i * 0.08}s`;
       card.innerHTML = `
         <div class="sac-bg" style="background:${svc.gradient}"></div>
         ${svc.bgImg ? `<div class="sac-img" style="background-image:url('${svc.bgImg}')"></div>` : ''}
         <div class="sac-pattern"></div>
         <div class="sac-top">
           <div class="sac-badge">${svc.badge}</div>
-          <div class="sac-promo">${svc.promoLabel}</div>
         </div>
-        <div class="sac-emoji">${svc.emoji}</div>
         <div class="sac-body">
-          <div class="sac-tagline">${svc.tagline}</div>
-          <div class="sac-subline">${svc.subline}</div>
+          <div class="sac-tagline">${svc.displayName}</div>
+          <div class="sac-subline">${svc.optionsSummary}</div>
+          <div class="sac-details">${svc.detailsSummary}</div>
         </div>
         <div class="sac-footer">
           <div class="sac-footer-left">
-            <div class="sac-price">from ₱${svc.price.toLocaleString()}<span>/hr</span></div>
-            <div class="sac-rating"><i class="bi bi-star-fill"></i>${svc.rating} · ${svc.jobs} jobs</div>
+            <div class="sac-price">${svc.startsAt}</div>
           </div>
-          <div class="sac-cta">See Details <i class="bi bi-arrow-right"></i></div>
+          <div class="sac-cta"></div>
         </div>`;
       card.addEventListener('click', () => openSvcDetail(svc));
       svcAdsGrid.appendChild(card);
