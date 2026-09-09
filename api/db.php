@@ -122,6 +122,36 @@ function ensureBookingStatusEnum($conn)
 }
 
 /**
+ * Ensure booking_requests table exists
+ */
+if (!function_exists('ensureBookingRequestsTable')) {
+    function ensureBookingRequestsTable($conn)
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS booking_requests (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          booking_id INT NOT NULL,
+          provider_id INT NOT NULL,
+          service VARCHAR(120) NOT NULL,
+          fixed_price DECIMAL(10,2) NOT NULL DEFAULT 0,
+          date DATE NULL,
+          time_slot VARCHAR(32) NULL,
+          address VARCHAR(255) NULL,
+          details TEXT NULL,
+          customer_name VARCHAR(120) NULL,
+          customer_phone VARCHAR(40) NULL,
+          customer_address VARCHAR(255) NULL,
+          status ENUM('pending','accepted','declined','closed') NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at DATETIME NULL,
+          responded_at DATETIME NULL,
+          INDEX idx_provider_status (provider_id, status),
+          INDEX idx_booking (booking_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        @$conn->query($sql);
+    }
+}
+
+/**
  * Validate payment method and reference data
  * @param string $method Payment method (cash, gcash, bank)
  * @param string|null $reference Payment reference (phone/account number)

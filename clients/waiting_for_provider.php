@@ -665,7 +665,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       </div>
     </div>
 
-    <div class="wfp-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" style="display:none;" onclick="closeCancelModal(event)">
+    <div class="wfp-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" onclick="closeCancelModal(event)">
       <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" onclick="event.stopPropagation()">
         <div class="wfp-confirm-head">
           <div class="wfp-confirm-icon"><i class="bi bi-x-circle-fill"></i></div>
@@ -1394,6 +1394,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     function openCancelModal() {
       const overlay = document.getElementById('cancelConfirmOverlay');
+      if (!overlay) return;
       const errBox = document.getElementById('cancelConfirmError');
       if (errBox) { errBox.style.display = 'none'; errBox.textContent = ''; }
       const confirmBtn = document.getElementById('btnCancelConfirm');
@@ -1403,6 +1404,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }
       const dismissBtn = document.getElementById('btnCancelDismiss');
       if (dismissBtn) dismissBtn.disabled = false;
+      overlay.style.display = 'flex';
       overlay.classList.add('show');
       overlay.setAttribute('aria-hidden', 'false');
       document.body.classList.add('modal-open');
@@ -1411,7 +1413,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     function closeCancelModal(event) {
       if (event && event.target && event.target !== document.getElementById('cancelConfirmOverlay')) return;
       const overlay = document.getElementById('cancelConfirmOverlay');
+      if (!overlay) return;
       overlay.classList.remove('show');
+      overlay.style.display = 'none';
       overlay.setAttribute('aria-hidden', 'true');
       document.body.classList.remove('modal-open');
     }
@@ -1437,6 +1441,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const fd = new FormData();
         fd.append('action', 'cancel');
         fd.append('id', BOOKING_ID);
+        fd.append('booking_id', BOOKING_ID);
         const res = await fetch(CANCEL_API, { method: 'POST', body: fd });
         const data = await res.json();
         if (data.success) {

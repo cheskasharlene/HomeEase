@@ -850,7 +850,6 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     }
 
     async function passBooking(bookingId, btn) {
-      // Locally hide card — don't send a decline to server (customer may still get accepted by others)
       const card = document.getElementById('liveCard' + bookingId);
       if (card) {
         card.style.transition = 'opacity 0.3s, transform 0.3s';
@@ -860,6 +859,15 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           card.remove();
           knownIds.delete(bookingId);
         }, 300);
+      }
+
+      try {
+        const fd = new FormData();
+        fd.append('action', 'decline');
+        fd.append('booking_id', bookingId);
+        await fetch('../api/provider_requests_api.php', { method: 'POST', body: fd });
+      } catch (e) {
+        console.warn('Pass error:', e);
       }
     }
 

@@ -44,7 +44,7 @@ if ($method === 'GET' && $action === 'live_feed') {
     $provAvailability = strtolower(trim((string)($providerRow['availability_status'] ?? 'offline')));
     
     // Enforce online status to receive live booking requests.
-    $isOnline = ($provAvailability === 'online');
+    $isOnline = in_array($provAvailability, ['available', 'online'], true);
     if (!$isOnline) {
         ob_end_clean();
         echo json_encode([
@@ -101,13 +101,17 @@ if ($method === 'GET' && $action === 'live_feed') {
             LEFT JOIN services sv ON sv.id = b.service_id
             LEFT JOIN users u ON u.id = b.user_id
             LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ?
-             LEFT JOIN payments p ON p.booking_id = b.id
+            LEFT JOIN payments p ON p.booking_id = b.id
             WHERE b.status = 'pending'
               AND LOWER(b.service) LIKE ?
               AND b.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
               AND NOT EXISTS (
                   SELECT 1 FROM booking_requests br2
                   WHERE br2.booking_id = b.id AND br2.status = 'accepted'
+              )
+              AND NOT EXISTS (
+                  SELECT 1 FROM booking_requests br_dec
+                  WHERE br_dec.booking_id = b.id AND br_dec.provider_id = ? AND br_dec.status IN ('declined', 'closed', 'accepted')
               )
             ORDER BY b.created_at DESC
             LIMIT 30";
@@ -119,7 +123,7 @@ if ($method === 'GET' && $action === 'live_feed') {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
     }
-    $stmt->bind_param('is', $providerId, $like);
+    $stmt->bind_param('isi', $providerId, $like, $providerId);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
@@ -428,20 +432,62 @@ if ($method === 'POST' && $action === 'accept') {
     exit;
 }
 
-if ($method === 'POST' && $action === 'decline') {
+if ($method === 'POST' && ($action === 'decline' || $action === 'decline_booking' || $action === 'pass')) {
+    $bookingId = (int) ($_POST['booking_id'] ?? 0);
     $requestId = (int) ($_POST['request_id'] ?? 0);
-    if ($requestId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid request id.']);
+
+    if ($bookingId <= 0 && $requestId > 0) {
+        $st = $conn->prepare("SELECT booking_id FROM booking_requests WHERE id = ? AND provider_id = ? LIMIT 1");
+        if ($st) {
+            $st->bind_param('ii', $requestId, $providerId);
+            $st->execute();
+            $row = $st->get_result()->fetch_assoc();
+            $st->close();
+            if ($row) {
+                $bookingId = (int) $row['booking_id'];
+            }
+        }
+    }
+
+    if ($bookingId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid booking or request ID.']);
         exit;
     }
 
-    $stmt = $conn->prepare("UPDATE booking_requests SET status = 'declined', responded_at = NOW() WHERE id = ? AND provider_id = ? AND status = 'pending'");
-    $stmt->bind_param('ii', $requestId, $providerId);
-    $stmt->execute();
-    $ok = $stmt->affected_rows > 0;
-    $stmt->close();
+    // Check if a booking_request record already exists for this provider and booking
+    $chk = $conn->prepare("SELECT id FROM booking_requests WHERE booking_id = ? AND provider_id = ? LIMIT 1");
+    $existingId = 0;
+    if ($chk) {
+        $chk->bind_param('ii', $bookingId, $providerId);
+        $chk->execute();
+        $r = $chk->get_result()->fetch_assoc();
+        $chk->close();
+        if ($r) {
+            $existingId = (int) $r['id'];
+        }
+    }
 
-    echo json_encode(['success' => $ok, 'message' => $ok ? 'Request declined.' : 'Request already closed.']);
+    if ($existingId > 0) {
+        $upd = $conn->prepare("UPDATE booking_requests SET status = 'declined', responded_at = NOW() WHERE id = ?");
+        $upd->bind_param('i', $existingId);
+        $upd->execute();
+        $upd->close();
+    } else {
+        $ins = $conn->prepare("INSERT INTO booking_requests
+            (booking_id, provider_id, service, fixed_price, date, time_slot, address, details, customer_name, customer_phone, customer_address, status, created_at, responded_at)
+            SELECT b.id, ?, COALESCE(sv.name, b.service), b.price, b.date, b.time_slot, b.address, b.notes, u.name, u.phone, b.address, 'declined', NOW(), NOW()
+            FROM bookings b
+            LEFT JOIN services sv ON sv.id = b.service_id
+            LEFT JOIN users u ON u.id = b.user_id
+            WHERE b.id = ?");
+        if ($ins) {
+            $ins->bind_param('ii', $providerId, $bookingId);
+            $ins->execute();
+            $ins->close();
+        }
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Booking declined.']);
     exit;
 }
 
@@ -552,29 +598,31 @@ if ($method === 'POST' && $action === 'update_location') {
 ob_end_clean();
 echo json_encode(['success' => false, 'message' => 'Unknown request.']);
 
-function ensureBookingRequestsTable(mysqli $conn): void
-{
-    $sql = "CREATE TABLE IF NOT EXISTS booking_requests (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      booking_id INT NOT NULL,
-      provider_id INT NOT NULL,
-      service VARCHAR(120) NOT NULL,
-      fixed_price DECIMAL(10,2) NOT NULL DEFAULT 0,
-      date DATE NULL,
-      time_slot VARCHAR(32) NULL,
-      address VARCHAR(255) NULL,
-      details TEXT NULL,
-      customer_name VARCHAR(120) NULL,
-      customer_phone VARCHAR(40) NULL,
-      customer_address VARCHAR(255) NULL,
-      status ENUM('pending','accepted','declined','closed') NOT NULL DEFAULT 'pending',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      expires_at DATETIME NULL,
-      responded_at DATETIME NULL,
-      INDEX idx_provider_status (provider_id, status),
-      INDEX idx_booking (booking_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-    $conn->query($sql);
+if (!function_exists('ensureBookingRequestsTable')) {
+    function ensureBookingRequestsTable(mysqli $conn): void
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS booking_requests (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          booking_id INT NOT NULL,
+          provider_id INT NOT NULL,
+          service VARCHAR(120) NOT NULL,
+          fixed_price DECIMAL(10,2) NOT NULL DEFAULT 0,
+          date DATE NULL,
+          time_slot VARCHAR(32) NULL,
+          address VARCHAR(255) NULL,
+          details TEXT NULL,
+          customer_name VARCHAR(120) NULL,
+          customer_phone VARCHAR(40) NULL,
+          customer_address VARCHAR(255) NULL,
+          status ENUM('pending','accepted','declined','closed') NOT NULL DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          expires_at DATETIME NULL,
+          responded_at DATETIME NULL,
+          INDEX idx_provider_status (provider_id, status),
+          INDEX idx_booking (booking_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $conn->query($sql);
+    }
 }
 
 /**

@@ -123,7 +123,7 @@ function providerIncomingRequests(mysqli $conn, int $providerId, int $limit = 2)
   }
 
   $provStmt = $conn->prepare('
-    SELECT s.name AS service_category
+    SELECT s.name AS service_category, LOWER(COALESCE(sp.availability_status, "offline")) AS availability_status
     FROM service_providers sp
     LEFT JOIN services s ON s.id = sp.service_id
     WHERE sp.provider_id = ?
@@ -146,17 +146,45 @@ function providerIncomingRequests(mysqli $conn, int $providerId, int $limit = 2)
     return [];
   }
 
+  $provAvailability = strtolower(trim((string) ($provRow['availability_status'] ?? 'offline')));
+  $isOnline = in_array($provAvailability, ['available', 'online'], true);
+  if (!$isOnline) {
+    return [];
+  }
+
   $limitSql = max(1, (int) $limit);
-  $sql = "SELECT id, booking_id, service, fixed_price, date, time_slot, address, customer_name
-          FROM booking_requests
-          WHERE provider_id = ? AND status = 'pending'
-          ORDER BY created_at DESC
+  $sql = "SELECT b.id AS booking_id, COALESCE(sv.name, b.service) AS service, b.address, b.price, b.created_at,
+                 b.date, b.time_slot, b.notes,
+                 COALESCE(br.fixed_price, b.price) AS fixed_price,
+                 COALESCE(br.address, b.address) AS request_address,
+                 COALESCE(br.customer_address, b.address) AS customer_address,
+                 COALESCE(br.details, b.notes) AS details,
+                 COALESCE(br.customer_name, u.name) AS customer_name,
+                 COALESCE(br.customer_phone, u.phone) AS customer_phone,
+                 COALESCE(br.id, 0) AS id
+          FROM bookings b
+          LEFT JOIN services sv ON sv.id = b.service_id
+          LEFT JOIN users u ON u.id = b.user_id
+          LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ?
+          WHERE b.status = 'pending'
+            AND LOWER(b.service) LIKE ?
+            AND b.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
+            AND NOT EXISTS (
+                SELECT 1 FROM booking_requests br2
+                WHERE br2.booking_id = b.id AND br2.status = 'accepted'
+            )
+            AND NOT EXISTS (
+                SELECT 1 FROM booking_requests br_dec
+                WHERE br_dec.booking_id = b.id AND br_dec.provider_id = ? AND br_dec.status IN ('declined', 'closed', 'accepted')
+            )
+          ORDER BY b.created_at DESC
           LIMIT $limitSql";
+  $like = '%' . strtolower(trim($providerService)) . '%';
   $stmt = $conn->prepare($sql);
   if (!$stmt) {
     return [];
   }
-  $stmt->bind_param('i', $providerId);
+  $stmt->bind_param('isi', $providerId, $like, $providerId);
   $stmt->execute();
   $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
   $stmt->close();

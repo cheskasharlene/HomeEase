@@ -17,6 +17,20 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
+$userCheckStmt = $conn->prepare("SELECT id FROM users WHERE id = ? LIMIT 1");
+if ($userCheckStmt) {
+    $userCheckStmt->bind_param("i", $_SESSION['user_id']);
+    $userCheckStmt->execute();
+    $uRow = $userCheckStmt->get_result()->fetch_assoc();
+    $userCheckStmt->close();
+    if (!$uRow) {
+        unset($_SESSION['user_id']);
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'Session expired or user account not found. Please log in again.']);
+        exit;
+    }
+}
+
 $uid = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
@@ -612,22 +626,41 @@ if ($method === 'POST' && $action === '') {
 }
 
 if ($method === 'POST' && $action === 'cancel') {
-    $id = intval($_POST['id'] ?? 0);
+    ensureBookingStatusEnum($conn);
+    ensureBookingRequestsTable($conn);
+
+    $id = intval($_POST['id'] ?? $_POST['booking_id'] ?? 0);
     $oldStatus = null;
-    if ($id > 0) {
-        $st = $conn->prepare("SELECT status FROM bookings WHERE id = ? AND user_id = ? LIMIT 1");
-        if ($st) {
-            $st->bind_param('ii', $id, $uid);
-            $st->execute();
-            $sr = $st->get_result()->fetch_assoc();
-            $st->close();
-            $oldStatus = $sr['status'] ?? null;
-        }
+    if ($id <= 0) {
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'Invalid booking ID.']);
+        exit;
     }
-    $stmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND user_id=? AND status NOT IN ('done', 'completed', 'cancelled')");
+
+    $st = $conn->prepare("SELECT status, user_id FROM bookings WHERE id = ? LIMIT 1");
+    if ($st) {
+        $st->bind_param('i', $id);
+        $st->execute();
+        $sr = $st->get_result()->fetch_assoc();
+        $st->close();
+        if (!$sr) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Booking not found.']);
+            exit;
+        }
+        if ((int)$sr['user_id'] !== $uid) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Unauthorized booking access.']);
+            exit;
+        }
+        $oldStatus = $sr['status'] ?? null;
+    }
+
+    $stmt = $conn->prepare("UPDATE bookings SET status='cancelled' WHERE id=? AND user_id=? AND LOWER(status) NOT IN ('done', 'completed', 'cancelled')");
     $stmt->bind_param("ii", $id, $uid);
     $ok = $stmt->execute() && $stmt->affected_rows > 0;
     $stmt->close();
+
     if ($ok) {
         logBookingStatusChange($conn, $id, $oldStatus, 'cancelled', 'user', $uid, 'Cancelled by client');
 
@@ -640,7 +673,7 @@ if ($method === 'POST' && $action === 'cancel') {
         }
     }
     ob_end_clean();
-    echo json_encode(['success' => $ok, 'message' => $ok ? 'Cancelled.' : 'Could not cancel.']);
+    echo json_encode(['success' => $ok, 'message' => $ok ? 'Booking cancelled.' : 'Could not cancel booking.']);
     exit;
 }
 
@@ -733,29 +766,31 @@ function _defaultServices()
     ];
 }
 
-function ensureBookingRequestsTable(mysqli $conn)
-{
-    $sql = "CREATE TABLE IF NOT EXISTS booking_requests (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        booking_id INT NOT NULL,
-        provider_id INT NOT NULL,
-        service VARCHAR(120) NOT NULL,
-        fixed_price DECIMAL(10,2) NOT NULL DEFAULT 0,
-        date DATE NULL,
-        time_slot VARCHAR(32) NULL,
-        address VARCHAR(255) NULL,
-        details TEXT NULL,
-        customer_name VARCHAR(120) NULL,
-        customer_phone VARCHAR(40) NULL,
-        customer_address VARCHAR(255) NULL,
-        status ENUM('pending','accepted','declined','closed') NOT NULL DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        expires_at DATETIME NULL,
-        responded_at DATETIME NULL,
-        INDEX idx_provider_status (provider_id, status),
-        INDEX idx_booking (booking_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-    $conn->query($sql);
+if (!function_exists('ensureBookingRequestsTable')) {
+    function ensureBookingRequestsTable(mysqli $conn)
+    {
+        $sql = "CREATE TABLE IF NOT EXISTS booking_requests (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            booking_id INT NOT NULL,
+            provider_id INT NOT NULL,
+            service VARCHAR(120) NOT NULL,
+            fixed_price DECIMAL(10,2) NOT NULL DEFAULT 0,
+            date DATE NULL,
+            time_slot VARCHAR(32) NULL,
+            address VARCHAR(255) NULL,
+            details TEXT NULL,
+            customer_name VARCHAR(120) NULL,
+            customer_phone VARCHAR(40) NULL,
+            customer_address VARCHAR(255) NULL,
+            status ENUM('pending','accepted','declined','closed') NOT NULL DEFAULT 'pending',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            expires_at DATETIME NULL,
+            responded_at DATETIME NULL,
+            INDEX idx_provider_status (provider_id, status),
+            INDEX idx_booking (booking_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $conn->query($sql);
+    }
 }
 
 function ensureProviderReviewsTable(mysqli $conn): void

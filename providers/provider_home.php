@@ -351,10 +351,13 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
         <div id="verifiedDashboard" style="display:none;">
           <div class="sec-row">
-            <div class="sec-ttl">Incoming Requests</div>
+            <div class="sec-ttl" style="display:flex;align-items:center;gap:8px;">
+              <span>Incoming Requests</span>
+              <span class="live-badge" id="homeLiveBadge" style="<?= ($isVerified && $availabilityStatus === 'online') ? 'display:inline-flex;' : 'display:none;' ?>">LIVE</span>
+            </div>
             <span class="sec-lnk" onclick="goPage('provider_requests.php')">See all -></span>
           </div>
-          <div class="req-list">
+          <div class="req-list" id="homeReqList">
             <?php
             $incomingRequests = providerIncomingRequests($conn, $providerId, 2);
             ?>
@@ -395,7 +398,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                     <div class="req-price">PHP <?= $price ?></div>
                     <div class="req-btns">
                       <button class="btn-accept" onclick="event.stopPropagation(); acceptHomeRequest(<?= $rid ?>, <?= $bid ?>);">Accept</button>
-                      <button class="btn-decline" onclick="event.stopPropagation(); declineHomeRequest(<?= $rid ?>);">Decline</button>
+                      <button class="btn-decline" onclick="event.stopPropagation(); declineHomeRequest(<?= $rid ?>, <?= $bid ?>);">Decline</button>
                     </div>
                   </div>
                 </div>
@@ -634,7 +637,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     }
 
     async function confirmAcceptHomeBooking() {
-      if (!pendingAcceptRequest || !pendingAcceptBooking) return;
+      if (!pendingAcceptRequest && !pendingAcceptBooking) return;
       if (isHomeActionRunning) return;
 
       const requestId = pendingAcceptRequest;
@@ -646,16 +649,22 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       
       try {
         const fd = new FormData();
-        fd.append('action', 'accept');
-        fd.append('request_id', requestId);
+        if (bookingId) {
+          fd.append('action', 'accept_booking');
+          fd.append('booking_id', bookingId);
+        } else {
+          fd.append('action', 'accept');
+          fd.append('request_id', requestId);
+        }
         
         const res = await fetch('../api/provider_requests_api.php', { method: 'POST', body: fd });
         const data = await res.json();
         
         if (data.success) {
           showNotice('Booking accepted successfully!', 'success');
+          const targetId = data.booking_id || bookingId;
           setTimeout(() => {
-            window.location.href = 'provider_accepted_booking.php?booking_id=' + bookingId;
+            window.location.href = 'provider_accepted_booking.php?booking_id=' + targetId;
           }, 800);
         } else {
           showNotice(data.message || 'Could not accept request.');
@@ -678,7 +687,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       }
     });
 
-    async function declineHomeRequest(requestId) {
+    async function declineHomeRequest(requestId, bookingId) {
       if (isHomeActionRunning) return;
       if (!confirm('Are you sure you want to decline this request?')) return;
       
@@ -688,34 +697,25 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       try {
         const fd = new FormData();
         fd.append('action', 'decline');
-        fd.append('request_id', requestId);
+        if (bookingId) fd.append('booking_id', bookingId);
+        if (requestId) fd.append('request_id', requestId);
         
         const res = await fetch('../api/provider_requests_api.php', { method: 'POST', body: fd });
         const data = await res.json();
         
         if (data.success) {
           showNotice('Request declined.', 'success');
-          const card = document.querySelector(`.req-card[data-request-id="${requestId}"]`);
+          const card = document.querySelector(`.req-card[data-booking-id="${bookingId}"]`) || document.querySelector(`.req-card[data-request-id="${requestId}"]`);
           if (card) {
             card.style.transition = 'opacity 0.3s, transform 0.3s';
             card.style.opacity = '0';
             card.style.transform = 'scale(0.9)';
             setTimeout(() => {
               card.remove();
-              const list = document.querySelector('.req-list');
-              if (list && !list.querySelector('.req-card[data-request-id]')) {
-                list.innerHTML = `
-                  <div class="req-card">
-                    <div class="req-ic">—</div>
-                    <div class="req-body">
-                      <div class="req-type">No incoming requests</div>
-                      <div class="req-meta">Check back later for new jobs.</div>
-                    </div>
-                  </div>`;
-              }
+              loadHomeLiveFeed();
             }, 300);
           } else {
-            setTimeout(() => window.location.reload(), 800);
+            loadHomeLiveFeed();
           }
         } else {
           showNotice(data.message || 'Could not decline request.');
@@ -1168,6 +1168,9 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       lastAvailabilityState = isOnline ? 'online' : 'offline';
       if (toggle) toggle.checked = isOnline;
       if (lbl) lbl.textContent = isOnline ? 'Online' : 'Offline';
+      if (typeof loadHomeLiveFeed === 'function') {
+        loadHomeLiveFeed();
+      }
     }
 
     async function syncAvailabilityFromServer() {
@@ -1575,6 +1578,99 @@ $reviewPreview = $dashboardReviews[0] ?? null;
     // Today's Schedule removed from home — no periodic schedule fetch required.
 
     initPrivacyConsentGate();
+
+    let homePollTimer = null;
+
+    async function loadHomeLiveFeed() {
+      if (!backendIsVerified) return;
+      const listEl = document.getElementById('homeReqList');
+      if (!listEl) return;
+
+      try {
+        const res = await fetch('../api/provider_requests_api.php?action=live_feed&_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+
+        if (!data || !data.success) return;
+
+        const liveBadge = document.getElementById('homeLiveBadge');
+
+        if (data.is_online === false) {
+          if (liveBadge) liveBadge.style.display = 'none';
+          listEl.innerHTML = `
+            <div class="req-card">
+              <div class="req-ic" style="color:#6b7280;">💤</div>
+              <div class="req-body">
+                <div class="req-type">You are Offline</div>
+                <div class="req-meta">Switch your status to <strong>Online</strong> above to start receiving live booking requests.</div>
+              </div>
+            </div>`;
+          return;
+        }
+
+        if (liveBadge) liveBadge.style.display = 'inline-flex';
+
+        const bookings = (data.live_bookings || []).slice(0, 2);
+
+        if (bookings.length === 0) {
+          listEl.innerHTML = `
+            <div class="req-card">
+              <div class="req-ic">—</div>
+              <div class="req-body">
+                <div class="req-type">No incoming requests</div>
+                <div class="req-meta">Check back later for new jobs.</div>
+              </div>
+            </div>`;
+          return;
+        }
+
+        listEl.innerHTML = bookings.map(req => {
+          const service = escapeHtml(req.service || 'Service');
+          const customer = escapeHtml(req.customer_name || 'Homeowner');
+          const address = escapeHtml(req.address || req.request_address || '—');
+          const date = req.date || '';
+          const time = req.time_slot || '';
+          const price = Number(req.fixed_price || req.price || 0).toLocaleString();
+
+          const words = (req.service || '').trim().split(/\s+/);
+          let initials = '';
+          if (words[0]) initials += words[0].charAt(0).toUpperCase();
+          if (words[1]) initials += words[1].charAt(0).toUpperCase();
+          if (!initials && req.service) initials = req.service.substring(0, 2).toUpperCase();
+
+          let timeLabel = date !== '' ? date : 'TBD';
+          if (time !== '') { timeLabel += ', ' + time; }
+
+          const bid = parseInt(req.booking_id || 0, 10);
+          const rid = parseInt(req.request_id || 0, 10);
+
+          return `
+            <div class="req-card" data-request-id="${rid}" data-booking-id="${bid}" onclick="goPage('provider_requests.php?booking_id=${bid}')" style="cursor:pointer;">
+              <div class="req-ic">${initials}</div>
+              <div class="req-body">
+                <div class="req-type">${service}</div>
+                <div class="req-name">${customer}</div>
+                <div class="req-meta">Address: ${address}<br>Time: ${escapeHtml(timeLabel)}</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;">
+                <div class="req-price">PHP ${price}</div>
+                <div class="req-btns">
+                  <button class="btn-accept" onclick="event.stopPropagation(); acceptHomeRequest(${rid}, ${bid});">Accept</button>
+                  <button class="btn-decline" onclick="event.stopPropagation(); declineHomeRequest(${rid}, ${bid});">Decline</button>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (e) {
+        console.warn('Home live feed error:', e);
+      }
+    }
+
+    if (backendIsVerified) {
+      loadHomeLiveFeed();
+      if (!homePollTimer) {
+        homePollTimer = setInterval(loadHomeLiveFeed, 4000);
+      }
+    }
 
     // Dynamic greeting update
     function updateGreeting() {
