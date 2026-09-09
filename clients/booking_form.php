@@ -30,6 +30,20 @@ $preselectedLng  = isset($_GET['lng'])  ? (float)$_GET['lng']  : '';
 $preselectedAddr = isset($_GET['addr']) ? trim($_GET['addr'])  : '';
 
 $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
+
+$serviceNotesMap = [
+  'Appliance Technician' => '<strong>Note:</strong> Basic tools and supplies are provided by the worker. If additional materials or parts are needed, the homeowner and worker will discuss and agree on the materials and cost before purchase. Any additional cost will be paid by the homeowner.',
+  'Carpenter' => '<strong>Note:</strong> Basic tools and supplies are provided by the worker. If additional materials or parts are needed, the homeowner and worker will discuss and agree on the materials and cost before purchase. Any additional cost will be paid by the homeowner.',
+  'Plumber' => '<strong>Note:</strong> Basic tools and supplies are provided by the worker. If additional materials or parts are needed, the homeowner and worker will discuss and agree on the materials and cost before purchase. Any additional cost will be paid by the homeowner.',
+  'Helper' => '<strong>Note:</strong> Service price covers the selected task and duration. Cooking includes meal preparation, childcare includes basic child supervision, and general errands include agreed household errands. Any additional expenses will be discussed and paid by the homeowner.',
+  'House Cleaner' => '<strong>Note:</strong> Basic cleaning supplies are provided by the worker. If the homeowner requests a specific/special cleaning product that the worker does not have, they can discuss the additional cost.',
+  'Laundry Worker' => '<strong>Note:</strong> The homeowner provides the detergent, fabric conditioner, and other preferred laundry products. The worker provides the equipment and performs the selected laundry service.'
+];
+$resolvedInitialSvc = $serviceName;
+if ($resolvedInitialSvc === 'Plumbing') $resolvedInitialSvc = 'Plumber';
+if ($resolvedInitialSvc === 'Laundry') $resolvedInitialSvc = 'Laundry Worker';
+if ($resolvedInitialSvc === 'Carpentry') $resolvedInitialSvc = 'Carpenter';
+$initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap['House Cleaner'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -241,10 +255,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         <div class="fixed-total-wrap">
           <div class="fixed-total-row">
-            <span><i class="bi bi-receipt" style="margin-right:4px;opacity:.6;"></i>Total Price</span>
+            <span><i class="bi bi-receipt" style="margin-right:6px;opacity:.7;"></i>Total Price</span>
             <span class="fixed-total-value" id="fixedTotalVal">₱0</span>
           </div>
-          <div class="fixed-total-note"><i class="bi bi-shield-check" style="color:#10b981;"></i> Fixed service fee — the Service Provider will provide the necessary materials/supplies for the service.</div>
+          <div class="fixed-total-note" id="servicePricingNoteWrap">
+            <i class="bi bi-info-circle-fill" style="color:#E8820C; font-size:14px; margin-top:1px; flex-shrink:0;"></i>
+            <span id="servicePricingNoteText"><?= $initialServiceNote ?></span>
+          </div>
         </div>
 
         <button class="btn-book" id="btnSubmit" onclick="submitBooking()"
@@ -318,9 +335,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       <div class="booking-confirm-summary" id="bookingConfirmSummary"></div>
 
-      <div class="booking-confirm-note">
-        <i class="bi bi-shield-check"></i>
-        This is a fixed service fee. The Service Provider will provide the necessary materials/supplies for the service.
+      <div class="booking-confirm-note" id="confirmPricingNoteWrap" style="align-items:flex-start;line-height:1.45;">
+        <i class="bi bi-info-circle-fill" style="color:#0F766E;margin-top:2px;flex-shrink:0;"></i>
+        <span id="confirmPricingNoteText"><?= $initialServiceNote ?></span>
       </div>
 
       <div class="booking-confirm-actions">
@@ -345,38 +362,36 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     // Service-specific dynamic fields and pricing rules
     const serviceFields = {
       'House Cleaner': [
-        { name: 'cleaning_type', label: 'House Cleaner Type', type: 'select', options: ['General', 'Deep House Cleaner', 'Move-in/out'], required: true },
-        { name: 'property_type', label: 'Property Type', type: 'select', options: ['Condo/Apartment', 'House'], required: true },
-        { name: 'num_rooms', label: 'Number of Rooms', type: 'number', min: 1, max: 10, required: true },
-        { name: 'num_bathrooms', label: 'Number of Bathrooms', type: 'number', min: 1, max: 5, required: true },
+        { name: 'cleaning_type', label: 'Cleaning Type', type: 'select', options: ['General Cleaning', 'Deep Cleaning', 'Move-in / Move-out'], required: true },
+        { name: 'property_type', label: 'Property Type', type: 'select', options: ['Condo / Apartment', 'House'], required: true },
+        { name: 'num_rooms', label: 'Number of Rooms', type: 'number', min: 1, max: 10, defaultValue: 1, required: true },
+        { name: 'num_bathrooms', label: 'Number of Bathrooms', type: 'number', min: 1, max: 5, defaultValue: 1, required: true },
         { name: 'inclusions_note', label: 'Additional Notes', type: 'text', placeholder: 'e.g., windows, carpets, etc.', required: false },
         { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe any specific instructions, preferences, or details...', required: false }
       ],
       'Helper': [
-        { name: 'helper_tasks', label: 'Tasks Needed', type: 'checkbox-group', options: ['Cooking', 'Childcare', 'General Errands'], defaultChecked: [], required: true },
-        { name: 'helper_hours', label: 'Number of Hours', type: 'number', min: 4, max: 12, required: true },
+        { name: 'helper_tasks', label: 'Tasks Needed', type: 'checkbox-group', options: ['Cooking', 'General Errands', 'Childcare'], defaultChecked: [], required: true },
+        { name: 'helper_hours', label: 'Number of Hours', type: 'number', min: 4, max: 12, defaultValue: 4, required: true },
         { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the helper tasks or instructions in detail...', required: false }
       ],
       'Laundry Worker': [
         { name: 'laundry_services', label: 'Services', type: 'checkbox-group', options: ['Wash & Dry', 'Fold', 'Iron'], defaultChecked: ['Wash & Dry'], required: true },
-        { name: 'laundry_kilos', label: 'Laundry Load', type: 'select', options: ['Under 5kg', '5-10kg', 'Over 10kg'], required: true },
+        { name: 'laundry_kilos', label: 'Laundry Weight', type: 'select', options: ['Under 5kg', '5–10kg', 'Over 10kg'], required: true },
         { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe any special laundry instructions or details...', required: false }
       ],
       'Plumber': [
-        { name: 'issue_type', label: 'Issue Type', type: 'select', options: ['Leak', 'Clog', 'Installation'], required: true },
+        { name: 'issue_type', label: 'Issue Type', type: 'select', options: ['Leak Repair', 'Clog Removal', 'Installation'], required: true },
         { name: 'issue_location', label: 'Location', type: 'select', options: ['Kitchen', 'Bathroom', 'Outdoor'], required: true },
-        { name: 'urgency', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'], required: true },
         { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the plumbing issue in detail...', required: true }
       ],
       'Carpenter': [
-        { name: 'carpentry_task', label: 'Task', type: 'select', options: ['Repairs', 'Installation'], required: true },
+        { name: 'carpentry_task', label: 'Task', type: 'select', options: ['Repair', 'Installation'], required: true },
         { name: 'complexity', label: 'Complexity', type: 'select', options: ['Simple', 'Complex'], required: true },
         { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the woodwork or carpentry problem in detail...', required: true }
       ],
       'Appliance Technician': [
-        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Ref', 'Washing Machine', 'TV'], required: true },
+        { name: 'appliance_type', label: 'Appliance Type', type: 'select', options: ['Aircon', 'Refrigerator', 'Washing Machine', 'TV'], required: true },
         { name: 'problem_severity', label: 'Problem Severity', type: 'select', options: ['Minor', 'Major'], required: true },
-        { name: 'urgency_level', label: 'Urgency', type: 'select', options: ['Normal', 'Urgent'], required: true },
         { name: 'problem_description', label: 'Problem Description / Service Details', type: 'textarea', placeholder: 'Describe the appliance issue or repair details...', required: true }
       ]
     };
@@ -398,6 +413,28 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       'Helper': 'Helper',
       'Appliance Technician': 'Appliance Technician',
     };
+
+    const serviceNotes = {
+      'Appliance Technician': '<strong>Note:</strong> Basic tools and supplies are provided by the worker. If additional materials or parts are needed, the homeowner and worker will discuss and agree on the materials and cost before purchase. Any additional cost will be paid by the homeowner.',
+      'Carpenter': '<strong>Note:</strong> Basic tools and supplies are provided by the worker. If additional materials or parts are needed, the homeowner and worker will discuss and agree on the materials and cost before purchase. Any additional cost will be paid by the homeowner.',
+      'Plumber': '<strong>Note:</strong> Basic tools and supplies are provided by the worker. If additional materials or parts are needed, the homeowner and worker will discuss and agree on the materials and cost before purchase. Any additional cost will be paid by the homeowner.',
+      'Helper': '<strong>Note:</strong> Service price covers the selected task and duration. Cooking includes meal preparation, childcare includes basic child supervision, and general errands include agreed household errands. Any additional expenses will be discussed and paid by the homeowner.',
+      'House Cleaner': '<strong>Note:</strong> Basic cleaning supplies are provided by the worker. If the homeowner requests a specific/special cleaning product that the worker does not have, they can discuss the additional cost.',
+      'Laundry Worker': '<strong>Note:</strong> The homeowner provides the detergent, fabric conditioner, and other preferred laundry products. The worker provides the equipment and performs the selected laundry service.'
+    };
+
+    function updateServicePricingNote(serviceName) {
+      const resolved = svcNameAliases[serviceName] || serviceName;
+      const noteHtml = serviceNotes[resolved] || serviceNotes[serviceName] || serviceNotes['House Cleaner'];
+      const noteEl = document.getElementById('servicePricingNoteText');
+      const confirmNoteEl = document.getElementById('confirmPricingNoteText');
+      if (noteEl) {
+        noteEl.innerHTML = noteHtml;
+      }
+      if (confirmNoteEl) {
+        confirmNoteEl.innerHTML = noteHtml;
+      }
+    }
 
     /* ===== GPS LOCATION ===== */
     async function reverseGeocode(lat, lng) {
@@ -559,6 +596,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       // Render dynamic fields for this service
       renderDynamicFields(selectedSvc.name);
 
+      // Display corresponding service note below Total Price
+      updateServicePricingNote(selectedSvc.name);
+
       updatePricePreview();
     }
 
@@ -594,7 +634,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           return `
             <div class="fg">
               <label class="fl">${field.label}${reqStar}</label>
-              <input class="fi calc-input" id="field_${field.name}" type="number" min="${field.min}" max="${field.max}" value="1">
+              <input class="fi calc-input" id="field_${field.name}" type="number" min="${field.min}" max="${field.max}" value="${field.defaultValue !== undefined ? field.defaultValue : (field.min || 1)}">
             </div>
           `;
         } else if (field.type === 'checkbox-group') {
@@ -682,81 +722,167 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const lines = [];
 
       if (selectedSvc.name === 'House Cleaner') {
-        total = 500;
-        lines.push('Service fee only: ₱500');
+        const matrix = {
+          'General Cleaning': { 'Condo / Apartment': 750, 'Condo/Apartment': 750, 'House': 950 },
+          'General': { 'Condo / Apartment': 750, 'Condo/Apartment': 750, 'House': 950 },
+          'Deep Cleaning': { 'Condo / Apartment': 1250, 'Condo/Apartment': 1250, 'House': 1450 },
+          'Deep House Cleaner': { 'Condo / Apartment': 1250, 'Condo/Apartment': 1250, 'House': 1450 },
+          'Move-in / Move-out': { 'Condo / Apartment': 1450, 'Condo/Apartment': 1450, 'House': 1650 },
+          'Move-in/out': { 'Condo / Apartment': 1450, 'Condo/Apartment': 1450, 'House': 1650 }
+        };
 
-        const cleanTypeAdd = { 'General': 0, 'Deep House Cleaner': 500, 'Move-in/out': 700 };
-        const propertyAdd = { 'Condo/Apartment': 0, 'House': 200 };
-        const rooms = Math.max(0, normalizeNumber(v.num_rooms, 1));
-        const baths = Math.max(0, normalizeNumber(v.num_bathrooms, 1));
+        const cType = v.cleaning_type;
+        const pType = v.property_type;
+        const base = (cType && pType && matrix[cType] && matrix[cType][pType]) ? matrix[cType][pType] : 0;
+        const rooms = Math.max(1, normalizeNumber(v.num_rooms, 1));
+        const baths = Math.max(1, normalizeNumber(v.num_bathrooms, 1));
+        const extraRooms = Math.max(0, rooms - 1);
+        const extraBaths = Math.max(0, baths - 1);
+        const roomAdd = extraRooms * 100;
+        const bathAdd = extraBaths * 150;
 
-        const cAdd = cleanTypeAdd[v.cleaning_type] ?? 0;
-        const pAdd = propertyAdd[v.property_type] ?? 0;
-        const rAdd = rooms * 100;
-        const bAdd = baths * 150;
-
-        total += cAdd + pAdd + rAdd + bAdd;
-        lines.push(`House Cleaner type: +₱${cAdd}`);
-        lines.push(`Property: +₱${pAdd}`);
-        lines.push(`Rooms (${rooms}): +₱${rAdd}`);
-        lines.push(`Bathrooms (${baths}): +₱${bAdd}`);
+        total = base > 0 ? (base + roomAdd + bathAdd) : 0;
+        if (base > 0) {
+          lines.push(`Base (${cType} - ${pType}, 1 Room, 1 Bath): ₱${base.toLocaleString('en-PH')}`);
+          if (extraRooms > 0) lines.push(`Additional Rooms (${extraRooms} @ ₱100): +₱${roomAdd.toLocaleString('en-PH')}`);
+          if (extraBaths > 0) lines.push(`Additional Bathrooms (${extraBaths} @ ₱150): +₱${bathAdd.toLocaleString('en-PH')}`);
+        }
       } else if (selectedSvc.name === 'Helper') {
-        total = 400;
-        lines.push('Service fee only: ₱400 (4 hours)');
-
         const tasks = Array.isArray(v.helper_tasks) ? v.helper_tasks : [];
-        const taskAdd = tasks.reduce((sum, t) => sum + ({ 'Cooking': 150, 'Childcare': 200, 'General Errands': 100 }[t] ?? 0), 0);
+        const hasCooking = tasks.includes('Cooking');
+        const hasErrands = tasks.includes('General Errands');
+        const hasChildcare = tasks.includes('Childcare');
+
+        let base = 0;
+        let taskName = '';
+        if (hasCooking && hasErrands && hasChildcare) {
+          base = 850;
+          taskName = 'Cooking + General Errands + Childcare';
+        } else if (hasCooking && hasChildcare) {
+          base = 750;
+          taskName = 'Cooking + Childcare';
+        } else if (hasErrands && hasChildcare) {
+          base = 700;
+          taskName = 'General Errands + Childcare';
+        } else if (hasCooking && hasErrands) {
+          base = 650;
+          taskName = 'Cooking + General Errands';
+        } else if (hasChildcare) {
+          base = 600;
+          taskName = 'Childcare';
+        } else if (hasCooking) {
+          base = 550;
+          taskName = 'Cooking';
+        } else if (hasErrands) {
+          base = 500;
+          taskName = 'General Errands';
+        }
+
         const hours = Math.max(1, normalizeNumber(v.helper_hours, 4));
-        const excess = (hours > 4) ? ((hours - 4) * 100) : 0;
+        const extraHours = Math.max(0, hours - 4);
+        const extraFee = extraHours * 100;
 
-        total += taskAdd + excess;
-        lines.push(`Tasks (${tasks.join(', ') || 'None'}): +₱${taskAdd}`);
-        if (excess > 0) lines.push(`Excess Hours (+${hours - 4}): +₱${excess}`);
+        total = base > 0 ? (base + extraFee) : 0;
+        if (base > 0) {
+          lines.push(`Tasks (${taskName}): ₱${base.toLocaleString('en-PH')}`);
+          if (extraHours > 0) {
+            lines.push(`Additional Hours (${extraHours} hr${extraHours > 1 ? 's' : ''} @ ₱100/hr): +₱${extraFee.toLocaleString('en-PH')}`);
+          }
+        }
       } else if (selectedSvc.name === 'Laundry Worker') {
-        total = 300;
-        lines.push('Service fee only: ₱300');
-
         const tasks = Array.isArray(v.laundry_services) ? v.laundry_services : [];
-        const taskAdd = tasks.reduce((sum, t) => sum + ({ 'Wash & Dry': 100, 'Fold': 100, 'Iron': 150 }[t] ?? 0), 0);
-        const kiloAdd = ({ 'Under 5kg': 0, '5-10kg': 200, 'Over 10kg': 400 }[v.laundry_kilos] ?? 0);
+        const hasWashDry = tasks.some(t => t.toLowerCase().includes('wash'));
+        const hasFold = tasks.some(t => t.toLowerCase().includes('fold'));
+        const hasIron = tasks.some(t => t.toLowerCase().includes('iron'));
 
-        total += taskAdd + kiloAdd;
-        lines.push(`Services (${tasks.join(', ') || 'None'}): +₱${taskAdd}`);
-        lines.push(`Load size: +₱${kiloAdd}`);
+        let svcKey = '';
+        if (hasWashDry && hasFold && hasIron) {
+          svcKey = 'Wash + Dry + Iron + Fold';
+        } else if (hasWashDry && hasIron) {
+          svcKey = 'Wash & Dry + Iron';
+        } else if (hasWashDry && hasFold) {
+          svcKey = 'Wash & Dry + Fold';
+        } else if (hasFold && hasIron) {
+          svcKey = 'Fold + Iron';
+        } else if (hasWashDry) {
+          svcKey = 'Wash & Dry';
+        } else if (hasIron) {
+          svcKey = 'Iron';
+        } else if (hasFold) {
+          svcKey = 'Fold';
+        }
+
+        const rawWeight = (v.laundry_kilos || '').replace('–', '-');
+        let weightKey = '';
+        if (rawWeight.includes('Under')) weightKey = 'Under 5kg';
+        else if (rawWeight.includes('5-10')) weightKey = '5-10kg';
+        else if (rawWeight.includes('Over')) weightKey = 'Over 10kg';
+
+        const matrix = {
+          'Wash & Dry': { 'Under 5kg': 500, '5-10kg': 700, 'Over 10kg': 900 },
+          'Iron': { 'Under 5kg': 500, '5-10kg': 700, 'Over 10kg': 900 },
+          'Fold': { 'Under 5kg': 450, '5-10kg': 650, 'Over 10kg': 850 },
+          'Wash & Dry + Fold': { 'Under 5kg': 600, '5-10kg': 800, 'Over 10kg': 1000 },
+          'Wash & Dry + Iron': { 'Under 5kg': 650, '5-10kg': 850, 'Over 10kg': 1050 },
+          'Fold + Iron': { 'Under 5kg': 600, '5-10kg': 800, 'Over 10kg': 1000 },
+          'Wash + Dry + Iron + Fold': { 'Under 5kg': 750, '5-10kg': 950, 'Over 10kg': 1150 }
+        };
+
+        total = (svcKey && weightKey && matrix[svcKey] && matrix[svcKey][weightKey]) ? matrix[svcKey][weightKey] : 0;
+        if (total > 0) {
+          lines.push(`Service: ${svcKey}`);
+          lines.push(`Weight: ${weightKey}`);
+          lines.push(`Total Price: ₱${total.toLocaleString('en-PH')}`);
+        }
       } else if (selectedSvc.name === 'Plumber') {
-        total = 500;
-        lines.push('Service fee only: ₱500');
+        const matrix = {
+          'Leak Repair': { 'Kitchen': 800, 'Bathroom': 900, 'Outdoor': 950 },
+          'Leak': { 'Kitchen': 800, 'Bathroom': 900, 'Outdoor': 950 },
+          'Clog Removal': { 'Kitchen': 800, 'Bathroom': 900, 'Outdoor': 950 },
+          'Clog': { 'Kitchen': 800, 'Bathroom': 900, 'Outdoor': 950 },
+          'Installation': { 'Kitchen': 1300, 'Bathroom': 1400, 'Outdoor': 1450 }
+        };
 
-        const issueAdd = ({ 'Leak': 300, 'Clog': 300, 'Installation': 800 }[v.issue_type] ?? 0);
-        const locAdd = ({ 'Kitchen': 0, 'Bathroom': 100, 'Outdoor': 150 }[v.issue_location] ?? 0);
-        const urgAdd = ({ 'Normal': 0, 'Urgent': 300 }[v.urgency] ?? 0);
-
-        total += issueAdd + locAdd + urgAdd;
-        lines.push(`Issue type: +₱${issueAdd}`);
-        lines.push(`Location: +₱${locAdd}`);
-        lines.push(`Urgency: +₱${urgAdd}`);
+        const issue = v.issue_type;
+        const loc = v.issue_location;
+        total = (issue && loc && matrix[issue] && matrix[issue][loc]) ? matrix[issue][loc] : 0;
+        if (total > 0) {
+          lines.push(`Issue: ${issue}`);
+          lines.push(`Location: ${loc}`);
+          lines.push(`Service Price: ₱${total.toLocaleString('en-PH')}`);
+        }
       } else if (selectedSvc.name === 'Carpenter') {
-        total = 600;
-        lines.push('Service fee only: ₱600');
+        const matrix = {
+          'Repair': { 'Simple': 800, 'Complex': 1200 },
+          'Repairs': { 'Simple': 800, 'Complex': 1200 },
+          'Installation': { 'Simple': 900, 'Complex': 1400 }
+        };
 
-        const typeAdd = ({ 'Repairs': 0, 'Installation': 300 }[v.carpentry_task] ?? 0);
-        const prepAdd = ({ 'Simple': 0, 'Complex': 500 }[v.complexity] ?? 0);
-
-        total += typeAdd + prepAdd;
-        lines.push(`Task: +₱${typeAdd}`);
-        lines.push(`Complexity: +₱${prepAdd}`);
+        const task = v.carpentry_task;
+        const comp = v.complexity;
+        total = (task && comp && matrix[task] && matrix[task][comp]) ? matrix[task][comp] : 0;
+        if (total > 0) {
+          lines.push(`Task: ${task}`);
+          lines.push(`Complexity: ${comp}`);
+          lines.push(`Service Price: ₱${total.toLocaleString('en-PH')}`);
+        }
       } else if (selectedSvc.name === 'Appliance Technician') {
-        total = 500;
-        lines.push('Service fee only: ₱500');
+        const matrix = {
+          'Aircon': { 'Minor': 1100, 'Major': 2500 },
+          'Refrigerator': { 'Minor': 1000, 'Major': 2000 },
+          'Ref': { 'Minor': 1000, 'Major': 2000 },
+          'Washing Machine': { 'Minor': 1000, 'Major': 2000 },
+          'TV': { 'Minor': 800, 'Major': 1500 }
+        };
 
-        const appAdd = ({ 'Aircon': 500, 'Ref': 400, 'Washing Machine': 400, 'TV': 300 }[v.appliance_type] ?? 0);
-        const sevAdd = ({ 'Minor': 300, 'Major': 800 }[v.problem_severity] ?? 0);
-        const urgAdd = ({ 'Normal': 0, 'Urgent': 300 }[v.urgency_level] ?? 0);
-
-        total += appAdd + sevAdd + urgAdd;
-        lines.push(`Appliance: +₱${appAdd}`);
-        lines.push(`Severity: +₱${sevAdd}`);
-        lines.push(`Urgency: +₱${urgAdd}`);
+        const app = v.appliance_type;
+        const sev = v.problem_severity;
+        total = (app && sev && matrix[app] && matrix[app][sev]) ? matrix[app][sev] : 0;
+        if (total > 0) {
+          lines.push(`Appliance: ${app}`);
+          lines.push(`Severity: ${sev}`);
+          lines.push(`Service Price: ₱${total.toLocaleString('en-PH')}`);
+        }
       }
 
       return { total, summaryLines: lines };

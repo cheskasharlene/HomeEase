@@ -12,12 +12,12 @@ $providerId = (int)($_SESSION['provider_id'] ?? 0);
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider');
 
 $serviceBaseFees = [
-  'House Cleaner' => 500,
-  'Helper' => 400,
-  'Laundry Worker' => 300,
-  'Plumber' => 500,
-  'Carpenter' => 600,
-  'Appliance Technician' => 500
+  'House Cleaner' => 750,
+  'Helper' => 500,
+  'Laundry Worker' => 450,
+  'Plumber' => 800,
+  'Carpenter' => 800,
+  'Appliance Technician' => 800
 ];
 
 // Fetch provider's active service details directly via service_id

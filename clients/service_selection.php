@@ -97,12 +97,12 @@ if (empty($_SESSION['user_id'])) {
     };
 
     const serviceBaseFees = {
-      'House Cleaner': 500,
-      'Helper': 400,
-      'Laundry Worker': 300,
-      'Plumber': 500,
-      'Carpenter': 600,
-      'Appliance Technician': 500
+      'House Cleaner': 750,
+      'Helper': 500,
+      'Laundry Worker': 450,
+      'Plumber': 800,
+      'Carpenter': 800,
+      'Appliance Technician': 800
     };
 
     function brandIcon(name, fallback) {

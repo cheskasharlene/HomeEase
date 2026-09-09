@@ -800,55 +800,72 @@ function _serviceScopeMeta($service)
 {
     $scopes = [
         'House Cleaner' => [
-            'base_fee' => 500,
+            'base_fee' => 750,
             'included' => [
                 'Basic room cleaning and tidying',
                 'Sweeping, mopping, dusting, and wiping surfaces',
-                'Bathroom and kitchen surface cleanup'
+                'Bathroom and kitchen surface cleanup',
+                'Standard cleaning supplies provided by the cleaner'
             ],
             'excluded' => [
-                'Cleaning materials and supplies',
-                'Heavy stain removal or deep restoration',
-                'Special equipment rentals or disposal fees'
+                'Heavy stain restoration or specialized industrial equipment'
             ],
-            'provider_supply_fee' => 450,
+            'provider_supply_fee' => 0,
+        ],
+        'Helper' => [
+            'base_fee' => 500,
+            'included' => [
+                'Household assistance for selected tasks (Cooking, Errands, Childcare)',
+                'Standard 4-hour household service support'
+            ],
+            'excluded' => [
+                'Heavy manual construction or specialized technician labor'
+            ],
+            'provider_supply_fee' => 0,
+        ],
+        'Laundry Worker' => [
+            'base_fee' => 450,
+            'included' => [
+                'Washing, drying, folding, and/or ironing based on selected service',
+                'Standard detergent and laundry equipment provided by the worker'
+            ],
+            'excluded' => [
+                'Specialty dry-cleaning requiring industrial solvents'
+            ],
+            'provider_supply_fee' => 0,
         ],
         'Plumber' => [
-            'base_fee' => 500,
+            'base_fee' => 800,
             'included' => [
-                'Inspection, diagnosis, and labor for the requested repair',
-                'Minor troubleshooting and standard installation labor'
+                'Inspection, diagnosis, and labor for the requested plumbing repair',
+                'Standard plumbing tools and materials provided by the plumber'
             ],
             'excluded' => [
-                'Replacement pipes, valves, fixtures, and other parts',
-                'Special materials or specialty fittings',
-                'Major demolition or rebuilding work'
+                'Major structural demolition or rebuilding work'
             ],
-            'provider_supply_fee' => 300,
+            'provider_supply_fee' => 0,
         ],
         'Carpenter' => [
-            'base_fee' => 600,
+            'base_fee' => 800,
             'included' => [
                 'Labor for repairs, assembly, or installation',
-                'Basic carpentry assessment and measurement'
+                'Standard tools and supplies provided by the carpenter'
             ],
             'excluded' => [
-                'Wood, hardware, paint, varnish, and other materials',
-                'Custom fabrication beyond the agreed scope'
+                'Custom architectural fabrication beyond agreed scope'
             ],
-            'provider_supply_fee' => 350,
+            'provider_supply_fee' => 0,
         ],
         'Appliance Technician' => [
-            'base_fee' => 500,
+            'base_fee' => 800,
             'included' => [
                 'Diagnosis and labor for the selected appliance issue',
-                'Basic cleaning of accessible parts during service'
+                'Standard tools and supplies provided by the technician'
             ],
             'excluded' => [
-                'Replacement parts, refrigerant, or specialty components',
-                'Major repairs that require manufacturer-only parts'
+                'Manufacturer-only board replacements requiring custom factory orders'
             ],
-            'provider_supply_fee' => 250,
+            'provider_supply_fee' => 0,
         ],
     ];
 
@@ -867,79 +884,170 @@ function _computeFixedPrice($service, $data)
     $breakdown = [];
 
     if ($service === 'House Cleaner') {
-        $total = 500;
-        $breakdown[] = 'Base: 500';
+        $matrix = [
+            'General Cleaning' => ['Condo / Apartment' => 750, 'Condo/Apartment' => 750, 'House' => 950],
+            'General' => ['Condo / Apartment' => 750, 'Condo/Apartment' => 750, 'House' => 950],
+            'Deep Cleaning' => ['Condo / Apartment' => 1250, 'Condo/Apartment' => 1250, 'House' => 1450],
+            'Deep House Cleaner' => ['Condo / Apartment' => 1250, 'Condo/Apartment' => 1250, 'House' => 1450],
+            'Move-in / Move-out' => ['Condo / Apartment' => 1450, 'Condo/Apartment' => 1450, 'House' => 1650],
+            'Move-in/out' => ['Condo / Apartment' => 1450, 'Condo/Apartment' => 1450, 'House' => 1650]
+        ];
 
-        $typeAdd = ['General' => 0, 'Deep House Cleaner' => 500, 'Move-in/out' => 700];
-        $propertyAdd = ['Condo/Apartment' => 0, 'House' => 200];
+        $cleanType = (string) ($data['cleaning_type'] ?? '');
+        $propertyType = (string) ($data['property_type'] ?? '');
+        $base = $matrix[$cleanType][$propertyType] ?? 0;
 
-        $cleanType = (string) ($data['cleaning_type'] ?? 'General');
-        $propertyType = (string) ($data['property_type'] ?? 'Condo/Apartment');
-        $rooms = max(0, _asInt($data['num_rooms'] ?? 1, 1));
-        $bathrooms = max(0, _asInt($data['num_bathrooms'] ?? 1, 1));
+        $rooms = max(1, _asInt($data['num_rooms'] ?? 1, 1));
+        $bathrooms = max(1, _asInt($data['num_bathrooms'] ?? 1, 1));
+        $extraRooms = max(0, $rooms - 1);
+        $extraBaths = max(0, $bathrooms - 1);
+        $roomAdd = $extraRooms * 100;
+        $bathAdd = $extraBaths * 150;
 
-        $total += ($typeAdd[$cleanType] ?? 0);
-        $total += ($propertyAdd[$propertyType] ?? 0);
-        $total += $rooms * 100;
-        $total += $bathrooms * 150;
+        $total = $base > 0 ? ($base + $roomAdd + $bathAdd) : 0;
+        if ($base > 0) {
+            $breakdown[] = "House Cleaner Base ($cleanType - $propertyType, 1 Room, 1 Bath): $base";
+            if ($extraRooms > 0) $breakdown[] = "Additional Rooms ($extraRooms @ 100): $roomAdd";
+            if ($extraBaths > 0) $breakdown[] = "Additional Bathrooms ($extraBaths @ 150): $bathAdd";
+        }
     } elseif ($service === 'Helper') {
-        $total = 400;
-        $breakdown[] = 'Base: 400';
-
         $tasks = _parseCsvValues($data['helper_tasks'] ?? []);
+        $hasCooking = in_array('Cooking', $tasks, true);
+        $hasErrands = in_array('General Errands', $tasks, true);
+        $hasChildcare = in_array('Childcare', $tasks, true);
+
+        $base = 0;
+        $taskName = '';
+        if ($hasCooking && $hasErrands && $hasChildcare) {
+            $base = 850;
+            $taskName = 'Cooking + General Errands + Childcare';
+        } elseif ($hasCooking && $hasChildcare) {
+            $base = 750;
+            $taskName = 'Cooking + Childcare';
+        } elseif ($hasErrands && $hasChildcare) {
+            $base = 700;
+            $taskName = 'General Errands + Childcare';
+        } elseif ($hasCooking && $hasErrands) {
+            $base = 650;
+            $taskName = 'Cooking + General Errands';
+        } elseif ($hasChildcare) {
+            $base = 600;
+            $taskName = 'Childcare';
+        } elseif ($hasCooking) {
+            $base = 550;
+            $taskName = 'Cooking';
+        } elseif ($hasErrands) {
+            $base = 500;
+            $taskName = 'General Errands';
+        }
+
         $hours = max(1, _asInt($data['helper_hours'] ?? 4, 4));
+        $extraHours = max(0, $hours - 4);
+        $extraFee = $extraHours * 100;
 
-        $taskAdd = 0;
-        foreach($tasks as $t) {
-            $taskAdd += ((['House Cleaner' => 100, 'Cooking' => 150, 'Childcare' => 200, 'General Errands' => 100][$t]) ?? 0);
+        $total = $base > 0 ? ($base + $extraFee) : 0;
+        if ($base > 0) {
+            $breakdown[] = "Helper Base ($taskName): $base";
+            if ($extraHours > 0) {
+                $breakdown[] = "Additional Hours ($extraHours hr(s) @ 100/hr): $extraFee";
+            }
         }
-        $total += $taskAdd;
-        $total += ($hours > 4) ? (($hours-4)*100) : 0; // extra hours over 4
     } elseif ($service === 'Laundry Worker') {
-        $total = 300;
-        $breakdown[] = 'Base: 300';
-        
         $tasks = _parseCsvValues($data['laundry_services'] ?? []);
-        $taskAdd = 0;
-        foreach($tasks as $t) {
-            $taskAdd += (['Wash & Dry' => 100, 'Fold' => 100, 'Iron' => 150][$t] ?? 0);
+        $hasWashDry = false;
+        $hasFold = false;
+        $hasIron = false;
+        foreach ($tasks as $t) {
+            $tl = strtolower($t);
+            if (strpos($tl, 'wash') !== false) $hasWashDry = true;
+            if (strpos($tl, 'fold') !== false) $hasFold = true;
+            if (strpos($tl, 'iron') !== false) $hasIron = true;
         }
-        
-        $kilos = (string)($data['laundry_kilos'] ?? 'Under 5kg');
-        $kiloAdd = (['Under 5kg' => 0, '5-10kg' => 200, 'Over 10kg' => 400][$kilos] ?? 0);
-        
-        $total += $taskAdd + $kiloAdd;
+
+        $svcKey = '';
+        if ($hasWashDry && $hasFold && $hasIron) {
+            $svcKey = 'Wash + Dry + Iron + Fold';
+        } elseif ($hasWashDry && $hasIron) {
+            $svcKey = 'Wash & Dry + Iron';
+        } elseif ($hasWashDry && $hasFold) {
+            $svcKey = 'Wash & Dry + Fold';
+        } elseif ($hasFold && $hasIron) {
+            $svcKey = 'Fold + Iron';
+        } elseif ($hasWashDry) {
+            $svcKey = 'Wash & Dry';
+        } elseif ($hasIron) {
+            $svcKey = 'Iron';
+        } elseif ($hasFold) {
+            $svcKey = 'Fold';
+        }
+
+        $rawWeight = str_replace('–', '-', (string) ($data['laundry_kilos'] ?? ''));
+        $weightKey = '';
+        if (stripos($rawWeight, 'under') !== false) {
+            $weightKey = 'Under 5kg';
+        } elseif (strpos($rawWeight, '5-10') !== false) {
+            $weightKey = '5-10kg';
+        } elseif (stripos($rawWeight, 'over') !== false) {
+            $weightKey = 'Over 10kg';
+        }
+
+        $matrix = [
+            'Wash & Dry' => ['Under 5kg' => 500, '5-10kg' => 700, 'Over 10kg' => 900],
+            'Iron' => ['Under 5kg' => 500, '5-10kg' => 700, 'Over 10kg' => 900],
+            'Fold' => ['Under 5kg' => 450, '5-10kg' => 650, 'Over 10kg' => 850],
+            'Wash & Dry + Fold' => ['Under 5kg' => 600, '5-10kg' => 800, 'Over 10kg' => 1000],
+            'Wash & Dry + Iron' => ['Under 5kg' => 650, '5-10kg' => 850, 'Over 10kg' => 1050],
+            'Fold + Iron' => ['Under 5kg' => 600, '5-10kg' => 800, 'Over 10kg' => 1000],
+            'Wash + Dry + Iron + Fold' => ['Under 5kg' => 750, '5-10kg' => 950, 'Over 10kg' => 1150]
+        ];
+
+        $total = ($svcKey && $weightKey && isset($matrix[$svcKey][$weightKey])) ? $matrix[$svcKey][$weightKey] : 0;
+        if ($total > 0) {
+            $breakdown[] = "Laundry ($svcKey, $weightKey): $total";
+        }
     } elseif ($service === 'Plumber') {
-        $total = 500;
-        $breakdown[] = 'Base: 500';
+        $matrix = [
+            'Leak Repair' => ['Kitchen' => 800, 'Bathroom' => 900, 'Outdoor' => 950],
+            'Leak' => ['Kitchen' => 800, 'Bathroom' => 900, 'Outdoor' => 950],
+            'Clog Removal' => ['Kitchen' => 800, 'Bathroom' => 900, 'Outdoor' => 950],
+            'Clog' => ['Kitchen' => 800, 'Bathroom' => 900, 'Outdoor' => 950],
+            'Installation' => ['Kitchen' => 1300, 'Bathroom' => 1400, 'Outdoor' => 1450]
+        ];
 
-        $issue = (string) ($data['issue_type'] ?? 'Leak');
-        $location = (string) ($data['issue_location'] ?? 'Kitchen');
-        $urgency = (string) ($data['urgency'] ?? 'Normal');
-
-        $total += (['Leak' => 300, 'Clog' => 300, 'Installation' => 800][$issue] ?? 0);
-        $total += (['Kitchen' => 0, 'Bathroom' => 100, 'Outdoor' => 150][$location] ?? 0);
-        $total += ($urgency === 'Urgent') ? 300 : 0;
+        $issue = (string) ($data['issue_type'] ?? '');
+        $location = (string) ($data['issue_location'] ?? '');
+        $total = ($issue && $location && isset($matrix[$issue][$location])) ? $matrix[$issue][$location] : 0;
+        if ($total > 0) {
+            $breakdown[] = "Plumber ($issue, $location): $total";
+        }
     } elseif ($service === 'Carpenter') {
-        $total = 600;
-        $breakdown[] = 'Base: 600';
+        $matrix = [
+            'Repair' => ['Simple' => 800, 'Complex' => 1200],
+            'Repairs' => ['Simple' => 800, 'Complex' => 1200],
+            'Installation' => ['Simple' => 900, 'Complex' => 1400]
+        ];
 
-        $task = (string) ($data['carpentry_task'] ?? 'Repairs');
-        $complexity = (string)($data['complexity'] ?? 'Simple');
-
-        $total += (['Repairs' => 0, 'Furniture Making' => 500, 'Installation' => 300][$task] ?? 0);
-        $total += (['Simple' => 0, 'Complex' => 500][$complexity] ?? 0);
+        $task = (string) ($data['carpentry_task'] ?? '');
+        $complexity = (string) ($data['complexity'] ?? '');
+        $total = ($task && $complexity && isset($matrix[$task][$complexity])) ? $matrix[$task][$complexity] : 0;
+        if ($total > 0) {
+            $breakdown[] = "Carpenter ($task, $complexity): $total";
+        }
     } elseif ($service === 'Appliance Technician') {
-        $total = 500;
-        $breakdown[] = 'Base: 500';
+        $matrix = [
+            'Aircon' => ['Minor' => 1100, 'Major' => 2500],
+            'Refrigerator' => ['Minor' => 1000, 'Major' => 2000],
+            'Ref' => ['Minor' => 1000, 'Major' => 2000],
+            'Washing Machine' => ['Minor' => 1000, 'Major' => 2000],
+            'TV' => ['Minor' => 800, 'Major' => 1500]
+        ];
 
-        $appliance = (string) ($data['appliance_type'] ?? 'TV');
-        $severity = (string) ($data['problem_severity'] ?? 'Minor');
-        $urgency = (string) ($data['urgency_level'] ?? 'Normal');
-
-        $total += (['Aircon' => 500, 'Ref' => 400, 'Washing Machine' => 400, 'TV' => 300, 'Other' => 200][$appliance] ?? 0);
-        $total += (['Minor' => 300, 'Major' => 800][$severity] ?? 0);
-        $total += ($urgency === 'Urgent') ? 300 : 0;
+        $appliance = (string) ($data['appliance_type'] ?? '');
+        $severity = (string) ($data['problem_severity'] ?? '');
+        $total = ($appliance && $severity && isset($matrix[$appliance][$severity])) ? $matrix[$appliance][$severity] : 0;
+        if ($total > 0) {
+            $breakdown[] = "Appliance Technician ($appliance, $severity): $total";
+        }
     }
 
     return [
@@ -953,29 +1061,30 @@ function _summarizeSelectedOptions($service, $data)
     $pairs = [];
 
     if ($service === 'House Cleaner') {
-        $pairs[] = 'House Cleaner Type: ' . ((string) ($data['cleaning_type'] ?? 'General'));
-        $pairs[] = 'Property Type: ' . ((string) ($data['property_type'] ?? 'Condo/Apartment'));
-        $pairs[] = 'Rooms: ' . max(0, _asInt($data['num_rooms'] ?? 1, 1));
-        $pairs[] = 'Bathrooms: ' . max(0, _asInt($data['num_bathrooms'] ?? 1, 1));
+        $pairs[] = 'Cleaning Type: ' . ((string) ($data['cleaning_type'] ?? 'General Cleaning'));
+        $pairs[] = 'Property Type: ' . ((string) ($data['property_type'] ?? 'Condo / Apartment'));
+        $pairs[] = 'Rooms: ' . max(1, _asInt($data['num_rooms'] ?? 1, 1));
+        $pairs[] = 'Bathrooms: ' . max(1, _asInt($data['num_bathrooms'] ?? 1, 1));
+        if (!empty($data['inclusions_note'])) {
+            $pairs[] = 'Additional Notes: ' . trim((string) $data['inclusions_note']);
+        }
     } elseif ($service === 'Helper') {
         $tasks = _parseCsvValues($data['helper_tasks'] ?? []);
         $pairs[] = 'Tasks: ' . (empty($tasks) ? 'None' : implode(', ', $tasks));
-        $pairs[] = 'Hours: ' . max(1, _asInt($data['helper_hours'] ?? 4, 4));
+        $pairs[] = 'Hours: ' . max(4, _asInt($data['helper_hours'] ?? 4, 4));
     } elseif ($service === 'Laundry Worker') {
         $tasks = _parseCsvValues($data['laundry_services'] ?? []);
-        $pairs[] = 'Tasks: ' . (empty($tasks) ? 'None' : implode(', ', $tasks));
+        $pairs[] = 'Services: ' . (empty($tasks) ? 'None' : implode(', ', $tasks));
         $pairs[] = 'Load size: ' . ((string) ($data['laundry_kilos'] ?? 'Under 5kg'));
     } elseif ($service === 'Plumber') {
-        $pairs[] = 'Issue Type: ' . ((string) ($data['issue_type'] ?? 'Leak'));
+        $pairs[] = 'Issue Type: ' . ((string) ($data['issue_type'] ?? 'Leak Repair'));
         $pairs[] = 'Location: ' . ((string) ($data['issue_location'] ?? 'Kitchen'));
-        $pairs[] = 'Urgency: ' . ((string) ($data['urgency'] ?? 'Normal'));
     } elseif ($service === 'Carpenter') {
-        $pairs[] = 'Task: ' . ((string) ($data['carpentry_task'] ?? 'Repairs'));
+        $pairs[] = 'Task: ' . ((string) ($data['carpentry_task'] ?? 'Repair'));
         $pairs[] = 'Complexity: ' . ((string) ($data['complexity'] ?? 'Simple'));
     } elseif ($service === 'Appliance Technician') {
         $pairs[] = 'Appliance: ' . ((string) ($data['appliance_type'] ?? 'TV'));
         $pairs[] = 'Severity: ' . ((string) ($data['problem_severity'] ?? 'Minor'));
-        $pairs[] = 'Urgency: ' . ((string) ($data['urgency_level'] ?? 'Normal'));
     }
 
     if (isset($data['problem_description']) && trim((string)$data['problem_description']) !== '') {
