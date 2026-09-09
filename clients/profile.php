@@ -726,7 +726,7 @@ if ($appBase === '') {
               </div>
               <div class="faq-answer"
                 style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">HOME EASE is an
-                AI-assisted mobile platform for booking household services with real-time GPS tracking.</div>
+                Mobile platform for booking household services with real-time GPS tracking.</div>
             </div>
             <div class="faq-item"
               style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;"
@@ -766,7 +766,7 @@ if ($appBase === '') {
               </div>
               <div class="faq-answer"
                 style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Yes, you can cancel
-                before the scheduled time. Cancellation fees may apply.</div>
+                before the scheduled time.</div>
             </div>
             <div class="faq-item"
               style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;"
@@ -828,7 +828,7 @@ if ($appBase === '') {
               </div>
               <div class="faq-answer"
                 style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Additional charges
-                may apply depending on the service type or cancellation policy.</div>
+                may apply depending on the service type.</div>
             </div>
           </div>
 
@@ -846,7 +846,7 @@ if ($appBase === '') {
               </div>
               <div class="faq-answer"
                 style="display:none;margin-top:12px;font-size:14px;color:#6b7280;line-height:1.6;">Services include
-                House Cleaner, plumbing, electrical work, and other household tasks.</div>
+                House Cleaner, Plumbing, Electrical work, and other household tasks.</div>
             </div>
             <div class="faq-item"
               style="margin-bottom:16px;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;"
