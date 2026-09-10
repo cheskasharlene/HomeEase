@@ -20,6 +20,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../assets/js/location_helper.js"></script>
   <link href="../assets/css/main.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/provider_requests.css">
   <style>
@@ -873,8 +874,8 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
     /* ===== PROVIDER GPS TRACKING ===== */
     function startProviderTracking() {
-      if (!navigator.geolocation) return;
-      navigator.geolocation.watchPosition(
+      HomeEaseLocation.watchLocation(
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
         (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
@@ -885,8 +886,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
             providerGpsLng = lng;
           }
         },
-        () => {},
-        { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+        () => {}
       );
     }
 

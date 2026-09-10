@@ -28,6 +28,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
   <!-- Leaflet Map -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../assets/js/location_helper.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css">
   <link rel="stylesheet" href="../assets/css/waiting_for_provider.css">
   <style>
@@ -991,17 +992,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     }
 
     function startClientGps() {
-      if (!navigator.geolocation) {
-        showGpsBanner('loading', '📡 No GPS on this device — using map default.');
-        return;
-      }
       showGpsBanner('loading', '📡 Acquiring GPS signal…');
       const opts = { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 };
-      /* Fast coarse fix first, then watch for precise */
-      navigator.geolocation.getCurrentPosition(_gpsOnFix, _gpsOnError, {
-        enableHighAccuracy: false, maximumAge: 60000, timeout: 5000
-      });
-      gpsWatchId = navigator.geolocation.watchPosition(_gpsOnFix, _gpsOnError, opts);
+      HomeEaseLocation.getLocation(
+        { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 },
+        _gpsOnFix,
+        _gpsOnError
+      );
+      gpsWatchId = HomeEaseLocation.watchLocation(opts, _gpsOnFix, _gpsOnError);
     }
 
 
@@ -1163,17 +1161,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         }
       };
 
-      if (!navigator.geolocation) {
-        _resetBtn();
-        if (providerMarker) fitMap(providerMarker.getLatLng().lat, providerMarker.getLatLng().lng);
-        else map.setView([customerLat, customerLng], 15, { animate: true });
-        return;
-      }
-
       showGpsBanner('loading', '📡 Getting precise location…');
 
       /* High-accuracy one-shot fix */
-      navigator.geolocation.getCurrentPosition(
+      HomeEaseLocation.getLocation(
+        { enableHighAccuracy: true, timeout: 12000 },
         (pos) => {
           _resetBtn();
           _gpsOnFix(pos);   // updates customerLat/Lng + marker
@@ -1187,12 +1179,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         },
         (err) => {
           _resetBtn();
-          const msgs = { 1: '🔒 Location permission denied.', 2: '📡 GPS unavailable.', 3: '⏱ GPS timed out — retrying…' };
-          showGpsBanner('error', msgs[err.code] || 'GPS error.');
+          _gpsOnError(err);
           if (providerMarker) fitMap(providerMarker.getLatLng().lat, providerMarker.getLatLng().lng);
           else map.setView([customerLat, customerLng], 15, { animate: true });
-        },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+        }
       );
     }
 
@@ -1634,8 +1624,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       btn.disabled = true;
       btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> Requesting…';
 
-      // This call triggers the browser’s native permission prompt
-      navigator.geolocation.getCurrentPosition(
+      HomeEaseLocation.getLocation(
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
         (pos) => {
           hideGpsModal();
           _gpsOnFix(pos);        // process this first fix immediately
@@ -1643,14 +1633,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         },
         (err) => {
           hideGpsModal();
-          const msgs = {
-            1: '🔒 Location denied. Enable GPS in your browser settings, then refresh.',
-            2: '📡 GPS unavailable. Using default Batangas location.',
-            3: '⏱ GPS timed out. Using default location.'
-          };
-          showGpsBanner('error', msgs[err.code] || 'Could not get location.');
-        },
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+          showGpsBanner('error', err.message || 'Could not get location.');
+        }
       );
     }
 

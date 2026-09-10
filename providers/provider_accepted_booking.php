@@ -40,6 +40,7 @@ if ($bookingId > 0) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../assets/js/location_helper.js"></script>
   <link href="../assets/css/main.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/waiting_for_provider.css">
   <link rel="stylesheet" href="../assets/css/booking_form.css">
@@ -627,7 +628,7 @@ if ($bookingId > 0) {
       });
 
       // ── Provider GPS Precision Engine ──
-      if (navigator.geolocation) {
+      if (window.HomeEaseLocation) {
         const _GPS = {
           SMOOTH_ALPHA: 0.25,
           MIN_MOVE_M: 5,
@@ -724,11 +725,13 @@ if ($bookingId > 0) {
         const _opts = { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 };
         showGpsStatus('loading', '📡 Acquiring GPS signal…');
 
-        /* Fast coarse fix first (accepts cached/WiFi), then continuous high-accuracy watch */
-        navigator.geolocation.getCurrentPosition(_onFix, _onErr, {
-          enableHighAccuracy: false, maximumAge: 60000, timeout: 5000
-        });
-        navigator.geolocation.watchPosition(_onFix, _onErr, _opts);
+        /* Fast coarse fix first, then continuous high-accuracy watch */
+        HomeEaseLocation.getLocation(
+          { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 },
+          _onFix,
+          _onErr
+        );
+        HomeEaseLocation.watchLocation(_opts, _onFix, _onErr);
       }
       syncSheetHeight();
     }
@@ -876,19 +879,11 @@ if ($bookingId > 0) {
         }
       };
 
-      if (!navigator.geolocation) {
-        _resetBtn();
-        if (custM && provM) {
-          const bounds = L.latLngBounds([custLat, custLng], [provLat, provLng]);
-          map.fitBounds(bounds, { padding: [80, 80] });
-        }
-        return;
-      }
-
       showGpsStatus('loading', '📡 Getting precise location…');
 
       /* High-accuracy one-shot fix */
-      navigator.geolocation.getCurrentPosition(
+      HomeEaseLocation.getLocation(
+        { enableHighAccuracy: true, timeout: 12000 },
         (pos) => {
           _resetBtn();
           provLat = pos.coords.latitude;
@@ -907,15 +902,13 @@ if ($bookingId > 0) {
         },
         (err) => {
           _resetBtn();
-          const msgs = { 1:'🔒 Location permission denied.', 2:'📡 GPS unavailable.', 3:'⏱ GPS timed out — retrying…' };
-          showGpsStatus('error', msgs[err.code] || 'GPS error.');
+          showGpsStatus('error', err.message || 'GPS error.');
           /* Fall back to fitting existing markers */
           if (custM && provM) {
             const bounds = L.latLngBounds([custLat, custLng], [provLat, provLng]);
             map.fitBounds(bounds, { padding: [80, 80] });
           }
-        },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
+        }
       );
     }
 

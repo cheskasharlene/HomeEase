@@ -60,6 +60,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
   <link rel="stylesheet" href="../assets/css/main.css">
   <link rel="stylesheet" href="../assets/css/bookings.css">
   <link rel="stylesheet" href="../assets/css/booking_form.css">
+  <script src="../assets/js/location_helper.js"></script>
 </head>
 
 <body>
@@ -458,12 +459,9 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
     }
 
     async function requestLocation(silent = false) {
-      if (!navigator.geolocation) {
-        setGpsCard('error', 'Geolocation not supported by this browser.');
-        return;
-      }
       setGpsCard('loading', 'Getting your GPS coordinates…');
-      navigator.geolocation.getCurrentPosition(
+      HomeEaseLocation.getLocation(
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
         async (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
@@ -476,14 +474,8 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           setGpsCard('success', display);
         },
         (err) => {
-          const msgs = {
-            1: 'Permission denied — enable location in your browser settings.',
-            2: 'Location unavailable. Check your GPS signal.',
-            3: 'Location timed out. Please try again.'
-          };
-          setGpsCard('error', msgs[err.code] || 'Could not get location.');
-        },
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+          setGpsCard('error', err.message || 'Could not get location.');
+        }
       );
     }
 

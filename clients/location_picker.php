@@ -21,6 +21,7 @@ if (!$serviceName) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="../assets/js/location_helper.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css">
   <style>
     * { box-sizing: border-box; }
@@ -384,23 +385,19 @@ if (!$serviceName) {
 
     /* ── GPS — accept everything, refine over time ── */
     function startGps() {
-      if (!navigator.geolocation) {
-        showBadge('error', '📡 GPS not supported by this browser');
-        return;
-      }
       showBadge('loading', '📡 Acquiring GPS signal…');
 
       const opts = { enableHighAccuracy: true, maximumAge: 30000, timeout: 30000 };
 
-      /* First shot — accept cached position (up to 30 s old) for speed */
-      navigator.geolocation.getCurrentPosition(onFix, onErr, {
-        enableHighAccuracy: false,   // fast coarse fix first
-        maximumAge: 60000,
-        timeout: 5000
-      });
+      HomeEaseLocation.getLocation(
+        { enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 },
+        onFix,
+        (err) => showBadge('error', '📡 ' + (err.message || 'Could not acquire GPS'))
+      );
 
-      /* Then watch for the best possible fix */
-      gpsWatchId = navigator.geolocation.watchPosition(onFix, onErr, opts);
+      gpsWatchId = HomeEaseLocation.watchLocation(opts, onFix, (err) => {
+        showBadge('error', '📡 ' + (err.message || 'GPS Signal lost'));
+      });
     }
 
     function onFix(pos) {
