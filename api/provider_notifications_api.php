@@ -53,7 +53,14 @@ if ($method === 'GET') {
 }
 
 if ($method === 'POST') {
-    if (!empty($_POST['mark_all'])) {
+    $rawInput  = file_get_contents('php://input');
+    $jsonInput = !empty($rawInput) ? json_decode($rawInput, true) : [];
+    if (!is_array($jsonInput)) {
+        $jsonInput = [];
+    }
+
+    $markAll = !empty($_POST['mark_all']) || !empty($_GET['mark_all']) || !empty($jsonInput['mark_all']);
+    if ($markAll) {
         $stmt = $conn->prepare("UPDATE provider_notifications SET is_read = 1 WHERE provider_id = ?");
         $stmt->bind_param('i', $providerId);
         $stmt->execute();
@@ -61,7 +68,7 @@ if ($method === 'POST') {
         respond(true, 'All marked as read.');
     }
 
-    $notifId = (int) ($_POST['id'] ?? 0);
+    $notifId = (int) ($_POST['id'] ?? $_GET['id'] ?? $jsonInput['id'] ?? 0);
     if ($notifId > 0) {
         $stmt = $conn->prepare("UPDATE provider_notifications SET is_read = 1 WHERE id = ? AND provider_id = ?");
         $stmt->bind_param('ii', $notifId, $providerId);

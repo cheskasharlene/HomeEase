@@ -105,11 +105,17 @@ if ($stmt) {
           <div class="ni" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
           <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span class="nl">Requests</span></div>
           <div class="ni" onclick="goPage('provider_earnings.php')"><i class="bi bi-cash-stack"></i><span class="nl">Earnings</span></div>
-          <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
+          <div class="ni ni-bell on" onclick="goPage('provider_notifications.php')">
+            <div class="ni-bell-wrap"><i class="bi bi-bell-fill"></i><span class="ni-badge" id="navBellBadge" style="display:none;"></span></div>
+            <span class="nl">Notifications</span>
+          </div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php else: ?>
           <div class="ni" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
-          <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
+          <div class="ni ni-bell on" onclick="goPage('provider_notifications.php')">
+            <div class="ni-bell-wrap"><i class="bi bi-bell-fill"></i><span class="ni-badge" id="navBellBadge" style="display:none;"></span></div>
+            <span class="nl">Notifications</span>
+          </div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php endif; ?>
       </div>
@@ -191,20 +197,40 @@ if ($stmt) {
     /* ── Merge local + server ── */
     function mergeNotifications() {
       const localList = readLocalNotifs();
-      const byId = new Map();
-      localList.forEach(item => byId.set(String(item.id), item));
-      window.HE.notifications.forEach(item => {
-        if (!byId.has(String(item.id))) byId.set(String(item.id), item);
+      const localMap  = new Map();
+      localList.forEach(item => {
+        if (item && item.id !== undefined) localMap.set(String(item.id), item);
+      });
+
+      const mergedMap = new Map();
+
+      // 1. Process server notifications (authoritative DB records)
+      (window.HE.notifications || []).forEach(serverItem => {
+        const key = String(serverItem.id);
+        const localItem = localMap.get(key);
+        // If either server DB or local storage marked it read, consider it read
+        const isRead = Boolean(serverItem.read || (localItem && localItem.read));
+        mergedMap.set(key, {
+          ...serverItem,
+          read: isRead
+        });
+      });
+
+      // 2. Add local-only notifications not yet in server DB
+      localMap.forEach((localItem, key) => {
+        if (!mergedMap.has(key)) {
+          mergedMap.set(key, localItem);
+        }
       });
 
       /* If provider is rejected, ensure a rejection notification is present */
       if (window.HE.verificationState === 'rejected') {
-        const hasRej = Array.from(byId.values()).some(n => 
+        const hasRej = Array.from(mergedMap.values()).some(n => 
           n && (n.type === 'verification_rejected' || n.type === 'rejected' || (String(n.id) === 'verification_rejected'))
         );
         if (!hasRej) {
           const createdAt = new Date().toISOString();
-          byId.set('verification_rejected', {
+          mergedMap.set('verification_rejected', {
             id: 'verification_rejected',
             type: 'verification_rejected',
             title: 'Worker Application Rejected',
@@ -217,7 +243,7 @@ if ($stmt) {
         }
       }
 
-      window.HE.notifications = Array.from(byId.values())
+      window.HE.notifications = Array.from(mergedMap.values())
         .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     }
 
@@ -234,6 +260,17 @@ if ($stmt) {
         countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
       }
       document.getElementById('markAllBtn').style.display = unreadList.length ? '' : 'none';
+
+      // Update navbar bell badge
+      const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
+      badges.forEach(b => {
+        if (unreadList.length > 0) {
+          b.textContent = unreadList.length > 99 ? '99+' : String(unreadList.length);
+          b.style.display = 'block';
+        } else {
+          b.style.display = 'none';
+        }
+      });
 
       if (!total) {
         document.getElementById('nBody').innerHTML = emptyStateHTML();
@@ -413,39 +450,36 @@ if ($stmt) {
       const n = window.HE.notifications.find(nf => String(nf.id) === String(id));
       if (!n || n.read) return;
 
+      const finishMarkRead = () => {
+        n.read = true;
+        writeLocalNotifs(window.HE.notifications);
+        renderNotifs();
+      };
+
       /* Visual ripple */
       const card = document.getElementById(`nc-${id}`);
       if (card) {
         card.classList.add('reading');
-        setTimeout(() => {
-          n.read = true;
-          /* Update localStorage */
-          const localList = readLocalNotifs();
-          const localNotif = localList.find(item => String(item.id) === String(id));
-          if (localNotif) { localNotif.read = true; writeLocalNotifs(localList); }
-          renderNotifs();
-        }, 280);
+        setTimeout(finishMarkRead, 280);
       } else {
-        n.read = true;
-        const localList = readLocalNotifs();
-        const localNotif = localList.find(item => String(item.id) === String(id));
-        if (localNotif) { localNotif.read = true; writeLocalNotifs(localList); }
-        renderNotifs();
+        finishMarkRead();
       }
 
-      /* Persist to server */
-      const form = new FormData();
-      form.append('id', id);
-      fetch('../api/provider_notifications_api.php', { method: 'POST', body: form }).catch(() => {});
+      /* Persist to server if valid DB ID */
+      if (typeof id === 'number' || (typeof id === 'string' && /^\d+$/.test(id))) {
+        const form = new FormData();
+        form.append('id', id);
+        fetch('../api/provider_notifications_api.php', { method: 'POST', body: form }).catch(() => {});
+      }
     }
 
     /* ── Mark all read ── */
     function markAllRead() {
       const hasUnread = window.HE.notifications.some(n => !n.read);
       if (!hasUnread) return;
+
       window.HE.notifications.forEach(n => n.read = true);
-      const localList = readLocalNotifs().map(item => ({ ...item, read: true }));
-      writeLocalNotifs(localList);
+      writeLocalNotifs(window.HE.notifications);
       renderNotifs();
       showToast('All notifications marked as read', 'success');
 
@@ -461,7 +495,7 @@ if ($stmt) {
         const data = await res.json();
         if (!data.success || !Array.isArray(data.notifications)) return;
 
-        const next = data.notifications.map(n => ({
+        const fetched = data.notifications.map(n => ({
           id:         Number(n.id),
           type:       n.type || 'general',
           title:      n.title,
@@ -472,10 +506,12 @@ if ($stmt) {
           icon:       n.icon || 'house_cleaner'
         }));
 
-        const previousIds = new Set(window.HE.notifications.map(n => String(n.id)));
-        const newItems    = next.filter(n => !previousIds.has(String(n.id)));
-        window.HE.notifications = next;
-        writeLocalNotifs(next);
+        const previousIds = new Set((window.HE.notifications || []).map(n => String(n.id)));
+        const newItems    = fetched.filter(n => !previousIds.has(String(n.id)));
+
+        window.HE.notifications = fetched;
+        mergeNotifications();
+        writeLocalNotifs(window.HE.notifications);
         renderNotifs();
 
         if (showNewToast && newItems.length) {

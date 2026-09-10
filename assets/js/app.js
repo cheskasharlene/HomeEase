@@ -1057,33 +1057,32 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
 // Polls the provider notifications API and keeps the bell badge up to date
 // on every provider page that has a #navBellBadge element.
 (function initProviderBellBadge() {
-  // Only run on provider pages (badge element must exist)
-  const badge = document.getElementById('navBellBadge');
-  if (!badge) return;
-
   let _lastCount = -1;
 
   function updateBadge(count) {
-    if (count === _lastCount) return;
+    const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
+    if (!badges.length) return;
+
     const prev = _lastCount;
     _lastCount = count;
 
-    if (count > 0) {
-      badge.textContent = count > 99 ? '99+' : String(count);
-      badge.style.display = 'block';
-      // Shake the bell icon if new notifications arrived
-      if (prev >= 0 && count > prev) {
-        const bellIcon = badge.closest('.ni-bell-wrap');
-        if (bellIcon) {
-          bellIcon.classList.remove('ni-bell-shake');
-          void bellIcon.offsetWidth; // reflow to restart animation
-          bellIcon.classList.add('ni-bell-shake');
-          setTimeout(() => bellIcon.classList.remove('ni-bell-shake'), 600);
+    badges.forEach(badge => {
+      if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.style.display = 'block';
+        if (prev >= 0 && count > prev) {
+          const bellWrap = badge.closest('.ni-bell-wrap');
+          if (bellWrap) {
+            bellWrap.classList.remove('ni-bell-shake');
+            void bellWrap.offsetWidth;
+            bellWrap.classList.add('ni-bell-shake');
+            setTimeout(() => bellWrap.classList.remove('ni-bell-shake'), 600);
+          }
         }
+      } else {
+        badge.style.display = 'none';
       }
-    } else {
-      badge.style.display = 'none';
-    }
+    });
   }
 
   async function pollBellCount() {
@@ -1096,14 +1095,12 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
     } catch (e) { /* silent — don't break the page */ }
   }
 
-  // Kick off immediately then poll every 10 s
-  document.addEventListener('DOMContentLoaded', function () {
-    pollBellCount();
-    setInterval(pollBellCount, 10000);
-  });
-
-  // If DOM already loaded (script at bottom of body), run now
-  if (document.readyState !== 'loading') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      pollBellCount();
+      setInterval(pollBellCount, 10000);
+    });
+  } else {
     pollBellCount();
     setInterval(pollBellCount, 10000);
   }
