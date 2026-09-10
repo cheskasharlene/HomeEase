@@ -606,7 +606,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
               </div>
               <div class="req-price-tag">₱${Number(r.fixed_price || 0).toLocaleString('en-PH')}</div>
             </div>
-            ${isCompleted ? `<div class="req-footer"><button class="btn-view" onclick="goPage('provider_accepted_booking.php?booking_id=${r.booking_id}')"><i class="bi bi-eye" style="margin-right:5px;"></i>View details</button></div>` : ''}
+            ${isCompleted ? `<div class="req-footer"><button class="btn-view" onclick="goPage('provider_booking_detail.php?booking_id=${r.booking_id}')"><i class="bi bi-eye" style="margin-right:5px;"></i>View details</button></div>` : ''}
           </div>`;
       }).join('');
     }
@@ -899,10 +899,18 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     document.addEventListener('DOMContentLoaded', () => {
       startProviderTracking();
 
-      // Parse booking_id from URL so we can auto-open details after feed loads
       const params = new URLSearchParams(window.location.search);
       const bid = params.get('booking_id');
       if (bid && /^\d+$/.test(bid)) requestedBookingId = bid;
+
+      const tabParam = params.get('tab');
+      if (tabParam === 'completed') {
+        const tabs = document.querySelectorAll('.feed-tab');
+        if (tabs && tabs[1]) {
+          switchTab('completed', tabs[1]);
+          return;
+        }
+      }
 
       startPolling();
     });

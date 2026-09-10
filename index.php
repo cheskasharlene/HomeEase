@@ -210,6 +210,7 @@ if (!empty($_SESSION['provider_id'])) {
     .pwd-req.met { color: #059669; }
     .pwd-req i { font-size: 10px; transition: all 0.2s; }
     .pwd-req.met i::before { content: '\F26E'; } /* bi-check-circle-fill */
+    .req-star { color: #ef4444; margin-left: 2px; font-weight: 700; }
   </style>
 </head>
 
@@ -296,14 +297,14 @@ if (!empty($_SESSION['provider_id'])) {
 
         <div class="two-col">
           <div class="fg">
-            <label class="fl">First Name</label>
+            <label class="fl">First Name <span class="req-star">*</span></label>
             <div class="fi-wrap">
               <input type="text" class="fi" id="regFirst" placeholder="Juan" autocomplete="given-name" />
               <i class="bi bi-person-fill fi-icon"></i>
             </div>
           </div>
           <div class="fg">
-            <label class="fl">Last Name</label>
+            <label class="fl">Last Name <span class="req-star">*</span></label>
             <div class="fi-wrap">
               <input type="text" class="fi" id="regLast" placeholder="Dela Cruz" autocomplete="family-name" />
               <i class="bi bi-person-fill fi-icon"></i>
@@ -312,21 +313,21 @@ if (!empty($_SESSION['provider_id'])) {
         </div>
 
         <div class="fg">
-          <label class="fl">Email Address</label>
+          <label class="fl">Email Address <span class="req-star">*</span></label>
           <div class="fi-wrap">
             <input type="email" class="fi" id="regEmail" placeholder="you@example.com" autocomplete="email" />
             <i class="bi bi-envelope-fill fi-icon"></i>
           </div>
         </div>
         <div class="fg">
-          <label class="fl">Phone Number</label>
+          <label class="fl">Phone Number <span class="req-star">*</span></label>
           <div class="fi-wrap">
             <input type="tel" class="fi" id="regPhone" placeholder="+63 9XX XXX XXXX" autocomplete="tel" />
             <i class="bi bi-telephone-fill fi-icon"></i>
           </div>
         </div>
         <div class="fg">
-          <label class="fl">Address</label>
+          <label class="fl">Address <span class="req-star">*</span></label>
           <div class="fi-wrap">
             <input type="text" class="fi" id="regAddress" placeholder="e.g. 123 Mauban, Quezon" autocomplete="street-address" />
             <i class="bi bi-geo-alt-fill fi-icon"></i>
@@ -336,7 +337,7 @@ if (!empty($_SESSION['provider_id'])) {
 
 
         <div class="fg" id="regSpecialtyWrap">
-          <label class="fl">Specialty / Service Category</label>
+          <label class="fl">Specialty / Service Category <span class="req-star">*</span></label>
           <div class="fi-wrap">
             <select class="fi" id="regSpecialty">
               <option value="">Select your specialty…</option>
@@ -352,7 +353,7 @@ if (!empty($_SESSION['provider_id'])) {
         </div>
 
         <div class="fg">
-          <label class="fl">Password</label>
+          <label class="fl">Password <span class="req-star">*</span></label>
           <div class="fi-wrap">
             <input type="password" class="fi" id="regPwd" placeholder="Min. 8 characters" autocomplete="new-password" oninput="updatePwdStrength(this.value)" />
             <button class="eye-btn" type="button" onclick="togglePwd('regPwd',this)"><i
@@ -374,7 +375,7 @@ if (!empty($_SESSION['provider_id'])) {
           </div>
         </div>
         <div class="fg">
-          <label class="fl">Confirm Password</label>
+          <label class="fl">Confirm Password <span class="req-star">*</span></label>
           <div class="fi-wrap">
             <input type="password" class="fi" id="regPwd2" placeholder="Re-enter password"
               autocomplete="new-password" />

@@ -165,6 +165,65 @@ if ($method === 'GET' && $action === 'payment') {
     exit;
 }
 
+// Provider: get complete booking detail
+if ($method === 'GET' && ($action === 'booking_detail' || $action === 'detail')) {
+    $bookingId = (int)($_GET['booking_id'] ?? 0);
+    if ($bookingId <= 0) {
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'Invalid booking ID.']);
+        exit;
+    }
+
+    $sql = "SELECT b.*,
+                   COALESCE(s.name, b.service) AS service_name,
+                   COALESCE(NULLIF(br.customer_name, ''), NULLIF(u.name, ''), 'Client') AS customer_name,
+                   COALESCE(NULLIF(br.customer_phone, ''), NULLIF(u.phone, ''), '') AS customer_phone,
+                   COALESCE(NULLIF(br.customer_address, ''), NULLIF(b.address, ''), NULLIF(u.address, ''), '') AS customer_address,
+                   u.email AS customer_email,
+                   br.details AS request_details,
+                   br.fixed_price AS request_fixed_price,
+                   br.status AS request_status,
+                   p.payment_method,
+                   p.payment_status,
+                   p.amount AS payment_amount,
+                   p.payment_proof_path,
+                   p.payment_reference,
+                   p.transaction_id,
+                   pr.rating AS review_rating,
+                   pr.comment AS review_comment,
+                   pr.created_at AS review_created_at
+            FROM bookings b
+            LEFT JOIN services s ON s.id = b.service_id
+            LEFT JOIN users u ON u.id = b.user_id
+            LEFT JOIN booking_requests br ON (br.booking_id = b.id AND br.provider_id = ?)
+            LEFT JOIN payments p ON p.booking_id = b.id
+            LEFT JOIN provider_reviews pr ON (pr.booking_id = b.id AND pr.provider_id = ?)
+            WHERE b.id = ? AND (b.provider_id = ? OR br.provider_id = ?)
+            ORDER BY br.id DESC
+            LIMIT 1";
+
+    $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
+        exit;
+    }
+    $stmt->bind_param('iiiii', $providerId, $providerId, $bookingId, $providerId, $providerId);
+    $stmt->execute();
+    $booking = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$booking) {
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'Booking not found or not assigned to you.']);
+        exit;
+    }
+
+    ob_end_clean();
+    echo json_encode(['success' => true, 'booking' => $booking]);
+    exit;
+}
+
 if ($method === 'GET') {
 
     $filter = strtolower(trim((string) ($_GET['filter'] ?? 'all')));

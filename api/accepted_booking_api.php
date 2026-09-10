@@ -47,23 +47,17 @@ if ($providerId > 0) {
     $select .= ', u.name AS user_name, u.phone AS user_phone, u.address AS user_address';
     $select .= ', b.customer_lat, b.customer_lng';
 
-    $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ? AND br.status = 'accepted'";
+    $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ? AND br.status IN ('accepted', 'closed')";
     $join .= ' LEFT JOIN users u ON b.user_id = u.id';
 
-    $where = "br.id IS NOT NULL";
-    $types = 'i';
-    $params = [$providerId];
-
-    if ($hasProviderId) {
-        $where .= ' AND b.provider_id = ?';
-        $types .= 'i';
-        $params[] = $providerId;
-    }
-
     if ($bookingId > 0) {
-        $where .= ' AND b.id = ?';
-        $types .= 'i';
-        $params[] = $bookingId;
+        $where = "(br.id IS NOT NULL OR b.provider_id = ?) AND b.id = ?";
+        $types = 'iii';
+        $params = [$providerId, $providerId, $bookingId];
+    } else {
+        $where = "(br.status = 'accepted' OR (b.provider_id = ? AND LOWER(COALESCE(b.status,'')) NOT IN ('done','completed','cancelled')))";
+        $types = 'ii';
+        $params = [$providerId, $providerId];
     }
 
     $order = $bookingId > 0 ? '' : ' ORDER BY b.created_at DESC LIMIT 1';

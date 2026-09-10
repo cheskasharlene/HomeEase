@@ -368,3 +368,9 @@
     #regSpecialtyWrap {
       display: none;
     }
+
+    .req-star {
+      color: #ef4444;
+      margin-left: 2px;
+      font-weight: 700;
+    }

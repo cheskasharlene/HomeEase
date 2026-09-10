@@ -98,7 +98,7 @@ $noReviewCount = $totalJobs - $withReviewCount;
                 $reviewComment = (string) ($job['review_comment'] ?? '');
                 $reviewRating = $job['review_rating'] !== null ? (float) $job['review_rating'] : null;
                 ?>
-                <div class="job-card">
+                <div class="job-card" onclick="goPage('provider_booking_detail.php?booking_id=<?= (int)($job['id'] ?? 0) ?>')" style="cursor:pointer;">
                   <div class="job-head">
                     <div>
                       <div class="job-service"><?= $service ?></div>
@@ -121,6 +121,10 @@ $noReviewCount = $totalJobs - $withReviewCount;
                   <?php else: ?>
                     <div class="job-no-review">No review yet.</div>
                   <?php endif; ?>
+                  <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #f1ded0;display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:#E8820C;">
+                    <span><i class="bi bi-eye"></i> View details</span>
+                    <i class="bi bi-chevron-right"></i>
+                  </div>
                 </div>
               <?php endforeach; ?>
             </div>

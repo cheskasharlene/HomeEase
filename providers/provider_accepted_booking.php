@@ -8,6 +8,23 @@ require_once __DIR__ . '/../api/db.php';
 require_once __DIR__ . '/provider_access.php';
 enforceProviderSectionAccess('requests', $conn);
 $bookingId = (int) ($_GET['booking_id'] ?? 0);
+
+if ($bookingId > 0) {
+  $chk = $conn->prepare("SELECT status FROM bookings WHERE id = ? LIMIT 1");
+  if ($chk) {
+    $chk->bind_param('i', $bookingId);
+    $chk->execute();
+    $bRow = $chk->get_result()->fetch_assoc();
+    $chk->close();
+    if ($bRow) {
+      $bStatus = strtolower(trim((string)($bRow['status'] ?? '')));
+      if ($bStatus === 'done' || $bStatus === 'completed') {
+        header('Location: provider_booking_detail.php?booking_id=' . $bookingId);
+        exit;
+      }
+    }
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -909,6 +926,12 @@ $bookingId = (int) ($_GET['booking_id'] ?? 0);
         const data = await (await fetch(url, { cache: 'no-store' })).json();
         if (!data.success || !data.booking) return;
         const b = data.booking;
+
+        const bStatus = String(b.status || '').toLowerCase();
+        if (bStatus === 'done' || bStatus === 'completed') {
+          window.location.replace('provider_booking_detail.php?booking_id=' + (b.id || BID));
+          return;
+        }
 
         if (!BID && b.id) BID = b.id;
 
