@@ -278,153 +278,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }
     }
 
-    /* GPS Permission Modal */
-    #gpsModal {
-      position: absolute;
-      inset: 0;
-      z-index: 900;
-      background: rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(6px);
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      transition: opacity .3s;
-    }
-
-    #gpsModal.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #gpsModalSheet {
-      width: 100%;
-      max-width: 480px;
-      background: #fff;
-      border-radius: 28px 28px 0 0;
-      padding: 28px 24px 40px;
-      font-family: 'Poppins', sans-serif;
-      transform: translateY(0);
-      transition: transform .35s cubic-bezier(.32, .72, 0, 1);
-    }
-
-    #gpsModal.hidden #gpsModalSheet {
-      transform: translateY(100%);
-    }
-
-    .gps-modal-handle {
-      width: 40px;
-      height: 4px;
-      background: #E0D8D0;
-      border-radius: 2px;
-      margin: 0 auto 20px;
-    }
-
-    .gps-modal-icon {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #E8820C, #F5A623);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 34px;
-      margin: 0 auto 16px;
-      box-shadow: 0 6px 24px rgba(232, 130, 12, 0.35);
-    }
-
-    .gps-modal-title {
-      font-size: 20px;
-      font-weight: 800;
-      color: #1A1A2E;
-      text-align: center;
-      margin-bottom: 8px;
-    }
-
-    .gps-modal-sub {
-      font-size: 13px;
-      color: #7A7064;
-      text-align: center;
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
-
-    .gps-modal-items {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-
-    .gps-modal-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: #FAF8F5;
-      border-radius: 14px;
-      padding: 12px 14px;
-    }
-
-    .gps-modal-item-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, #E8820C, #F5A623);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      flex-shrink: 0;
-    }
-
-    .gps-modal-item-text {
-      font-size: 13px;
-      color: #1A1A2E;
-      font-weight: 600;
-    }
-
-    .gps-modal-item-sub {
-      font-size: 11px;
-      color: #9E9690;
-      margin-top: 1px;
-    }
-
-    .gps-btn-allow {
-      width: 100%;
-      height: 52px;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #E8820C, #F5A623);
-      color: #fff;
-      border: none;
-      cursor: pointer;
-      font-size: 15px;
-      font-weight: 800;
-      font-family: 'Poppins', sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 6px 20px rgba(232, 130, 12, 0.38);
-      margin-bottom: 10px;
-      transition: transform .15s, box-shadow .15s;
-    }
-
-    .gps-btn-allow:active {
-      transform: scale(0.97);
-    }
-
-    .gps-btn-skip {
-      width: 100%;
-      height: 44px;
-      border-radius: 14px;
-      background: transparent;
-      color: #9E9690;
-      border: none;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'Poppins', sans-serif;
-    }
-
     @keyframes spin {
       to {
         transform: rotate(360deg);
@@ -460,45 +313,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     <!-- Map -->
     <div id="wfpMap"></div>
-
-    <!-- GPS Permission Modal (hidden until boot() decides) -->
-    <div id="gpsModal" class="hidden" style="display:none">
-      <div id="gpsModalSheet">
-        <div class="gps-modal-handle"></div>
-        <div class="gps-modal-icon">📍</div>
-        <div class="gps-modal-title">Enable Location Access</div>
-        <div class="gps-modal-sub">
-          HomeEase needs your location to show you on the map<br>and let your provider navigate to you.
-        </div>
-        <div class="gps-modal-items">
-          <div class="gps-modal-item">
-            <div class="gps-modal-item-icon">🚗</div>
-            <div>
-              <div class="gps-modal-item-text">Track your provider in real-time</div>
-              <div class="gps-modal-item-sub">See exactly where they are on the map</div>
-            </div>
-          </div>
-          <div class="gps-modal-item">
-            <div class="gps-modal-item-icon">🏠</div>
-            <div>
-              <div class="gps-modal-item-text">Show your location to provider</div>
-              <div class="gps-modal-item-sub">So they can navigate directly to you</div>
-            </div>
-          </div>
-          <div class="gps-modal-item">
-            <div class="gps-modal-item-icon">🔒</div>
-            <div>
-              <div class="gps-modal-item-text">Your location stays private</div>
-              <div class="gps-modal-item-sub">Only shared with your assigned provider</div>
-            </div>
-          </div>
-        </div>
-        <button class="gps-btn-allow" id="btnAllowGps" onclick="requestGpsPermission()">
-          <i class="bi bi-geo-alt-fill"></i> Enable GPS Location
-        </button>
-        <button class="gps-btn-skip" onclick="skipGps()">Use default location instead</button>
-      </div>
-    </div>
 
     <!-- Recenter button -->
     <button class="wfp-recenter" id="btnRecenter" onclick="recenterMap()" aria-label="Recenter">
@@ -1004,15 +818,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
 
     function showGpsBanner(type, msg) {
-      let el = document.getElementById('gpsBanner');
-      if (!el) {
-        el = document.createElement('div');
-        el.id = 'gpsBanner';
-        document.getElementById('topBarCenter').appendChild(el);
-      }
-      el.className = 'gps-status-banner ' + type;
-      el.textContent = msg;
-      el.style.display = 'block';
+      // Suppressed on Homeowner side: no location-access instruction or banner is displayed
+      // Underlying GPS tracking continues working silently in the background
     }
 
     function hideGpsBanner() {
@@ -1595,61 +1402,21 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       window.addEventListener('resize', syncSheetHeight);
       window.addEventListener('popstate', goBack);
 
-      // Check if we already have GPS permission
-      if (navigator.permissions) {
-        try {
-          const perm = await navigator.permissions.query({ name: 'geolocation' });
-          if (perm.state === 'granted') {
-            // Already allowed — skip modal, start GPS directly
-            hideGpsModal();
-            startClientGps();
-            return;
-          } else if (perm.state === 'denied') {
-            // Already denied — hide modal, show banner
-            hideGpsModal();
-            showGpsBanner('error', '🔒 Location blocked — enable it in browser settings.');
-            return;
-          }
-        } catch (e) { /* permissions API not fully supported */ }
-      }
-
-      // Show modal to ask for GPS
-      const m = document.getElementById('gpsModal');
-      m.style.display = 'flex';
-      requestAnimationFrame(() => m.classList.remove('hidden'));
-    }
-
-    function requestGpsPermission() {
-      const btn = document.getElementById('btnAllowGps');
-      btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin 1s linear infinite"></i> Requesting…';
-
-      HomeEaseLocation.getLocation(
-        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-        (pos) => {
-          hideGpsModal();
-          _gpsOnFix(pos);        // process this first fix immediately
-          startClientGps();       // then start continuous watch
-        },
-        (err) => {
-          hideGpsModal();
-          showGpsBanner('error', err.message || 'Could not get location.');
-        }
-      );
-    }
-
-    function skipGps() {
-      hideGpsModal();
-      showGpsBanner('loading', '📍 Using Sto. Tomas, Batangas as your location.');
-      setTimeout(hideGpsBanner, 4000);
-      // Start watch anyway in the background — if GPS improves, it'll update
+      // Silently start GPS tracking in the background without UI prompts or banners
       startClientGps();
     }
 
     function hideGpsModal() {
       const m = document.getElementById('gpsModal');
-      m.classList.add('hidden');
-      setTimeout(() => { if (m.classList.contains('hidden')) m.style.display = 'none'; }, 400);
+      if (m) m.style.display = 'none';
+    }
+
+    function requestGpsPermission() {
+      startClientGps();
+    }
+
+    function skipGps() {
+      startClientGps();
     }
 
     /* ── Report Action Workflows ── */
