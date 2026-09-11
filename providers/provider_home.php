@@ -907,7 +907,10 @@ $reviewPreview = $dashboardReviews[0] ?? null;
 
           if (!file) {
             // File cleared
-            if (fileNameEl) fileNameEl.textContent = field.isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
+            if (fileNameEl) {
+              fileNameEl.textContent = field.isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
+              fileNameEl.style.display = '';
+            }
             const feedbackKey = feedbackId;
             if (uploadFeedbackTimers[feedbackKey]) {
               clearTimeout(uploadFeedbackTimers[feedbackKey]);
@@ -928,8 +931,10 @@ $reviewPreview = $dashboardReviews[0] ?? null;
             return;
           }
 
-          // Update filename in slot
-          if (fileNameEl) fileNameEl.textContent = file.name;
+          // Do NOT display filename inside upload box; keep box clean, preview card below shows file info
+          if (fileNameEl) {
+            fileNameEl.style.display = 'none';
+          }
 
           // Show success feedback temporarily (automatically disappears after 2.5 seconds)
           showUploadFeedback(feedbackEl, 'Uploaded successfully', 2500);
@@ -1037,6 +1042,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       const isRequired = ['uploadIdDoc', 'uploadSelfieDoc', 'uploadAddressDoc', 'uploadServiceProof', 'uploadGCashQr', 'uploadBankQr'].includes(fieldId);
       if (fileNameEl) {
         fileNameEl.textContent = isRequired ? 'Tap to upload' : 'Tap to upload (optional)';
+        fileNameEl.style.display = '';
       }
 
       if (uploadFeedbackTimers[feedbackKey]) {
@@ -1153,7 +1159,9 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           const fullUrl = doc.file_path.startsWith('http') ? doc.file_path : ('../' + doc.file_path);
           const filename = doc.file_path.split('/').pop() || (key + '_file');
 
-          if (fileNameEl) fileNameEl.textContent = filename;
+          if (fileNameEl) {
+            fileNameEl.style.display = 'none';
+          }
           if (feedbackEl) {
             showUploadFeedback(feedbackEl, 'Existing document uploaded', 2500);
           }
