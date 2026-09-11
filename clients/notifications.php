@@ -236,12 +236,13 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
         <div class="n-ic"><img src="${imgSrc}" alt="" loading="lazy"></div>
         <div class="n-content">
-          <div class="n-title">${escHtml(n.title)}</div>
+          <div class="n-title-row">
+            <div class="n-title">${escHtml(n.title)}</div>
+            ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
+          </div>
           <div class="n-msg">${escHtml(n.msg)}</div>
           <div class="n-time">
-            ${!n.read
-              ? '<div class="n-dot"></div>'
-              : '<i class="bi bi-check2-all n-read-check"></i>'}
+            ${n.read ? '<i class="bi bi-check2-all n-read-check"></i>' : ''}
             ${escHtml(n.time)}
           </div>
         </div>
@@ -278,9 +279,35 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
       n.read = true;
 
-      /* Visual ripple first */
+      /* Immediately remove unread styles and red dot */
       const card = document.getElementById(`nc-${id}`);
       if (card) {
+        card.classList.remove('unread');
+        const redDot = card.querySelector('.n-unread-red-dot');
+        if (redDot) {
+          redDot.style.opacity = '0';
+          redDot.style.transform = 'scale(0)';
+          setTimeout(() => redDot.remove(), 160);
+        }
+        const unreadBar = card.querySelector('.n-unread-bar');
+        if (unreadBar) unreadBar.remove();
+
+        const remainingUnread = (window.HE.notifications || []).filter(item => !item.read).length;
+        const countEl = document.getElementById('nCount');
+        const total = (window.HE.notifications || []).length;
+        if (countEl) {
+          if (remainingUnread > 0) {
+            countEl.innerHTML = `<strong>${remainingUnread}</strong> unread &nbsp;·&nbsp; ${total} total`;
+          } else {
+            countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
+          }
+        }
+        const markBtn = document.getElementById('markAllBtn');
+        if (markBtn) {
+          markBtn.style.display = remainingUnread ? '' : 'none';
+        }
+        syncUnreadCount(remainingUnread);
+
         card.classList.add('reading');
         setTimeout(() => {
           renderNotifs();
@@ -306,6 +333,16 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
     function markAllRead() {
       const hasUnread = (window.HE.notifications || []).some(n => !n.read);
       if (!hasUnread) return;
+
+      document.querySelectorAll('.n-unread-red-dot').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'scale(0)';
+      });
+      setTimeout(() => {
+        document.querySelectorAll('.n-unread-red-dot, .n-unread-bar').forEach(el => el.remove());
+      }, 160);
+      document.querySelectorAll('.n-card.unread').forEach(el => el.classList.remove('unread'));
+
       window.HE.notifications.forEach(n => n.read = true);
       renderNotifs();
       showToast('All notifications marked as read', 'success');

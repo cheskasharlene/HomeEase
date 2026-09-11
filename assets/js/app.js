@@ -1068,33 +1068,17 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
       localStorage.setItem('he_provider_unread_notifs', String(unread));
     } catch (e) {}
 
-    // Find all red dot and badge elements
-    let dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
+    // Find all badge elements and ensure legacy dots are hidden
     const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
-
-    // Auto-inject .ndot into .ni-bell-wrap if missing on any provider page
-    if (!dots.length) {
-      const bellWraps = document.querySelectorAll('.bnav .ni-bell .ni-bell-wrap, .bnav .ni[onclick*="provider_notifications.php"] .ni-bell-wrap');
-      bellWraps.forEach(wrap => {
-        if (!wrap.querySelector('.ndot')) {
-          const dot = document.createElement('div');
-          dot.className = 'ndot';
-          dot.id = 'navNotifDot';
-          dot.style.display = unread > 0 ? 'block' : 'none';
-          wrap.appendChild(dot);
-        }
-      });
-      dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
-    }
-
+    const dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
     dots.forEach(dot => {
-      dot.style.display = unread > 0 ? 'block' : 'none';
+      dot.style.display = 'none';
     });
 
     badges.forEach(badge => {
       if (unread > 0) {
         badge.textContent = unread > 99 ? '99+' : String(unread);
-        badge.style.display = 'block';
+        badge.style.display = 'flex';
         if (prev >= 0 && unread > prev) {
           const bellWrap = badge.closest('.ni-bell-wrap');
           if (bellWrap) {

@@ -108,7 +108,6 @@ if ($stmt) {
           <div class="ni ni-bell on" onclick="goPage('provider_notifications.php')">
             <div class="ni-bell-wrap">
               <i class="bi bi-bell-fill"></i>
-              <div class="ndot" id="navNotifDot" style="display:none;"></div>
               <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
             </div>
             <span class="nl">Notifications</span>
@@ -119,7 +118,6 @@ if ($stmt) {
           <div class="ni ni-bell on" onclick="goPage('provider_notifications.php')">
             <div class="ni-bell-wrap">
               <i class="bi bi-bell-fill"></i>
-              <div class="ndot" id="navNotifDot" style="display:none;"></div>
               <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
             </div>
             <span class="nl">Notifications</span>
@@ -209,21 +207,21 @@ if ($stmt) {
         localStorage.setItem('he_provider_unread_notifs', String(c));
       } catch (e) {}
 
-      // Update navbar bell red dot
-      const dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
-      dots.forEach(d => {
-        d.style.display = c > 0 ? 'block' : 'none';
-      });
-
       // Update navbar bell badge
       const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
       badges.forEach(b => {
         if (c > 0) {
           b.textContent = c > 99 ? '99+' : String(c);
-          b.style.display = 'block';
+          b.style.display = 'flex';
         } else {
           b.style.display = 'none';
         }
+      });
+
+      // Ensure no legacy nav dots ever display over the badge
+      const dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
+      dots.forEach(d => {
+        d.style.display = 'none';
       });
 
       if (typeof window.updateProviderNotificationDot === 'function') {
@@ -246,6 +244,13 @@ if ($stmt) {
           n && (n.type === 'verification_rejected' || n.type === 'rejected' || (String(n.id) === 'verification_rejected'))
         );
         if (!hasRej) {
+          let isSynthRead = false;
+          try {
+            const synthKey = 'he_provider_read_synthetic_' + String(window.HE.providerId || '0');
+            const synthReads = JSON.parse(localStorage.getItem(synthKey) || '[]');
+            isSynthRead = synthReads.includes('verification_rejected');
+          } catch(e) {}
+
           const createdAt = new Date().toISOString();
           map.set('verification_rejected', {
             id: 'verification_rejected',
@@ -254,7 +259,7 @@ if ($stmt) {
             msg: window.HE.rejectionReason ? ('Reason: ' + window.HE.rejectionReason) : 'Your worker verification application was rejected by the admin. Please update your requirements.',
             time: 'Recently',
             created_at: createdAt,
-            read: false,
+            read: isSynthRead,
             icon: 'bi-x-circle'
           });
         }
@@ -329,14 +334,17 @@ if ($stmt) {
           ${!n.read ? '<div class="n-unread-bar" style="background:#dc2626;"></div>' : ''}
           <div class="n-ic" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-x-circle-fill"></i></div>
           <div class="n-content">
-            <div class="n-title" style="color:#991b1b;font-weight:800;">${escHtml(n.title)}</div>
+            <div class="n-title-row">
+              <div class="n-title" style="color:#991b1b;font-weight:800;">${escHtml(n.title)}</div>
+              ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
+            </div>
             <div class="n-msg" style="color:#7f1d1d;line-height:1.45;">${escHtml(n.msg)}</div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
               <span style="font-size:11px;font-weight:800;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;padding:3px 10px;border-radius:999px;">Rejected</span>
-              <button onclick="event.stopPropagation(); goPage('provider_home.php');" style="border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(220,38,38,0.25);">Update Requirements</button>
+              <button onclick="event.stopPropagation(); markRead('${String(n.id)}'); goPage('provider_home.php');" style="border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(220,38,38,0.25);">Update Requirements</button>
             </div>
             <div class="n-time" style="margin-top:7px;color:#991b1b;">
-              ${!n.read ? '<div class="n-dot" style="background:#dc2626;"></div>' : '<i class="bi bi-check2-all n-read-check" style="color:#dc2626;"></i>'}
+              ${n.read ? '<i class="bi bi-check2-all n-read-check" style="color:#dc2626;"></i>' : ''}
               ${escHtml(n.time || 'Now')}
             </div>
           </div>
@@ -350,14 +358,17 @@ if ($stmt) {
           ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
           <div class="n-ic" style="background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#059669;font-size:20px;display:flex;align-items:center;justify-content:center;">✔</div>
           <div class="n-content">
-            <div class="n-title">${escHtml(n.title)}</div>
+            <div class="n-title-row">
+              <div class="n-title">${escHtml(n.title)}</div>
+              ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
+            </div>
             <div class="n-msg">${escHtml(n.msg)}</div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
               <span style="font-size:11px;font-weight:800;color:#059669;background:#dcfce7;border:1px solid #86efac;padding:3px 10px;border-radius:999px;">Verified</span>
-              <button onclick="activateAndGoDashboard(event)" style="border:none;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;cursor:pointer;">Go to Dashboard</button>
+              <button onclick="activateAndGoDashboard(event, '${String(n.id)}')" style="border:none;border-radius:10px;padding:8px 10px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#E8820C,#F5A623);color:#fff;cursor:pointer;">Go to Dashboard</button>
             </div>
             <div class="n-time" style="margin-top:7px;">
-              ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+              ${n.read ? '<i class="bi bi-check2-all n-read-check"></i>' : ''}
               ${escHtml(n.time || 'Now')}
             </div>
           </div>
@@ -370,10 +381,13 @@ if ($stmt) {
           ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
           <div class="n-ic" style="background:linear-gradient(135deg,#fff7ed,#ffedd5);color:#ea580c;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-cash-stack"></i></div>
           <div class="n-content">
-            <div class="n-title">${escHtml(n.title)}</div>
+            <div class="n-title-row">
+              <div class="n-title">${escHtml(n.title)}</div>
+              ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
+            </div>
             <div class="n-msg">${escHtml(n.msg)}</div>
             <div class="n-time">
-              ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+              ${n.read ? '<i class="bi bi-check2-all n-read-check"></i>' : ''}
               ${escHtml(n.time)}
             </div>
           </div>
@@ -386,10 +400,13 @@ if ($stmt) {
           ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
           <div class="n-ic" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-exclamation-triangle-fill"></i></div>
           <div class="n-content">
-            <div class="n-title" style="color:#dc2626;">${escHtml(n.title)}</div>
+            <div class="n-title-row">
+              <div class="n-title" style="color:#dc2626;">${escHtml(n.title)}</div>
+              ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
+            </div>
             <div class="n-msg">${escHtml(n.msg)}</div>
             <div class="n-time">
-              ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+              ${n.read ? '<i class="bi bi-check2-all n-read-check"></i>' : ''}
               ${escHtml(n.time)}
             </div>
           </div>
@@ -402,10 +419,13 @@ if ($stmt) {
           ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
           <div class="n-ic" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#2563eb;font-size:20px;display:flex;align-items:center;justify-content:center;"><i class="bi bi-shield-fill-exclamation"></i></div>
           <div class="n-content">
-            <div class="n-title">${escHtml(n.title)}</div>
+            <div class="n-title-row">
+              <div class="n-title">${escHtml(n.title)}</div>
+              ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
+            </div>
             <div class="n-msg">${escHtml(n.msg)}</div>
             <div class="n-time">
-              ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+              ${n.read ? '<i class="bi bi-check2-all n-read-check"></i>' : ''}
               ${escHtml(n.time)}
             </div>
           </div>
@@ -418,10 +438,13 @@ if ($stmt) {
         ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
         <div class="n-ic"><img src="${img}" alt="" loading="lazy"></div>
         <div class="n-content">
-          <div class="n-title">${escHtml(n.title)}</div>
+          <div class="n-title-row">
+            <div class="n-title">${escHtml(n.title)}</div>
+            ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
+          </div>
           <div class="n-msg">${escHtml(n.msg)}</div>
           <div class="n-time">
-            ${!n.read ? '<div class="n-dot"></div>' : '<i class="bi bi-check2-all n-read-check"></i>'}
+            ${n.read ? '<i class="bi bi-check2-all n-read-check"></i>' : ''}
             ${escHtml(n.time)}
           </div>
         </div>
@@ -443,8 +466,9 @@ if ($stmt) {
     }
 
     /* ── Dashboard unlock ── */
-    async function activateAndGoDashboard(event) {
+    async function activateAndGoDashboard(event, notifId = null) {
       if (event) event.stopPropagation();
+      if (notifId) markRead(notifId);
       if (window.HE.verificationState !== 'approval_ready') { goPage('provider_home.php'); return; }
       try {
         const fd = new FormData();
@@ -468,12 +492,50 @@ if ($stmt) {
 
       const card = document.getElementById(`nc-${id}`);
       if (card) {
+        card.classList.remove('unread');
+        const redDot = card.querySelector('.n-unread-red-dot');
+        if (redDot) {
+          redDot.style.opacity = '0';
+          redDot.style.transform = 'scale(0)';
+          setTimeout(() => redDot.remove(), 160);
+        }
+        const unreadBar = card.querySelector('.n-unread-bar');
+        if (unreadBar) unreadBar.remove();
+
+        const remainingUnread = (window.HE.notifications || []).filter(item => !item.read).length;
+        const countEl = document.getElementById('nCount');
+        const total = (window.HE.notifications || []).length;
+        if (countEl) {
+          if (remainingUnread > 0) {
+            countEl.innerHTML = `<strong>${remainingUnread}</strong> unread &nbsp;·&nbsp; ${total} total`;
+          } else {
+            countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
+          }
+        }
+        const markBtn = document.getElementById('markAllBtn');
+        if (markBtn) {
+          markBtn.style.display = remainingUnread ? '' : 'none';
+        }
+        syncProviderUnread(remainingUnread);
+
         card.classList.add('reading');
         setTimeout(() => {
           renderNotifs();
         }, 280);
       } else {
         renderNotifs();
+      }
+
+      /* If synthetic ID, remember in local storage */
+      if (typeof id === 'string' && !/^\d+$/.test(id)) {
+        try {
+          const synthKey = 'he_provider_read_synthetic_' + String(window.HE.providerId || '0');
+          const synthReads = JSON.parse(localStorage.getItem(synthKey) || '[]');
+          if (!synthReads.includes(id)) {
+            synthReads.push(id);
+            localStorage.setItem(synthKey, JSON.stringify(synthReads));
+          }
+        } catch(e) {}
       }
 
       /* Persist to server if valid DB ID */
@@ -498,10 +560,25 @@ if ($stmt) {
       const hasUnread = (window.HE.notifications || []).some(n => !n.read);
       if (!hasUnread) return;
 
+      document.querySelectorAll('.n-unread-red-dot').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'scale(0)';
+      });
+      setTimeout(() => {
+        document.querySelectorAll('.n-unread-red-dot, .n-unread-bar').forEach(el => el.remove());
+      }, 160);
+      document.querySelectorAll('.n-card.unread').forEach(el => el.classList.remove('unread'));
+
       window.HE.notifications.forEach(n => n.read = true);
       renderNotifs();
       showToast('All notifications marked as read', 'success');
       syncProviderUnread(0);
+
+      try {
+        const synthKey = 'he_provider_read_synthetic_' + String(window.HE.providerId || '0');
+        const synthReads = ['verification_rejected'];
+        localStorage.setItem(synthKey, JSON.stringify(synthReads));
+      } catch(e) {}
 
       const form = new FormData();
       form.append('mark_all', '1');

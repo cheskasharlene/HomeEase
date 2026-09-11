@@ -234,6 +234,35 @@
 /* ── Content ── */
 .n-content { flex: 1; min-width: 0; }
 
+/* ── Title Row & Unread Red Dot ── */
+.n-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+  min-width: 0;
+}
+
+.n-title-row .n-title {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.n-unread-red-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  min-height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+  flex-shrink: 0;
+  display: inline-block;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
 .n-title {
   font-size: 13.5px;
   font-weight: 700;
@@ -267,7 +296,7 @@
 .n-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--g-start), var(--g-mid));
+  background: #ef4444;
   flex-shrink: 0;
   animation: dotPulse 2s infinite ease-in-out;
 }
@@ -297,6 +326,10 @@ body.dark .n-card.unread {
 body.dark .n-title       { color: var(--td); }
 body.dark .n-msg         { color: var(--tm); }
 body.dark .n-time        { color: var(--plight); }
+body.dark .n-unread-red-dot {
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+}
 body.dark .n-day-lbl-text { color: var(--tm); }
 body.dark .n-ttl         { color: var(--td); }
 body.dark .n-count-sub   { color: rgba(255,243,220,0.5); }

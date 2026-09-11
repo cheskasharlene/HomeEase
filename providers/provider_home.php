@@ -463,7 +463,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <div class="ni ni-bell" onclick="goPage('provider_notifications.php')">
             <div class="ni-bell-wrap">
               <i class="bi bi-bell-fill"></i>
-              <div class="ndot" id="navNotifDot" style="display:none;"></div>
               <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
             </div>
             <span class="nl">Notifications</span>
@@ -474,7 +473,6 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           <div class="ni ni-bell" onclick="goPage('provider_notifications.php')">
             <div class="ni-bell-wrap">
               <i class="bi bi-bell-fill"></i>
-              <div class="ndot" id="navNotifDot" style="display:none;"></div>
               <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
             </div>
             <span class="nl">Notifications</span>
