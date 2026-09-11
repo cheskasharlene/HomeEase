@@ -92,6 +92,7 @@ if ($appBase === '') {
     .p-hdr {
       background: linear-gradient(145deg, #C86500 0%, #E8820C 25%, #F5A623 60%, #FFB347 100%);
       padding: 52px 22px 24px;
+      border-radius: 0 0 28px 28px;
       display: flex;
       flex-direction: column;
       align-items: center;

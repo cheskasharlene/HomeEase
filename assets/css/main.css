@@ -1568,10 +1568,14 @@ body.dark .pill.progress { background: #0f1f3d; color: #60a5fa; border-color: #1
 body.dark .pill.done     { background: var(--teal-mid); color: var(--teal); border-color: var(--teal-mid); }
 body.dark .pill.cancelled { background: #1a1a1a; color: #6b7280; border-color: #2d2d2d; }
 
+/* ── Universal Homeowner Curved Header ── */
+.hdr, .h-hdr, .n-hdr, .p-hdr, .ab-hero, .w-hdr {
+  border-radius: 0 0 28px 28px;
+}
 
 @media (max-width: 420px) {
   .shell { max-width: 100%; }
-  .h-hdr, .bk-hdr, .n-hdr, .p-hdr { padding: 42px 16px 18px; border-radius: 0 0 24px 24px; }
+  .h-hdr, .bk-hdr, .n-hdr, .p-hdr, .hdr, .ab-hero, .w-hdr { padding: 42px 16px 18px; border-radius: 0 0 28px 28px; }
   .h-body, .bk-body, .n-body, .p-body, .a-scroll { padding-left: 14px; padding-right: 14px; }
   .a-hdr { padding: 40px 18px 12px; }
   .pop-card { width: 170px; }

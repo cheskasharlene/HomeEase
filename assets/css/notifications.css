@@ -34,6 +34,7 @@
       rgba(245,166,35,0.45) 65%,
       rgba(255,183,107,0.15) 85%,
       rgba(255,255,255,0)   100%);
+  border-radius: 0 0 28px 28px;
   display: flex;
   align-items: center;
   justify-content: space-between;
