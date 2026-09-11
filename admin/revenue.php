@@ -67,7 +67,7 @@ include __DIR__ . '/includes/sidebar.php';
     <div class="chart-card">
       <div class="sec-hdr" style="margin-bottom: 12px;">
         <div class="sec-ttl" style="display:flex; flex-direction:column; gap:2px;">
-          <span>Earnings Analytics</span>
+          <span>Revenue Analytics</span>
           <span style="font-size:11px; font-weight:500; color:var(--txt-muted); text-transform:none; letter-spacing:0;">Platform Revenue</span>
         </div>
         <div style="display:flex; background:var(--bg-input); border-radius:10px; padding:2px; gap:2px; border:1px solid var(--border-col);">
@@ -399,7 +399,7 @@ async function fetchAndDrawChart(filter) {
             displayColors: false,
             callbacks: {
               label: function(context) {
-                return '₱' + context.parsed.y.toLocaleString();
+                return '₱' + (context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
               }
             }
           }
@@ -431,7 +431,7 @@ async function fetchAndDrawChart(filter) {
                 weight: 'bold'
               },
               callback: function(value) {
-                return '₱' + value;
+                return '₱' + Number(value).toLocaleString('en-PH');
               }
             }
           }

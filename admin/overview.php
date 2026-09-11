@@ -36,7 +36,7 @@ include __DIR__ . '/includes/sidebar.php';
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-ic amber"><i class="bi bi-currency-dollar"></i></div>
+        <div class="stat-ic amber"><span class="stat-ic-symbol" style="font-weight:900;font-size:20px;font-family:'Nunito',sans-serif;line-height:1;display:inline-block;">₱</span></div>
         <div>
           <div class="stat-val" id="st-revenue">–</div>
           <div class="stat-lbl">Revenue</div>
@@ -51,11 +51,21 @@ include __DIR__ . '/includes/sidebar.php';
       </div>
     </div>
     <div class="chart-card">
-      <div class="sec-hdr">
-        <div class="sec-ttl">Revenue (₱)</div><span id="revTotal"
-          style="font-size:12px;font-weight:700;color:var(--teal);">Loading...</span>
+      <div class="sec-hdr" style="margin-bottom: 12px;">
+        <div class="sec-ttl" style="display:flex; flex-direction:column; gap:2px;">
+          <span>Revenue Analytics</span>
+          <span style="font-size:11px; font-weight:500; color:var(--txt-muted); text-transform:none; letter-spacing:0;">Platform Revenue</span>
+        </div>
+        <div style="display:flex; background:var(--bg-input); border-radius:10px; padding:2px; gap:2px; border:1px solid var(--border-col);">
+          <button class="rev-filter-btn active" onclick="changeOverviewRevFilter('daily', this)">Daily</button>
+          <button class="rev-filter-btn" onclick="changeOverviewRevFilter('weekly', this)">Weekly</button>
+          <button class="rev-filter-btn" onclick="changeOverviewRevFilter('monthly', this)">Monthly</button>
+          <button class="rev-filter-btn" onclick="changeOverviewRevFilter('yearly', this)">Yearly</button>
+        </div>
       </div>
-      <div class="rev-bar-wrap" id="revChart"></div>
+      <div style="position:relative; height:180px; width:100%;">
+        <canvas id="overviewRevenueBarChart"></canvas>
+      </div>
     </div>
 
     <div class="sec-pad">
@@ -74,6 +84,123 @@ include __DIR__ . '/includes/sidebar.php';
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
+let overviewRevenueBarChartInstance = null;
+let currentOverviewRevFilter = 'daily';
+
+function createChartGradient(ctx, isDark) {
+  const c = ctx.getContext('2d');
+  const gradient = c.createLinearGradient(0, 0, 0, 180);
+  gradient.addColorStop(0, 'rgba(245, 166, 35, 0.4)');
+  gradient.addColorStop(1, 'rgba(245, 166, 35, 0)');
+  return gradient;
+}
+
+async function changeOverviewRevFilter(filter, btn) {
+  currentOverviewRevFilter = filter;
+  if (btn && btn.parentElement) {
+    btn.parentElement.querySelectorAll('.rev-filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  await renderOverviewRevenueBarChart(filter);
+}
+
+async function renderOverviewRevenueBarChart(filter = currentOverviewRevFilter) {
+  const ctx = document.getElementById('overviewRevenueBarChart');
+  if (!ctx) return;
+
+  try {
+    const res = await fetch(`../api/admin_api.php?section=revenue&action=chart&filter=${filter}`);
+    const chartData = await res.json();
+    if (!chartData || !chartData.success) return;
+
+    if (overviewRevenueBarChartInstance) {
+      overviewRevenueBarChartInstance.destroy();
+    }
+
+    const isDark = document.body.classList.contains('dark');
+    const gridColor = isDark ? '#4a3e28' : '#ede8e0';
+    const labelColor = isDark ? '#a19685' : '#8e8e93';
+
+    overviewRevenueBarChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          label: 'Platform Revenue (₱)',
+          data: chartData.data,
+          borderColor: '#F5A623',
+          borderWidth: 3,
+          backgroundColor: createChartGradient(ctx, isDark),
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#F5A623',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: isDark ? '#2a2216' : '#ffffff',
+            titleColor: isDark ? '#ffffff' : '#1A1A2E',
+            bodyColor: '#F5A623',
+            borderColor: '#F5A623',
+            borderWidth: 1,
+            padding: 10,
+            displayColors: false,
+            callbacks: {
+              label: function(context) {
+                return '₱' + (context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              color: labelColor,
+              font: {
+                family: 'Nunito',
+                size: 10,
+                weight: 'bold'
+              }
+            }
+          },
+          y: {
+            grid: {
+              color: gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: labelColor,
+              font: {
+                family: 'Nunito',
+                size: 10,
+                weight: 'bold'
+              },
+              callback: function(value) {
+                return '₱' + Number(value).toLocaleString('en-PH');
+              }
+            }
+          }
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Failed to render overview revenue chart:', err);
+  }
+}
+
 async function loadOverview() {
   try {
     const [resStats, resRev] = await Promise.all([
@@ -90,32 +217,14 @@ async function loadOverview() {
       ? resRev.total_revenue
       : (s.total_revenue || 0);
 
-    // Revenue formatting: e.g. ₱42.1k or ₱0.00
+    // Revenue formatting: e.g. ₱1,000.00 or ₱450.00
     const floatVal = parseFloat(totalRev) || 0;
-    if (floatVal >= 1000) {
-      document.getElementById('st-revenue').textContent = '₱' + (floatVal / 1000).toFixed(1) + 'k';
-    } else {
-      document.getElementById('st-revenue').textContent = '₱' + floatVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+    document.getElementById('st-revenue').textContent = '₱' + floatVal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     document.getElementById('st-workers').textContent = s.active_workers;
-    document.getElementById('revTotal').textContent = '₱' + floatVal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-    // Revenue chart
-    const chart = document.getElementById('revChart');
-    const revRows = s.revenue_chart || [];
-    if (revRows.length) {
-      const max = Math.max(...revRows.map(r => parseFloat(r.rev)), 1);
-      chart.innerHTML = revRows.map(r => {
-        const h = Math.max(4, Math.round((parseFloat(r.rev) / max) * 60));
-        return `<div class="rev-bar-item">
-          <div class="rev-bar-fill" style="height:${h}px;" title="₱${parseFloat(r.rev).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}"></div>
-          <div class="rev-bar-lbl">${r.mo}</div>
-        </div>`;
-      }).join('');
-    } else {
-      chart.innerHTML = '<div style="font-size:12px;color:var(--txt-muted);text-align:center;width:100%;padding:20px 0;">No revenue data yet</div>';
-    }
+    // Render modern, responsive overview bar chart
+    await renderOverviewRevenueBarChart(currentOverviewRevFilter);
 
     // Recent Bookings
     const recentBks = document.getElementById('recentBookings');

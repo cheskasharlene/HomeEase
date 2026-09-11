@@ -728,7 +728,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-ic amber"><i class="bi bi-currency-dollar"></i></div>
+            <div class="stat-ic amber"><span class="stat-ic-symbol" style="font-weight:900;font-size:20px;font-family:'Nunito',sans-serif;line-height:1;display:inline-block;">₱</span></div>
             <div>
               <div class="stat-val" id="st-revenue">–</div>
               <div class="stat-lbl">Revenue</div>
@@ -744,11 +744,21 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
 
         <div class="chart-card">
-          <div class="sec-hdr">
-            <div class="sec-ttl">Revenue (₱)</div><span id="revTotal"
-              style="font-size:12px;font-weight:700;color:var(--teal);">Loading...</span>
+          <div class="sec-hdr" style="margin-bottom: 12px;">
+            <div class="sec-ttl" style="display:flex; flex-direction:column; gap:2px;">
+              <span>Revenue Analytics</span>
+              <span style="font-size:11px; font-weight:500; color:var(--txt-muted); text-transform:none; letter-spacing:0;">Platform Revenue</span>
+            </div>
+            <div style="display:flex; background:var(--bg-input); border-radius:10px; padding:2px; gap:2px; border:1px solid var(--border-col);">
+              <button class="rev-filter-btn active" onclick="changeOverviewRevFilter('daily', this)">Daily</button>
+              <button class="rev-filter-btn" onclick="changeOverviewRevFilter('weekly', this)">Weekly</button>
+              <button class="rev-filter-btn" onclick="changeOverviewRevFilter('monthly', this)">Monthly</button>
+              <button class="rev-filter-btn" onclick="changeOverviewRevFilter('yearly', this)">Yearly</button>
+            </div>
           </div>
-          <div class="rev-bar-wrap" id="revChart"></div>
+          <div style="position:relative; height:180px; width:100%;">
+            <canvas id="overviewRevenueBarChart"></canvas>
+          </div>
         </div>
 
 
@@ -834,7 +844,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="chart-card">
           <div class="sec-hdr" style="margin-bottom: 12px;">
             <div class="sec-ttl" style="display:flex; flex-direction:column; gap:2px;">
-              <span>Earnings Analytics</span>
+              <span>Revenue Analytics</span>
               <span style="font-size:11px; font-weight:500; color:var(--txt-muted); text-transform:none; letter-spacing:0;">Platform Revenue</span>
             </div>
             <div style="display:flex; background:var(--bg-input); border-radius:10px; padding:2px; gap:2px; border:1px solid var(--border-col);">
@@ -1194,7 +1204,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     <div class="bnav">
       <div class="ni on" id="nav-overview" onclick="showTab('overview')"><i class="bi bi-grid-1x2-fill"></i><span
           class="nl">Overview</span></div>
-      <div class="ni" id="nav-revenue" onclick="showTab('revenue')"><i class="bi bi-cash-coin"></i><span
+      <div class="ni" id="nav-revenue" onclick="showTab('revenue')"><i class="bi bi-wallet2"></i><span
           class="nl">Revenue</span></div>
       <div class="ni" id="nav-bookings" onclick="showTab('bookings')"><i class="bi bi-calendar-check-fill"></i><span
           class="nl">Bookings</span></div>
@@ -1996,7 +2006,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
                   displayColors: false,
                   callbacks: {
                     label: function(context) {
-                      return '₱' + context.parsed.y.toLocaleString();
+                      return '₱' + (context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                     }
                   }
                 }
@@ -2028,7 +2038,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
                       weight: 'bold'
                     },
                     callback: function(value) {
-                      return '₱' + value;
+                      return '₱' + Number(value).toLocaleString('en-PH');
                     }
                   }
                 }
@@ -2046,6 +2056,114 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         gradient.addColorStop(0, 'rgba(245, 166, 35, 0.4)');
         gradient.addColorStop(1, 'rgba(245, 166, 35, 0)');
         return gradient;
+      }
+
+      let overviewRevenueBarChartInstance = null;
+      let currentOverviewRevFilter = 'daily';
+
+      async function changeOverviewRevFilter(filter, btn) {
+        currentOverviewRevFilter = filter;
+        if (btn && btn.parentElement) {
+          btn.parentElement.querySelectorAll('.rev-filter-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        }
+        await renderOverviewRevenueBarChart(filter);
+      }
+
+      async function renderOverviewRevenueBarChart(filter = currentOverviewRevFilter) {
+        const ctx = document.getElementById('overviewRevenueBarChart');
+        if (!ctx) return;
+
+        try {
+          const chartData = await api('revenue', 'chart', null, `&filter=${filter}`);
+          if (!chartData || !chartData.success) return;
+
+          if (overviewRevenueBarChartInstance) {
+            overviewRevenueBarChartInstance.destroy();
+          }
+
+          const isDark = document.body.classList.contains('dark');
+          const gridColor = isDark ? '#4a3e28' : '#ede8e0';
+          const labelColor = isDark ? '#a19685' : '#8e8e93';
+
+          overviewRevenueBarChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: chartData.labels,
+              datasets: [{
+                label: 'Platform Revenue (₱)',
+                data: chartData.data,
+                borderColor: '#F5A623',
+                borderWidth: 3,
+                backgroundColor: createChartGradient(ctx, isDark),
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#F5A623',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  backgroundColor: isDark ? '#2a2216' : '#ffffff',
+                  titleColor: isDark ? '#ffffff' : '#1A1A2E',
+                  bodyColor: '#F5A623',
+                  borderColor: '#F5A623',
+                  borderWidth: 1,
+                  padding: 10,
+                  displayColors: false,
+                  callbacks: {
+                    label: function(context) {
+                      return '₱' + (context.parsed.y || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  grid: {
+                    display: false
+                  },
+                  ticks: {
+                    color: labelColor,
+                    font: {
+                      family: 'Nunito',
+                      size: 10,
+                      weight: 'bold'
+                    }
+                  }
+                },
+                y: {
+                  grid: {
+                    color: gridColor,
+                    drawBorder: false
+                  },
+                  ticks: {
+                    color: labelColor,
+                    font: {
+                      family: 'Nunito',
+                      size: 10,
+                      weight: 'bold'
+                    },
+                    callback: function(value) {
+                      return '₱' + Number(value).toLocaleString('en-PH');
+                    }
+                  }
+                }
+              }
+            }
+          });
+        } catch (err) {
+          console.error('Failed to render overview revenue chart:', err);
+        }
       }
 
       async function updateRevenueChart(filter, btn) {
@@ -2078,29 +2196,15 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           const formattedRev = formatMetric(floatVal, true);
           const fullRev = php(floatVal);
 
-          document.getElementById('st-revenue').textContent = formattedRev;
+          document.getElementById('st-revenue').textContent = fullRev;
           document.getElementById('st-workers').textContent = s.active_workers;
-          document.getElementById('revTotal').textContent = fullRev;
 
           // Keep Revenue Analytics total element in sync as well
           const totalRevVal = document.getElementById('total-revenue-val');
           if (totalRevVal) totalRevVal.textContent = formattedRev;
 
-          // Revenue chart
-          const chart = document.getElementById('revChart');
-          const revRows = (revenueData && revenueData.revenue_chart) ? revenueData.revenue_chart : (s.revenue_chart || []);
-          if (revRows.length) {
-            const max = Math.max(...revRows.map(r => parseFloat(r.rev)), 1);
-            chart.innerHTML = revRows.map(r => {
-              const h = Math.max(4, Math.round((parseFloat(r.rev) / max) * 60));
-              return `<div class="rev-bar-item">
-          <div class="rev-bar-fill" style="height:${h}px;" title="${php(r.rev)}"></div>
-          <div class="rev-bar-lbl">${r.mo}</div>
-        </div>`;
-            }).join('');
-          } else {
-            chart.innerHTML = '<div style="font-size:12px;color:var(--txt-muted);text-align:center;width:100%;padding:20px 0;">No revenue data yet</div>';
-          }
+          // Render modern, responsive overview bar chart
+          await renderOverviewRevenueBarChart(currentOverviewRevFilter);
 
           // Donut (Safe-guarded)
           const svg = document.getElementById('donutSvg');
@@ -3988,7 +4092,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       remittancesCache = data.remittances || [];
       if (!remittancesCache.length) {
-        body.innerHTML = '<div class="empty-state"><i class="bi bi-cash-coin" style="font-size:32px;"></i><p>No remittances found.</p></div>';
+        body.innerHTML = '<div class="empty-state"><i class="bi bi-wallet2" style="font-size:32px;"></i><p>No remittances found.</p></div>';
         return;
       }
 

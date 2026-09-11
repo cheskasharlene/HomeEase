@@ -57,24 +57,26 @@ async function loadOverview() {
     document.getElementById('st-users').textContent = s.total_users;
     document.getElementById('st-bookings').textContent = s.total_bookings;
     const floatVal = parseFloat(s.total_revenue) || 0;
-    if (floatVal >= 1000) {
-      document.getElementById('st-revenue').textContent = '₱' + (floatVal / 1000).toFixed(1) + 'k';
-    } else {
-      document.getElementById('st-revenue').textContent = '₱' + floatVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
+    document.getElementById('st-revenue').textContent = php(floatVal);
     document.getElementById('st-workers').textContent = s.active_workers;
     document.getElementById('revTotal').textContent = php(floatVal);
     // Revenue chart
-    const chart = document.getElementById('revChart');
-    const revRows = s.revenue_chart || [];
-    if (revRows.length) {
-      const max = Math.max(...revRows.map(r => parseFloat(r.rev)), 1);
-      chart.innerHTML = revRows.map(r => {
-        const h = Math.max(4, Math.round((parseFloat(r.rev) / max) * 60));
-        return `<div class="rev-bar-item"><div class="rev-bar-fill" style="height:${h}px;" title="${php(r.rev)}"></div><div class="rev-bar-lbl">${r.mo}</div></div>`;
-      }).join('');
+    if (typeof renderOverviewRevenueBarChart === 'function') {
+      renderOverviewRevenueBarChart();
     } else {
-      chart.innerHTML = '<div style="font-size:12px;color:var(--txt-muted);text-align:center;width:100%;padding:20px 0;">No revenue data yet</div>';
+      const chart = document.getElementById('revChart');
+      if (chart) {
+        const revRows = s.revenue_chart || [];
+        if (revRows.length) {
+          const max = Math.max(...revRows.map(r => parseFloat(r.rev)), 1);
+          chart.innerHTML = revRows.map(r => {
+            const h = Math.max(4, Math.round((parseFloat(r.rev) / max) * 60));
+            return `<div class="rev-bar-item"><div class="rev-bar-fill" style="height:${h}px;" title="${php(r.rev)}"></div><div class="rev-bar-lbl">${r.mo}</div></div>`;
+          }).join('');
+        } else {
+          chart.innerHTML = '<div style="font-size:12px;color:var(--txt-muted);text-align:center;width:100%;padding:20px 0;">No revenue data yet</div>';
+        }
+      }
     }
     // Donut
     const bd = s.breakdown || {};
