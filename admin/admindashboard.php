@@ -859,46 +859,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         </div>
 
-        <!-- Breakdown -->
-        <div class="sec-pad">
-          <div class="sec-hdr">
-            <div class="sec-ttl">Revenue Breakdown</div>
-          </div>
-          <div class="card" style="padding:16px; display:flex; flex-direction:column; gap:16px;">
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <div style="width:12px; height:12px; border-radius:50%; background:var(--teal);"></div>
-                  <span style="font-size:12px; font-weight:700; color:var(--txt-primary);">Service Provider Commission</span>
-                </div>
-                <span style="font-size:12px; font-weight:800; color:var(--txt-primary);" id="breakdown-commission-val">₱0.00</span>
-              </div>
-              <div style="width:100%; height:8px; background:var(--bg-input); border-radius:4px; overflow:hidden;">
-                <div style="width:0%; height:100%; background:var(--teal); border-radius:4px;" id="breakdown-commission-bar"></div>
-              </div>
-              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--txt-muted); margin-top:4px;">
-                <span>4% remittance fee per booking</span>
-                <span id="breakdown-commission-pct">0% of total</span>
-              </div>
-            </div>
-            <div>
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                  <div style="width:12px; height:12px; border-radius:50%; background:#2563eb;"></div>
-                  <span style="font-size:12px; font-weight:700; color:var(--txt-primary);">Platform Convenience Fees</span>
-                </div>
-                <span style="font-size:12px; font-weight:800; color:var(--txt-primary);" id="breakdown-convenience-val">₱0.00</span>
-              </div>
-              <div style="width:100%; height:8px; background:var(--bg-input); border-radius:4px; overflow:hidden;">
-                <div style="width:0%; height:100%; background:#2563eb; border-radius:4px;" id="breakdown-convenience-bar"></div>
-              </div>
-              <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--txt-muted); margin-top:4px;">
-                <span>Fixed service/booking fees</span>
-                <span id="breakdown-convenience-pct">0% of total</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Revenue Performance -->
         <div class="sec-pad">
@@ -1834,25 +1794,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             const revTotalEl = document.getElementById('revTotal');
             if (revTotalEl) revTotalEl.textContent = fullTotal;
 
-            // Populate breakdown dynamically
-            const total = summaryData.total_revenue;
-            const commissionAmt = total;
-            const convenienceAmt = 0.00;
-            
-            let commissionPct = 0;
-            let conveniencePct = 0;
-            if (total > 0) {
-              commissionPct = 100;
-              conveniencePct = 0;
-            }
-            
-            document.getElementById('breakdown-commission-val').textContent = '₱' + commissionAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            document.getElementById('breakdown-commission-bar').style.width = commissionPct + '%';
-            document.getElementById('breakdown-commission-pct').textContent = commissionPct + '% of total';
-            
-            document.getElementById('breakdown-convenience-val').textContent = '₱' + convenienceAmt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            document.getElementById('breakdown-convenience-bar').style.width = conveniencePct + '%';
-            document.getElementById('breakdown-convenience-pct').textContent = conveniencePct + '% of total';
 
             // Populate Revenue Performance dynamically
             const completedCount = parseInt(summaryData.completed_bookings) || 0;
