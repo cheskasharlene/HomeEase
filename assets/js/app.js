@@ -1053,24 +1053,49 @@ const SVC_IMGS = {
 
 window.addEventListener("DOMContentLoaded", injectGlobalModals);
 
-// ── Provider Nav Bell Badge ────────────────────────────────────────────────
-// Polls the provider notifications API and keeps the bell badge up to date
-// on every provider page that has a #navBellBadge element.
+// ── Provider Nav Bell Badge & Notification Dot ─────────────────────────────
+// Polls provider notifications API and keeps red dot and badge updated
+// on every provider page that has a bottom navigation.
 (function initProviderBellBadge() {
   let _lastCount = -1;
 
   function updateBadge(count) {
-    const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
-    if (!badges.length) return;
-
+    const unread = Math.max(0, Number(count) || 0);
     const prev = _lastCount;
-    _lastCount = count;
+    _lastCount = unread;
+
+    try {
+      localStorage.setItem('he_provider_unread_notifs', String(unread));
+    } catch (e) {}
+
+    // Find all red dot and badge elements
+    let dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
+    const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
+
+    // Auto-inject .ndot into .ni-bell-wrap if missing on any provider page
+    if (!dots.length) {
+      const bellWraps = document.querySelectorAll('.bnav .ni-bell .ni-bell-wrap, .bnav .ni[onclick*="provider_notifications.php"] .ni-bell-wrap');
+      bellWraps.forEach(wrap => {
+        if (!wrap.querySelector('.ndot')) {
+          const dot = document.createElement('div');
+          dot.className = 'ndot';
+          dot.id = 'navNotifDot';
+          dot.style.display = unread > 0 ? 'block' : 'none';
+          wrap.appendChild(dot);
+        }
+      });
+      dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
+    }
+
+    dots.forEach(dot => {
+      dot.style.display = unread > 0 ? 'block' : 'none';
+    });
 
     badges.forEach(badge => {
-      if (count > 0) {
-        badge.textContent = count > 99 ? '99+' : String(count);
+      if (unread > 0) {
+        badge.textContent = unread > 99 ? '99+' : String(unread);
         badge.style.display = 'block';
-        if (prev >= 0 && count > prev) {
+        if (prev >= 0 && unread > prev) {
           const bellWrap = badge.closest('.ni-bell-wrap');
           if (bellWrap) {
             bellWrap.classList.remove('ni-bell-shake');
@@ -1085,23 +1110,147 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
     });
   }
 
+  window.updateProviderNotificationDot = updateBadge;
+
   async function pollBellCount() {
+    const path = window.location.pathname.toLowerCase();
+    if (!path.includes('/providers/')) return;
+
     try {
-      const res  = await fetch('../api/provider_notifications_api.php?action=count', { cache: 'no-store' });
+      const res = await fetch('../api/provider_notifications_api.php?action=count&t=' + Date.now(), { cache: 'no-store' });
       const data = await res.json();
-      if (data && typeof data.unread_count === 'number') {
+      if (data && data.success && typeof data.unread_count === 'number') {
         updateBadge(data.unread_count);
       }
-    } catch (e) { /* silent — don't break the page */ }
+    } catch (e) { /* silent */ }
+  }
+
+  function setup() {
+    try {
+      const cached = parseInt(localStorage.getItem('he_provider_unread_notifs') || '0', 10);
+      if (!isNaN(cached)) updateBadge(cached);
+    } catch (e) {}
+
+    pollBellCount();
+    setInterval(pollBellCount, 6000);
+    window.addEventListener('focus', pollBellCount);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') pollBellCount();
+    });
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'he_provider_unread_notifs') {
+        const c = parseInt(e.newValue || '0', 10);
+        updateBadge(c);
+      }
+    });
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      pollBellCount();
-      setInterval(pollBellCount, 10000);
-    });
+    document.addEventListener('DOMContentLoaded', setup);
   } else {
-    pollBellCount();
-    setInterval(pollBellCount, 10000);
+    setup();
+  }
+})();
+
+// ── Homeowner Nav Bell Badge & Notification Dot ────────────────────────────
+// Polls client notifications API and keeps red dot synchronized
+// on every homeowner page that has a bottom navigation.
+(function initHomeownerNotificationDot() {
+  let _lastCount = -1;
+
+  function updateDots(count) {
+    const unread = Math.max(0, Number(count) || 0);
+    const prev = _lastCount;
+    _lastCount = unread;
+
+    try {
+      localStorage.setItem('he_unread_notifs', String(unread));
+    } catch (e) {}
+
+    let dots = document.querySelectorAll('#navNotifDot, .bnav .ndot');
+
+    // Auto-inject .ndot into .bnav bell item if missing
+    if (!dots.length) {
+      const bellItem = document.querySelector('.bnav .ni[onclick*="notifications.php"], .bnav .ni.on[onclick*="notifications.php"]');
+      if (bellItem) {
+        let wrap = bellItem.querySelector('.ni-bell-wrap');
+        if (!wrap) {
+          const icon = bellItem.querySelector('i.bi-bell, i.bi-bell-fill');
+          if (icon) {
+            wrap = document.createElement('div');
+            wrap.className = 'ni-bell-wrap';
+            icon.parentNode.insertBefore(wrap, icon);
+            wrap.appendChild(icon);
+          }
+        }
+        if (wrap && !wrap.querySelector('.ndot')) {
+          const dot = document.createElement('div');
+          dot.className = 'ndot';
+          dot.id = 'navNotifDot';
+          dot.style.display = unread > 0 ? 'block' : 'none';
+          wrap.appendChild(dot);
+          dots = [dot];
+        }
+      }
+    }
+
+    dots.forEach(dot => {
+      dot.style.display = unread > 0 ? 'block' : 'none';
+    });
+
+    if (prev >= 0 && unread > prev) {
+      const wrap = document.querySelector('.bnav .ni-bell-wrap');
+      if (wrap) {
+        wrap.classList.remove('ni-bell-shake');
+        void wrap.offsetWidth;
+        wrap.classList.add('ni-bell-shake');
+        setTimeout(() => wrap.classList.remove('ni-bell-shake'), 600);
+      }
+    }
+  }
+
+  window.updateHomeownerNotificationDot = updateDots;
+
+  async function pollUnread() {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('/admin/') || path.includes('/providers/')) return;
+
+    const apiUrl = path.includes('/clients/')
+      ? '../api/notifications_api.php?action=count&t=' + Date.now()
+      : 'api/notifications_api.php?action=count&t=' + Date.now();
+
+    try {
+      const res = await fetch(apiUrl, { cache: 'no-store' });
+      const data = await res.json();
+      if (data && data.success && typeof data.unread_count === 'number') {
+        updateDots(data.unread_count);
+      }
+    } catch (e) {}
+  }
+
+  function setup() {
+    try {
+      const cached = parseInt(localStorage.getItem('he_unread_notifs') || '0', 10);
+      if (!isNaN(cached)) updateDots(cached);
+    } catch (e) {}
+
+    pollUnread();
+    setInterval(pollUnread, 6000);
+    window.addEventListener('focus', pollUnread);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') pollUnread();
+    });
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'he_unread_notifs') {
+        const c = parseInt(e.newValue || '0', 10);
+        updateDots(c);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setup);
+  } else {
+    setup();
   }
 })();

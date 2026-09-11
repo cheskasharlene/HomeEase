@@ -61,7 +61,13 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       <div class="ni" onclick="goPage('../home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
       <div class="ni on" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
       <div class="ni" onclick="goPage('service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-      <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
+      <div class="ni" onclick="goPage('notifications.php')">
+        <div class="ni-bell-wrap">
+          <i class="bi bi-bell-fill"></i>
+          <div class="ndot" id="navNotifDot" style="display:none;"></div>
+        </div>
+        <span class="nl">Notifications</span>
+      </div>
       <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
     </div>
   </div>

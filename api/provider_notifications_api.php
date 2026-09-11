@@ -40,7 +40,14 @@ if ($method === 'GET') {
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
+    $unreadCount = 0;
     foreach ($rows as &$row) {
+        $row['id'] = (int) $row['id'];
+        $row['reference_id'] = !empty($row['reference_id']) ? (int) $row['reference_id'] : null;
+        $row['is_read'] = (int) $row['is_read'];
+        if ($row['is_read'] === 0) {
+            $unreadCount++;
+        }
         $diff = time() - strtotime($row['created_at']);
         if ($diff < 60)        $row['time'] = 'Just now';
         elseif ($diff < 3600)  $row['time'] = floor($diff / 60) . 'm ago';
@@ -49,7 +56,10 @@ if ($method === 'GET') {
     }
     unset($row);
 
-    respond(true, '', ['notifications' => $rows]);
+    respond(true, '', [
+        'notifications' => $rows,
+        'unread_count'  => $unreadCount
+    ]);
 }
 
 if ($method === 'POST') {
@@ -59,22 +69,32 @@ if ($method === 'POST') {
         $jsonInput = [];
     }
 
-    $markAll = !empty($_POST['mark_all']) || !empty($_GET['mark_all']) || !empty($jsonInput['mark_all']);
+    $data = array_merge($_POST, $jsonInput);
+
+    $markAll = !empty($data['mark_all']) || !empty($_GET['mark_all']);
     if ($markAll) {
         $stmt = $conn->prepare("UPDATE provider_notifications SET is_read = 1 WHERE provider_id = ?");
         $stmt->bind_param('i', $providerId);
         $stmt->execute();
         $stmt->close();
-        respond(true, 'All marked as read.');
+        respond(true, 'All marked as read.', ['unread_count' => 0]);
     }
 
-    $notifId = (int) ($_POST['id'] ?? $_GET['id'] ?? $jsonInput['id'] ?? 0);
+    $notifId = (int) ($data['id'] ?? $_GET['id'] ?? 0);
     if ($notifId > 0) {
         $stmt = $conn->prepare("UPDATE provider_notifications SET is_read = 1 WHERE id = ? AND provider_id = ?");
         $stmt->bind_param('ii', $notifId, $providerId);
         $stmt->execute();
         $stmt->close();
-        respond(true, 'Marked as read.');
+
+        $cntStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM provider_notifications WHERE provider_id = ? AND is_read = 0");
+        $cntStmt->bind_param('i', $providerId);
+        $cntStmt->execute();
+        $cntRow = $cntStmt->get_result()->fetch_assoc();
+        $cntStmt->close();
+        $unread = (int) ($cntRow['cnt'] ?? 0);
+
+        respond(true, 'Marked as read.', ['unread_count' => $unread, 'id' => $notifId]);
     }
 
     respond(false, 'Invalid request.');
@@ -104,9 +124,12 @@ function ensureProviderNotificationsTable(mysqli $conn): void
     $conn->query("ALTER TABLE provider_notifications ADD COLUMN IF NOT EXISTS reference_id INT DEFAULT NULL");
 }
 
-function respond(bool $success, string $message = '', array $extra = []): never
-{
-    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
-    exit;
+if (!function_exists('respond')) {
+    function respond(bool $success, string $message = '', array $extra = []): never
+    {
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
+        exit;
+    }
 }
 ?>

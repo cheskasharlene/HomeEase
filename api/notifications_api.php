@@ -17,10 +17,21 @@ if (empty($_SESSION['user_id'])) {
     respond(false, 'Not logged in.');
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int)$_SESSION['user_id'];
 $method  = $_SERVER['REQUEST_METHOD'];
+$action  = $_GET['action'] ?? $_POST['action'] ?? '';
 
 if ($method === 'GET') {
+    if ($action === 'count') {
+        $stmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ? AND is_read = 0");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        $unread = (int)($res['cnt'] ?? 0);
+        respond(true, '', ['unread_count' => $unread]);
+    }
+
     $stmt = $conn->prepare(
         "SELECT id, title, message, icon, is_read, created_at FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 100"
     );
@@ -29,8 +40,13 @@ if ($method === 'GET') {
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    /* Attach a formatted relative-time string for the client */
+    $unreadCount = 0;
     foreach ($rows as &$row) {
+        $row['id'] = (int)$row['id'];
+        $row['is_read'] = (int)$row['is_read'];
+        if ($row['is_read'] === 0) {
+            $unreadCount++;
+        }
         $diff = time() - strtotime($row['created_at']);
         if ($diff < 60)       $row['time'] = 'Just now';
         elseif ($diff < 3600) $row['time'] = floor($diff / 60) . 'm ago';
@@ -39,21 +55,32 @@ if ($method === 'GET') {
     }
     unset($row);
 
-    respond(true, '', ['notifications' => $rows]);
+    respond(true, '', [
+        'notifications' => $rows,
+        'unread_count'  => $unreadCount
+    ]);
 }
 
 if ($method === 'POST') {
-    if (!empty($_POST['mark_all'])) {
+    $rawInput  = file_get_contents('php://input');
+    $jsonInput = !empty($rawInput) ? json_decode($rawInput, true) : [];
+    if (!is_array($jsonInput)) {
+        $jsonInput = [];
+    }
+
+    $data = array_merge($_POST, $jsonInput);
+
+    if (!empty($data['mark_all']) || !empty($_GET['mark_all'])) {
         $stmt = $conn->prepare(
             "UPDATE notifications SET is_read = 1 WHERE user_id = ?"
         );
         $stmt->bind_param("i", $user_id);
         $stmt->execute();
         $stmt->close();
-        respond(true, 'All marked as read.');
+        respond(true, 'All marked as read.', ['unread_count' => 0]);
     }
 
-    $notif_id = intval($_POST['id'] ?? 0);
+    $notif_id = intval($data['id'] ?? $_GET['id'] ?? 0);
     if ($notif_id > 0) {
         $stmt = $conn->prepare(
             "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?"
@@ -61,7 +88,15 @@ if ($method === 'POST') {
         $stmt->bind_param("ii", $notif_id, $user_id);
         $stmt->execute();
         $stmt->close();
-        respond(true, 'Marked as read.');
+
+        $cntStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ? AND is_read = 0");
+        $cntStmt->bind_param("i", $user_id);
+        $cntStmt->execute();
+        $cntRes = $cntStmt->get_result()->fetch_assoc();
+        $cntStmt->close();
+        $unread = (int)($cntRes['cnt'] ?? 0);
+
+        respond(true, 'Marked as read.', ['unread_count' => $unread, 'id' => $notif_id]);
     }
 
     respond(false, 'Invalid request.');

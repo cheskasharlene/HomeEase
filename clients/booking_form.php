@@ -280,8 +280,13 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
       <div class="ni on" onclick="goPage('service_selection.php')">
         <div class="nb-c"><i class="bi bi-plus-lg"></i></div>
       </div>
-      <div class="ni" onclick="goPage('notifications.php')"><i class="bi bi-bell-fill"></i><span
-          class="nl">Notifications</span></div>
+      <div class="ni" onclick="goPage('notifications.php')">
+        <div class="ni-bell-wrap">
+          <i class="bi bi-bell-fill"></i>
+          <div class="ndot" id="navNotifDot" style="display:none;"></div>
+        </div>
+        <span class="nl">Notifications</span>
+      </div>
       <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span>
       </div>
     </div>

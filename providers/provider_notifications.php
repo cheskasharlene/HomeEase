@@ -48,7 +48,7 @@ if ($stmt) {
       'msg'        => $n['message'],
       'time'       => providerTimeAgo($n['created_at']),
       'created_at' => $n['created_at'],
-      'read'       => (bool) $n['is_read'],
+      'read'       => ((int) $n['is_read']) === 1,
       'icon'       => $n['icon'] ?? 'house_cleaner',
     ];
   }, $rows);
@@ -106,14 +106,22 @@ if ($stmt) {
           <div class="ni" onclick="goPage('provider_requests.php')"><i class="bi bi-clipboard-check-fill"></i><span class="nl">Requests</span></div>
           <div class="ni" onclick="goPage('provider_earnings.php')"><i class="bi bi-cash-stack"></i><span class="nl">Earnings</span></div>
           <div class="ni ni-bell on" onclick="goPage('provider_notifications.php')">
-            <div class="ni-bell-wrap"><i class="bi bi-bell-fill"></i><span class="ni-badge" id="navBellBadge" style="display:none;"></span></div>
+            <div class="ni-bell-wrap">
+              <i class="bi bi-bell-fill"></i>
+              <div class="ndot" id="navNotifDot" style="display:none;"></div>
+              <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
+            </div>
             <span class="nl">Notifications</span>
           </div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
         <?php else: ?>
           <div class="ni" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
           <div class="ni ni-bell on" onclick="goPage('provider_notifications.php')">
-            <div class="ni-bell-wrap"><i class="bi bi-bell-fill"></i><span class="ni-badge" id="navBellBadge" style="display:none;"></span></div>
+            <div class="ni-bell-wrap">
+              <i class="bi bi-bell-fill"></i>
+              <div class="ndot" id="navNotifDot" style="display:none;"></div>
+              <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
+            </div>
             <span class="nl">Notifications</span>
           </div>
           <div class="ni" onclick="goPage('provider_profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
@@ -194,43 +202,52 @@ if ($stmt) {
         .replace(/"/g,'&quot;');
     }
 
-    /* ── Merge local + server ── */
-    function mergeNotifications() {
-      const localList = readLocalNotifs();
-      const localMap  = new Map();
-      localList.forEach(item => {
-        if (item && item.id !== undefined) localMap.set(String(item.id), item);
+    /* ── Sync unread across tabs & bottom nav ── */
+    function syncProviderUnread(count) {
+      const c = Math.max(0, Number(count) || 0);
+      try {
+        localStorage.setItem('he_provider_unread_notifs', String(c));
+      } catch (e) {}
+
+      // Update navbar bell red dot
+      const dots = document.querySelectorAll('#navNotifDot, .bnav .ni-bell .ndot, #providerNav .ndot');
+      dots.forEach(d => {
+        d.style.display = c > 0 ? 'block' : 'none';
       });
 
-      const mergedMap = new Map();
-
-      // 1. Process server notifications (authoritative DB records)
-      (window.HE.notifications || []).forEach(serverItem => {
-        const key = String(serverItem.id);
-        const localItem = localMap.get(key);
-        // If either server DB or local storage marked it read, consider it read
-        const isRead = Boolean(serverItem.read || (localItem && localItem.read));
-        mergedMap.set(key, {
-          ...serverItem,
-          read: isRead
-        });
+      // Update navbar bell badge
+      const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
+      badges.forEach(b => {
+        if (c > 0) {
+          b.textContent = c > 99 ? '99+' : String(c);
+          b.style.display = 'block';
+        } else {
+          b.style.display = 'none';
+        }
       });
 
-      // 2. Add local-only notifications not yet in server DB
-      localMap.forEach((localItem, key) => {
-        if (!mergedMap.has(key)) {
-          mergedMap.set(key, localItem);
+      if (typeof window.updateProviderNotificationDot === 'function') {
+        window.updateProviderNotificationDot(c);
+      }
+    }
+
+    /* ── Authoritative Notification Store ── */
+    function setNotifications(list) {
+      const map = new Map();
+      (list || []).forEach(item => {
+        if (item && item.id !== undefined) {
+          map.set(String(item.id), item);
         }
       });
 
       /* If provider is rejected, ensure a rejection notification is present */
       if (window.HE.verificationState === 'rejected') {
-        const hasRej = Array.from(mergedMap.values()).some(n => 
+        const hasRej = Array.from(map.values()).some(n => 
           n && (n.type === 'verification_rejected' || n.type === 'rejected' || (String(n.id) === 'verification_rejected'))
         );
         if (!hasRej) {
           const createdAt = new Date().toISOString();
-          mergedMap.set('verification_rejected', {
+          map.set('verification_rejected', {
             id: 'verification_rejected',
             type: 'verification_rejected',
             title: 'Worker Application Rejected',
@@ -243,34 +260,31 @@ if ($stmt) {
         }
       }
 
-      window.HE.notifications = Array.from(mergedMap.values())
+      window.HE.notifications = Array.from(map.values())
         .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
     }
 
     /* ── Render ── */
     function renderNotifs() {
-      const notifs     = window.HE.notifications;
+      const notifs     = window.HE.notifications || [];
       const unreadList = notifs.filter(n => !n.read);
       const total      = notifs.length;
 
       const countEl = document.getElementById('nCount');
-      if (unreadList.length > 0) {
-        countEl.innerHTML = `<strong>${unreadList.length}</strong> unread &nbsp;·&nbsp; ${total} total`;
-      } else {
-        countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
-      }
-      document.getElementById('markAllBtn').style.display = unreadList.length ? '' : 'none';
-
-      // Update navbar bell badge
-      const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
-      badges.forEach(b => {
+      if (countEl) {
         if (unreadList.length > 0) {
-          b.textContent = unreadList.length > 99 ? '99+' : String(unreadList.length);
-          b.style.display = 'block';
+          countEl.innerHTML = `<strong>${unreadList.length}</strong> unread &nbsp;·&nbsp; ${total} total`;
         } else {
-          b.style.display = 'none';
+          countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
         }
-      });
+      }
+      const markBtn = document.getElementById('markAllBtn');
+      if (markBtn) {
+        markBtn.style.display = unreadList.length ? '' : 'none';
+      }
+
+      // Synchronize unread count immediately with navigation red dot
+      syncProviderUnread(unreadList.length);
 
       if (!total) {
         document.getElementById('nBody').innerHTML = emptyStateHTML();
@@ -447,51 +461,58 @@ if ($stmt) {
 
     /* ── Mark single read ── */
     function markRead(id) {
-      const n = window.HE.notifications.find(nf => String(nf.id) === String(id));
+      const n = (window.HE.notifications || []).find(nf => String(nf.id) === String(id));
       if (!n || n.read) return;
 
-      const finishMarkRead = () => {
-        n.read = true;
-        writeLocalNotifs(window.HE.notifications);
-        renderNotifs();
-      };
+      n.read = true;
 
-      /* Visual ripple */
       const card = document.getElementById(`nc-${id}`);
       if (card) {
         card.classList.add('reading');
-        setTimeout(finishMarkRead, 280);
+        setTimeout(() => {
+          renderNotifs();
+        }, 280);
       } else {
-        finishMarkRead();
+        renderNotifs();
       }
 
       /* Persist to server if valid DB ID */
       if (typeof id === 'number' || (typeof id === 'string' && /^\d+$/.test(id))) {
         const form = new FormData();
         form.append('id', id);
-        fetch('../api/provider_notifications_api.php', { method: 'POST', body: form }).catch(() => {});
+        fetch('../api/provider_notifications_api.php', { method: 'POST', body: form })
+          .then(r => r.json())
+          .then(data => {
+            if (data && typeof data.unread_count === 'number') {
+              syncProviderUnread(data.unread_count);
+            }
+          })
+          .catch(() => {});
+      } else {
+        syncProviderUnread((window.HE.notifications || []).filter(item => !item.read).length);
       }
     }
 
     /* ── Mark all read ── */
     function markAllRead() {
-      const hasUnread = window.HE.notifications.some(n => !n.read);
+      const hasUnread = (window.HE.notifications || []).some(n => !n.read);
       if (!hasUnread) return;
 
       window.HE.notifications.forEach(n => n.read = true);
-      writeLocalNotifs(window.HE.notifications);
       renderNotifs();
       showToast('All notifications marked as read', 'success');
+      syncProviderUnread(0);
 
       const form = new FormData();
       form.append('mark_all', '1');
-      fetch('../api/provider_notifications_api.php', { method: 'POST', body: form }).catch(() => {});
+      fetch('../api/provider_notifications_api.php', { method: 'POST', body: form })
+        .catch(() => {});
     }
 
     /* ── Polling refresh ── */
     async function refreshProviderNotifications(showNewToast = false) {
       try {
-        const res  = await fetch('../api/provider_notifications_api.php', { cache: 'no-store' });
+        const res  = await fetch('../api/provider_notifications_api.php?t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (!data.success || !Array.isArray(data.notifications)) return;
 
@@ -500,18 +521,26 @@ if ($stmt) {
           type:       n.type || 'general',
           title:      n.title,
           msg:        n.message,
-          time:       providerTimeAgo(n.created_at),
+          time:       n.time || providerTimeAgo(n.created_at),
           created_at: n.created_at || null,
-          read:       !!n.is_read,
+          read:       Number(n.is_read) === 1,
           icon:       n.icon || 'house_cleaner'
         }));
 
         const previousIds = new Set((window.HE.notifications || []).map(n => String(n.id)));
         const newItems    = fetched.filter(n => !previousIds.has(String(n.id)));
 
-        window.HE.notifications = fetched;
-        mergeNotifications();
-        writeLocalNotifs(window.HE.notifications);
+        // Preserve optimistic read states for in-flight requests
+        const readIdsInCurrent = new Set(
+          (window.HE.notifications || []).filter(n => n.read).map(n => String(n.id))
+        );
+        fetched.forEach(n => {
+          if (readIdsInCurrent.has(String(n.id))) {
+            n.read = true;
+          }
+        });
+
+        setNotifications(fetched);
         renderNotifs();
 
         if (showNewToast && newItems.length) {
@@ -523,7 +552,7 @@ if ($stmt) {
     }
 
     /* ── Boot ── */
-    mergeNotifications();
+    setNotifications(window.HE.notifications);
     renderNotifs();
     refreshProviderNotifications(false);
     setInterval(() => refreshProviderNotifications(true), 8000);

@@ -707,3 +707,15 @@ function sendProviderNotification($conn, $providerId, $type, $title, $message, $
     $stmt->close();
     return $ok;
 }
+
+function sendUserNotification($conn, $userId, $title, $message, $icon = 'bell')
+{
+    if (!$conn instanceof mysqli || (int)$userId <= 0) return false;
+    $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
+    if (!$stmt) return false;
+    $stmt->bind_param("isss", $userId, $title, $message, $icon);
+    $ok = $stmt->execute();
+    $stmt->close();
+    return $ok;
+}
+

@@ -190,11 +190,11 @@ if ($uid > 0) {
     window._allPros = [];
 
     function updateNotificationDot(unreadCount) {
-      window.HE.unreadNotifs = Number(unreadCount) || 0;
-      const dot = document.getElementById('navNotifDot') || document.querySelector('.bnav .ndot');
-      if (dot) {
+      window.HE.unreadNotifs = Math.max(0, Number(unreadCount) || 0);
+      const dots = document.querySelectorAll('#navNotifDot, .bnav .ndot');
+      dots.forEach(dot => {
         dot.style.display = window.HE.unreadNotifs > 0 ? 'block' : 'none';
-      }
+      });
       try {
         localStorage.setItem('he_unread_notifs', String(window.HE.unreadNotifs));
       } catch (e) {}
@@ -202,11 +202,10 @@ if ($uid > 0) {
 
     async function checkUnreadNotifications() {
       try {
-        const res = await fetch('api/notifications_api.php?t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('api/notifications_api.php?action=count&t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
-        if (data.success && Array.isArray(data.notifications)) {
-          const unread = data.notifications.filter(n => Number(n.is_read) === 0);
-          updateNotificationDot(unread.length);
+        if (data && data.success && typeof data.unread_count === 'number') {
+          updateNotificationDot(data.unread_count);
         }
       } catch (e) {}
     }
@@ -665,9 +664,16 @@ if ($uid > 0) {
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('clients/booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('clients/service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage('clients/notifications.php')"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span><div class="ndot" id="navNotifDot" style="${notifDotStyle}"></div></div>
+        <div class="ni" onclick="goPage('clients/notifications.php')">
+          <div class="ni-bell-wrap">
+            <i class="bi bi-bell-fill"></i>
+            <div class="ndot" id="navNotifDot" style="${notifDotStyle}"></div>
+          </div>
+          <span class="nl">Notifications</span>
+        </div>
         <div class="ni" onclick="goPage('clients/profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
+    updateNotificationDot(window.HE.unreadNotifs);
 
     // Dynamic greeting update
     function updateGreeting() {

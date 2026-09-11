@@ -32,7 +32,7 @@ $notifications = array_map(function ($n) {
     'msg'        => $n['message'],
     'time'       => timeAgo($n['created_at']),
     'created_at' => $n['created_at'],
-    'read'       => (bool) $n['is_read'],
+    'read'       => ((int) $n['is_read']) === 1,
     'icon'       => $n['icon'] ?? 'house_cleaner',
   ];
 }, $rows);
@@ -145,31 +145,58 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         <div class="ni" onclick="goPage('../home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('service_selection.php')" style="cursor:pointer;"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni on"><i class="bi bi-bell-fill"></i><span class="nl">Notifications</span></div>
+        <div class="ni on">
+          <div class="ni-bell-wrap">
+            <i class="bi bi-bell-fill"></i>
+            <div class="ndot" id="navNotifDot" style="display:none;"></div>
+          </div>
+          <span class="nl">Notifications</span>
+        </div>
         <div class="ni" onclick="goPage('profile.php')"><i class="bi bi-person-fill"></i><span class="nl">Profile</span></div>
       </div>`;
 
+    /* ── Sync unread across tabs & bottom nav ── */
+    function syncUnreadCount(count) {
+      const c = Math.max(0, Number(count) || 0);
+      window.HE.unreadCount = c;
+      try {
+        localStorage.setItem('he_unread_notifs', String(c));
+      } catch (e) {}
+
+      const dots = document.querySelectorAll('#navNotifDot, .bnav .ndot');
+      dots.forEach(d => {
+        d.style.display = c > 0 ? 'block' : 'none';
+      });
+
+      if (typeof window.updateHomeownerNotificationDot === 'function') {
+        window.updateHomeownerNotificationDot(c);
+      }
+    }
+
     /* ── Render ── */
     function renderNotifs() {
-      const notifs     = window.HE.notifications;
+      const notifs     = window.HE.notifications || [];
       const unreadList = notifs.filter(n => !n.read);
       const total      = notifs.length;
 
       /* Update header count */
       const countEl = document.getElementById('nCount');
-      if (unreadList.length > 0) {
-        countEl.innerHTML = `<strong>${unreadList.length}</strong> unread &nbsp;·&nbsp; ${total} total`;
-      } else {
-        countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
+      if (countEl) {
+        if (unreadList.length > 0) {
+          countEl.innerHTML = `<strong>${unreadList.length}</strong> unread &nbsp;·&nbsp; ${total} total`;
+        } else {
+          countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
+        }
       }
 
-      /* Sync with Home page and other tabs via localStorage */
-      try {
-        localStorage.setItem('he_unread_notifs', String(unreadList.length));
-      } catch (e) {}
+      /* Sync with Home page and bottom nav */
+      syncUnreadCount(unreadList.length);
 
       /* Hide "mark all" when nothing unread */
-      document.getElementById('markAllBtn').style.display = unreadList.length ? '' : 'none';
+      const markBtn = document.getElementById('markAllBtn');
+      if (markBtn) {
+        markBtn.style.display = unreadList.length ? '' : 'none';
+      }
 
       if (!total) {
         document.getElementById('nBody').innerHTML = emptyStateHTML();
@@ -246,35 +273,43 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
     /* ── Mark single read ── */
     function markRead(id) {
-      const n = window.HE.notifications.find(n => n.id === id);
+      const n = (window.HE.notifications || []).find(n => Number(n.id) === Number(id));
       if (!n || n.read) return;
+
+      n.read = true;
 
       /* Visual ripple first */
       const card = document.getElementById(`nc-${id}`);
       if (card) {
         card.classList.add('reading');
         setTimeout(() => {
-          n.read = true;
           renderNotifs();
         }, 280);
       } else {
-        n.read = true;
         renderNotifs();
       }
 
       /* Persist to server */
       const form = new FormData();
       form.append('id', id);
-      fetch('../api/notifications_api.php', { method: 'POST', body: form }).catch(() => {});
+      fetch('../api/notifications_api.php', { method: 'POST', body: form })
+        .then(r => r.json())
+        .then(data => {
+          if (data && typeof data.unread_count === 'number') {
+            syncUnreadCount(data.unread_count);
+          }
+        })
+        .catch(() => {});
     }
 
     /* ── Mark all read ── */
     function markAllRead() {
-      const hasUnread = window.HE.notifications.some(n => !n.read);
+      const hasUnread = (window.HE.notifications || []).some(n => !n.read);
       if (!hasUnread) return;
       window.HE.notifications.forEach(n => n.read = true);
       renderNotifs();
       showToast('All notifications marked as read', 'success');
+      syncUnreadCount(0);
 
       const form = new FormData();
       form.append('mark_all', '1');
@@ -284,7 +319,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
     /* ── Polling refresh ── */
     async function refreshClientNotifications(showNewToast = false) {
       try {
-        const res  = await fetch('../api/notifications_api.php', { cache: 'no-store' });
+        const res  = await fetch('../api/notifications_api.php?t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
         if (!data.success || !Array.isArray(data.notifications)) return;
 
@@ -294,13 +329,23 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
           msg:        n.message || n.msg,
           time:       n.time,
           created_at: n.created_at || null,
-          read:       !!n.is_read,
+          read:       Number(n.is_read) === 1,
           icon:       n.icon || 'house_cleaner'
         }));
 
         const beforeIds = getStoredClientNotifIds();
         const nextIds   = next.map(n => String(n.id));
         const newItems  = next.filter(n => !beforeIds.includes(String(n.id)));
+
+        // Preserve optimistic read states for in-flight clicks
+        const readIdsInCurrent = new Set(
+          (window.HE.notifications || []).filter(n => n.read).map(n => Number(n.id))
+        );
+        next.forEach(n => {
+          if (readIdsInCurrent.has(n.id)) {
+            n.read = true;
+          }
+        });
 
         window.HE.notifications = next;
         renderNotifs();
@@ -314,7 +359,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
     /* ── Boot ── */
     renderNotifs();
-    setStoredClientNotifIds(window.HE.notifications.map(n => String(n.id)));
+    setStoredClientNotifIds((window.HE.notifications || []).map(n => String(n.id)));
     refreshClientNotifications(false);
     setInterval(() => refreshClientNotifications(true), 8000);
   </script>
