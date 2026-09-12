@@ -142,12 +142,17 @@ if ($method === 'GET' && $action === 'check_review') {
         echo json_encode(['success' => false, 'reviewed' => false]);
         exit;
     }
-    $rev = $conn->prepare("SELECT id FROM provider_reviews WHERE booking_id = ? LIMIT 1");
+    $rev = $conn->prepare("SELECT id, rating, comment FROM provider_reviews WHERE booking_id = ? LIMIT 1");
     $rev->bind_param("i", $booking_id);
     $rev->execute();
-    $exists = (bool) $rev->get_result()->fetch_assoc();
+    $revRow = $rev->get_result()->fetch_assoc();
     $rev->close();
-    echo json_encode(['success' => true, 'reviewed' => $exists]);
+    echo json_encode([
+        'success' => true,
+        'reviewed' => (bool) $revRow,
+        'rating' => $revRow ? (int) ($revRow['rating'] ?? 0) : 0,
+        'comment' => $revRow ? (string) ($revRow['comment'] ?? '') : ''
+    ]);
     exit;
 }
 

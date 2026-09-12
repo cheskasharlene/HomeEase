@@ -251,14 +251,11 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         const hasReviewed = parseInt(b.has_reviewed || 0) > 0;
         const leaveReviewHint = rawStatus === 'completed'
           ? (hasReviewed
-              ? `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              ? `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px; display:flex; align-items:center; gap:10px;">
                   <div style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#166534; background:#F0FDF4; padding:6px 12px; border-radius:10px;">
                     <i class="bi bi-patch-check-fill" style="color:#16A34A;"></i>
                     <span>Reviewed ${b.review_rating ? '★ ' + b.review_rating : ''}</span>
                   </div>
-                  <button class="btn-book" style="height:34px;font-size:11px;padding:0 14px;border-radius:10px;background:var(--bg-input);color:var(--td);border:1px solid var(--border-col);box-shadow:none;font-family:'Nunito',sans-serif;font-weight:700;width:auto;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}', ${parseInt(b.review_rating || 0)}, '${(b.review_comment || '').replace(/'/g, "\\'").replace(/\r?\n/g, ' ')}')">  
-                    <i class="bi bi-pencil-square"></i> Edit Review
-                  </button>
                 </div>`
               : `<div style="margin-top:12px; border-top: 1px dashed var(--border-col); padding-top: 12px;">
                   <button class="btn-book" style="height:40px;font-size:12px;width:100%;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FEF3C7);color:#D97706;border:1.5px solid #FDE68A;box-shadow:none;font-family:'Nunito',sans-serif;font-weight:800;" onclick="event.stopPropagation(); openReviewModal(${b.id}, ${b.provider_id || 0}, '${providerName.replace(/'/g, "\\'")}')">  

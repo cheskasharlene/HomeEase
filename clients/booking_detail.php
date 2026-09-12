@@ -372,8 +372,15 @@ if (empty($_SESSION['user_id'])) {
         // Show Rate & Review section only on completed bookings
         if (statusKey === 'done' && hasProvider) {
           document.getElementById('reviewSection').classList.remove('ab-hide');
-          // Check if already reviewed
-          checkExistingReview(_bookingId);
+          // Check if already reviewed from booking details
+          const hasReviewed = b.has_reviewed === true || parseInt(b.has_reviewed || 0) > 0;
+          if (hasReviewed) {
+            _cachedReviewRating = Number(b.review_rating || 0);
+            _cachedReviewComment = b.review_comment || '';
+            showAlreadyReviewed(_cachedReviewRating, _cachedReviewComment);
+          } else {
+            checkExistingReview(_bookingId);
+          }
         }
       } catch (e) { showEmptyState(); }
     }
@@ -383,7 +390,11 @@ if (empty($_SESSION['user_id'])) {
       try {
         const res  = await fetch('../api/reviews_api.php?action=check_review&booking_id=' + encodeURIComponent(bookingId), { cache: 'no-store' });
         const data = await res.json();
-        if (data.reviewed) showAlreadyReviewed(_cachedReviewRating || 0, _cachedReviewComment || '');
+        if (data.reviewed) {
+          const rating = Number(data.rating || _cachedReviewRating || 0);
+          const comment = data.comment || _cachedReviewComment || '';
+          showAlreadyReviewed(rating, comment);
+        }
       } catch (e) { /* non-critical */ }
     }
 
@@ -393,11 +404,9 @@ if (empty($_SESSION['user_id'])) {
     function showAlreadyReviewed(existingRating = 0, existingComment = '') {
       _cachedReviewRating = existingRating;
       _cachedReviewComment = existingComment;
+      const starText = existingRating > 0 ? ` (${existingRating} ★)` : '';
       document.getElementById('reviewBtnArea').innerHTML =
-        `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;">
-          <div class="rr-done-badge" style="margin:0;"><i class="bi bi-patch-check-fill"></i> You reviewed this booking ${existingRating ? '(' + existingRating + ' ★)' : ''}</div>
-          <button type="button" onclick="openReviewSheet(${existingRating}, '${(existingComment || '').replace(/'/g, "\\'")}')" style="background:var(--card,#fff);border:1.5px solid var(--border,#e5e7eb);padding:9px 14px;border-radius:12px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:var(--td,#1a1a2e);cursor:pointer;display:inline-flex;align-items:center;gap:6px;"><i class="bi bi-pencil-square"></i> Edit</button>
-        </div>`;
+        `<div class="rr-done-badge" style="margin:0;"><i class="bi bi-patch-check-fill"></i> You reviewed this booking${starText}</div>`;
     }
 
     // ── Review Sheet ───────────────────────────────────────────────────────
@@ -478,7 +487,7 @@ if (empty($_SESSION['user_id'])) {
 
         if (data.success) {
           closeReviewSheet();
-          showAlreadyReviewed(); // swap button to done-badge
+          showAlreadyReviewed(_selectedStar, comment); // swap button to done-badge with submitted rating
           showToast('Thank you for your review! ⭐', 'success');
         } else {
           errEl.textContent = data.message || 'Could not submit. Try again.';
