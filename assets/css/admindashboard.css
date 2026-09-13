@@ -1,6 +1,6 @@
-/* ── Admin Dashboard Styles ── */
 
-    /* ── Header ── */
+
+    
     .a-hdr {
       display: flex;
       align-items: center;
@@ -49,7 +49,7 @@
     }
     .hdr-btn:hover { background: var(--teal-bg); color: var(--teal); }
 
-    /* ── Stat cards ── */
+    
     .stat-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -127,7 +127,7 @@
       margin-top: 1px;
     }
 
-    /* ── Quick actions ── */
+    
     .quick-actions {
       display: flex;
       gap: 8px;
@@ -168,7 +168,7 @@
       font-family: 'Nunito', sans-serif;
     }
 
-    /* ── Chart card ── */
+    
     .chart-card {
       background: var(--bg-card);
       border-radius: 18px;
@@ -178,7 +178,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.04);
     }
 
-    /* ── Section header ── */
+    
     .sec-hdr {
       display: flex;
       align-items: center;
@@ -193,7 +193,7 @@
       color: var(--txt-primary);
     }
 
-    /* ── Card ── */
+    
     .card {
       background: var(--bg-card);
       border-radius: 18px;
@@ -202,7 +202,7 @@
       box-shadow: 0 2px 8px rgba(0,0,0,.04);
     }
 
-    /* ── Donut chart ── */
+    
     .donut-wrap {
       display: flex;
       align-items: center;
@@ -246,7 +246,7 @@
       box-shadow: 0 1px 3px rgba(0,0,0,.1);
     }
 
-    /* ── Chart Legend Enhancement ── */
+    
     .chartjs-legend {
       padding-top: 16px !important;
       margin-top: 16px !important;
@@ -274,7 +274,7 @@
       margin-right: 2px !important;
     }
 
-    /* ── Booking card ── */
+    
     .bk-card {
       background: var(--bg-card);
       border-radius: 16px;
@@ -293,7 +293,7 @@
       color: var(--teal);
     }
 
-    /* ── List items ── */
+    
     .list-item {
       display: flex;
       align-items: center;
@@ -345,7 +345,7 @@
       flex-shrink: 0;
     }
 
-    /* ── Empty state ── */
+    
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -359,7 +359,7 @@
     .empty-state i { font-size: 32px; }
     .empty-state p { font-size: 13px; font-weight: 600; margin: 0; }
 
-    /* ── Sheet overlay ── */
+    
     .sheet-ol {
       position: absolute;
       inset: 0;
@@ -429,14 +429,14 @@
     }
     .sh-close:hover { background: #fee2e2; color: #dc2626; }
 
-    /* ── Form group row ── */
+    
     .fg-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
 
-    /* ── Modal buttons ── */
+    
     .modal-btns {
       display: flex;
       flex-direction: column;
@@ -474,7 +474,7 @@
     }
     .btn-outline:hover { border-color: var(--teal); color: var(--teal); }
 
-    /* ── Search bar ── */
+    
     .search-bar {
       display: flex;
       align-items: center;
@@ -498,7 +498,7 @@
     }
     .search-bar input::placeholder { color: var(--txt-muted); }
 
-    /* ── Action buttons ── */
+    
     .act-btns { display: flex; gap: 5px; }
 
     .act-btn {
@@ -520,7 +520,7 @@
     .act-btn.del  { background: #fef2f2; color: #dc2626; }
     .act-btn.del:hover  { background: #fee2e2; }
 
-    /* ── Detail rows ── */
+    
     .detail-row {
       display: flex;
       align-items: center;
@@ -543,7 +543,7 @@
       text-align: right;
     }
 
-    /* ── Toast ── */
+    
     #toastBox {
       position: absolute;
       top: 16px;
@@ -592,7 +592,7 @@
 
     @keyframes w-spin { to { transform: rotate(360deg); } }
 
-    /* ── Loading splash ── */
+    
     #ml {
       position: absolute;
       inset: 0;
@@ -633,7 +633,7 @@
       to   { opacity: 1; transform: scale(1); }
     }
 
-/* ── Extra styles not in admindashboard.css ── */
+
     .screen {
       display: none;
       flex-direction: column;
@@ -858,7 +858,7 @@
       background: var(--teal-bg);
     }
 
-    /* Status filter tabs */
+    
     .status-tabs {
       display: flex;
       gap: 6px;
@@ -890,7 +890,7 @@
       color: #fff;
     }
 
-    /* User avatar */
+    
     .user-av {
       width: 42px;
       height: 42px;
@@ -905,7 +905,7 @@
       flex-shrink: 0;
     }
 
-    /* Revenue mini bars */
+    
     .rev-bar-wrap {
       height: 64px;
       display: flex;
@@ -937,7 +937,7 @@
       font-weight: 700;
     }
 
-    /* Donut chart */
+    
     .donut-wrap svg {
       transform: rotate(-90deg);
     }
@@ -967,4 +967,4 @@
       border-color: var(--teal);
       color: #fff;
     }
-
+

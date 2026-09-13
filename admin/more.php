@@ -60,5 +60,5 @@ include __DIR__ . '/includes/sidebar.php';
 </main>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <script>
-// ... JS for more page (copy from admindashboard.js)
+
 </script>

@@ -25,14 +25,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <!-- Leaflet Map -->
+  
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="../assets/js/location_helper.js"></script>
   <link rel="stylesheet" href="../assets/css/main.css">
   <link rel="stylesheet" href="../assets/css/waiting_for_provider.css">
   <style>
-    /* ===== MAP STYLE PICKER ===== */
+    
     .wfp-layers-btn {
       position: absolute;
       bottom: calc(var(--sheet-h, 260px) + 70px);
@@ -152,7 +152,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       display: block;
     }
 
-    /* Fallback color blocks for thumbnails */
+    
     .thumb-standard {
       background: linear-gradient(135deg, #e8f4e8, #b8d4b8, #88c088, #98b8e0, #d4e8f0);
     }
@@ -169,7 +169,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       background: linear-gradient(135deg, #fafafa, #f0f0f0, #e8e8e8, #f5f5f5, #ffffff);
     }
 
-    /* Pseudo-map lines on thumbs */
+    
     .wfp-style-thumb::after {
       content: '';
       position: absolute;
@@ -219,7 +219,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       display: flex;
     }
 
-    /* ===== PROVIDER MARKER PULSE (Grab/Angkas style) ===== */
+    
     @keyframes provPulse {
       0% {
         transform: scale(0.8);
@@ -237,7 +237,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       }
     }
 
-    /* Customer marker — home icon with subtle glow */
+    
     .wfp-marker-customer-home {
       width: 40px;
       height: 40px;
@@ -251,7 +251,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       font-size: 20px;
     }
 
-    /* Customer marker — pulsing home circle */
+    
     .wfp-marker-customer-home {
       width: 44px;
       height: 44px;
@@ -289,7 +289,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 <body>
   <div class="wfp-shell">
 
-    <!-- Top Bar -->
+    
     <div class="wfp-topbar">
       <button class="wfp-topbar-btn" onclick="goBack()" aria-label="Back">
         <i class="bi bi-arrow-left"></i>
@@ -311,20 +311,20 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       </div>
     </div>
 
-    <!-- Map -->
+    
     <div id="wfpMap"></div>
 
-    <!-- Recenter button -->
+    
     <button class="wfp-recenter" id="btnRecenter" onclick="recenterMap()" aria-label="Recenter">
       <i class="bi bi-crosshair2"></i>
     </button>
 
-    <!-- Map Layers button -->
+    
     <button class="wfp-layers-btn" id="btnLayers" onclick="openStylePicker()" aria-label="Map Style">
       <i class="bi bi-layers-fill"></i>
     </button>
 
-    <!-- Style Picker Overlay -->
+    
     <div class="wfp-style-overlay" id="styleOverlay" onclick="closeStylePicker(event)">
       <div class="wfp-style-drawer" onclick="event.stopPropagation()">
         <div class="wfp-style-handle"></div>
@@ -364,15 +364,15 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       </div>
     </div>
 
-    <!-- Bottom Sheet -->
+    
     <div class="wfp-sheet expanded" id="wfpSheet">
-      <!-- Draggable handle — tap to collapse/expand -->
+      
       <div class="wfp-sheet-handle" id="sheetHandle" onclick="toggleSheet()">
         <div class="wfp-sheet-handle-pill"></div>
       </div>
       <div class="wfp-sheet-body" id="sheetBody">
 
-        <!-- Status Banner -->
+        
         <div class="wfp-status-banner" id="statusBanner">
           <div class="wfp-search-ring" id="statusSpinner"></div>
           <div class="wfp-status-text" id="statusText">
@@ -380,7 +380,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <!-- Provider Card (hidden until accepted) -->
+        
         <div class="wfp-provider-card" id="providerCard" style="display:none;">
           <div class="wfp-prov-av" id="provAvatar">?</div>
           <div class="wfp-prov-info">
@@ -395,7 +395,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <!-- Tips while waiting -->
+        
         <div class="wfp-tips" id="tipsSection">
           <div class="wfp-tips-title">While you wait 👀</div>
           <div class="wfp-tips-scroll">
@@ -418,14 +418,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           </div>
         </div>
 
-        <!-- Cancel button (only when pending) -->
+        
         <div class="wfp-cancel-wrap" id="cancelWrap">
           <button class="wfp-cancel-btn" id="btnCancel" onclick="cancelBooking()">
             <i class="bi bi-x-circle-fill"></i> Cancel Booking
           </button>
         </div>
 
-        <!-- Chat Button (shown when accepted) -->
+        
         <div id="chatBtnWrap" style="display:none;padding:0 16px 8px;">
           <button onclick="openChat()"
             style="width:100%;height:46px;border-radius:13px;background:linear-gradient(135deg,#1A1A2E,#2D2D4E);color:#fff;border:none;cursor:pointer;font-size:13px;font-weight:800;font-family:'Poppins',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -436,7 +436,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
       </div>
 
-      <!-- Price Bar -->
+      
       <div class="wfp-price-bar">
         <div class="wfp-price-svc">
           <div class="wfp-price-svc-icon" id="svcIcon">🏠</div>
@@ -449,7 +449,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       </div>
     </div>
 
-    <!-- Chat Drawer (inside shell to stay in mobile frame) -->
+    
     <div id="chatOverlay"
       style="position:absolute;inset:0;z-index:800;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s"
       onclick="closeChat(event)">
@@ -500,7 +500,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         </div>
       </div>
     </div>
-  </div><!-- /.wfp-shell -->
+  </div>
 
   <script src="../assets/js/app.js"></script>
   <script>
@@ -845,7 +845,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         className: '',
         html: `
           <div style="position:relative;width:44px;height:44px;">
-            <!-- Outer pulse ring -->
+            
             <div style="
               position:absolute;inset:-8px;
               border-radius:50%;
@@ -853,7 +853,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
               opacity:0.18;
               animation:provPulse 1.6s ease-out infinite;
             "></div>
-            <!-- Mid ring -->
+            
             <div style="
               position:absolute;inset:-2px;
               border-radius:50%;
@@ -861,7 +861,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
               opacity:0.5;
               animation:provPulse 1.6s ease-out infinite 0.3s;
             "></div>
-            <!-- Core dot -->
+            
             <div style="
               width:44px;height:44px;
               border-radius:50%;
@@ -871,7 +871,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
               display:flex;align-items:center;justify-content:center;
               font-size:20px;
             ">${emoji}</div>
-            <!-- Label -->
+            
             <div style="
               position:absolute;top:48px;left:50%;transform:translateX(-50%);
               background:${color};color:#fff;
@@ -1565,7 +1565,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     document.addEventListener('DOMContentLoaded', boot);
   </script>
 
-  <!-- Report Modal Overlay -->
+  
   <div class="wfp-confirm-overlay" id="reportModalOverlay" aria-hidden="true" onclick="closeReportModal(event)" style="z-index: 1300;">
     <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle" onclick="event.stopPropagation()" style="max-height: 90vh; overflow-y: auto;">
       <div class="wfp-confirm-head" style="margin-bottom: 20px;">
@@ -1628,7 +1628,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     </div>
   </div>
 
-  <!-- Report Success Modal Overlay -->
+  
   <div class="wfp-confirm-overlay" id="reportSuccessOverlay" aria-hidden="true" onclick="closeReportSuccessModal(event)" style="z-index: 1350;">
     <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportSuccessTitle" onclick="event.stopPropagation()">
       <div class="wfp-confirm-head" style="margin-bottom: 16px; flex-direction: column; align-items: center; text-align: center; gap: 12px;">

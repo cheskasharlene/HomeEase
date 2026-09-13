@@ -49,7 +49,7 @@ if ($action === 'pros') {
     exit;
 }
 
-// ── LIST (for workers.php full listing) ───────────────────────────
+
 if ($action === 'list') {
 
     $search = trim($_GET['search'] ?? '');
@@ -156,7 +156,7 @@ if ($action === 'profile') {
         exit;
     }
 
-    // Get recent reviews
+    
     $stmt = $conn->prepare("SELECT r.rating, r.comment, r.created_at, u.name AS user_name FROM provider_reviews r LEFT JOIN users u ON r.user_id = u.id WHERE r.provider_id = ? ORDER BY r.created_at DESC LIMIT 10");
     $stmt->bind_param("i", $id);
     $stmt->execute();

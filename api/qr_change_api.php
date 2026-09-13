@@ -1,19 +1,19 @@
 <?php
-/**
- * QR Change Request API
- * Handles GCash/Bank Transfer QR code change requests.
- *
- * Provider actions (require provider_id session):
- *   GET  ?action=my_requests           — list own requests
- *   GET  ?action=current_qr            — get current active QR paths
- *   POST ?action=submit                — submit a new request (with file upload)
- *
- * Admin actions (require admin session):
- *   GET  ?action=list                  — list all requests
- *   GET  ?action=pending_count         — count of pending requests
- *   POST ?action=approve               — approve a request
- *   POST ?action=reject                — reject a request
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ob_start();
 ini_set('display_errors', 0);
@@ -31,10 +31,10 @@ require_once __DIR__ . '/db.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
 
-// ── Ensure table exists ─────────────────────────────────────────────────────
+
 ensureQrChangeRequestsTable($conn);
 
-// ── Route: Admin endpoints ──────────────────────────────────────────────────
+
 $isAdmin = !empty($_SESSION['admin_id']) || (
     !empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'admin'
 );
@@ -84,7 +84,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         }
         $adminId = (int)($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
-        // Fetch the request
+        
         $stmt = $conn->prepare("SELECT * FROM qr_change_requests WHERE id = ? LIMIT 1");
         $stmt->bind_param('i', $id);
         $stmt->execute();
@@ -107,7 +107,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
 
         $conn->begin_transaction();
         try {
-            // Update request status
+            
             $upd = $conn->prepare(
                 "UPDATE qr_change_requests SET status='approved', admin_id=?, reviewed_at=NOW() WHERE id=?"
             );
@@ -115,24 +115,24 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
             $upd->execute();
             $upd->close();
 
-            // Determine QR type from file path or use a general approach:
-            // Replace both qr_gcash and update provider_documents for gcash_qr and bank_qr
-            // We store new QR path to both fields so the provider's payment receives the new QR.
-            // The provider submitted one QR image; apply it based on what was their current active channel.
-            // Strategy: upsert provider_documents for gcash_qr type (primary channel).
-            // Also update sp.qr_gcash column as fallback.
+            
+            
+            
+            
+            
+            
             $conn->query(
                 "UPDATE service_providers SET qr_gcash = '" . $conn->real_escape_string($newQrPath) . "' WHERE provider_id = $providerId"
             );
 
-            // Upsert into provider_documents
+            
             $conn->query("INSERT INTO provider_documents (provider_id, document_type, file_path, verified_status, uploaded_at)
                 VALUES ($providerId, 'gcash_qr', '" . $conn->real_escape_string($newQrPath) . "', 'approved', NOW())
                 ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), verified_status = 'approved', uploaded_at = NOW()");
 
 
 
-            // Audit log to admin_notifications (ensure table)
+            
             $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 type VARCHAR(50) NOT NULL DEFAULT 'general',
@@ -210,7 +210,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
     }
 }
 
-// ── Route: Provider endpoints ───────────────────────────────────────────────
+
 if (empty($_SESSION['provider_id'])) {
     ob_end_clean();
     http_response_code(401);
@@ -220,7 +220,7 @@ if (empty($_SESSION['provider_id'])) {
 
 $providerId = (int)$_SESSION['provider_id'];
 
-// GET current QR info
+
 if ($method === 'GET' && $action === 'current_qr') {
     $stmt = $conn->prepare(
         "SELECT sp.qr_gcash, sp.qr_bank,
@@ -251,7 +251,7 @@ if ($method === 'GET' && $action === 'current_qr') {
     exit;
 }
 
-// GET provider's own request history
+
 if ($method === 'GET' && $action === 'my_requests') {
     $stmt = $conn->prepare(
         "SELECT id, reason, current_qr_path, new_qr_path, status, admin_remarks, submitted_at, reviewed_at
@@ -270,7 +270,7 @@ if ($method === 'GET' && $action === 'my_requests') {
     exit;
 }
 
-// POST submit a new request
+
 if ($method === 'POST' && $action === 'submit') {
     $reason = trim($_POST['reason'] ?? '');
 
@@ -280,7 +280,7 @@ if ($method === 'POST' && $action === 'submit') {
         exit;
     }
 
-    // Check no existing pending request
+    
     $chk = $conn->prepare("SELECT id FROM qr_change_requests WHERE provider_id = ? AND status = 'pending' LIMIT 1");
     $chk->bind_param('i', $providerId);
     $chk->execute();
@@ -293,7 +293,7 @@ if ($method === 'POST' && $action === 'submit') {
         exit;
     }
 
-    // Handle file upload
+    
     if (!isset($_FILES['new_qr']) || $_FILES['new_qr']['error'] !== UPLOAD_ERR_OK) {
         ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'New QR code image is required.']);
@@ -301,7 +301,7 @@ if ($method === 'POST' && $action === 'submit') {
     }
 
     $file     = $_FILES['new_qr'];
-    $maxBytes = 5 * 1024 * 1024; // 5 MB
+    $maxBytes = 5 * 1024 * 1024; 
     if ($file['size'] > $maxBytes) {
         ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'File size must not exceed 5 MB.']);
@@ -316,7 +316,7 @@ if ($method === 'POST' && $action === 'submit') {
         exit;
     }
 
-    // Validate MIME type as additional check
+    
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime  = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
@@ -343,10 +343,10 @@ if ($method === 'POST' && $action === 'submit') {
 
     $newQrStorePath = 'uploads/qr_changes/' . $newFileName;
 
-    // Get current QR path for reference
+    
     $r = $conn->query("SELECT qr_gcash FROM service_providers WHERE provider_id = $providerId LIMIT 1");
     $spRow = $r ? $r->fetch_assoc() : [];
-    // Also check provider_documents
+    
     $docRow = null;
     $dstmt  = $conn->prepare("SELECT file_path FROM provider_documents WHERE provider_id=? AND document_type='gcash_qr' LIMIT 1");
     $dstmt->bind_param('i', $providerId);
@@ -355,7 +355,7 @@ if ($method === 'POST' && $action === 'submit') {
     $dstmt->close();
     $currentQr = $docRow['file_path'] ?? $spRow['qr_gcash'] ?? null;
 
-    // Insert request
+    
     $ins = $conn->prepare(
         "INSERT INTO qr_change_requests (provider_id, reason, current_qr_path, new_qr_path, status, submitted_at)
          VALUES (?, ?, ?, ?, 'pending', NOW())"
@@ -367,7 +367,7 @@ if ($method === 'POST' && $action === 'submit') {
 
 
 
-    // Notify admin
+    
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         type VARCHAR(50) NOT NULL DEFAULT 'general',
@@ -397,12 +397,12 @@ if ($method === 'POST' && $action === 'submit') {
     exit;
 }
 
-// Fallback
+
 ob_end_clean();
 http_response_code(400);
 echo json_encode(['success' => false, 'message' => 'Invalid action.']);
 
-// ── Helper functions ────────────────────────────────────────────────────────
+
 
 function ensureQrChangeRequestsTable($conn)
 {

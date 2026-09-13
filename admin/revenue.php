@@ -15,7 +15,7 @@ include __DIR__ . '/includes/sidebar.php';
   </div>
 
   <div class="a-scroll" id="revenue-scroll" style="padding:0 0 90px; overflow-x:hidden;">
-    <!-- Metric summary cards -->
+    
     <div class="stat-grid" style="margin-bottom:14px;">
       <div class="stat-card">
         <div class="stat-ic amber"><i class="bi bi-piggy-bank-fill"></i></div>
@@ -47,7 +47,7 @@ include __DIR__ . '/includes/sidebar.php';
       </div>
     </div>
 
-    <!-- Pending Remittance -->
+    
     <div style="padding:0 18px; margin-bottom:14px;">
       <div class="stat-card" style="display:flex; justify-content:space-between; align-items:center;">
         <div style="display:flex; align-items:center; gap:10px;">
@@ -63,7 +63,7 @@ include __DIR__ . '/includes/sidebar.php';
       </div>
     </div>
 
-    <!-- Chart -->
+    
     <div class="chart-card">
       <div class="sec-hdr" style="margin-bottom: 12px;">
         <div class="sec-ttl" style="display:flex; flex-direction:column; gap:2px;">
@@ -83,7 +83,7 @@ include __DIR__ . '/includes/sidebar.php';
     </div>
 
 
-    <!-- Revenue Performance -->
+    
     <div class="sec-pad">
       <div class="sec-hdr">
         <div class="sec-ttl">Revenue Performance</div>
@@ -109,7 +109,7 @@ include __DIR__ . '/includes/sidebar.php';
       </div>
     </div>
 
-    <!-- Revenue Comparison -->
+    
     <div class="sec-pad" style="margin-top:2px;">
       <div class="sec-hdr">
         <div class="sec-ttl">Revenue Comparison</div>
@@ -171,12 +171,12 @@ body.dark .stat-ic.red { background:#4c0519; color:#f43f5e; }
 <?php include __DIR__ . '/includes/footer.php'; ?>
 
 <script>
-// JavaScript code for desktop-view page
+
 let revenueChartInstance = null;
 
 async function loadRevenue() {
   try {
-    // 1. Load summary metrics
+    
     const summaryRes = await fetch('../api/admin_api.php?section=revenue&action=summary');
     const summaryData = await summaryRes.json();
     if (summaryData.success) {
@@ -187,7 +187,7 @@ async function loadRevenue() {
       document.getElementById('pending-remittance-val').textContent = formatMetric(summaryData.pending_remittance, false);
 
 
-      // Populate Revenue Performance dynamically
+      
       const completedCount = parseInt(summaryData.completed_bookings) || 0;
       const avgRevenue = parseFloat(summaryData.avg_revenue_per_booking) || 0.00;
       const growthPct = parseFloat(summaryData.growth_pct) || 0.0;
@@ -214,7 +214,7 @@ async function loadRevenue() {
         }
       }
 
-      // Populate Revenue Comparison dynamically
+      
       const thisMonthVal = parseFloat(summaryData.month_revenue) || 0.00;
       const lastMonthVal = parseFloat(summaryData.last_month_revenue) || 0.00;
 
@@ -270,7 +270,7 @@ async function loadRevenue() {
       }
     }
 
-    // 2. Load chart data
+    
     const activeBtn = document.querySelector('.rev-filter-btn.active');
     const activeFilter = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : 'daily';
     await fetchAndDrawChart(activeFilter);

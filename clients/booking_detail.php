@@ -30,7 +30,7 @@ if (empty($_SESSION['user_id'])) {
     }
     @media (max-width: 420px) { .booking-detail-screen .ab-scroll { padding-bottom: 148px; } }
 
-    /* ── Rate & Review Button ── */
+    
     .rr-btn-wrap { padding: 0 20px 16px; }
     .rr-btn {
       width: 100%; padding: 14px; border: none; border-radius: 16px;
@@ -54,7 +54,7 @@ if (empty($_SESSION['user_id'])) {
     }
     .rr-done-badge i { font-size: 15px; }
 
-    /* ── Review Bottom Sheet ── */
+    
     .rr-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.48);
       z-index: 200; display: none; align-items: flex-end; justify-content: center;
@@ -79,7 +79,7 @@ if (empty($_SESSION['user_id'])) {
       font-family: 'Nunito',sans-serif; font-size: 13px; color: var(--tm,#6b7280);
       text-align: center; padding: 0 24px 18px;
     }
-    /* Stars */
+    
     .rr-stars {
       display: flex; justify-content: center; gap: 10px; padding: 0 24px 6px;
     }
@@ -94,7 +94,7 @@ if (empty($_SESSION['user_id'])) {
       font-family: 'Nunito',sans-serif; font-size: 12px; font-weight: 700;
       color: #F5A623; text-align: center; height: 18px; margin-bottom: 4px;
     }
-    /* Comment */
+    
     .rr-textarea-wrap { padding: 10px 24px 0; }
     .rr-textarea {
       width: 100%; box-sizing: border-box;
@@ -105,7 +105,7 @@ if (empty($_SESSION['user_id'])) {
       transition: border-color .2s ease;
     }
     .rr-textarea:focus { border-color: #F5A623; }
-    /* Actions */
+    
     .rr-actions { padding: 16px 24px 0; display: flex; gap: 10px; }
     .rr-cancel {
       flex: 1; padding: 13px; border: 1.5px solid var(--border,#e5e7eb);
@@ -213,7 +213,7 @@ if (empty($_SESSION['user_id'])) {
           <div class="bd-provider-note" id="providerNote">Provider details will appear once assigned.</div>
         </div>
 
-        <!-- Rate & Review section — shown only on completed bookings -->
+        
         <div class="rr-btn-wrap ab-hide" id="reviewSection">
           <div id="reviewBtnArea">
             <button class="rr-btn" id="openReviewBtn" onclick="openReviewSheet()">
@@ -245,7 +245,7 @@ if (empty($_SESSION['user_id'])) {
     </div>
   </div>
 
-  <!-- ── Review Bottom Sheet ── -->
+  
   <div class="rr-overlay" id="rrOverlay" onclick="handleOverlayClick(event)">
     <div class="rr-sheet" id="rrSheet">
       <div class="rr-handle"></div>
@@ -324,13 +324,13 @@ if (empty($_SESSION['user_id'])) {
       document.getElementById('emptyState').classList.remove('ab-hide');
     }
 
-    // ── State ──────────────────────────────────────────────────────────────
+    
     let _bookingId   = null;
     let _providerId  = null;
     let _selectedStar = 0;
     const starLabels = ['','Terrible 😟','Not Great 😕','Okay 😐','Good 😊','Excellent 🤩'];
 
-    // ── Load booking ───────────────────────────────────────────────────────
+    
     async function loadBookingDetail() {
       const params = new URLSearchParams(window.location.search);
       _bookingId = params.get('booking_id');
@@ -369,10 +369,10 @@ if (empty($_SESSION['user_id'])) {
         document.getElementById('providerRatingText').textContent = ratingText;
         document.getElementById('providerNote').style.display = hasProvider ? 'none' : 'block';
 
-        // Show Rate & Review section only on completed bookings
+        
         if (statusKey === 'done' && hasProvider) {
           document.getElementById('reviewSection').classList.remove('ab-hide');
-          // Check if already reviewed from booking details
+          
           const hasReviewed = b.has_reviewed === true || parseInt(b.has_reviewed || 0) > 0;
           if (hasReviewed) {
             _cachedReviewRating = Number(b.review_rating || 0);
@@ -385,7 +385,7 @@ if (empty($_SESSION['user_id'])) {
       } catch (e) { showEmptyState(); }
     }
 
-    // ── Check if already reviewed ──────────────────────────────────────────
+    
     async function checkExistingReview(bookingId) {
       try {
         const res  = await fetch('../api/reviews_api.php?action=check_review&booking_id=' + encodeURIComponent(bookingId), { cache: 'no-store' });
@@ -395,7 +395,7 @@ if (empty($_SESSION['user_id'])) {
           const comment = data.comment || _cachedReviewComment || '';
           showAlreadyReviewed(rating, comment);
         }
-      } catch (e) { /* non-critical */ }
+      } catch (e) {  }
     }
 
     let _cachedReviewRating = 0;
@@ -409,7 +409,7 @@ if (empty($_SESSION['user_id'])) {
         `<div class="rr-done-badge" style="margin:0;"><i class="bi bi-patch-check-fill"></i> You reviewed this booking${starText}</div>`;
     }
 
-    // ── Review Sheet ───────────────────────────────────────────────────────
+    
     function openReviewSheet(existingRating = 0, existingComment = '') {
       document.getElementById('rrErr').textContent = '';
       const isEditing = existingRating > 0;
@@ -456,7 +456,7 @@ if (empty($_SESSION['user_id'])) {
       document.getElementById('rrErr').textContent = '';
     }
 
-    // ── Submit ─────────────────────────────────────────────────────────────
+    
     async function submitReview() {
       const errEl  = document.getElementById('rrErr');
       const btn    = document.getElementById('rrSubmitBtn');
@@ -487,7 +487,7 @@ if (empty($_SESSION['user_id'])) {
 
         if (data.success) {
           closeReviewSheet();
-          showAlreadyReviewed(_selectedStar, comment); // swap button to done-badge with submitted rating
+          showAlreadyReviewed(_selectedStar, comment); 
           showToast('Thank you for your review! ⭐', 'success');
         } else {
           errEl.textContent = data.message || 'Could not submit. Try again.';
@@ -501,7 +501,7 @@ if (empty($_SESSION['user_id'])) {
       }
     }
 
-    // ── Toast ──────────────────────────────────────────────────────────────
+    
     function showToast(msg, type = 'success') {
       const old = document.getElementById('bdToast');
       if (old) old.remove();

@@ -1,19 +1,19 @@
 <?php
-/**
- * Payment System Test Suite
- * Run tests to verify payment system implementation
- * 
- * Usage: 
- *   CLI: php api/test_payment_system.php
- *   Web: http://localhost/HomeEase/api/test_payment_system.php?test=all
- */
+
+
+
+
+
+
+
+
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 require_once __DIR__ . '/db.php';
 
-// Color codes for CLI output
+
 class Colors {
     const RESET = "\033[0m";
     const GREEN = "\033[92m";
@@ -56,7 +56,7 @@ function section_header($title) {
     }
 }
 
-// ============= TESTS =============
+
 
 section_header("Database Connection Test");
 
@@ -67,18 +67,18 @@ if ($conn->connect_error) {
     log_test("Database Connection", true, "Connected to " . DB_NAME);
 }
 
-// ============= PAYMENTS TABLE TESTS =============
+
 
 section_header("Payments Table Tests");
 
 $result = ensurePaymentsTable($conn);
 log_test("Create/Verify Payments Table", $result);
 
-// Check table structure
+
 $tableCheck = $conn->query("SHOW TABLES LIKE 'payments'");
 log_test("Payments Table Exists", $tableCheck && $tableCheck->num_rows > 0);
 
-// Check columns
+
 $expectedColumns = [
     'id', 'booking_id', 'user_id', 'payment_method', 'payment_status',
     'payment_reference', 'amount', 'transaction_id', 'notes', 'created_at', 'updated_at'
@@ -103,7 +103,7 @@ if ($columnsPresent) {
     log_test("All Required Columns Present", true, count($expectedColumns) . " columns");
 }
 
-// ============= VALIDATION TESTS =============
+
 
 section_header("Payment Data Validation Tests");
 
@@ -127,19 +127,19 @@ foreach ($tests as $test) {
     log_test("Validation: {$label}", $passed, $validation['message']);
 }
 
-// ============= SAVE PAYMENT TESTS =============
+
 
 section_header("Payment Save/Retrieve Tests");
 
-// Create test booking first
+
 $testUserId = 999;
 $testBookingId = 9999;
 
-// Clean up test data first
+
 $conn->query("DELETE FROM payments WHERE user_id = {$testUserId}");
 $conn->query("DELETE FROM bookings WHERE id = {$testBookingId} AND user_id = {$testUserId}");
 
-// Try to insert test booking
+
 $bookingStmt = $conn->prepare("INSERT INTO bookings (id, user_id, service, date, address, price, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
 if ($bookingStmt) {
     $testDate = date('Y-m-d');
@@ -153,7 +153,7 @@ if ($bookingStmt) {
     if ($bookingStmt->execute()) {
         log_test("Create Test Booking", true, "Booking #{$testBookingId}");
         
-        // Test save payment
+        
         $saveResult = savePayment($conn, $testBookingId, $testUserId, 'gcash', '09123456789', 1500, 'pending');
         log_test("Save Payment", $saveResult['success'], $saveResult['message']);
         
@@ -161,7 +161,7 @@ if ($bookingStmt) {
             $paymentId = $saveResult['payment_id'];
             log_test("Transaction ID Generated", !empty($saveResult['transaction_id']), $saveResult['transaction_id']);
             
-            // Test retrieve payment
+            
             $payment = getPaymentByBooking($conn, $testUserId, $testBookingId);
             log_test("Retrieve Payment", $payment !== null);
             
@@ -179,7 +179,7 @@ if ($bookingStmt) {
     log_test("Create Test Booking", false, "Could not prepare statement");
 }
 
-// ============= USER ISOLATION TESTS =============
+
 
 section_header("User Data Isolation Tests");
 
@@ -188,11 +188,11 @@ $testUser2 = 1002;
 $testBooking1 = 10001;
 $testBooking2 = 10002;
 
-// Clean up
+
 $conn->query("DELETE FROM payments WHERE user_id IN ({$testUser1}, {$testUser2})");
 $conn->query("DELETE FROM bookings WHERE id IN ({$testBooking1}, {$testBooking2})");
 
-// Create bookings for different users
+
 $for1 = true;
 for ($i = 0; $i < 2; $i++) {
     $userId = $for1 ? $testUser1 : $testUser2;
@@ -208,12 +208,12 @@ for ($i = 0; $i < 2; $i++) {
         $stmt->execute();
         $stmt->close();
         
-        // Create payment for each user
+        
         $saveResult = savePayment($conn, $bookingId, $userId, 'cash', null, 1000, 'pending');
     }
 }
 
-// Test that User 1 can only see their own payment
+
 $user1Payments = $conn->prepare("SELECT COUNT(*) as count FROM payments WHERE user_id = ?");
 if ($user1Payments) {
     $uid = $testUser1;
@@ -226,11 +226,11 @@ if ($user1Payments) {
     log_test("User Isolation", $user1Count === 1, "User {$testUser1} sees {$user1Count} payment(s)");
 }
 
-// ============= API ENDPOINT TESTS =============
+
 
 section_header("API Endpoint Tests");
 
-// Simulate payment detail API
+
 if ($payment) {
     $detail = getPaymentByBooking($conn, $testUserId, $testBookingId);
     $isArray = is_array($detail);
@@ -238,7 +238,7 @@ if ($payment) {
     log_test("API: Get Payment Detail", $isArray && $hasExpectedFields);
 }
 
-// ============= SUMMARY =============
+
 
 section_header("Test Summary");
 
@@ -267,7 +267,7 @@ if ($isWeb) {
     }
 }
 
-// Clean up test data
+
 $conn->query("DELETE FROM payments WHERE user_id IN ({$testUserId}, {$testUser1}, {$testUser2})");
 $conn->query("DELETE FROM bookings WHERE id IN ({$testBookingId}, {$testBooking1}, {$testBooking2}) AND user_id IN ({$testUserId}, {$testUser1}, {$testUser2})");
 

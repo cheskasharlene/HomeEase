@@ -1,9 +1,9 @@
--- HomeEase schema normalization migration
--- Run: source migrations/20260530_normalize_core_schema.sql
+
+
 
 START TRANSACTION;
 
--- 1) Normalize payment methods
+
 CREATE TABLE IF NOT EXISTS payment_methods (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(32) NOT NULL UNIQUE,
@@ -30,7 +30,7 @@ JOIN payment_methods pm
 SET p.payment_method_id = pm.id
 WHERE p.payment_method_id IS NULL;
 
--- 2) Normalize bookings -> services and assigned provider
+
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS service_id INT NULL AFTER user_id;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS provider_id INT NULL AFTER service_id;
 ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_service_id (service_id);
@@ -42,7 +42,7 @@ JOIN services s
 SET b.service_id = s.id
 WHERE b.service_id IS NULL;
 
--- 3) Dynamic key-value booking details
+
 CREATE TABLE IF NOT EXISTS booking_details (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     booking_id INT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS booking_details (
     UNIQUE KEY uq_booking_field (booking_id, field_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 4) Allow multiple services per provider
+
 CREATE TABLE IF NOT EXISTS service_provider_services (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     provider_id INT NOT NULL,
@@ -71,7 +71,7 @@ FROM service_providers sp
 JOIN services s
     ON (LOWER(TRIM(s.name)) COLLATE utf8mb4_unicode_ci) = (LOWER(TRIM(COALESCE(sp.service_category, ''))) COLLATE utf8mb4_unicode_ci);
 
--- 5) Provider document store (normalized)
+
 CREATE TABLE IF NOT EXISTS provider_documents (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     provider_id INT NOT NULL,
@@ -129,7 +129,7 @@ FROM service_providers
 WHERE COALESCE(qr_bank, bank_qr) IS NOT NULL AND TRIM(COALESCE(qr_bank, bank_qr)) <> ''
 ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), uploaded_at = VALUES(uploaded_at);
 
--- 6) Booking status audit log
+
 CREATE TABLE IF NOT EXISTS booking_status_logs (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     booking_id INT NOT NULL,
@@ -150,7 +150,7 @@ WHERE NOT EXISTS (
     SELECT 1 FROM booking_status_logs l WHERE l.booking_id = b.id
 );
 
--- 7) Add foreign keys if missing
+
 SET @fk_exists := (
     SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
     WHERE CONSTRAINT_SCHEMA = DATABASE() AND TABLE_NAME = 'payments' AND CONSTRAINT_NAME = 'fk_payments_payment_method'

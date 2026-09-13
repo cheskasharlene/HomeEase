@@ -1,8 +1,8 @@
-/* ═══════════════════════════════════════════════
-   notifications.css  –  HomeEase Notification UI
-   ═══════════════════════════════════════════════ */
 
-/* ── Screen wrapper ── */
+
+
+
+
 #notifications {
   background: var(--bg-screen);
   justify-content: flex-start;
@@ -10,7 +10,7 @@
   flex-direction: column !important;
 }
 
-/* ── Scrollable area ── */
+
 .n-scroll {
   width: 100%;
   flex: 1;
@@ -21,7 +21,7 @@
 }
 .n-scroll::-webkit-scrollbar { display: none; }
 
-/* ── Header gradient banner ── */
+
 .n-hdr {
   width: 100%;
   padding: 48px 22px 24px;
@@ -95,10 +95,10 @@
 }
 .n-markall:active { transform: translateY(0); }
 
-/* ── Body ── */
+
 .n-body { padding: 16px 18px 4px; }
 
-/* ── Day group separator ── */
+
 .n-day-group { margin-bottom: 6px; }
 
 .n-day-lbl {
@@ -126,7 +126,7 @@
   border-radius: 1px;
 }
 
-/* ── Unread badge pill ── */
+
 .n-unread-pill {
   display: inline-flex;
   align-items: center;
@@ -144,7 +144,7 @@
   box-shadow: 0 2px 8px rgba(232,130,12,0.3);
 }
 
-/* ── Notification card matching Admin Side (.admin-notif-item) ── */
+
 .n-card {
   display: flex;
   align-items: flex-start;
@@ -160,7 +160,7 @@
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 
-  /* Entry animation */
+  
   animation: notifSlideIn 0.32s cubic-bezier(.34,1.2,.64,1) both;
 }
 
@@ -176,7 +176,7 @@
   transform: translateY(0);
 }
 
-/* Staggered animation delays for first 10 cards */
+
 .n-card:nth-child(1)  { animation-delay: 0.00s; }
 .n-card:nth-child(2)  { animation-delay: 0.04s; }
 .n-card:nth-child(3)  { animation-delay: 0.08s; }
@@ -188,7 +188,7 @@
 .n-card:nth-child(9)  { animation-delay: 0.22s; }
 .n-card:nth-child(10) { animation-delay: 0.23s; }
 
-/* ── Unread card styling with top-right indicator ── */
+
 .n-card.unread {
   background: rgba(245, 166, 35, 0.06);
   border-color: rgba(245, 166, 35, 0.28);
@@ -214,12 +214,12 @@
   transform: scale(0);
 }
 
-/* Ensure title doesn't overlap the top-right indicator */
+
 .n-card.unread .n-card-ttl {
   padding-right: 18px;
 }
 
-/* Mark-as-read ripple overlay */
+
 .n-card .n-read-ripple {
   position: absolute;
   inset: 0;
@@ -231,7 +231,7 @@
 }
 .n-card.reading .n-read-ripple { opacity: 1; }
 
-/* ── Unread notification number badge matching Admin Side (.notif-badge) ── */
+
 .notif-badge {
   position: static;
   min-width: 18px;
@@ -250,7 +250,7 @@
 }
 .notif-badge:empty, .notif-badge[data-count='0'] { display: none !important; }
 
-/* ── Icon container matching Admin Side (.admin-notif-ic) ── */
+
 .n-card-ic {
   width: 42px;
   height: 42px;
@@ -315,13 +315,13 @@
   color: #0891b2;
 }
 
-/* ── Notification body matching Admin Side (.admin-notif-body) ── */
+
 .n-card-body {
   flex: 1;
   min-width: 0;
 }
 
-/* Title matching Admin Side (.admin-notif-ttl) */
+
 .n-card-ttl {
   font-size: 13px;
   font-weight: 700;
@@ -331,7 +331,7 @@
   word-break: break-word;
 }
 
-/* Message matching Admin Side (.admin-notif-msg) */
+
 .n-card-msg {
   font-size: 12px;
   color: var(--tm);
@@ -339,7 +339,7 @@
   word-break: break-word;
 }
 
-/* Status tags matching Admin Side */
+
 .n-tag {
   margin-top: 6px;
   display: inline-flex;
@@ -354,7 +354,7 @@
 .n-tag.warning { background: #fef3c7; color: #d97706; }
 .n-tag.danger  { background: #fee2e2; color: #dc2626; }
 
-/* Time matching Admin Side (.admin-notif-time) */
+
 .n-card-time {
   font-size: 10px;
   color: var(--plight);
@@ -368,7 +368,7 @@
   font-size: 10.5px;
 }
 
-/* ── Dark mode ── */
+
 body.dark .n-card {
   background: var(--bg-card);
   border-color: var(--border-col);
@@ -440,7 +440,7 @@ body.dark .w-hdr {
   background: linear-gradient(135deg, #7A3800 0%, #A85A00 30%, #C8780A 60%, #8B6200 100%) !important;
 }
 
-/* ── Empty state ── */
+
 .empty {
   text-align: center;
   padding: 60px 20px 40px;
@@ -484,7 +484,7 @@ body.dark .empty-icon-wrap {
   background: linear-gradient(135deg, #3A2800, #5A3C00);
 }
 
-/* ── Toast ── */
+
 .he-toast {
   position: fixed;
   left: 50%;

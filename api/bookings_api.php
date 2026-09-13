@@ -1,5 +1,5 @@
 <?php
-ob_start(); // Buffer all output to prevent stray errors/warnings from corrupting JSON
+ob_start(); 
 ini_set('display_errors', 0);
 error_reporting(0);
 if (session_status() === PHP_SESSION_NONE) {
@@ -35,7 +35,7 @@ $uid = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-// Ensure services table is seeded with correct data
+
 _seedServices($conn);
 
 if ($method === 'GET' && $action === 'services') {
@@ -342,7 +342,7 @@ if ($method === 'POST' && $action === '') {
     $hours = 1;
     $is_realtime = (trim($_POST['realtime'] ?? '0') === '1');
 
-    // Real-time: override date/time to now
+    
     if ($is_realtime || $date === '') {
         $date = date('Y-m-d');
     }
@@ -355,7 +355,7 @@ if ($method === 'POST' && $action === '') {
         echo json_encode(['success' => false, 'message' => 'Service is required.']);
         exit;
     }
-    // Address is GPS-detected on the client; fall back gracefully if empty
+    
     if (!$address) {
         $address = 'GPS Location';
     }
@@ -377,7 +377,7 @@ if ($method === 'POST' && $action === '') {
         exit;
     }
 
-    // Validation for problem_description on repair services
+    
     if (in_array($service, ['Plumber', 'Carpenter', 'Appliance Technician'], true)) {
         $problemDesc = trim($_POST['problem_description'] ?? '');
         if ($problemDesc === '') {
@@ -490,7 +490,7 @@ if ($method === 'POST' && $action === '') {
 
         logBookingStatusChange($conn, $bid, null, 'pending', 'user', $uid, 'Booking created');
 
-        // Save GPS coordinates if provided (safely add columns if needed)
+        
         if ($customer_lat !== null && $customer_lng !== null) {
             _safeAddColumn($conn, 'bookings', 'customer_lat', 'DECIMAL(10,8) NULL');
             _safeAddColumn($conn, 'bookings', 'customer_lng', 'DECIMAL(11,8) NULL');
@@ -502,7 +502,7 @@ if ($method === 'POST' && $action === '') {
             }
         }
 
-        // Save dynamic booking form values to normalized key-value table.
+        
         $ignoreFields = [
             'service', 'date', 'time_slot', 'address', 'notes',
             'customer_name', 'customer_phone', 'customer_address',
@@ -524,18 +524,18 @@ if ($method === 'POST' && $action === '') {
             upsertBookingDetail($conn, $bid, (string) $fieldName, $fieldValue);
         }
 
-        // Save payment information
+        
         ensurePaymentsTable($conn);
         $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
         $paymentReference = null;
         $proofPath = null;
         
-        // Save payment with 'pending' status
+        
         $paymentStatus = 'pending';
         $paymentResult = savePayment($conn, $bid, $uid, $paymentMethod, $paymentReference, $price, $paymentStatus, $proofPath);
         
         if (!$paymentResult['success']) {
-            // Log the error but don't fail the booking - payment saving is secondary
+            
             error_log("Payment save error for booking $bid: " . $paymentResult['message']);
         }
 
@@ -543,7 +543,7 @@ if ($method === 'POST' && $action === '') {
 
         $providers = [];
         {
-                        // Broadcast to ALL providers matching the service (no cap) who are currently online.
+                        
                         $providerStmt = $conn->prepare(
                                 "SELECT DISTINCT sp.provider_id AS id,
                                         sp.full_name AS name,
@@ -562,8 +562,8 @@ if ($method === 'POST' && $action === '') {
                 $providerStmt->close();
             }
 
-            // NO FALLBACK - if no providers match the service category, don't send requests
-            // This ensures requests only go to providers who offer that specific service
+            
+            
         }
 
         if (!empty($providers)) {
@@ -665,7 +665,7 @@ if ($method === 'POST' && $action === 'cancel') {
     if ($ok) {
         logBookingStatusChange($conn, $id, $oldStatus, 'cancelled', 'user', $uid, 'Cancelled by client');
 
-        // Close any associated provider requests
+        
         $reqStmt = $conn->prepare("UPDATE booking_requests SET status='closed' WHERE booking_id = ? AND status IN ('pending', 'accepted')");
         if ($reqStmt) {
             $reqStmt->bind_param("i", $id);
@@ -681,10 +681,10 @@ if ($method === 'POST' && $action === 'cancel') {
 ob_end_clean();
 echo json_encode(['success' => false, 'message' => 'Unknown request.']);
 
-/**
- * Safely add a column to a table only if it doesn't already exist.
- * Prevents fatal mysqli_sql_exception: Duplicate column name.
- */
+
+
+
+
 function _safeAddColumn(mysqli $conn, string $table, string $column, string $definition): void
 {
     $res = $conn->query("SHOW COLUMNS FROM `{$table}` LIKE '{$column}'");
@@ -695,7 +695,7 @@ function _safeAddColumn(mysqli $conn, string $table, string $column, string $def
 
 function _seedServices(mysqli $conn)
 {
-    // Create services table if it doesn't exist
+    
     $conn->query("CREATE TABLE IF NOT EXISTS services (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(120) NOT NULL UNIQUE,
@@ -705,16 +705,16 @@ function _seedServices(mysqli $conn)
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     
-    // Check if we already have the new services
+    
     $checkStmt = $conn->query("SELECT COUNT(*) as cnt FROM services WHERE name = 'House Cleaner' AND active = 1");
     if ($checkStmt) {
         $row = $checkStmt->fetch_assoc();
         if ($row && $row['cnt'] > 0) {
-            return; // Already seeded with new services
+            return; 
         }
     }
     
-    // Delete old services and insert new ones
+    
     $conn->query("DELETE FROM services");
     $conn->query("ALTER TABLE services AUTO_INCREMENT = 1");
     

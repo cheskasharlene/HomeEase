@@ -20,7 +20,7 @@
   --shadow: rgba(232, 130, 12, .12);
 }
 
-/* ── Dark mode ── */
+
 body.dark {
   --td: #f1f5f9;
   --tm: #94a3b8;
@@ -118,7 +118,7 @@ body {
   }
 }
 
-/* ── Header ── */
+
 .hdr {
   width: 100%;
   padding: 48px 20px 20px;
@@ -189,7 +189,7 @@ body {
   background: rgba(255, 255, 255, 0.32);
 }
 
-/* ── Scroll ── */
+
 .scroll {
   width: 100%;
   flex: 1;
@@ -202,7 +202,7 @@ body {
   display: none;
 }
 
-/* ── Section ── */
+
 .sec {
   padding: 18px 18px 0;
 }
@@ -252,7 +252,7 @@ body {
   font-size: 13px;
 }
 
-/* ── Service cards ── */
+
 .svc-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -319,7 +319,7 @@ body {
   grid-column: 1/-1;
 }
 
-/* ── Booking Form ── */
+
 .form-card {
   background: var(--bg-card);
   border-radius: 20px;
@@ -387,7 +387,7 @@ select.fi {
   gap: 10px;
 }
 
-/* ── Pricing Toggle ── */
+
 .price-toggle {
   display: flex;
   background: var(--bg-input);
@@ -415,7 +415,7 @@ select.fi {
   box-shadow: 0 3px 10px rgba(232, 130, 12, 0.14);
 }
 
-/* ── Price preview ── */
+
 .price-preview {
   background: linear-gradient(135deg, var(--teal-bg), rgba(255, 229, 180, 0.5));
   border: 1.5px solid var(--teal-mid);
@@ -440,7 +440,7 @@ select.fi {
   font-family: 'Poppins', sans-serif;
 }
 
-/* ── Technician picker ── */
+
 .tech-section {
   margin-bottom: 13px;
 }
@@ -570,7 +570,7 @@ select.fi {
   margin-top: 4px;
 }
 
-/* ── Book button ── */
+
 .btn-book {
   width: 100%;
   padding: 14px;
@@ -613,7 +613,7 @@ select.fi {
   box-shadow: none;
 }
 
-/* ── Booking cards (my bookings list) ── */
+
 .bk-card {
   background: var(--bg-card);
   border-radius: 20px;
@@ -658,7 +658,7 @@ select.fi {
 .bk-card:nth-child(9)  { animation-delay: .43s; }
 .bk-card:nth-child(10) { animation-delay: .48s; }
 
-/* Service-specific accent colors */
+
 .bk-card[data-svc="Cleaning"]         { --bk-accent: #0EA5E9; }
 .bk-card[data-svc="House Cleaner"]    { --bk-accent: #0EA5E9; }
 .bk-card[data-svc="Plumbing"]         { --bk-accent: #6366F1; }
@@ -688,7 +688,7 @@ select.fi {
   transform: scale(1.08);
 }
 
-/* Service-specific icon backgrounds */
+
 .bk-ic.ic-cleaning    { background: linear-gradient(135deg, #E0F2FE, #BAE6FD); }
 .bk-ic.ic-house_cleaner { background: linear-gradient(135deg, #E0F2FE, #BAE6FD); }
 .bk-ic.ic-plumbing    { background: linear-gradient(135deg, #EEF2FF, #C7D2FE); }
@@ -728,7 +728,7 @@ select.fi {
   font-family: 'Poppins', sans-serif;
 }
 
-/* Status pills */
+
 .pill {
   display: inline-flex;
   align-items: center;
@@ -789,7 +789,7 @@ select.fi {
   gap: 6px;
 }
 
-/* ── Toast ── */
+
 #toastBox {
   position: absolute;
   top: 16px;
@@ -846,7 +846,7 @@ select.fi {
   }
 }
 
-/* ── Empty / Loader ── */
+
 .empty {
   text-align: center;
   padding: 30px 20px;
@@ -871,7 +871,7 @@ select.fi {
   font-size: 13px;
 }
 
-/* ── Hours stepper ── */
+
 .stepper {
   display: flex;
   align-items: center;
@@ -917,7 +917,7 @@ select.fi {
   font-weight: 600;
 }
 
-/* ── Dark mode: white header text ── */
+
 body.dark .hdr-title {
   color: #fff !important;
 }
@@ -931,7 +931,7 @@ body.dark .hdr-btn {
   color: #fff !important;
 }
 
-/* ── Dark mode header gradient (matches notifications) ── */
+
 body.dark .hdr {
   background: linear-gradient(135deg, #7A3800 0%, #A85A00 30%, #C8780A 60%, #8B6200 100%) !important;
 }

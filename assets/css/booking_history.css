@@ -161,7 +161,7 @@
     }
     .star-btn {
       font-size: 38px;
-      color: #CBD5E1; /* Clearly unselected outline star */
+      color: #CBD5E1; 
       cursor: pointer;
       line-height: 1;
       display: inline-flex;
@@ -242,7 +242,7 @@
       cursor: pointer;
     }
 
-    /* Dark mode for bottom nav */
+    
     body.dark .bnav {
       background: var(--bg-card) !important;
       border-top-color: var(--border-col) !important;
@@ -251,7 +251,7 @@
     body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
     body.dark .nb-c { box-shadow: 0 6px 20px rgba(232, 130, 12, .3); }
 
-    /* Dark mode for rating stars & modal */
+    
     body.dark .star-btn {
       color: #4B5563;
     }

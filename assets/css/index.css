@@ -1,4 +1,4 @@
-/* ── Login page layout ── */
+
 .logo-hdr {
   padding: 52px 28px 28px;
   display: flex;
@@ -305,7 +305,7 @@
       display: none;
     }
 
-    /* ── Account type selector ── */
+    
     .acct-type-row {
       display: flex;
       gap: 10px;

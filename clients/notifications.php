@@ -94,7 +94,7 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
     </div>
   </div>
 
-  <!-- Persistent toast element -->
+  
   <div class="he-toast" id="heToast"></div>
 
   <script src="../assets/js/app.js"></script>

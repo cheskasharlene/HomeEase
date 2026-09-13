@@ -24,7 +24,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
   <link href="../assets/css/main.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/provider_requests.css">
   <style>
-    /* ===== LIVE FEED OVERRIDES ===== */
+    
     .live-badge {
       display: inline-flex; align-items: center; gap: 5px;
       background: #EF4444; color: #fff;
@@ -191,7 +191,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       padding: 0 16px 12px;
     }
     .hdr-count { font-size: 12px; color: #7A7064; font-weight: 600; }
-    /* ── Map Preview Modal ── */
+    
     .map-modal-overlay{position:absolute;inset:0;z-index:900;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .25s}
     .map-modal-overlay.open{opacity:1;pointer-events:all}
     .map-modal-card{width:100%;max-height:92%;background:#fff;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform .32s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;overflow:hidden}
@@ -226,7 +226,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 </head>
 <body>
   <div class="shell" id="app">
-  <!-- Map Preview Modal (inside shell to stay in mobile frame) -->
+  
   <div class="map-modal-overlay" id="mapModal" onclick="closeMapModal(event)">
     <div class="map-modal-card" onclick="event.stopPropagation()">
       <div class="map-modal-handle"></div>
@@ -310,7 +310,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
     <div class="screen" id="requests-page">
       <div class="p-scroll">
-        <!-- Header -->
+        
         <div class="p-hdr">
           <div style="position:relative;z-index:1;">
             <div style="display:flex;align-items:center;gap:10px;">
@@ -325,13 +325,13 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         </div>
 
 
-        <!-- Feed tabs -->
+        
         <div class="feed-tabs">
           <div class="feed-tab on" data-tab="live" onclick="switchTab('live',this)">🔴 Live Feed</div>
           <div class="feed-tab" data-tab="completed" onclick="switchTab('completed',this)">Completed</div>
         </div>
 
-        <!-- Poll progress bar -->
+        
         <div class="poll-bar" id="pollBar" style="display:none;">
           <div class="poll-bar-fill" id="pollFill"></div>
         </div>
@@ -341,7 +341,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           <div style="font-size:11px;color:#9E9690;" id="lastUpdated"></div>
         </div>
 
-        <!-- Feed list -->
+        
         <div id="feedList">
           <div class="empty-feed">
             <div class="empty-feed-icon">⏳</div>
@@ -397,28 +397,28 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     let knownIds = new Set();
     let isAccepting = false;
     let liveBookingLookup = new Map();
-    let requestedBookingId = null; // booking_id from URL to auto-open
+    let requestedBookingId = null; 
 
     function tryOpenRequestedBooking() {
       if (!requestedBookingId) return;
       const id = parseInt(requestedBookingId, 10);
       if (!id) return;
 
-      // First try: find live accept button (opens map modal)
+      
       const btn = document.getElementById('btnAccept' + id);
       if (btn) {
         btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Click after small delay so rendering/scroll settles
+        
         setTimeout(() => btn.click(), 220);
         requestedBookingId = null;
         return;
       }
 
-      // Second try: find live card and highlight it
+      
       const card = document.getElementById('liveCard' + id);
       if (card) {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // transient highlight
+        
         const orig = card.style.boxShadow;
         card.style.boxShadow = '0 6px 30px rgba(232,130,12,0.25)';
         setTimeout(() => card.style.boxShadow = orig, 1800);
@@ -426,7 +426,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         return;
       }
 
-      // For requests in "my requests" view, attempt to find req-card by data attribute
+      
       const reqCard = document.querySelector(`.req-card[data-booking-id="${id}"]`);
       if (reqCard) {
         reqCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -445,7 +445,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       loadFeed(true);
     }
 
-    /* ===== LIVE FEED ===== */
+    
     async function loadFeed(forceReset = false) {
       try {
         let url, data;
@@ -462,7 +462,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         if (!data.success) return;
 
 
-        // Show/hide poll bar
+        
         document.getElementById('pollBar').style.display = currentTab === 'live' ? 'block' : 'none';
 
         if (currentTab === 'live') {
@@ -485,12 +485,12 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
             count > 0 ? `${count} booking${count > 1 ? 's' : ''} waiting for a provider` : 'No live bookings right now';
           document.getElementById('feedCount').textContent = count > 0 ? count + ' live' : '';
 
-          // If a booking_id was provided in the URL, try to open it now
+          
           tryOpenRequestedBooking();
         } else {
           renderMyRequests(data.requests || []);
 
-          // Also attempt in case the booking is in "my requests"
+          
           tryOpenRequestedBooking();
         }
 
@@ -515,22 +515,22 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         return;
       }
 
-      // Detect new cards
+      
       const newIds = new Set(bookings.map(b => b.booking_id));
       const addedIds = new Set([...newIds].filter(id => !knownIds.has(id)));
 
       if (forceReset || addedIds.size === bookings.length) {
-        // Full re-render
+        
         el.innerHTML = bookings.map(b => buildLiveCard(b, false)).join('');
       } else if (addedIds.size > 0) {
-        // Prepend new cards only
+        
         const newHtml = [...addedIds].map(id => {
           const b = bookings.find(x => x.booking_id === id);
           return b ? buildLiveCard(b, true) : '';
         }).join('');
         el.insertAdjacentHTML('afterbegin', newHtml);
 
-        // Remove cards no longer in feed
+        
         document.querySelectorAll('.live-card[data-booking-id]').forEach(card => {
           const id = parseInt(card.dataset.bookingId);
           if (!newIds.has(id)) card.remove();
@@ -615,11 +615,11 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       }).join('');
     }
 
-    /* ===== MAP PREVIEW MODAL ===== */
+    
     let previewMap = null, previewMarker = null, modalBookingId = null;
     let providerGpsLat = null, providerGpsLng = null;
 
-    // Batangas Province — service area center & bounds (excludes Cavite)
+    
     const ST_CENTER = [13.7565, 121.0583];
     const ST_BOUNDS = L.latLngBounds(L.latLng(13.30, 120.55), L.latLng(14.20, 121.55));
 
@@ -629,7 +629,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
     }
 
     async function geocodeAddress(address) {
-      // Search across all of Batangas province
+      
       const q = encodeURIComponent((address || '') + ', Batangas, Philippines');
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1` +
@@ -728,7 +728,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       document.getElementById('btnModalAccept').innerHTML = '<i class="bi bi-check2-circle"></i> Accept Job';
       document.getElementById('mapModal').classList.add('open');
 
-      await new Promise(r => setTimeout(r, 80)); // let modal animate in
+      await new Promise(r => setTimeout(r, 80)); 
 
       if (!previewMap) {
         previewMap = L.map('mapPreview', {
@@ -749,7 +749,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         let lat = parseFloat(booking.customer_lat);
         let lng = parseFloat(booking.customer_lng);
 
-        // Validate stored GPS — reject if outside Batangas Province
+        
         if (!isValidCoord(lat, lng)) {
           console.warn(`Stored GPS (${lat},${lng}) invalid — geocoding address instead.`);
           document.getElementById('modalDist').textContent = '📍 Locating…';
@@ -775,7 +775,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
         previewMarker = L.marker([lat, lng], { icon }).addTo(previewMap);
         previewMarker.bindPopup('<b>🏠 Client Location</b>').openPopup();
 
-        // Distance from provider's real GPS — use Sto. Tomas center if GPS is unavailable or invalid
+        
         const fromLat = (providerGpsLat && isValidCoord(providerGpsLat, providerGpsLng))
                         ? providerGpsLat : ST_CENTER[0];
         const fromLng = (providerGpsLng && isValidCoord(providerGpsLat, providerGpsLng))
@@ -789,14 +789,14 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
 
       } catch(e) {
         console.warn('Map locate failed:', e);
-        // Fall back to Sto. Tomas center
+        
         previewMap.fitBounds(ST_BOUNDS);
         document.getElementById('modalDist').textContent = '📍 Address not found';
       }
     }
 
     function closeMapModal(e) {
-      // Allow: direct call (no event), or backdrop click
+      
       if (e && e.target !== document.getElementById('mapModal')) return;
       document.getElementById('mapModal').classList.remove('open');
       modalBookingId = null;
@@ -812,7 +812,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       await acceptBooking(modalBookingId, btn);
     }
 
-    /* ===== ACCEPT / PASS ===== */
+    
     async function acceptBooking(bookingId, btn, qrFile = null) {
       if (isAccepting) return;
       isAccepting = true;
@@ -875,7 +875,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       }
     }
 
-    /* ===== PROVIDER GPS TRACKING ===== */
+    
     function startProviderTracking() {
       HomeEaseLocation.watchLocation(
         { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
@@ -883,7 +883,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           const acc = pos.coords.accuracy;
-          // Only store if accurate enough and within Batangas Province
+          
           if (acc < 500 && ST_BOUNDS.contains(L.latLng(lat, lng))) {
             providerGpsLat = lat;
             providerGpsLng = lng;
@@ -893,7 +893,7 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
       );
     }
 
-    /* ===== POLLING ===== */
+    
     function startPolling() {
       loadFeed(true);
       pollTimer = setInterval(() => loadFeed(false), 5000);

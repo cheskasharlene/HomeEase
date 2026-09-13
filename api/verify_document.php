@@ -15,22 +15,22 @@ if (!$filePath) {
     exit;
 }
 
-// Remove any ../ from the path to prevent directory traversal
+
 $filePath = str_replace('..\\', '', $filePath);
 $filePath = str_replace('../', '', $filePath);
 
-// Construct the full filesystem path
+
 $fullPath = __DIR__ . '/../' . $filePath;
 $fullPath = realpath($fullPath);
 
-// Verify the path is still within the project
+
 $projectRoot = realpath(__DIR__ . '/..');
 if ($fullPath === false || strpos($fullPath, $projectRoot) !== 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid path']);
     exit;
 }
 
-// Check if file exists
+
 if (!file_exists($fullPath)) {
     echo json_encode([
         'success' => false, 
@@ -42,7 +42,7 @@ if (!file_exists($fullPath)) {
     exit;
 }
 
-// Check if it's readable
+
 if (!is_readable($fullPath)) {
     echo json_encode([
         'success' => false,
@@ -53,7 +53,7 @@ if (!is_readable($fullPath)) {
     exit;
 }
 
-// Get file info
+
 $fileSize = filesize($fullPath);
 $mimeType = mime_content_type($fullPath);
 

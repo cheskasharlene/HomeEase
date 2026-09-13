@@ -39,7 +39,7 @@ if (!$serviceName) {
       overflow: hidden;
     }
 
-    /* ── Top Bar ── */
+    
     .lp-topbar {
       display: flex; align-items: center; gap: 12px;
       padding: 14px 16px 10px;
@@ -65,7 +65,7 @@ if (!$serviceName) {
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    /* ── Map ── */
+    
     #lpMap {
       flex: 1;
       width: 100%;
@@ -74,7 +74,7 @@ if (!$serviceName) {
       z-index: 1;
     }
 
-    /* draggable center pin overlay */
+    
     .map-pin-overlay {
       position: absolute;
       top: 50%; left: 50%;
@@ -102,7 +102,7 @@ if (!$serviceName) {
       border-radius: 50%;
     }
 
-    /* GPS accuracy circle badge */
+    
     #accBadge {
       position: absolute;
       top: 12px; left: 50%; transform: translateX(-50%);
@@ -116,7 +116,7 @@ if (!$serviceName) {
       transition: opacity .3s;
     }
 
-    /* "Use my location" recenter button */
+    
     #btnRecenter {
       position: absolute;
       right: 14px; top: 14px;
@@ -131,7 +131,7 @@ if (!$serviceName) {
       box-shadow: 0 2px 10px rgba(0,0,0,0.12);
     }
 
-    /* ── Bottom Sheet ── */
+    
     .lp-sheet {
       background: #fff;
       border-radius: 24px 24px 0 0;
@@ -150,7 +150,7 @@ if (!$serviceName) {
       font-family: 'Poppins', sans-serif; margin-bottom: 14px;
     }
 
-    /* ── Search input row ── */
+    
     .lp-search-wrap {
       position: relative;
       margin-bottom: 10px;
@@ -188,7 +188,7 @@ if (!$serviceName) {
     }
     .lp-search-clear.show { display: flex; }
 
-    /* Suggestions dropdown */
+    
     .lp-suggestions {
       position: absolute; left: 0; right: 0; top: calc(100% + 6px);
       background: #fff;
@@ -228,7 +228,7 @@ if (!$serviceName) {
       font-size: 12px; color: #9E9690; font-weight: 600;
     }
 
-    /* Use my location row */
+    
     .lp-use-location {
       display: flex; align-items: center; gap: 12px;
       padding: 12px 14px; cursor: pointer;
@@ -241,7 +241,7 @@ if (!$serviceName) {
       font-size: 14px; font-weight: 700; color: #1A1A2E;
     }
 
-    /* Confirm button */
+    
     .lp-confirm-btn {
       width: 100%; height: 52px; border-radius: 16px;
       background: linear-gradient(135deg, #E8820C, #F5A623);
@@ -262,7 +262,7 @@ if (!$serviceName) {
 <body>
   <div class="lp-shell">
 
-    <!-- Top Bar -->
+    
     <div class="lp-topbar">
       <button class="lp-back-btn" onclick="history.back()"><i class="bi bi-arrow-left"></i></button>
       <div class="lp-topbar-info">
@@ -271,32 +271,32 @@ if (!$serviceName) {
       </div>
     </div>
 
-    <!-- Map (fills available space) -->
+    
     <div style="position:relative; flex:1; min-height:0;">
       <div id="lpMap"></div>
 
-      <!-- Centre pin (visual only — map moves under it) -->
+      
       <div class="map-pin-overlay" id="mapPin">
         <div class="map-pin-dot">🏠</div>
         <div class="map-pin-tail"></div>
         <div class="map-pin-shadow"></div>
       </div>
 
-      <!-- GPS accuracy badge -->
+      
       <div id="accBadge" style="display:none;"></div>
 
-      <!-- Recenter button -->
+      
       <button id="btnRecenter" onclick="recenterToGps()" title="Use my current location">
         <i class="bi bi-crosshair2"></i>
       </button>
     </div>
 
-    <!-- Bottom Sheet -->
+    
     <div class="lp-sheet">
       <div class="lp-sheet-handle"></div>
       <div class="lp-sheet-title">Where should we send your provider?</div>
 
-      <!-- Search / address input with autocomplete -->
+      
       <div class="lp-search-wrap" id="searchWrap">
         <div class="lp-search-row">
           <div class="lp-addr-icon"><i class="bi bi-geo-alt-fill"></i></div>
@@ -316,23 +316,23 @@ if (!$serviceName) {
             <i class="bi bi-x-lg"></i>
           </button>
         </div>
-        <!-- Suggestions dropdown -->
+        
         <div class="lp-suggestions" id="suggBox"></div>
       </div>
 
-      <!-- Use my current location -->
+      
       <div class="lp-use-location" onclick="recenterToGps()">
         <i class="bi bi-send-fill"></i>
         <span class="lp-use-location-lbl">Use my current location</span>
       </div>
 
-      <!-- Confirm -->
+      
       <button class="lp-confirm-btn" id="btnConfirm" onclick="confirmLocation()" disabled>
         <i class="bi bi-check-circle-fill"></i> Confirm Location
       </button>
     </div>
 
-    <!-- Hidden fields -->
+    
     <input type="hidden" id="finalLat" value="">
     <input type="hidden" id="finalLng" value="">
     <input type="hidden" id="finalAddr" value="">

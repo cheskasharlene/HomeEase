@@ -1,30 +1,30 @@
 @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800&display=swap");
 
 :root {
-  /* ── Brand gradient stops ── */
+  
   --g-start:     #E8820C;
   --g-mid:       #F5A623;
   --g-light:     #FFB347;
   --g-pale:      #FFC96B;
 
-  /* ── Semantic tokens ── */
+  
   --purple:      #F5A623;
   --pdark:       #D4790A;
   --plight:      #FFB84D;
   --pbg:         #FFF8F0;
 
-  /* ── Text ── */
+  
   --td:          #1A1A2E;
   --tm:          #8E8E93;
   --txt-primary: #1A1A2E;
   --txt-muted:   #8E8E93;
 
-  /* ── Status ── */
+  
   --success:     #10b981;
   --warn:        #F5A623;
   --danger:      #ef4444;
 
-  /* ── Surfaces ── */
+  
   --bg-body:     #FDF9F4;
   --bg-shell:    #ffffff;
   --bg-screen:   #F9F5EF;
@@ -39,11 +39,11 @@
   --shadow-col:  rgba(232, 130, 12, 0.14);
   --shadow-lg:   rgba(232, 130, 12, 0.18);
 
-  /* ── Navigation icons ── */
+  
   --ni-idle:     #C5BEB3;
   --ni-on:       #F5A623;
 
-  /* ── Teal aliases (keep compat) ── */
+  
   --teal:        #F5A623;
   --teal-bg:     #FFF8F0;
   --teal-mid:    #FFE5B4;
@@ -373,7 +373,7 @@ body {
 .srch-price { font-size: 13px; font-weight: 800; color: var(--purple); flex-shrink: 0; }
 .srch-empty { text-align: center; padding: 30px; color: var(--tm); font-size: 13px; }
 
-/* ── Support sheet ── */
+
 .sup-sheet,
 .help-sheet,
 .cont-sheet {
@@ -440,7 +440,7 @@ body {
 .sup-ds { font-size: 11px; color: var(--tm); margin-top: 2px; }
 .sup-arr { color: var(--border-col); font-size: 14px; }
 
-/* ── FAQ items ── */
+
 .faq-item {
   border-bottom: 1px solid var(--border-col);
   cursor: pointer;
@@ -481,7 +481,7 @@ body {
 
 .faq-item.open .faq-icon { transform: rotate(180deg); }
 
-/* ── Contact channels ── */
+
 .cont-channel {
   display: flex;
   align-items: center;
@@ -803,7 +803,7 @@ body {
   z-index: 50;
 }
 
-/* Navigation container for screens that use navContainer div */
+
 #navContainer {
   position: absolute;
   left: 0;
@@ -836,7 +836,7 @@ body {
 
 .nl { font-size: 10px; font-weight: 700; }
 
-/* ── Bell nav item with unread badge / red dot ──────────────── */
+
 .ni-bell-wrap {
   position: relative;
   display: inline-flex;
@@ -876,7 +876,7 @@ body {
   100% { transform: scale(1); }
 }
 
-/* Shake animation when new notifs arrive */
+
 .ni-bell-shake { animation: bell-shake .5s ease; }
 @keyframes bell-shake {
   0%,100% { transform: rotate(0); }
@@ -886,7 +886,7 @@ body {
   80%     { transform: rotate(8deg); }
 }
 
-/* Prevent any secondary dot from appearing over the nav bell badge */
+
 .ni-bell-wrap .ndot,
 .ni-bell .ndot {
   display: none !important;
@@ -1090,7 +1090,7 @@ body.dark .ndot {
   margin: 14px auto 18px;
 }
 
-/* Booking detail header */
+
 .bc-hdr {
   display: flex;
   align-items: center;
@@ -1581,7 +1581,7 @@ body.dark .pill.progress { background: #0f1f3d; color: #60a5fa; border-color: #1
 body.dark .pill.done     { background: var(--teal-mid); color: var(--teal); border-color: var(--teal-mid); }
 body.dark .pill.cancelled { background: #1a1a1a; color: #6b7280; border-color: #2d2d2d; }
 
-/* ── Universal Homeowner Curved Header ── */
+
 .hdr, .h-hdr, .n-hdr, .p-hdr, .ab-hero, .w-hdr {
   border-radius: 0 0 28px 28px;
 }
@@ -1653,7 +1653,7 @@ body.dark .pill.cancelled { background: #1a1a1a; color: #6b7280; border-color: #
   to { transform: rotate(360deg); }
 }
 
-/* ── Dark mode: white header text (global) ── */
+
 body.dark .n-ttl,
 body.dark .w-hdr-ttl,
 body.dark .bk-ttl,
@@ -1669,7 +1669,7 @@ body.dark .h-greet,
 body.dark .p-email,
 body.dark .st-hdr-sub   { color: rgba(255,255,255,0.75) !important; }
 
-/* ── Chat mine bubble fix ── */
+
 .chat-msg.mine { align-self: flex-end !important; align-items: flex-end !important; flex-direction: column; }
 .chat-msg.mine > div { align-items: flex-end; }
 .chat-msg-av {

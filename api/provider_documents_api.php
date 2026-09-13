@@ -1,8 +1,8 @@
 <?php
-/**
- * Provider Documents Upload API
- * Handles document submission, validation, storage, and verification
- */
+
+
+
+
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
@@ -17,59 +17,59 @@ if (empty($_SESSION['provider_id'])) {
 $provider_id = (int)$_SESSION['provider_id'];
 $action = $_POST['action'] ?? '';
 
-/**
- * Document type mapping with folder paths
- */
+
+
+
 $DOCUMENT_TYPES = [
     'valid_id' => [
         'folder' => 'id',
         'allowed_types' => ['image/jpeg', 'image/png', 'application/pdf'],
-        'max_size' => 5242880, // 5MB
+        'max_size' => 5242880, 
         'label' => 'Valid Government ID'
     ],
     'barangay_clearance' => [
         'folder' => 'brgy',
         'allowed_types' => ['image/jpeg', 'image/png', 'application/pdf'],
-        'max_size' => 5242880, // 5MB
+        'max_size' => 5242880, 
         'label' => 'Barangay Clearance'
     ],
     'selfie' => [
         'folder' => 'selfie',
         'allowed_types' => ['image/jpeg', 'image/png'],
-        'max_size' => 3145728, // 3MB
+        'max_size' => 3145728, 
         'label' => 'Selfie (Identity Confirmation)'
     ],
     'proof_of_address' => [
         'folder' => 'address',
         'allowed_types' => ['image/jpeg', 'image/png', 'application/pdf'],
-        'max_size' => 5242880, // 5MB
+        'max_size' => 5242880, 
         'label' => 'Proof of Address'
     ],
     'tools_kits' => [
         'folder' => 'tools',
         'allowed_types' => ['image/jpeg', 'image/png', 'image/webp'],
-        'max_size' => 5242880, // 5MB
+        'max_size' => 5242880, 
         'label' => 'Tools & Kits'
     ],
     'gcash_qr' => [
         'folder' => 'qrGcash',
         'allowed_types' => ['image/jpeg', 'image/png'],
-        'max_size' => 3145728, // 3MB
+        'max_size' => 3145728, 
         'label' => 'GCash QR Code'
     ],
     'bank_qr' => [
         'folder' => 'qrBank',
         'allowed_types' => ['image/jpeg', 'image/png'],
-        'max_size' => 3145728, // 3MB
+        'max_size' => 3145728, 
         'label' => 'Bank QR Code'
     ]
 ];
 
-/**
- * Initialize database - ensure verification columns exist in service_providers
- */
+
+
+
 function initializeTables($conn) {
-    // Add verification fields to service_providers if needed
+    
     $columns = [];
     $result = $conn->query("SHOW COLUMNS FROM service_providers");
     if ($result) {
@@ -78,7 +78,7 @@ function initializeTables($conn) {
         }
     }
 
-    // Add verification status fields
+    
     if (!in_array('verification_status', $columns)) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN verification_status VARCHAR(50) DEFAULT 'not_submitted'");
     }
@@ -89,7 +89,7 @@ function initializeTables($conn) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN verification_approved_at TIMESTAMP NULL");
     }
 
-    // Add document columns if they don't exist
+    
     if (!in_array('valid_id', $columns)) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN valid_id VARCHAR(500)");
     }
@@ -122,9 +122,9 @@ function initializeTables($conn) {
     }
 }
 
-/**
- * Ensure upload directories exist
- */
+
+
+
 function ensureUploadDirectories() {
     $base_dir = __DIR__ . '/../assets/images/registration';
     $subdirs = ['id', 'brgy', 'selfie', 'address', 'tools', 'payment', 'qrGcash', 'qrBank'];
@@ -139,7 +139,7 @@ function ensureUploadDirectories() {
             mkdir($dir, 0755, true);
         }
         
-        // Create .htaccess to prevent script execution in upload folders
+        
         $htaccess = $dir . '/.htaccess';
         if (!file_exists($htaccess)) {
             $rules = "<FilesMatch \"\\.(php|php\\d?|phtml|pl|py|jsp|asp|sh|cgi)$\">\n" .
@@ -156,9 +156,9 @@ function ensureUploadDirectories() {
     }
 }
 
-/**
- * Validate file upload
- */
+
+
+
 function validateFile($file, $document_type, $DOCUMENT_TYPES) {
     if (!isset($file) || $file['error'] !== UPLOAD_ERR_OK) {
         return [
@@ -172,7 +172,7 @@ function validateFile($file, $document_type, $DOCUMENT_TYPES) {
         return ['valid' => false, 'error' => 'Invalid document type'];
     }
 
-    // Check file size
+    
     if ($file['size'] > $doc_config['max_size']) {
         return [
             'valid' => false,
@@ -181,7 +181,7 @@ function validateFile($file, $document_type, $DOCUMENT_TYPES) {
         ];
     }
 
-    // Check MIME type
+    
     $finfo = finfo_open(FILEINFO_MIME_TYPE);
     $mime = finfo_file($finfo, $file['tmp_name']);
     finfo_close($finfo);
@@ -196,7 +196,7 @@ function validateFile($file, $document_type, $DOCUMENT_TYPES) {
         ];
     }
 
-    // For images, validate dimensions
+    
     if (strpos($mime, 'image/') === 0 && $document_type === 'selfie') {
         $image_info = getimagesize($file['tmp_name']);
         if ($image_info === false) {
@@ -218,9 +218,9 @@ function validateFile($file, $document_type, $DOCUMENT_TYPES) {
     ];
 }
 
-/**
- * Generate unique filename
- */
+
+
+
 function generateUniqueFilename($original_filename, $provider_id, $document_type) {
     $ext = pathinfo($original_filename, PATHINFO_EXTENSION);
     $timestamp = time();
@@ -235,37 +235,37 @@ function generateUniqueFilename($original_filename, $provider_id, $document_type
     return $filename;
 }
 
-/**
- * Handle single document upload
- */
+
+
+
 function uploadDocument($file, $document_type, $provider_id, &$file_path) {
     global $DOCUMENT_TYPES;
 
-    // Validate file
+    
     $validation = validateFile($file, $document_type, $DOCUMENT_TYPES);
     if (!$validation['valid']) {
         return ['valid' => false, 'error' => $validation['error']];
     }
 
-    // Ensure directories exist
+    
     ensureUploadDirectories();
 
     $doc_config = $DOCUMENT_TYPES[$document_type];
     $base_dir = __DIR__ . '/../assets/images/registration/' . $doc_config['folder'];
     
-    // Generate unique filename
+    
     $filename = generateUniqueFilename($validation['filename'], $provider_id, $document_type);
     $file_path_full = $base_dir . '/' . $filename;
     
-    // Move uploaded file
+    
     if (!move_uploaded_file($file['tmp_name'], $file_path_full)) {
         return ['valid' => false, 'error' => 'Failed to save file on server'];
     }
 
-    // Set proper permissions
+    
     chmod($file_path_full, 0644);
 
-    // Return relative path for database storage
+    
     $file_path = 'assets/images/registration/' . $doc_config['folder'] . '/' . $filename;
     
     return [
@@ -277,9 +277,9 @@ function uploadDocument($file, $document_type, $provider_id, &$file_path) {
     ];
 }
 
-/**
- * Map document type to database column name
- */
+
+
+
 function getColumnNameForDocType($doc_type) {
     $mapping = [
         'valid_id' => 'valid_id',
@@ -293,9 +293,9 @@ function getColumnNameForDocType($doc_type) {
     return $mapping[$doc_type] ?? null;
 }
 
-/**
- * Store document info in database (direct to service_providers)
- */
+
+
+
 function storeDocumentInfo($conn, $provider_id, $document_type, $file_path, $original_filename, $file_size, $mime_type) {
     $normalizedType = ($document_type === 'selfie') ? 'selfie_verification' : $document_type;
     $column_name = getColumnNameForDocType($document_type);
@@ -304,7 +304,7 @@ function storeDocumentInfo($conn, $provider_id, $document_type, $file_path, $ori
         return ['success' => false, 'error' => 'Invalid document type'];
     }
 
-    // Use UPDATE to set the legacy column for compatibility.
+    
     $query = "UPDATE service_providers SET `" . $column_name . "` = ? WHERE provider_id = ?";
     $stmt = $conn->prepare($query);
 
@@ -320,7 +320,7 @@ function storeDocumentInfo($conn, $provider_id, $document_type, $file_path, $ori
 
     $stmt->close();
 
-    // Also persist in normalized provider_documents table.
+    
     $docStmt = $conn->prepare("INSERT INTO provider_documents (provider_id, document_type, file_path, uploaded_at, verified_status)
         VALUES (?, ?, ?, NOW(), 'submitted')
         ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), uploaded_at = NOW(), verified_status = 'submitted', verified_at = NULL, verification_notes = NULL");
@@ -334,9 +334,9 @@ function storeDocumentInfo($conn, $provider_id, $document_type, $file_path, $ori
     return ['success' => true];
 }
 
-/**
- * POST: Upload documents
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     initializeTables($conn);
 
@@ -346,10 +346,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     $uploaded_docs = [];
     $errors = [];
 
-    // Process required documents
+    
     foreach ($required_docs as $doc_type) {
         if (!isset($_FILES[$doc_type]) || $_FILES[$doc_type]['error'] === UPLOAD_ERR_NO_FILE) {
-            // Check if document was previously uploaded for this provider
+            
             $colName = getColumnNameForDocType($doc_type);
             $hasExisting = false;
             if ($colName) {
@@ -396,7 +396,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
         $uploaded_docs[] = $doc_type;
     }
 
-    // Process optional documents
+    
     foreach ($optional_docs as $doc_type) {
         if (!isset($_FILES[$doc_type]) || $_FILES[$doc_type]['error'] === UPLOAD_ERR_NO_FILE) {
             continue;
@@ -426,22 +426,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
         $uploaded_docs[] = $doc_type;
     }
 
-    // Check if all required documents were uploaded
+    
     if (count($errors) > 0 && count($uploaded_docs) < count($required_docs)) {
         respond(false, 'Upload failed. ' . implode(' | ', $errors));
     }
 
-    // Update provider verification status to 'pending' and clear rejection_reason so admin can re-review
+    
     $verification_status = count($uploaded_docs) >= count($required_docs) ? 'pending' : 'partial';
     $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0 WHERE provider_id = ?");
     $stmt->bind_param('si', $verification_status, $provider_id);
     $stmt->execute();
     $stmt->close();
 
-    // Reset normalized provider_documents status to submitted
+    
     $conn->query("UPDATE provider_documents SET verified_status = 'submitted', verified_at = NULL WHERE provider_id = " . (int)$provider_id);
 
-    // Notify admin
+    
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         type VARCHAR(50) NOT NULL DEFAULT 'general',
@@ -485,9 +485,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     ]);
 }
 
-/**
- * GET: Retrieve document information for a provider
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
     initializeTables($conn);
 
@@ -530,7 +530,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
         respond(false, 'Provider not found');
     }
 
-    // Convert to document type structure
+    
     $documents = $docs;
     if (!isset($documents['valid_id']) && $result['valid_id']) $documents['valid_id'] = ['file_path' => $result['valid_id'], 'type' => 'valid_id'];
     if (!isset($documents['barangay_clearance']) && $result['barangay_clearance']) $documents['barangay_clearance'] = ['file_path' => $result['barangay_clearance'], 'type' => 'barangay_clearance'];
@@ -543,9 +543,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
     respond(true, '', ['documents' => $documents]);
 }
 
-/**
- * POST: Delete a document (clear the file path for a document type)
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_document') {
     initializeTables($conn);
 
@@ -560,7 +560,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_document') {
         respond(false, 'Invalid document type');
     }
 
-    // Get current file path to delete the file
+    
     $get_stmt = $conn->prepare("SELECT `" . $column_name . "` FROM service_providers WHERE provider_id = ?");
     $get_stmt->bind_param('i', $provider_id);
     $get_stmt->execute();
@@ -573,7 +573,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_document') {
 
     $file_path = $doc_result[$column_name];
     
-    // Delete file from filesystem
+    
     if ($file_path) {
         $file_full_path = __DIR__ . '/../' . $file_path;
         if (file_exists($file_full_path)) {
@@ -581,13 +581,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_document') {
         }
     }
 
-    // Clear the legacy database column
+    
     $delete_stmt = $conn->prepare("UPDATE service_providers SET `" . $column_name . "` = NULL WHERE provider_id = ?");
     $delete_stmt->bind_param('i', $provider_id);
     $delete_stmt->execute();
     $delete_stmt->close();
 
-    // Remove normalized document row
+    
     $normalizedType = ($doc_type === 'selfie') ? 'selfie_verification' : $doc_type;
     $docDelete = $conn->prepare("DELETE FROM provider_documents WHERE provider_id = ? AND document_type = ?");
     if ($docDelete) {
@@ -599,9 +599,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'delete_document') {
     respond(true, 'Document deleted successfully');
 }
 
-/**
- * GET: Check verification status
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check_status') {
     initializeTables($conn);
 
@@ -645,7 +645,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'check_status') {
     $result = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    // Count documents
+    
     $document_count = 0;
     if ($result['has_valid_id'] || $docCounts['valid_id'] > 0) $document_count++;
     if ($result['has_barangay_clearance'] || $docCounts['barangay_clearance'] > 0) $document_count++;

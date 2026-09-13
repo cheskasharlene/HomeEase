@@ -15,7 +15,7 @@ $uid = (int) $_SESSION['user_id'];
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-// Ensure provider_reviews table exists
+
 $conn->query("CREATE TABLE IF NOT EXISTS provider_reviews (
     id INT AUTO_INCREMENT PRIMARY KEY,
     booking_id INT NOT NULL,
@@ -38,7 +38,7 @@ if ($method === 'POST' && $action === 'add_review') {
         exit;
     }
 
-    // Verify booking belongs to user and is completed
+    
     $chk = $conn->prepare("SELECT status FROM bookings WHERE id = ? AND user_id = ?");
     if (!$chk) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
@@ -77,7 +77,7 @@ if ($method === 'POST' && $action === 'add_review') {
     }
     $stmt->close();
 
-    // Update service_providers cached rating
+    
     $upStmt = $conn->prepare("
         UPDATE service_providers sp 
         LEFT JOIN (
@@ -128,7 +128,7 @@ if ($method === 'GET' && $action === 'check_review') {
         echo json_encode(['success' => false, 'reviewed' => false]);
         exit;
     }
-    // Confirm the booking belongs to this user before exposing review status
+    
     $chk = $conn->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? LIMIT 1");
     if (!$chk) {
         echo json_encode(['success' => false, 'reviewed' => false]);

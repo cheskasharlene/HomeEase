@@ -227,10 +227,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         
         const isPending = rawStatus === 'pending' && !isAcceptedStatus(b.status);
 
-        // For real-time bookings, show "Now" instead of date
+        
         const createdAt = b.created_at ? new Date(String(b.created_at).replace(' ', 'T')) : null;
         const minsAgo = createdAt ? ((Date.now() - createdAt.getTime()) / 60000) : 0;
-        const isRecentBooking = minsAgo < 120; // booked within last 2 hours
+        const isRecentBooking = minsAgo < 120; 
         const dateFormatted = isRecentBooking
           ? 'Now · ' + (createdAt ? createdAt.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'}) : '')
           : (b.date ? new Date(b.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + (b.time_slot ? ' · ' + b.time_slot : '') : '—');
@@ -294,7 +294,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         window.location.href = `booking_accepted.php?booking_id=${encodeURIComponent(id)}`;
         return;
       }
-      // Pending or in-progress bookings → show tracking map
+      
       if (s === 'pending' || s === 'confirmed' || s === 'progress' || s === 'active') {
         window.location.href = `waiting_for_provider.php?booking_id=${encodeURIComponent(id)}`;
         return;
@@ -394,7 +394,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       if (banner) {
         banner.style.display = 'flex';
         banner.classList.remove('shake');
-        void banner.offsetWidth; // trigger reflow
+        void banner.offsetWidth; 
         banner.classList.add('shake');
       }
       if (starContainerEl) {
@@ -437,7 +437,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         setRating(existingRating);
         document.getElementById('revComment').value = existingComment || '';
       } else {
-        setRating(0); // All 5 stars start empty/unselected!
+        setRating(0); 
         document.getElementById('revComment').value = '';
       }
 

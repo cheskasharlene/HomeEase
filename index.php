@@ -27,7 +27,7 @@ if (!empty($_SESSION['provider_id'])) {
   <link rel="stylesheet" href="assets/css/main.css?v=<?php echo filemtime('assets/css/main.css'); ?>">
   <link rel="stylesheet" href="assets/css/index.css?v=<?php echo filemtime('assets/css/index.css'); ?>">
   <style>
-    /* ── Login page critical styles (inline to prevent cache issues) ── */
+    
     .logo-hdr {
       padding: 48px 28px 22px;
       display: flex;
@@ -186,7 +186,7 @@ if (!empty($_SESSION['provider_id'])) {
     }
     .acct-type-lbl { font-size: 11px; font-weight: 800; color: var(--txt-muted, #8E8E93); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; display: block; }
     #regSpecialtyWrap { display: none; }
-    /* ── Password Strength Meter ── */
+    
     .pwd-strength-wrap { margin-top: 6px; }
     .pwd-bars { display: flex; gap: 4px; margin-bottom: 6px; }
     .pwd-bar {
@@ -207,7 +207,7 @@ if (!empty($_SESSION['provider_id'])) {
     }
     .pwd-req.met { color: #059669; }
     .pwd-req i { font-size: 10px; transition: all 0.2s; }
-    .pwd-req.met i::before { content: '\F26E'; } /* bi-check-circle-fill */
+    .pwd-req.met i::before { content: '\F26E'; } 
     .req-star { color: #ef4444; margin-left: 2px; font-weight: 700; }
   </style>
 </head>
@@ -566,7 +566,7 @@ if (!empty($_SESSION['provider_id'])) {
       const hasNum   = /[0-9]/.test(val);
       const score = [hasLen, hasUpper, hasLower, hasNum].filter(Boolean).length;
 
-      // Requirement indicators with icon swap
+      
       function setReq(id, met) {
         const el = document.getElementById(id);
         el.classList.toggle('met', met);
@@ -577,7 +577,7 @@ if (!empty($_SESSION['provider_id'])) {
       setReq('req-lower', hasLower);
       setReq('req-num',   hasNum);
 
-      // Color bars
+      
       const barClass = score <= 1 ? 'weak' : score === 2 ? 'fair' : score === 3 ? 'good' : 'strong';
       for (let i = 1; i <= 4; i++) {
         const bar = document.getElementById('pbar' + i);

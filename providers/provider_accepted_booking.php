@@ -45,12 +45,12 @@ if ($bookingId > 0) {
   <link rel="stylesheet" href="../assets/css/waiting_for_provider.css">
   <link rel="stylesheet" href="../assets/css/booking_form.css">
   <style>
-    /* ── Clip modal/overlays inside the shell ── */
+    
     .wfp-shell {
       overflow: hidden;
     }
 
-    /* ── Desktop: show as centred phone frame ── */
+    
     @media (min-width: 500px) {
       html { background: #18140C; }
       body { background: #18140C; padding: 20px; }
@@ -62,7 +62,7 @@ if ($bookingId > 0) {
       }
     }
 
-    /* Add any provider-specific overrides here */
+    
     .wfp-status-banner.accepted {
       background: linear-gradient(135deg, #1A1A2E, #2D2D4E);
     }
@@ -104,9 +104,9 @@ if ($bookingId > 0) {
 
 <body>
   <div class="wfp-shell">
-    <!-- Top Bar -->
+    
     <div class="wfp-topbar">
-      <!-- Back button removed during ongoing booking to prevent leaving the map view -->
+      
       <div class="wfp-topbar-btn" style="visibility:hidden;pointer-events:none;"></div>
       <div class="wfp-topbar-center" id="topBarCenter">
         <div class="wfp-topbar-title" id="topBarTitle">Active Job</div>
@@ -125,15 +125,15 @@ if ($bookingId > 0) {
       </div>
     </div>
 
-    <!-- Map -->
+    
     <div id="wfpMap"></div>
 
-    <!-- Recenter button -->
+    
     <button class="wfp-recenter" id="btnRecenter" onclick="recenterMap()" aria-label="Recenter">
       <i class="bi bi-crosshair2"></i>
     </button>
 
-    <!-- Style Picker Overlay (Reused from client side) -->
+    
     <div class="wfp-style-overlay" id="styleOverlay"
       style="position:absolute;inset:0;z-index:700;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .28s"
       onclick="closeStylePicker(event)">
@@ -170,15 +170,15 @@ if ($bookingId > 0) {
       </div>
     </div>
 
-    <!-- Bottom Sheet -->
+    
     <div class="wfp-sheet expanded" id="wfpSheet">
-      <!-- Draggable handle — tap to collapse/expand -->
+      
       <div class="wfp-sheet-handle" id="sheetHandle" onclick="toggleSheet()">
         <div class="wfp-sheet-handle-pill"></div>
       </div>
       <div class="wfp-sheet-body" id="sheetBody">
 
-        <!-- Status Banner -->
+        
         <div class="wfp-status-banner accepted" id="statusBanner">
           <div class="wfp-status-text" id="statusText">
             Head to the client's location <span>🚗</span>
@@ -188,7 +188,7 @@ if ($bookingId > 0) {
 
         <div id="paymentGateBanner" style="display:none;margin:0 14px 10px;padding:12px 14px;border-radius:14px;font-size:13px;font-weight:700;line-height:1.5;"></div>
 
-        <!-- Client Card -->
+        
         <div class="wfp-provider-card" id="clientCard">
           <div class="wfp-prov-av" id="clientAvatar">?</div>
           <div class="wfp-prov-info">
@@ -222,7 +222,7 @@ if ($bookingId > 0) {
 
       </div>
 
-      <!-- Price Bar -->
+      
       <div class="wfp-price-bar">
         <div class="wfp-price-svc">
           <div class="wfp-price-svc-icon" id="svcIcon">🛠</div>
@@ -233,9 +233,9 @@ if ($bookingId > 0) {
         </div>
         <div class="wfp-price-amount" id="priceAmount">₱–</div>
       </div>
-    </div><!-- /.wfp-price-bar -->
-  </div><!-- /.wfp-sheet -->
-  <!-- Chat Drawer (inside shell to stay in mobile frame) -->
+    </div>
+  </div>
+  
   <div id="chatOverlay"
     style="position:absolute;inset:0;z-index:800;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s"
     onclick="closeChat(event)">
@@ -266,11 +266,11 @@ if ($bookingId > 0) {
     </div>
   </div>
 
-  <!-- Provider Payment Review Modal -->
+  
   <div id="providerPaymentReviewModal" onclick="closeProviderPaymentModal(event)" style="position:absolute;inset:0;z-index:900;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .22s;padding:20px;">
     <div id="paymentReviewCard" onclick="event.stopPropagation()" style="width:100%;max-width:340px;max-height:82%;background:#fff;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.35);transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);">
 
-      <!-- Header -->
+      
       <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 0;">
         <div style="display:flex;align-items:center;gap:8px;">
           <div style="width:32px;height:32px;background:linear-gradient(135deg,#EFF6FF,#BFDBFE);border-radius:50%;display:flex;align-items:center;justify-content:center;">
@@ -283,7 +283,7 @@ if ($bookingId > 0) {
         </button>
       </div>
 
-      <!-- Body -->
+      
       <div style="flex:1;overflow-y:auto;padding:14px 16px;">
         <div style="background:#FAFAF8;border:1.5px solid #E8E0D5;border-radius:12px;padding:10px;margin-bottom:12px;text-align:center;">
           <img id="paymentProofImage" src="" style="max-width:100%;border-radius:8px;max-height:260px;object-fit:contain;" alt="Payment Proof">
@@ -291,7 +291,7 @@ if ($bookingId > 0) {
         </div>
       </div>
 
-      <!-- Actions -->
+      
       <div class="receipt-actions" style="display:flex;gap:8px;padding:0 16px 16px;">
         <button class="mark-done-btn" style="background:linear-gradient(135deg,#059669,#10B981);flex:1;margin-top:0;font-size:12px;height:40px;" onclick="confirmPayment()"><i class="bi bi-check-lg"></i> Confirm</button>
         <button class="mark-done-btn" style="background:#ef4444;flex:1;margin-top:0;font-size:12px;height:40px;" onclick="rejectPayment()"><i class="bi bi-x-lg"></i> Reject</button>
@@ -299,7 +299,7 @@ if ($bookingId > 0) {
     </div>
   </div>
 
-  <!-- Provider Payment Confirmed Modal -->
+  
   <div id="paymentConfirmedOverlay" onclick="closePaymentConfirmedModal(event)" style="position:absolute;inset:0;z-index:950;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .22s;padding:20px;">
     <div style="width:100%;max-width:340px;background:#fff;border-radius:20px;padding:24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.35);transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);" onclick="event.stopPropagation()">
       <div style="width:52px;height:52px;background:linear-gradient(135deg,#059669,#10B981);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;margin:0 auto 14px;box-shadow:0 8px 20px rgba(16,185,129,0.3);">
@@ -311,7 +311,7 @@ if ($bookingId > 0) {
     </div>
   </div>
 
-  </div><!-- /.wfp-shell -->
+  </div>
 
   <script src="../assets/js/app.js"></script>
   <script>
@@ -1236,7 +1236,7 @@ if ($bookingId > 0) {
       window.addEventListener('resize', syncSheetHeight);
     });
   </script>
-  <!-- Job Completed Modal -->
+  
   <div class="booking-confirm-overlay" id="jobCompleteOverlay" aria-hidden="true">
     <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="jobCompleteTitle" onclick="event.stopPropagation()">
       <div class="booking-confirm-head">
@@ -1252,7 +1252,7 @@ if ($bookingId > 0) {
       </div>
     </div>
   </div>
-  <!-- Mark Complete Confirmation Modal -->
+  
   <div class="booking-confirm-overlay" id="markCompleteConfirm" aria-hidden="true" onclick="closeMarkCompleteConfirm()">
     <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="markCompleteTitle" onclick="event.stopPropagation()">
       <div class="booking-confirm-head">
@@ -1268,7 +1268,7 @@ if ($bookingId > 0) {
       </div>
     </div>
   </div>
-  <!-- Cannot Complete (Blocking) Modal -->
+  
   <div class="booking-confirm-overlay" id="cannotCompleteOverlay" aria-hidden="true" style="pointer-events:all;">
     <div class="booking-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cannotCompleteTitle" onclick="event.stopPropagation()">
       <div class="booking-confirm-head">
@@ -1304,7 +1304,7 @@ if ($bookingId > 0) {
     </div>
   </div>
 
-  <!-- Report Modal Overlay -->
+  
   <div class="wfp-confirm-overlay" id="reportModalOverlay" aria-hidden="true" onclick="closeReportModal(event)" style="z-index: 1300;">
     <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportModalTitle" onclick="event.stopPropagation()" style="max-height: 90vh; overflow-y: auto;">
       <div class="wfp-confirm-head" style="margin-bottom: 20px;">
@@ -1367,7 +1367,7 @@ if ($bookingId > 0) {
     </div>
   </div>
 
-  <!-- Report Success Modal Overlay -->
+  
   <div class="wfp-confirm-overlay" id="reportSuccessOverlay" aria-hidden="true" onclick="closeReportSuccessModal(event)" style="z-index: 1350;">
     <div class="wfp-confirm-card" role="dialog" aria-modal="true" aria-labelledby="reportSuccessTitle" onclick="event.stopPropagation()">
       <div class="wfp-confirm-head" style="margin-bottom: 16px; flex-direction: column; align-items: center; text-align: center; gap: 12px;">

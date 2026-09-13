@@ -4,13 +4,13 @@ session_start();
 $artifactsDir = 'C:/Users/LENOVO/.gemini/antigravity/brain/b531985c-d5c0-417f-824e-d29f5d0bba38';
 $targetPath = 'c:/xampp/htdocs/HomeEase/assets/images/admin_gcash_qr.png';
 
-// Create a temp folder under HomeEase/assets/images/temp_media/ to expose the artifacts to the web page
+
 $webTempDir = 'c:/xampp/htdocs/HomeEase/assets/images/temp_media';
 if (!is_dir($webTempDir)) {
     mkdir($webTempDir, 0755, true);
 }
 
-// Copy all media__ and admin_gcash_qr files to the web temp folder
+
 $files = scandir($artifactsDir);
 foreach ($files as $file) {
     if (strpos($file, 'media__') === 0 || strpos($file, 'admin_gcash_qr') === 0) {
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['selected_file'])) {
     }
 }
 
-// Read the copied files in the temp folder to show them
+
 $tempFiles = [];
 if (is_dir($webTempDir)) {
     $tFiles = scandir($webTempDir);

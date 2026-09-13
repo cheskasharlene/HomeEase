@@ -1,17 +1,17 @@
 <?php
-/* ═══════════════════════════════════════════════════════════════
-   DATABASE CONFIGURATION
-   • Local  (XAMPP)     → set environment vars OR use the local block
-   • Live   (InfinityFree) → update the 4 constants below
-   ═══════════════════════════════════════════════════════════════ */
 
-// ── Local XAMPP Credentials ──
+
+
+
+
+
+
 define("DB_HOST", getenv('DB_HOST') ?: "localhost");
 define("DB_USER", getenv('DB_USER') ?: "root");
 define("DB_PASS", getenv('DB_PASS') ?: "");
 define("DB_NAME", getenv('DB_NAME') ?: "homease_db");
 
-// Prevent uncaught mysqli_sql_exception from breaking JSON API responses.
+
 mysqli_report(MYSQLI_REPORT_OFF);
 
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
@@ -32,11 +32,11 @@ function respond($success, $message = "", $data = [])
     exit;
 }
 
-/**
- * Ensure the payments table exists with proper structure
- * @param mysqli $conn Database connection
- * @return bool True if table exists or was created
- */
+
+
+
+
+
 function ensurePaymentsTable($conn)
 {
     $sql = "CREATE TABLE IF NOT EXISTS payments (
@@ -64,40 +64,40 @@ function ensurePaymentsTable($conn)
 
     $created = ($conn->query($sql) === TRUE || $conn->errno == 1050);
 
-    // Ensure payment_status supports 'submitted'
+    
     @$conn->query("ALTER TABLE `payments` MODIFY COLUMN `payment_status` ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted') NOT NULL DEFAULT 'pending'");
 
-    // Safely add proof column to pre-existing tables
+    
     $check = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'payment_proof_path'");
     if ($check && $check->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `payment_proof_path` VARCHAR(512) NULL AFTER `transaction_id`");
     }
 
-    // Ensure receiver_provider_id exists
+    
     $chk = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'receiver_provider_id'");
     if ($chk && $chk->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `receiver_provider_id` INT NULL AFTER `transaction_id`");
     }
 
-    // Ensure expected_until exists
+    
     $chk2 = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'expected_until'");
     if ($chk2 && $chk2->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `expected_until` DATETIME NULL AFTER `receiver_provider_id`");
     }
 
-    // Ensure payment_method_id exists for normalized method relation
+    
     $chk3 = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'payment_method_id'");
     if ($chk3 && $chk3->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `payment_method_id` INT NULL AFTER `user_id`");
     }
 
-    // Ensure payment_method_id index exists
+    
     $idx2 = $conn->query("SHOW INDEX FROM `payments` WHERE Key_name = 'idx_payment_method_id'");
     if ($idx2 && $idx2->num_rows === 0) {
         @$conn->query("ALTER TABLE `payments` ADD INDEX `idx_payment_method_id` (`payment_method_id`)");
     }
 
-    // Ensure payment_reference unique index exists (prefixed for older MySQL utf8 issues)
+    
     $idx = $conn->query("SHOW INDEX FROM `payments` WHERE Key_name = 'idx_payment_reference'");
     if ($idx && $idx->num_rows === 0) {
         @ $conn->query("ALTER TABLE `payments` ADD UNIQUE INDEX `idx_payment_reference` (`payment_reference`(190))");
@@ -106,9 +106,9 @@ function ensurePaymentsTable($conn)
     return $created;
 }
 
-/**
- * Ensure bookings.status supports awaiting_payment for online payment flow
- */
+
+
+
 function ensureBookingStatusEnum($conn)
 {
     $res = $conn->query("SHOW COLUMNS FROM bookings LIKE 'status'");
@@ -121,9 +121,9 @@ function ensureBookingStatusEnum($conn)
     }
 }
 
-/**
- * Ensure booking_requests table exists
- */
+
+
+
 if (!function_exists('ensureBookingRequestsTable')) {
     function ensureBookingRequestsTable($conn)
     {
@@ -151,12 +151,12 @@ if (!function_exists('ensureBookingRequestsTable')) {
     }
 }
 
-/**
- * Validate payment method and reference data
- * @param string $method Payment method (cash, gcash, bank)
- * @param string|null $reference Payment reference (phone/account number)
- * @return array Validation result with 'valid' bool and 'message'
- */
+
+
+
+
+
+
 function validatePaymentData($method, $reference = null)
 {
     $method = strtolower($method);
@@ -169,13 +169,13 @@ function validatePaymentData($method, $reference = null)
         return ['valid' => true, 'message' => 'Cash payment validated'];
     }
 
-    // Allow empty reference during initial booking creation
+    
     if (empty($reference)) {
         return ['valid' => true, 'message' => 'Pending payment reference'];
     }
 
     if ($method === 'gcash') {
-        // Validate GCash number format (11 digits for PH numbers)
+        
         if (!preg_match('/^09\d{9}$/', $reference)) {
             return ['valid' => false, 'message' => 'Invalid GCash number format (must be 09XXXXXXXXX)'];
         }
@@ -183,7 +183,7 @@ function validatePaymentData($method, $reference = null)
     }
 
     if ($method === 'bank') {
-        // Validate account number (numeric, 8-20 digits)
+        
         if (!preg_match('/^\d{8,20}$/', $reference)) {
             return ['valid' => false, 'message' => 'Invalid account number format'];
         }
@@ -193,29 +193,29 @@ function validatePaymentData($method, $reference = null)
     return ['valid' => false, 'message' => 'Payment validation error'];
 }
 
-/**
- * Save payment information to the payments table
- * @param mysqli $conn Database connection
- * @param int $bookingId Booking ID
- * @param int $userId User ID
- * @param string $method Payment method
- * @param string|null $reference Payment reference
- * @param float $amount Payment amount
- * @param string $status Payment status
- * @param string|null $proofPath Path to the uploaded proof of payment image
- * @return array Result with 'success' bool and 'payment_id' or 'message'
- */
+
+
+
+
+
+
+
+
+
+
+
+
 function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $status = 'pending', $proofPath = null)
 {
     ensurePaymentsTable($conn);
 
-    // Validate payment data
+    
     $validation = validatePaymentData($method, $reference);
     if (!$validation['valid']) {
         return ['success' => false, 'message' => $validation['message']];
     }
 
-    // Generate unique transaction ID
+    
     $transactionId = 'TXN-' . date('YmdHis') . '-' . $bookingId . '-' . mt_rand(1000, 9999);
 
     $stmt = $conn->prepare(
@@ -256,13 +256,13 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
     }
 }
 
-/**
- * Get payment information for a booking (user-scoped)
- * @param mysqli $conn Database connection
- * @param int $userId User ID
- * @param int $bookingId Booking ID
- * @return array|null Payment data or null if not found/not authorized
- */
+
+
+
+
+
+
+
 function getPaymentByBooking($conn, $userId, $bookingId)
 {
     ensurePaymentsTable($conn);
@@ -288,9 +288,9 @@ function getPaymentByBooking($conn, $userId, $bookingId)
     return $result;
 }
 
-/**
- * Ensure normalization-related tables and columns exist.
- */
+
+
+
 function ensureNormalizationSchema($conn)
 {
     $conn->query("CREATE TABLE IF NOT EXISTS payment_methods (
@@ -318,7 +318,7 @@ function ensureNormalizationSchema($conn)
         INDEX idx_booking_details_booking (booking_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Removed service_provider_services table creation - direct 1-to-many service mapping is used instead
+    
 
     $conn->query("CREATE TABLE IF NOT EXISTS provider_documents (
         id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -341,7 +341,7 @@ function ensureNormalizationSchema($conn)
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_service_id (service_id)");
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_provider_id (provider_id)");
 
-    // Ensure customer_lng and provider_lng are DECIMAL(11,8) to prevent clamping of longitude (e.g. 121.xx -> 99.99)
+    
     $res = $conn->query("SHOW COLUMNS FROM bookings LIKE 'customer_lng'");
     if ($res && ($col = $res->fetch_assoc())) {
         if (strpos(strtolower($col['Type']), 'decimal(11,8)') === false) {
@@ -355,54 +355,54 @@ function ensureNormalizationSchema($conn)
         }
     }
 
-    // Backfill service_id from existing text labels.
+    
     @$conn->query("UPDATE bookings b
         JOIN services s ON LOWER(TRIM(s.name)) = LOWER(TRIM(COALESCE(b.service, '')))
         SET b.service_id = s.id
         WHERE b.service_id IS NULL");
 
-    // Backfill payment method relation.
+    
     @$conn->query("UPDATE payments p
         JOIN payment_methods pm ON pm.code = LOWER(COALESCE(p.payment_method, 'cash'))
         SET p.payment_method_id = pm.id
         WHERE p.payment_method_id IS NULL");
 
-    // Add service_id column to service_providers if not exists
+    
     $resSp = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'service_id'");
     if ($resSp && $resSp->num_rows === 0) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN service_id INT NULL AFTER contact_number");
         $conn->query("ALTER TABLE service_providers ADD INDEX idx_sp_service_id (service_id)");
-        // Add foreign key constraint if it doesn't exist
+        
         $conn->query("ALTER TABLE service_providers ADD CONSTRAINT fk_sp_service_id FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL");
     }
 
-    // Add rejection_reason column to service_providers if not exists
+    
     $resRej = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'rejection_reason'");
     if ($resRej && $resRej->num_rows === 0) {
         @$conn->query("ALTER TABLE service_providers ADD COLUMN rejection_reason TEXT NULL");
     }
 
-    // Standardize existing service_category text if the column still exists, and migrate data to service_id
+    
     $resCat = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'service_category'");
     if ($resCat && $resCat->num_rows > 0) {
-        // Standardize text values
+        
         @$conn->query("UPDATE service_providers SET service_category = 'Plumber' WHERE LOWER(TRIM(service_category)) = 'plumbing'");
         @$conn->query("UPDATE service_providers SET service_category = 'House Cleaner' WHERE LOWER(TRIM(service_category)) IN ('cleaner', 'cleaning')");
         
-        // Backfill service_id based on service_category text matching
+        
         @$conn->query("UPDATE service_providers sp
             JOIN services s ON LOWER(TRIM(s.name)) = LOWER(TRIM(COALESCE(sp.service_category, '')))
             SET sp.service_id = s.id
             WHERE sp.service_id IS NULL");
             
-        // Drop the redundant service_category text column
+        
         @$conn->query("ALTER TABLE service_providers DROP COLUMN service_category");
     }
 
-    // Drop the junction table service_provider_services
+    
     @$conn->query("DROP TABLE IF EXISTS service_provider_services");
 
-    // Ensure admin_notifications table exists
+    
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         type VARCHAR(50) NOT NULL DEFAULT 'general',
@@ -413,7 +413,7 @@ function ensureNormalizationSchema($conn)
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // Add new columns for strict normalization
+    
     $columns = [];
     $result = $conn->query("SHOW COLUMNS FROM admin_notifications");
     if ($result) {
@@ -438,7 +438,7 @@ function ensureNormalizationSchema($conn)
         @$conn->query("ALTER TABLE admin_notifications ADD CONSTRAINT fk_admin_notif_qr FOREIGN KEY (qr_change_request_id) REFERENCES qr_change_requests(id) ON DELETE CASCADE");
     }
 
-    // Ensure remittances table exists
+    
     $conn->query("CREATE TABLE IF NOT EXISTS remittances (
         id INT AUTO_INCREMENT PRIMARY KEY,
         provider_id INT NOT NULL,
@@ -460,7 +460,7 @@ function ensureNormalizationSchema($conn)
         CONSTRAINT fk_remittances_provider FOREIGN KEY (provider_id) REFERENCES service_providers(provider_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    // Add remittance_id to admin_notifications if not exists
+    
     $columns = [];
     $result = $conn->query("SHOW COLUMNS FROM admin_notifications");
     if ($result) {
@@ -474,7 +474,7 @@ function ensureNormalizationSchema($conn)
         @$conn->query("ALTER TABLE admin_notifications ADD CONSTRAINT fk_admin_notif_remittance FOREIGN KEY (remittance_id) REFERENCES remittances(id) ON DELETE CASCADE");
     }
 
-    // Ensure provider_notifications table exists and has type & reference_id columns
+    
     $conn->query("CREATE TABLE IF NOT EXISTS provider_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         provider_id INT NOT NULL,
@@ -503,19 +503,19 @@ function ensureNormalizationSchema($conn)
         @$conn->query("ALTER TABLE provider_notifications ADD INDEX idx_provider_notif_ref (reference_id)");
     }
 
-    // Backfill existing rows if they are empty
+    
     @$conn->query("UPDATE admin_notifications SET provider_id = reference_id WHERE type = 'verification' AND provider_id IS NULL");
     @$conn->query("UPDATE admin_notifications SET qr_change_request_id = reference_id WHERE type = 'qr_change' AND qr_change_request_id IS NULL");
 
-    // Synchronize provider jobs_done count with database completed bookings
+    
     syncProviderJobsDone($conn);
     syncProviderOnlineStatuses($conn);
     syncUserOnlineStatuses($conn);
 }
 
-/**
- * Synchronize jobs_done count and average rating for service providers with actual completed bookings and reviews from database
- */
+
+
+
 function syncProviderJobsDone($conn, $providerId = null)
 {
     if (!$conn instanceof mysqli) return;
@@ -617,7 +617,7 @@ function ensureRemittancesForProvider($conn, $providerId)
 {
     ensureNormalizationSchema($conn);
 
-    // Group completed/done bookings by their service date (Daily cycle)
+    
     $query = "SELECT 
                 DATE(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'), STR_TO_DATE(date, '%M %d, %Y'), created_at)) AS DayDate,
                 SUM(price) AS daily_earnings
@@ -641,7 +641,7 @@ function ensureRemittancesForProvider($conn, $providerId)
     $today = date('Y-m-d');
 
     foreach ($days as $day => $earnings) {
-        // 4% remittance fee per completed service / booking daily aggregate
+        
         $amountDue = round($earnings * 0.04, 2);
         if ($amountDue <= 0) continue;
 
@@ -720,12 +720,12 @@ function sendUserNotification($conn, $userId, $title, $message, $icon = 'bell')
     return $ok;
 }
 
-/**
- * Automatically cancel pending bookings that have been unclaimed for > 3 minutes (180 seconds).
- * @param mysqli $conn
- * @param int $specificBookingId Optional specific booking to check and cancel if expired
- * @return int Number of bookings cancelled
- */
+
+
+
+
+
+
 function cancelExpiredMatchingBookings($conn, $specificBookingId = 0)
 {
     if (!$conn instanceof mysqli) return 0;
@@ -754,13 +754,13 @@ function cancelExpiredMatchingBookings($conn, $specificBookingId = 0)
                 $stmt->close();
 
                 if ($affected > 0) {
-                    // Close all pending booking requests for this booking
+                    
                     $conn->query("UPDATE booking_requests SET status = 'closed', responded_at = NOW() WHERE booking_id = {$bid} AND status = 'pending'");
 
-                    // Log status change
+                    
                     logBookingStatusChange($conn, $bid, 'pending', 'cancelled', 'system', 0, 'Matching timeout - No available workers');
 
-                    // Notify user
+                    
                     sendUserNotification($conn, $uid, 'Booking Cancelled', 'No available workers. Please try again.', 'x-circle');
 
                     $cancelledCount++;
@@ -774,9 +774,9 @@ function cancelExpiredMatchingBookings($conn, $specificBookingId = 0)
     return $cancelledCount;
 }
 
-/**
- * Ensures last_active column exists on service_providers table and syncs online/offline statuses.
- */
+
+
+
 function syncProviderOnlineStatuses($conn)
 {
     if (!($conn instanceof mysqli)) return;
@@ -792,9 +792,9 @@ function syncProviderOnlineStatuses($conn)
                      AND (last_active IS NULL OR last_active < DATE_SUB(NOW(), INTERVAL 2 MINUTE))");
 }
 
-/**
- * Updates last_active timestamp for a logged-in service provider.
- */
+
+
+
 function updateProviderActivity($conn, $providerId)
 {
     $providerId = (int)$providerId;
@@ -810,9 +810,9 @@ function updateProviderActivity($conn, $providerId)
     }
 }
 
-/**
- * Ensures is_online and last_active columns exist on users table and syncs online/offline statuses.
- */
+
+
+
 function syncUserOnlineStatuses($conn)
 {
     if (!($conn instanceof mysqli)) return;
@@ -833,9 +833,9 @@ function syncUserOnlineStatuses($conn)
                      AND (last_active IS NULL OR last_active < DATE_SUB(NOW(), INTERVAL 2 MINUTE))");
 }
 
-/**
- * Updates last_active timestamp and sets is_online = 1 for a logged-in user.
- */
+
+
+
 function updateUserActivity($conn, $userId)
 {
     $userId = (int)$userId;

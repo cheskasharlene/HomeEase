@@ -20,10 +20,10 @@ if ($bookingId <= 0) {
     exit;
 }
 
-// Auto-cancel any expired matching bookings (> 3 minutes unclaimed)
+
 cancelExpiredMatchingBookings($conn, $bookingId);
 
-// Fetch booking + provider info
+
 $sql = "SELECT b.id, COALESCE(sv.name, b.service) AS service, b.date, b.time_slot, b.address, b.price, b.status, b.created_at,
                b.provider_lat, b.provider_lng, b.customer_lat, b.customer_lng,
                br.provider_id AS req_provider_id, br.status AS req_status, br.responded_at,
@@ -56,7 +56,7 @@ if (!$row) {
 $status = $row['status'];
 $isTimeout = false;
 
-// Double check if pending and expired (>180 seconds)
+
 if ($status === 'pending' && !empty($row['created_at'])) {
     $createdTs = strtotime($row['created_at']);
     if (time() - $createdTs >= 180) {
@@ -67,7 +67,7 @@ if ($status === 'pending' && !empty($row['created_at'])) {
     }
 }
 
-// Check if cancelled booking was due to matching timeout
+
 if ($status === 'cancelled') {
     $logStmt = $conn->prepare("SELECT notes FROM booking_status_logs WHERE booking_id = ? AND new_status = 'cancelled' ORDER BY id DESC LIMIT 1");
     if ($logStmt) {
@@ -83,7 +83,7 @@ if ($status === 'cancelled') {
 
 $hasProvider = !empty($row['provider_name']);
 
-// Count pending requests (how many providers were notified)
+
 $pendingCount = 0;
 $pendingStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM booking_requests WHERE booking_id = ? AND status = 'pending'");
 if ($pendingStmt) {
@@ -94,13 +94,13 @@ if ($pendingStmt) {
     $pendingCount = (int)($pr['cnt'] ?? 0);
 }
 
-// Use real customer GPS if stored, otherwise default to Sto. Tomas, Batangas
+
 $customerLat = isset($row['customer_lat']) && $row['customer_lat'] !== null
     ? (float)$row['customer_lat'] : 14.1053;
 $customerLng = isset($row['customer_lng']) && $row['customer_lng'] !== null
     ? (float)$row['customer_lng'] : 121.1390;
 
-// Batangas Province — service area bounds (excludes Cavite)
+
 $STO_TOMAS_MIN_LAT = 13.30; $STO_TOMAS_MAX_LAT = 14.20;
 $STO_TOMAS_MIN_LNG = 120.55; $STO_TOMAS_MAX_LNG = 121.55;
 
@@ -113,9 +113,9 @@ function isInStoTomasServer(float $lat, float $lng): bool {
 $providerLat = $row['provider_lat'] !== null ? (float)$row['provider_lat'] : null;
 $providerLng = $row['provider_lng'] !== null ? (float)$row['provider_lng'] : null;
 
-/* Simulation fallback — only when provider hasn't sent any GPS yet */
+ 
 if ($hasProvider && $providerLat === null) {
-    // Simulate provider approaching — coordinates drift toward customer over time as fallback
+    
     $acceptedAt = strtotime($row['responded_at'] ?? 'now');
     $elapsed = max(0, time() - $acceptedAt);
     $startOffset = 0.018;
@@ -123,7 +123,7 @@ if ($hasProvider && $providerLat === null) {
     $providerLat = $customerLat + ($startOffset * (1 - $progress)) + (sin($elapsed * 0.3) * 0.0005);
     $providerLng = $customerLng - ($startOffset * (1 - $progress)) + (cos($elapsed * 0.2) * 0.0005);
 } elseif ($status === 'pending' && $providerLat === null) {
-    // Show "searching" animation coords — provider icon orbits
+    
     $t = time() % 30;
     $angle = ($t / 30) * 2 * M_PI;
     $providerLat = $customerLat + cos($angle) * 0.012;

@@ -217,16 +217,16 @@ async function loadOverview() {
       ? resRev.total_revenue
       : (s.total_revenue || 0);
 
-    // Revenue formatting: e.g. ₱1,000.00 or ₱450.00
+    
     const floatVal = parseFloat(totalRev) || 0;
     document.getElementById('st-revenue').textContent = '₱' + floatVal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     document.getElementById('st-workers').textContent = s.active_workers;
 
-    // Render modern, responsive overview bar chart
+    
     await renderOverviewRevenueBarChart(currentOverviewRevFilter);
 
-    // Recent Bookings
+    
     const recentBks = document.getElementById('recentBookings');
     if (recentBks && s.recent_bookings) {
       recentBks.innerHTML = s.recent_bookings.map(b => {

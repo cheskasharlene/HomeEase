@@ -1,12 +1,12 @@
 <?php
-/**
- * Provider Document Handler Utility
- * Provides helper functions for document management
- */
 
-/**
- * Get all required and optional documents
- */
+
+
+
+
+
+
+
 function getDocumentRequirements() {
     return [
         'required' => [
@@ -41,9 +41,9 @@ function getDocumentRequirements() {
     ];
 }
 
-/**
- * Get document status for provider
- */
+
+
+
 function getProviderDocumentStatus($conn, $provider_id) {
     $reqs = getDocumentRequirements();
     $status = [
@@ -53,7 +53,7 @@ function getProviderDocumentStatus($conn, $provider_id) {
         'total_submitted' => 0
     ];
 
-    // Map document type to DB column
+    
     $column_map = [
         'valid_id' => 'valid_id',
         'barangay_clearance' => 'barangay_clearance',
@@ -62,7 +62,7 @@ function getProviderDocumentStatus($conn, $provider_id) {
         'tools_kits' => 'tools_&_kits'
     ];
 
-    // Get normalized provider documents first.
+    
     $docMap = [];
     $docStmt = $conn->prepare("SELECT document_type FROM provider_documents WHERE provider_id = ?");
     if ($docStmt) {
@@ -78,7 +78,7 @@ function getProviderDocumentStatus($conn, $provider_id) {
         }
     }
 
-    // Legacy fallback columns remain supported.
+    
     $stmt = $conn->prepare("SELECT valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits` FROM service_providers WHERE provider_id = ?");
     $stmt->bind_param('i', $provider_id);
     $stmt->execute();
@@ -108,25 +108,25 @@ function getProviderDocumentStatus($conn, $provider_id) {
     return $status;
 }
 
-/**
- * Is document type required
- */
+
+
+
 function isDocumentRequired($doc_type) {
     $reqs = getDocumentRequirements();
     return isset($reqs['required'][$doc_type]);
 }
 
-/**
- * Get document info by type
- */
+
+
+
 function getDocumentInfo($doc_type) {
     $reqs = getDocumentRequirements();
     return $reqs['required'][$doc_type] ?? $reqs['optional'][$doc_type] ?? null;
 }
 
-/**
- * Format file size for display
- */
+
+
+
 function formatFileSize($bytes) {
     if ($bytes == 0) return '0 B';
     $k = 1024;
@@ -141,16 +141,16 @@ function formatFileSize($bytes) {
     return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
 }
 
-/**
- * Check if file is an image
- */
+
+
+
 function isImageFile($mime_type) {
     return strpos($mime_type, 'image/') === 0;
 }
 
-/**
- * Get readable document type name
- */
+
+
+
 function getDocumentTypeName($doc_type) {
     $info = getDocumentInfo($doc_type);
     return $info['label'] ?? ucfirst(str_replace('_', ' ', $doc_type));

@@ -47,15 +47,15 @@ if ($providerId > 0 && $conn instanceof mysqli) {
 
 require_once __DIR__ . '/provider_dashboard_data.php';
 
-// Initialize earnings variables with strict null-coalescing defaults
+
 $thisMonthEarnings = 0.00;
 $jobsCompleted = 0;
-$monthlyGoal = 16500.00; // Default monthly goal
+$monthlyGoal = 16500.00; 
 
 if ($providerId > 0 && $conn instanceof mysqli) {
-  // 1. "THIS MONTH" Earnings: Sum of completed/done booking prices in the current calendar month and year
-  $currentMonth = date('n'); // 1-12
-  $currentYear  = date('Y'); // 4-digit year
+  
+  $currentMonth = date('n'); 
+  $currentYear  = date('Y'); 
   
   $queryThisMonth = "SELECT SUM(price) AS this_month_sum 
                      FROM bookings 
@@ -73,7 +73,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     $stmtThisMonth->close();
   }
 
-  // 2. Count of completed bookings (jobs done) for this provider
+  
   $queryJobsCount = "SELECT COUNT(id) AS jobs_count 
                      FROM bookings 
                      WHERE provider_id = ? 
@@ -198,7 +198,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                 <li><i class="bi bi-check-circle-fill"></i> Selected Service</li>
               </ul>
               <div class="upload-grid" style="margin-top:12px;">
-                <!-- Valid Government ID (Required) -->
+                
                 <div class="upload-wrapper" id="wrapUploadIdDoc">
                   <label class="upload-slot" for="uploadIdDoc">
                     <input type="file" id="uploadIdDoc" accept="image/*,application/pdf" />
@@ -212,7 +212,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <div class="upload-preview" id="previewUploadIdDoc"></div>
                 </div>
 
-                <!-- Selfie Verification (Required) -->
+                
                 <div class="upload-wrapper" id="wrapUploadSelfieDoc">
                   <label class="upload-slot" for="uploadSelfieDoc">
                     <input type="file" id="uploadSelfieDoc" accept="image/*" />
@@ -226,7 +226,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <div class="upload-preview" id="previewUploadSelfieDoc"></div>
                 </div>
 
-                <!-- Proof of Address (Required) -->
+                
                 <div class="upload-wrapper" id="wrapUploadAddressDoc">
                   <label class="upload-slot" for="uploadAddressDoc">
                     <input type="file" id="uploadAddressDoc" accept="image/*,application/pdf" />
@@ -240,7 +240,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <div class="upload-preview" id="previewUploadAddressDoc"></div>
                 </div>
 
-                <!-- Barangay Clearance (Optional) -->
+                
                 <div class="upload-wrapper" id="wrapUploadCertification">
                   <label class="upload-slot" for="uploadCertification">
                     <input type="file" id="uploadCertification" accept="image/*,application/pdf" />
@@ -301,7 +301,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
               <p style="font-size: 13px; color: #6b7280; margin-bottom: 14px; line-height: 1.45;">Please provide your payment method QR codes for receiving payments from customers.</p>
               
               <div class="upload-grid">
-                <!-- GCash QR Code (Required) -->
+                
                 <div class="upload-wrapper" id="wrapUploadGCashQr">
                   <label class="upload-slot" for="uploadGCashQr">
                     <input type="file" id="uploadGCashQr" accept="image/*" />
@@ -315,7 +315,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
                   <div class="upload-preview" id="previewUploadGCashQr"></div>
                 </div>
 
-                <!-- Bank QR Code (Required) -->
+                
                 <div class="upload-wrapper" id="wrapUploadBankQr">
                   <label class="upload-slot" for="uploadBankQr">
                     <input type="file" id="uploadBankQr" accept="image/*" />
@@ -542,7 +542,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         </div>
       </div>
     </div>
-    <!-- Accept Booking Confirmation Modal -->
+    
     <div class="modal-overlay" id="acceptConfirmModal" onclick="if(event.target===this)closeAcceptConfirmModal()">
       <div class="modal-card" style="padding: 24px;">
         <div style="width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #ffe5b4, #fff8f0); color: #e8820c; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
@@ -556,7 +556,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         </div>
       </div>
     </div>
-    <!-- Attachment Lightbox Modal for Compact Previews -->
+    
     <div class="attach-lightbox-overlay" id="attachLightboxModal" onclick="if(event.target===this)closeAttachLightbox()">
       <div class="attach-lightbox-card" onclick="event.stopPropagation()">
         <div class="attach-lightbox-header">
@@ -566,7 +566,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           </button>
         </div>
         <div class="attach-lightbox-body" id="attachLightboxBody">
-          <!-- Dynamically populated -->
+          
         </div>
         <div class="attach-lightbox-footer">
           <span class="attach-lightbox-meta" id="attachLightboxMeta"></span>

@@ -82,12 +82,12 @@ if ($uid > 0) {
         </div>
         <div class="svc-ads-grid" id="svcAdsGrid"></div>
 
-        <!-- Service Detail Panel -->
+        
         <div class="svc-detail-overlay" id="svcDetailOverlay" onclick="closeSvcDetail(event)"></div>
         <div class="svc-detail-panel" id="svcDetailPanel">
           <div class="sdp-handle"></div>
 
-          <!-- Hero banner -->
+          
           <div class="sdp-hero" id="sdpHero">
             <div class="sdp-hero-icon"><i id="sdpIcon"></i></div>
             <div class="sdp-hero-text">
@@ -97,25 +97,25 @@ if ($uid > 0) {
             <div class="sdp-hero-close" onclick="closeSvcDetail()"><i class="bi bi-x"></i></div>
           </div>
 
-          <!-- Price + Duration chips -->
+          
           <div class="sdp-chips" id="sdpChips"></div>
 
-          <!-- Description -->
+          
           <div class="sdp-section-lbl">About This Service</div>
           <div class="sdp-desc" id="sdpDesc"></div>
 
-          <!-- What's included -->
+          
           <div class="sdp-section-lbl">What's Included</div>
           <div class="sdp-features" id="sdpFeatures"></div>
 
-          <!-- How it works -->
+          
           <div class="sdp-section-lbl">How It Works</div>
           <div class="sdp-steps" id="sdpSteps"></div>
 
-          <!-- Highlights -->
+          
           <div class="sdp-highlights" id="sdpHighlights"></div>
 
-          <!-- Guarantee -->
+          
           <div class="sdp-guarantee" id="sdpGuarantee"></div>
 
           <button class="sdp-book-btn" id="sdpBookBtn">Book Now &nbsp;<i class="bi bi-arrow-right"></i></button>
@@ -127,7 +127,7 @@ if ($uid > 0) {
 
 
 
-        <!-- All Providers Panel -->
+        
         <div class="svc-detail-overlay" id="proOverlay" onclick="closeAllProviders(event)"></div>
         <div class="svc-detail-panel" id="proPanel">
           <div class="sdp-handle"></div>
@@ -141,7 +141,7 @@ if ($uid > 0) {
           <div id="proList" style="display:flex;flex-direction:column;gap:12px"><div style="text-align:center;padding:30px;color:var(--tm);font-family:Nunito,sans-serif">Loading providers...</div></div>
         </div>
 
-        <!-- Provider Profile Popout -->
+        
         <div class="svc-detail-overlay" id="proProfileOverlay" onclick="closeProviderProfile(event)"></div>
         <div class="svc-detail-panel" id="proProfilePanel">
           <div class="sdp-handle"></div>

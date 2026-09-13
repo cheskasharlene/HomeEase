@@ -41,7 +41,7 @@ if (isset($_GET['booking_id'])) {
   <link rel="stylesheet" href="../assets/css/main.css">
   <link rel="stylesheet" href="../assets/css/accepted_booking.css?v=<?= time() ?>">
   <style>
-    /* Cancel Booking Confirmation Modal (Inline Fallback for Zero-Cache Dependency) */
+    
     .cancel-confirm-overlay {
       position: fixed;
       inset: 0;
@@ -368,14 +368,14 @@ if (isset($_GET['booking_id'])) {
               </div>
             </div>
 
-            <!-- Pay Now & Upload Receipt Button (shows if payment is pending) -->
+            
             <div id="payNowContainer" class="ab-hide" style="margin-top: 14px; width: 100%;">
               <button class="ab-payment-single-btn" type="button" onclick="openUserPaymentModal()">
                 <i class="bi bi-credit-card-2-front-fill" style="font-size: 16px;"></i> Pay Now / Upload Receipt
               </button>
             </div>
 
-            <!-- User Payment Modal -->
+            
             <div class="payment-expired-overlay" id="userPaymentModal" onclick="closeUserPaymentModal(event)" aria-hidden="true" style="z-index: 1000; display: none;">
               <div class="payment-expired-card" role="dialog" aria-modal="true" style="max-height: 90vh; overflow-y: auto; text-align: left; padding: 20px;" onclick="event.stopPropagation()">
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
@@ -464,7 +464,7 @@ if (isset($_GET['booking_id'])) {
         </div>
       </div>
 
-      <!-- Payment Confirmed / Received Acknowledgment Overlay -->
+      
       <div class="payment-success-overlay" id="paymentReceivedOverlay" aria-hidden="true" style="display:none;">
         <div class="payment-success-card" role="dialog" aria-modal="true" aria-labelledby="paymentReceivedTitle">
           <div class="payment-success-head">
@@ -484,7 +484,7 @@ if (isset($_GET['booking_id'])) {
         </div>
       </div>
 
-      <!-- Cancel Booking Confirmation Modal -->
+      
       <div class="cancel-confirm-overlay" id="cancelConfirmOverlay" aria-hidden="true" style="display:none;" onclick="closeCancelModal(event)">
         <div class="cancel-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelConfirmTitle" onclick="event.stopPropagation()">
           <div class="cancel-confirm-head">
@@ -506,7 +506,7 @@ if (isset($_GET['booking_id'])) {
         </div>
       </div>
 
-      <!-- Cancel Booking Success Notification Modal -->
+      
       <div class="cancel-confirm-overlay" id="cancelSuccessOverlay" aria-hidden="true" style="display:none;">
         <div class="cancel-confirm-card" role="dialog" aria-modal="true" aria-labelledby="cancelSuccessTitle" onclick="event.stopPropagation()">
           <div class="cancel-confirm-head" style="flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 20px;">
@@ -930,7 +930,7 @@ if (isset($_GET['booking_id'])) {
           goBackToBookings();
         }
       } catch (e) {
-        // Ignore polling errors
+        
       }
     }
 

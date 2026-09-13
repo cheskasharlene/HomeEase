@@ -37,7 +37,7 @@ $avgRating        = $reviewsCount
   <div class="shell" id="app">
     <div class="screen" id="reviews">
       <div id="revScroll">
-        <!-- Header -->
+        
         <div class="rev-hdr">
           <div class="rev-hdr-top">
             <div class="rev-back" onclick="goPage('provider_profile.php')">
@@ -46,14 +46,14 @@ $avgRating        = $reviewsCount
             <div class="rev-hdr-title">My Reviews</div>
           </div>
           
-          <!-- Average Rating Card -->
+          
           <div class="rev-rating-card">
             <div class="rev-avg-stars">★★★★★</div>
             <div class="rev-avg-text"><?= number_format($avgRating, 1) ?> Overall Rating (<?= $reviewsCount ?> Reviews)</div>
           </div>
         </div>
 
-        <!-- Reviews List -->
+        
         <div class="rev-body">
           <div class="sec-row">
             <div class="sec-ttl">All Reviews</div>

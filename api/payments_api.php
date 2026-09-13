@@ -1,9 +1,9 @@
 <?php
-/**
- * Payment API
- * Handles payment-related operations: fetch payment details, update payment status
- * All operations are user-scoped for security
- */
+
+
+
+
+
 
 ob_start();
 ini_set('display_errors', 0);
@@ -21,12 +21,12 @@ require_once __DIR__ . '/db.php';
 $method = $_SERVER['REQUEST_METHOD'];
 $action = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
 
-// Ensure payments table exists
+
 ensurePaymentsTable($conn);
 ensureBookingStatusEnum($conn);
 ensureNormalizationSchema($conn);
 
-// Provider actions: confirm or reject payment (provider session, not client user_id)
+
 if ($method === 'POST' && in_array($action, ['provider_confirm', 'provider_reject'], true)) {
     if (empty($_SESSION['provider_id'])) {
         ob_end_clean();
@@ -118,7 +118,7 @@ if ($method === 'POST' && in_array($action, ['provider_confirm', 'provider_rejec
     }
 }
 
-// Client actions — require user session
+
 if (empty($_SESSION['user_id'])) {
     ob_end_clean();
     http_response_code(401);
@@ -128,10 +128,10 @@ if (empty($_SESSION['user_id'])) {
 
 $uid = (int) $_SESSION['user_id'];
 
-/**
- * GET /api/payments_api.php?action=detail&booking_id=123
- * Get payment details for a specific booking
- */
+
+
+
+
 if ($method === 'GET' && $action === 'detail') {
     $bookingId = (int) ($_GET['booking_id'] ?? 0);
     
@@ -141,7 +141,7 @@ if ($method === 'GET' && $action === 'detail') {
         exit;
     }
     
-    // Verify booking belongs to user
+    
     $verifyStmt = $conn->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? LIMIT 1");
     if (!$verifyStmt) {
         ob_end_clean();
@@ -160,11 +160,11 @@ if ($method === 'GET' && $action === 'detail') {
         exit;
     }
     
-    // Get payment details
+    
     $payment = getPaymentByBooking($conn, $uid, $bookingId);
     
     if ($payment) {
-        // Also include assigned provider payment channels (only after provider accepted)
+        
         $provId = null;
         $stmtp = $conn->prepare("SELECT receiver_provider_id FROM payments WHERE booking_id = ? LIMIT 1");
         if ($stmtp) {
@@ -212,7 +212,7 @@ if ($method === 'GET' && $action === 'detail') {
     exit;
 }
 
-// POST /api/payments_api.php?action=submit
+
 if ($method === 'POST' && $action === 'submit') {
     $bookingId = (int)($_POST['booking_id'] ?? 0);
     $paymentReference = trim($_POST['payment_reference'] ?? '');
@@ -225,7 +225,7 @@ if ($method === 'POST' && $action === 'submit') {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Missing required fields']); exit;
     }
 
-    // Verify booking belongs to user
+    
     $bchk = $conn->prepare("SELECT id, user_id, status FROM bookings WHERE id = ? LIMIT 1");
     $bchk->bind_param('i', $bookingId);
     $bchk->execute();
@@ -233,7 +233,7 @@ if ($method === 'POST' && $action === 'submit') {
     $bchk->close();
     if (!$brow || (int)$brow['user_id'] !== $uid) { ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Booking not found or not authorized']); exit; }
 
-    // Get payment expectation
+    
     $pstmt = $conn->prepare("SELECT * FROM payments WHERE booking_id = ? LIMIT 1");
     $pstmt->bind_param('i', $bookingId);
     $pstmt->execute();
@@ -251,16 +251,16 @@ if ($method === 'POST' && $action === 'submit') {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Payment has already been submitted or completed']); exit;
     }
 
-    // Check time window
+    
     $now = date('Y-m-d H:i:s');
     if (!empty($pay['expected_until']) && $now > $pay['expected_until']) {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Payment time window expired']); exit;
     }
 
-    // Use expected amount directly from DB
+    
     $amount = (float)$pay['amount'];
 
-    // Ensure payment_reference uniqueness
+    
     if ($paymentReference !== '') {
         $rchk = $conn->prepare("SELECT id FROM payments WHERE payment_reference = ? AND booking_id <> ? LIMIT 1");
         $rchk->bind_param('si', $paymentReference, $bookingId);
@@ -270,11 +270,11 @@ if ($method === 'POST' && $action === 'submit') {
         if ($rrow) { ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Transaction reference already used']); exit; }
     }
 
-    // Verify assigned provider exists
+    
     $providerId = (int)($pay['receiver_provider_id'] ?? 0);
     if ($providerId <= 0) { ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Assigned provider not found']); exit; }
 
-    // Handle proof upload (required for online payments)
+    
     $proofPath = null;
     if (!isset($_FILES['payment_proof']) || $_FILES['payment_proof']['error'] !== UPLOAD_ERR_OK) {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Payment receipt image is required']); exit;
@@ -297,14 +297,14 @@ if ($method === 'POST' && $action === 'submit') {
 
     ensureBookingStatusEnum($conn);
 
-    // Update payments row
+    
     $upd = $conn->prepare("UPDATE payments SET payment_reference=?, amount=?, payment_proof_path=?, notes=?, payment_status='submitted', updated_at=NOW() WHERE id = ?");
     $notes = ($senderName !== '') ? 'Sender: ' . $senderName : null;
     $pid = (int)$pay['id'];
     $upd->bind_param('sdssi', $paymentReference, $amount, $proofPath, $notes, $pid);
     if ($upd->execute()) {
         $upd->close();
-        // Keep booking awaiting provider confirmation
+        
         $oldStatus = (string)($brow['status'] ?? 'pending');
         $conn->query("UPDATE bookings SET status = 'awaiting_payment' WHERE id = " . intval($bookingId));
         if ($oldStatus !== 'awaiting_payment') {
@@ -313,7 +313,7 @@ if ($method === 'POST' && $action === 'submit') {
 
 
 
-        // Notify client about next step for visibility in notifications page
+        
         $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES ({$uid}, 'Payment Submitted', 'Your payment proof has been sent to the worker for confirmation.', 'wallet', 0, NOW())");
         if ($providerId > 0) {
             sendProviderNotification($conn, $providerId, 'payment', 'Payment Submitted', "Client submitted payment for booking #{$bookingId}. Review and confirm it.", 'bi-cash-coin', $bookingId);
@@ -324,7 +324,7 @@ if ($method === 'POST' && $action === 'submit') {
     }
 }
 
-// Ensure disputes table exists
+
 function ensureDisputesTable($conn)
 {
     $conn->query("CREATE TABLE IF NOT EXISTS disputes (
@@ -339,15 +339,15 @@ function ensureDisputesTable($conn)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
-/**
- * GET /api/payments_api.php?action=list
- * Get all payments for the logged-in user
- */
+
+
+
+
 if ($method === 'GET' && $action === 'list') {
     $limit = (int) ($_GET['limit'] ?? 50);
     $offset = (int) ($_GET['offset'] ?? 0);
     
-    if ($limit > 500) $limit = 500; // Cap the limit
+    if ($limit > 500) $limit = 500; 
     if ($limit < 1) $limit = 50;
     if ($offset < 0) $offset = 0;
     
@@ -378,7 +378,7 @@ if ($method === 'GET' && $action === 'list') {
     $payments = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-    // Get total count
+    
     $countStmt = $conn->prepare("SELECT COUNT(*) as count FROM payments WHERE user_id = ?");
     if ($countStmt) {
         $countStmt->bind_param('i', $uid);
@@ -401,10 +401,10 @@ if ($method === 'GET' && $action === 'list') {
     exit;
 }
 
-/**
- * GET /api/payments_api.php?action=stats
- * Get payment statistics for the user
- */
+
+
+
+
 if ($method === 'GET' && $action === 'stats') {
     $stmt = $conn->prepare(
         "SELECT 
@@ -430,7 +430,7 @@ if ($method === 'GET' && $action === 'stats') {
     $stats = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     
-    // Calculate summary
+    
     $summary = [
         'total_payments' => 0,
         'total_amount' => 0,
@@ -466,7 +466,7 @@ if ($method === 'GET' && $action === 'stats') {
     exit;
 }
 
-// Invalid action
+
 ob_end_clean();
 http_response_code(400);
 echo json_encode(['success' => false, 'message' => 'Invalid action']);

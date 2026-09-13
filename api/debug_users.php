@@ -1,8 +1,8 @@
 <?php
-// Test login with real credentials - DELETE AFTER DEBUGGING
+
 $url = 'http://localhost/homeease/api/login.php';
 
-// Test 1: Check what the actual password hash looks like for test@gmail.com
+
 require 'db.php';
 
 header('Content-Type: text/plain');
@@ -19,7 +19,7 @@ if ($user) {
     echo "Password hash: " . $user['password'] . "\n";
     echo "Is bcrypt: " . (strpos($user['password'], '$2y$') === 0 ? 'YES' : 'NO') . "\n\n";
     
-    // Check common passwords
+    
     $testPasswords = ['12345678', 'password', 'test1234', 'Test@123', '123456789', 'password123'];
     foreach ($testPasswords as $pw) {
         $ok = password_verify($pw, $user['password']) || $pw === $user['password'];
@@ -28,7 +28,7 @@ if ($user) {
 } else {
     echo "User test@gmail.com NOT found\n";
     
-    // List all users
+    
     $r = $conn->query("SELECT id, email, role FROM users LIMIT 10");
     echo "\nAll users:\n";
     while ($row = $r->fetch_assoc()) {
@@ -36,7 +36,7 @@ if ($user) {
     }
 }
 
-// Test 2: Also check php.ini for display_errors that could pollute output
+
 echo "\n=== PHP Config ===\n";
 echo "display_errors: " . ini_get('display_errors') . "\n";
 echo "error_reporting: " . ini_get('error_reporting') . "\n";

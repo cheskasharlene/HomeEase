@@ -1,9 +1,9 @@
 <?php
 
-/**
- * Fetch real reviews for a provider from the database.
- * Returns an array of review rows or an empty array if none found.
- */
+
+
+
+
 function providerDashboardReviews(mysqli $conn, int $providerId): array
 {
   if ($providerId <= 0) {
@@ -198,8 +198,8 @@ function providerIncomingRequests(mysqli $conn, int $providerId, int $limit = 2)
 
 function providerJobHistory(mysqli $conn, int $providerId, string $providerSpecialty = ''): array
 {
-  // Fetch all real reviews for this provider, keyed by booking_id,
-  // so we can attach them to job history rows without a second query per row.
+  
+  
   $revMap = [];
   $revStmt = $conn->prepare("
     SELECT booking_id, rating, comment
@@ -276,7 +276,7 @@ function providerJobHistory(mysqli $conn, int $providerId, string $providerSpeci
   foreach ($rows as $row) {
     $bookingId  = (int)   ($row['id']          ?? 0);
     $clientName = (string) ($row['client_name'] ?? 'Client');
-    // Look up review by booking_id — accurate and no name-collision risk.
+    
     $review     = $revMap[$bookingId] ?? null;
 
     $dateRaw = (string) ($row['date'] ?? '');

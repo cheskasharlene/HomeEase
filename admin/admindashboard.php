@@ -23,23 +23,23 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
   <link href="../assets/css/admindashboard.css?v=<?= time() ?>" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <style>
-    /* ── ADMIN DASHBOARD CRITICAL INLINE CSS ── */
+    
 
-    /* Screen overrides */
+    
     .screen { display:none!important; flex-direction:column!important; align-items:stretch!important; justify-content:flex-start!important; position:absolute; inset:0; overflow:hidden; background:var(--bg-screen); }
     .screen.active { display:flex!important; flex-direction:column!important; align-items:stretch!important; justify-content:flex-start!important; }
 
-    /* Header */
+    
     .a-hdr { display:flex!important; align-items:center; justify-content:space-between; padding:52px 18px 16px; flex-shrink:0; background:var(--bg-screen); width:100%; }
     .a-hdr-right { display:flex; align-items:center; gap:6px; }
     .a-greet { font-size:12px; color:var(--txt-muted); font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
     .a-ttl { font-family:'Poppins',sans-serif; font-size:22px; font-weight:800; color:var(--txt-primary); line-height:1.1; }
     .hdr-btn { width:36px; height:36px; border-radius:50%; border:none; background:var(--bg-card); color:var(--txt-muted); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .2s; }
 
-    /* Scroll area */
+    
     .a-scroll { flex:1; width:100%; overflow-y:auto; overflow-x:hidden; padding:0 0 90px; }
 
-    /* Stat grid - 2 columns */
+    
     .stat-grid { display:grid!important; grid-template-columns:1fr 1fr!important; gap:10px; padding:0 18px; margin-bottom:14px; }
     .stat-card { background:var(--bg-card); border-radius:18px; padding:14px 12px; display:flex!important; align-items:center!important; gap:10px; border:1.5px solid var(--border-col); box-shadow:0 2px 8px rgba(0,0,0,.04); }
     .stat-ic { width:42px; height:42px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
@@ -50,25 +50,25 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .stat-val { font-family:'Poppins',sans-serif; font-size:18px; font-weight:800; color:var(--txt-primary); line-height:1.1; }
     .stat-lbl { font-size:10px; font-weight:700; color:var(--txt-muted); text-transform:uppercase; letter-spacing:.3px; margin-top:1px; }
 
-    /* Chart & section cards */
+    
     .chart-card { background:var(--bg-card); border-radius:18px; padding:16px; margin:0 18px 14px; border:1.5px solid var(--border-col); }
     .sec-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
     .sec-ttl { font-family:'Poppins',sans-serif; font-size:15px; font-weight:800; color:var(--txt-primary); }
     .sec-pad { padding:0 18px 14px; }
     .card { background:var(--bg-card); border-radius:18px; border:1.5px solid var(--border-col); overflow:hidden; }
 
-    /* Donut */
+    
     .donut-wrap { display:flex!important; align-items:center; gap:18px; padding:8px 0; }
     .donut-svg { width:110px; height:110px; flex-shrink:0; }
     .donut-legend { flex:1; display:flex; flex-direction:column; gap:6px; }
     .legend-item { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:var(--txt-primary); }
     .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 
-    /* Booking card */
+    
     .bk-card { background:var(--bg-card); border-radius:16px; padding:14px 16px; margin-bottom:10px; border:1.5px solid var(--border-col); cursor:pointer; }
     .bk-price { font-size:13px; font-weight:800; color:var(--teal); }
 
-    /* List items */
+    
     .list-item { display:flex!important; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--border-col); }
     .list-item:last-child { border-bottom:none; }
     .li-av { width:42px; height:42px; border-radius:12px; background:var(--teal-mid); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
@@ -77,7 +77,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .li-sub { font-size:11px; color:var(--txt-muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .li-right { display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0; }
 
-    /* Pagination */
+    
     .pg-wrap {
       display: grid;
       grid-template-columns: auto 1fr auto;
@@ -155,12 +155,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       transform: none;
     }
 
-    /* Empty state */
+    
     .empty-state { display:flex!important; flex-direction:column; align-items:center; justify-content:center; padding:36px 20px; text-align:center; gap:10px; color:var(--txt-muted); }
     .empty-state i { font-size:30px; }
     .empty-state p { font-size:13px; font-weight:600; margin:0; }
 
-    /* Sheet overlays */
+    
     .sheet-ol { position:absolute; inset:0; background:rgba(26,20,8,.55); z-index:200; display:flex; flex-direction:column; justify-content:flex-end; opacity:0; pointer-events:none; transition:opacity .3s; }
     .sheet-ol.on { opacity:1; pointer-events:all; }
     .sheet { background:var(--bg-card); border-radius:28px 28px 0 0; padding:0 18px 40px; max-height:88vh; overflow-y:auto; display:flex; flex-direction:column; transform:translateY(100%); transition:transform .38s cubic-bezier(.4,0,.2,1); }
@@ -170,7 +170,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .sh-ttl { font-family:'Poppins',sans-serif; font-size:18px; font-weight:800; color:var(--txt-primary); }
     .sh-close { width:32px; height:32px; border-radius:50%; border:none; background:var(--bg-screen); color:var(--txt-muted); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 
-    /* Branded confirm dialog */
+    
     .confirm-ol {
       position: absolute;
       inset: 0;
@@ -274,18 +274,18 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       box-shadow: 0 0 0 3px rgba(245, 166, 35, .16);
     }
 
-    /* Form rows & modal buttons */
+    
     .fg-row { display:grid!important; grid-template-columns:1fr 1fr; gap:10px; }
     .modal-btns { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
     .btn-danger { width:100%; padding:13px; border-radius:50px; border:none; background:#fee2e2; color:#dc2626; font-family:'Poppins',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
     .btn-outline { width:100%; padding:13px; border-radius:50px; border:2px solid var(--border-col); background:transparent; color:var(--txt-muted); font-family:'Poppins',sans-serif; font-size:14px; font-weight:700; cursor:pointer; }
 
-    /* Search bar */
+    
     .search-bar { display:flex!important; align-items:center; gap:10px; margin:0 18px 10px; padding:10px 14px; background:var(--bg-card); border:1.5px solid var(--border-col); border-radius:14px; flex-shrink:0; }
     .search-bar i { color:var(--txt-muted); font-size:15px; flex-shrink:0; }
     .search-bar input { flex:1; border:none; outline:none; background:transparent; font-family:'Nunito',sans-serif; font-size:13px; color:var(--txt-primary); }
 
-    /* Action buttons */
+    
     .act-btns { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; }
     .act-btn { width:30px; height:30px; border-radius:9px; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; transition:all .16s; }
     .act-btn.edit { background:#eff6ff; color:#2563eb; }
@@ -297,13 +297,13 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .act-btn.del { background:#fef2f2; color:#dc2626; }
     .act-btn.del:hover { background:#fee2e2; }
 
-    /* Detail rows */
+    
     .detail-row { display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid var(--border-col); }
     .detail-row:last-child { border-bottom:none; }
     .detail-lbl { font-size:12px; font-weight:700; color:var(--txt-muted); }
     .detail-val { font-size:13px; font-weight:700; color:var(--txt-primary); text-align:right; }
 
-    /* Verification Documents Container */
+    
     #wkVdocs {
       display: flex !important;
       flex-direction: column !important;
@@ -313,7 +313,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       width: 100% !important;
     }
 
-    /* Toast notifications */
+    
     .toast-n { display:flex; align-items:center; gap:10px; padding:12px 16px; border-radius:14px; font-size:13px; font-weight:700; color:#fff; animation:slideDown .35s forwards; }
     .toast-n.s { background:#10b981; }
     .toast-n.e { background:#ef4444; }
@@ -330,7 +330,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       font-size: 16px;
     }
 
-    /* Workers filter row */
+    
     .wk-filter-row {
       display: flex;
       gap: 9px;
@@ -413,16 +413,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     }
     .wk-filter-note.on { display: block; }
 
-    /* User avatar */
+    
     .user-av { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--teal),#E8960F); display:flex; align-items:center; justify-content:center; color:#fff; font-size:15px; font-weight:800; flex-shrink:0; }
 
-    /* Revenue mini chart */
+    
     .rev-bar-wrap { height:64px; display:flex; align-items:flex-end; gap:4px; margin-top:10px; }
     .rev-bar-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; }
     .rev-bar-fill { width:100%; border-radius:4px 4px 0 0; min-height:3px; background:var(--teal); opacity:.8; }
     .rev-bar-lbl { font-size:8px; color:var(--txt-muted); font-weight:700; }
 
-    /* More screen */
+    
     .more-row { display:flex; align-items:center; gap:14px; padding:15px 18px; border-bottom:1px solid var(--border-col); cursor:pointer; }
     .more-row:last-child { border-bottom:none; }
     .more-ic { width:40px; height:40px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:19px; flex-shrink:0; }
@@ -430,14 +430,14 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .more-sub { font-size:11px; color:var(--txt-muted); margin-top:1px; }
     .more-arrow { margin-left:auto; color:#d1d5db; font-size:15px; }
 
-    /* Toggle switch */
+    
     .toggle-sw { width:44px; height:24px; border-radius:12px; position:relative; cursor:pointer; transition:background .2s; flex-shrink:0; }
     .toggle-sw.on { background:var(--teal); }
     .toggle-sw.off { background:#e5e7eb; }
     .toggle-sw::after { content:''; position:absolute; top:3px; left:3px; width:18px; height:18px; background:#fff; border-radius:50%; transition:transform .2s; }
     .toggle-sw.on::after { transform:translateX(20px); }
 
-    /* Document View Button Container */
+    
     #wkVdocs {
       display: flex;
       flex-direction: column;
@@ -445,7 +445,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       width: 100%;
     }
 
-    /* Document View Button */
+    
     .doc-view-btn { 
       background: linear-gradient(135deg, #E8820C 0%, #F5A623 100%);
       color: #fff; 
@@ -499,7 +499,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       opacity: 0.95;
     }
 
-    /* Image Preview Modal */
+    
     .image-preview-overlay { 
       display: none; 
       position: fixed; 
@@ -624,7 +624,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       to { transform: rotate(360deg); }
     }
 
-    /* Offer & svc rows */
+    
     .svc-row { display:flex; align-items:center; gap:10px; padding:11px 18px; border-bottom:1px solid var(--border-col); cursor:pointer; }
     .svc-row:last-child { border-bottom:none; }
     .svc-ic-sm { width:36px; height:36px; border-radius:10px; background:var(--teal-mid); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
@@ -632,15 +632,15 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     .offer-list-item:last-child { border-bottom:none; }
     .offer-ic { width:38px; height:38px; border-radius:10px; background:#fef3c7; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
 
-    /* Loading splash override */
+    
     #ml { position:absolute; inset:0; background:linear-gradient(145deg,#E8820C 0%,#F5A623 42%,#FFB347 72%,#FFC96B 100%); z-index:999; display:flex; flex-direction:column; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity .2s; }
     #ml.on { opacity:1; pointer-events:all; }
 
-    /* Animations */
+    
     @keyframes slideDown { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
     @keyframes w-spin { to{transform:rotate(360deg)} }
 
-    /* Admin Notification Bell */
+    
     .notif-bell-wrap { position:relative; display:inline-flex; }
     .notif-badge { position:absolute; top:-4px; right:-4px; min-width:18px; height:18px; padding:0 5px; border-radius:9px; background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; font-size:10px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1; border:2px solid var(--bg-screen); animation:badgePop .35s cubic-bezier(.4,0,.2,1); }
     .notif-badge:empty, .notif-badge[data-count='0'] { display:none; }
@@ -649,7 +649,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     @keyframes bellShake { 0%{transform:rotate(0)} 15%{transform:rotate(14deg)} 30%{transform:rotate(-12deg)} 45%{transform:rotate(8deg)} 60%{transform:rotate(-6deg)} 75%{transform:rotate(2deg)} 100%{transform:rotate(0)} }
     .bell-shake i { animation:bellShake .6s ease-in-out; }
 
-    /* Admin Notification Items */
+    
     .admin-notif-item { display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border-col); cursor:pointer; transition:background .15s; position:relative; }
     .admin-notif-item:hover { background:var(--teal-bg); }
     .admin-notif-item:last-child { border-bottom:none; }
@@ -674,7 +674,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 <body>
 
   <div class="shell" id="app">
-    <!-- Loading splash -->
+    
     <div id="ml" class="on">
       <div class="ml-wrap">
         <div class="ml-box"><svg viewBox="0 0 54 54" fill="none">
@@ -792,7 +792,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
       <div class="a-scroll" id="revenue-scroll" style="overflow-x:hidden;">
-        <!-- Metric summary cards -->
+        
         <div class="stat-grid" style="margin-bottom:14px;">
           <div class="stat-card">
             <div class="stat-ic amber"><i class="bi bi-piggy-bank-fill"></i></div>
@@ -824,7 +824,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         </div>
 
-        <!-- Pending Remittance -->
+        
         <div style="padding:0 18px; margin-bottom:14px;">
           <div class="stat-card" style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:10px;">
@@ -840,7 +840,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         </div>
 
-        <!-- Chart -->
+        
         <div class="chart-card">
           <div class="sec-hdr" style="margin-bottom: 12px;">
             <div class="sec-ttl" style="display:flex; flex-direction:column; gap:2px;">
@@ -860,7 +860,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
 
 
-        <!-- Revenue Performance -->
+        
         <div class="sec-pad">
           <div class="sec-hdr">
             <div class="sec-ttl">Revenue Performance</div>
@@ -886,7 +886,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         </div>
 
-        <!-- Revenue Comparison -->
+        
         <div class="sec-pad" style="margin-top:2px;">
           <div class="sec-hdr">
             <div class="sec-ttl">Revenue Comparison</div>
@@ -959,7 +959,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="stab" data-bk="done" onclick="setBkFilter(this,'done')">Done</div>
         <div class="stab" data-bk="cancelled" onclick="setBkFilter(this,'cancelled')">Cancelled</div>
       </div>
-      <!-- Advanced Filters Panel -->
+      
       <div id="bkFiltersPanel"
         style="display:none;background:var(--bg-card);border-bottom:1px solid var(--border-col);padding:12px 18px;">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
@@ -1232,7 +1232,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-      <!-- Worker Picker Sheet -->
+      
       <div class="sheet-ol" id="workerPickerOl" onclick="if(event.target===this)closeSheet('workerPickerOl')">
         <div class="sheet">
           <div class="sh-hand"></div>
@@ -1278,7 +1278,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-      <!-- Image Preview Modal -->
+      
       <div class="image-preview-overlay" id="imagePreviewOverlay" onclick="if(event.target===this)closeImagePreview()">
         <div class="image-preview-modal">
           <div class="image-preview-header">
@@ -1383,7 +1383,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-      <!-- Review Management Sheet -->
+      
       <div class="sheet-ol" id="reviewSheetOl" onclick="if(event.target===this)closeSheet('reviewSheetOl')">
         <div class="sheet" style="max-height:92vh;">
           <div class="sh-hand"></div>
@@ -1399,7 +1399,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-      <!-- Incident Logs Sheet -->
+      
       <div class="sheet-ol" id="incidentSheetOl" onclick="if(event.target===this)closeSheet('incidentSheetOl')">
         <div class="sheet" style="max-height:92vh;">
           <div class="sh-hand"></div>
@@ -1425,7 +1425,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-      <!-- Incident Details Sheet -->
+      
       <div class="sheet-ol" id="incidentDetailOl" onclick="if(event.target===this)closeSheet('incidentDetailOl')">
         <div class="sheet" style="max-height:92vh;">
           <div class="sh-hand"></div>
@@ -1434,11 +1434,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <button class="sh-close" onclick="closeSheet('incidentDetailOl')"><i class="bi bi-x-lg"></i></button>
           </div>
           <div id="incidentDetailBody" style="overflow-y:auto;flex:1;padding:0 4px 20px 4px;">
-            <!-- Rendered dynamically -->
+            
           </div>
         </div>
       </div>
-      <!-- Admin Notifications Sheet -->
+      
       <div class="sheet-ol" id="adminNotifSheetOl" onclick="if(event.target===this)closeSheet('adminNotifSheetOl')">
         <div class="sheet" style="max-height:88vh;">
           <div class="sh-hand"></div>
@@ -1460,7 +1460,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-      <!-- Remittance Sheet (UI Only) -->
+      
       <div class="sheet-ol" id="remitSheetOl" onclick="if(event.target===this)closeSheet('remitSheetOl')">
         <div class="sheet" style="max-height:92vh;">
           <div class="sh-hand"></div>
@@ -1469,7 +1469,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <button class="sh-close" onclick="closeSheet('remitSheetOl')"><i class="bi bi-x-lg"></i></button>
           </div>
           
-          <!-- Summary Cards Grid -->
+          
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 18px 12px;">
             <div style="background:#fff7ed; border:1px solid #ffedd5; border-radius:14px; padding:10px 12px; box-shadow:0 1px 3px rgba(234,88,12,0.05);">
               <div style="font-size:10px; font-weight:700; color:#c2410c; text-transform:uppercase; letter-spacing:0.3px;">This Month</div>
@@ -1489,16 +1489,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </div>
           </div>
 
-          <!-- Controls: Filters and Sorting -->
+          
           <div style="background:var(--bg-card); border-bottom:1.5px solid var(--border-col); padding:10px 18px 12px; flex-shrink:0;">
-            <!-- Filter Tabs -->
+            
             <div style="display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; padding-bottom:8px;">
               <div class="stab on" id="remit-tab-all" onclick="setRemitFilter('all')" style="padding:5px 12px; font-size:11px;">All</div>
               <div class="stab" id="remit-tab-paid" onclick="setRemitFilter('paid')" style="padding:5px 12px; font-size:11px;">Paid</div>
               <div class="stab" id="remit-tab-pending" onclick="setRemitFilter('pending')" style="padding:5px 12px; font-size:11px;">Pending</div>
               <div class="stab" id="remit-tab-overdue" onclick="setRemitFilter('overdue')" style="padding:5px 12px; font-size:11px;">Overdue</div>
             </div>
-            <!-- Sorting dropdown -->
+            
             <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
               <span style="font-size:11px; font-weight:700; color:var(--txt-muted);">Sort By:</span>
               <select class="fi" id="remitSort" onchange="loadAdminRemittances()" style="flex:1; padding:6px 10px; font-size:12px; height:auto; min-height:auto;">
@@ -1513,14 +1513,14 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </div>
           </div>
 
-          <!-- Remittance List -->
+          
           <div id="remitSheetBody" style="overflow-y:auto; flex:1; padding:12px 18px 24px;">
-            <!-- Loaded dynamically -->
+            
           </div>
         </div>
       </div>
 
-      <!-- Remittance Details Modal -->
+      
       <div class="sheet-ol" id="remitDetailOl" onclick="if(event.target===this)closeSheet('remitDetailOl')">
         <div class="sheet" style="max-height:85vh;">
           <div class="sh-hand"></div>
@@ -1533,12 +1533,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
           
           <div id="remitDetailBody" style="overflow-y:auto; flex:1; padding:0 4px 20px;">
-            <!-- Rendered dynamically -->
+            
           </div>
         </div>
       </div>
 
-      <!-- Remittance Approve Confirm Dialog -->
+      
       <div class="confirm-ol" id="remitApproveConfirmOl" onclick="if(event.target===this)closeRemitApproveConfirm()">
         <div class="confirm-card">
           <div class="confirm-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669;">
@@ -1556,7 +1556,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-      <!-- Remittance Reject Confirm Dialog -->
+      
       <div class="confirm-ol" id="remitRejectConfirmOl" onclick="if(event.target===this)closeRemitRejectConfirm()">
         <div class="confirm-card">
           <div class="confirm-icon" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;">
@@ -1577,7 +1577,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </div>
       </div>
 
-    </div><!-- /.shell -->
+    </div>
 
     <script>
 
@@ -1774,13 +1774,13 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       async function loadRevenue() {
         try {
-          // 1. Load summary metrics directly from Revenue Analytics
+          
           const summaryData = await api('revenue', 'summary');
           if (summaryData.success) {
             const formattedTotal = formatMetric(summaryData.total_revenue, true);
             const fullTotal = php(summaryData.total_revenue);
 
-            // Update Revenue Analytics screen elements
+            
             const totalRevVal = document.getElementById('total-revenue-val');
             if (totalRevVal) totalRevVal.textContent = formattedTotal;
 
@@ -1789,14 +1789,14 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             document.getElementById('today-revenue-val').textContent = formatMetric(summaryData.today_revenue, false);
             document.getElementById('pending-remittance-val').textContent = formatMetric(summaryData.pending_remittance, false);
 
-            // Keep Admin Overview Revenue in exact lockstep
+            
             const stRevEl = document.getElementById('st-revenue');
             if (stRevEl) stRevEl.textContent = formattedTotal;
             const revTotalEl = document.getElementById('revTotal');
             if (revTotalEl) revTotalEl.textContent = fullTotal;
 
 
-            // Populate Revenue Performance dynamically
+            
             const completedCount = parseInt(summaryData.completed_bookings) || 0;
             const avgRevenue = parseFloat(summaryData.avg_revenue_per_booking) || 0.00;
             const growthPct = parseFloat(summaryData.growth_pct) || 0.0;
@@ -1823,7 +1823,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               }
             }
 
-            // Populate Revenue Comparison dynamically
+            
             const thisMonthVal = parseFloat(summaryData.month_revenue) || 0.00;
             const lastMonthVal = parseFloat(summaryData.last_month_revenue) || 0.00;
 
@@ -1879,7 +1879,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             }
           }
 
-          // 2. Load chart data
+          
           const activeBtn = document.querySelector('#sc-revenue .rev-filter-btn.active');
           const activeFilter = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : 'daily';
           await fetchAndDrawChart(activeFilter);
@@ -2160,7 +2160,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             legend.innerHTML = '';
             Object.entries(bd).forEach(([st, cnt]) => {
               const pct = cnt / total; const dash = pct * circ;
-              const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+              const circle = document.createElementNS('http:
               circle.setAttribute('cx', '40'); circle.setAttribute('cy', '40'); circle.setAttribute('r', '30');
               circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', colors[st] || '#e5e7eb');
               circle.setAttribute('stroke-width', '12');
@@ -2172,7 +2172,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             });
           }
 
-          // Recent bookings
+          
           const rb = document.getElementById('recentBookings');
           const recent = s.recent_bookings || [];
           if (!recent.length) { rb.innerHTML = '<div class="empty-state"><i class="bi bi-calendar-x"></i><p>No bookings yet</p></div>'; return; }
@@ -2193,9 +2193,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       let lastBkQuery = '';
       let lastWkQuery = '';
       let lastUsQuery = '';
-      let _currentBk = null;   // currently viewed booking
-      let _allWorkers = [];     // worker cache for picker
-      let workerUiState = {};   // local pause/resume state (UI only)
+      let _currentBk = null;   
+      let _allWorkers = [];     
+      let workerUiState = {};   
 
       function buildPaginationMarkup(currentPage, totalPages, prevFn, nextFn) {
         if (totalPages <= 1) return '';
@@ -2419,7 +2419,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         else toast(data.message || 'Failed', 'e');
       }
 
-      // ── Worker Picker ──────────────────────────────────────────────────────────
+      
       let _pickerBookingId = null;
 
       async function openWorkerPicker(bookingId, mode) {
@@ -2667,10 +2667,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             renderWorkerDocuments(data.documents);
           })
           .catch(() => {
-            // Keep the fallback documents already rendered.
+            
           });
         
-        // Show action buttons for workers that have docs and are still awaiting review
+        
         const hasDocuments = !!(w.valid_id || w.selfie_verification || w.proof_of_address || w.barangay_clearance || w['tools_&_kits'] || w.gcash_qr || w.bank_qr);
         const verificationStatus = String(w.verification_status || '').toLowerCase().trim();
         const reviewableStatuses = ['pending', 'pending_review', 'submitted', 'partial', 'approval_ready', 'not_verified', 'not_submitted'];
@@ -3015,7 +3015,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         return m[svc] || '🏠';
       }
 
-      // ── Admin Notifications ─────────────────────────────────────────────────
+      
       let _adminNotifInterval = null;
 
       async function loadAdminNotifCount() {
@@ -3024,7 +3024,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           if (data.success) {
             updateNotifBadge(data.unread_count);
           }
-        } catch (e) { /* silent */ }
+        } catch (e) {  }
       }
 
       function updateNotifBadge(count) {
@@ -3086,7 +3086,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           const timeAgo = getTimeAgo(n.created_at);
           const unreadClass = n.is_read == 0 ? 'unread' : '';
 
-          // Provider info for verification notifications
+          
           let providerTag = '';
           if (isVerif && n.provider_name) {
             const verified = n.is_verified == 1;
@@ -3178,11 +3178,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         }, 800);
         loadOverview();
         loadAdminNotifCount();
-        // Poll for new notifications every 30 seconds
+        
         _adminNotifInterval = setInterval(loadAdminNotifCount, 30000);
       })();
 
-      // ── Manage Reviews ───────────────────────────────────────────────────────
+      
       async function openReviewSheet() {
         document.getElementById('reviewSheetBody').innerHTML = '<div class="empty-state"><p><i class="bi bi-arrow-clockwise" style="animation:w-spin .9s linear infinite; display:inline-block;"></i> Loading reviews...</p></div>';
         openSheet('reviewSheetOl');
@@ -3210,13 +3210,13 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           return;
         }
 
-        // Summary stats
+        
         const total = reviews.length;
         const avgRating = (reviews.reduce((s, r) => s + parseInt(r.rating), 0) / total).toFixed(1);
         const dist = [5,4,3,2,1].map(n => ({ n, cnt: reviews.filter(r => parseInt(r.rating) === n).length }));
         const maxDist = Math.max(...dist.map(d => d.cnt), 1);
 
-        // Active filter state
+        
         const activeFilter = body.dataset.filter || 'all';
         let filtered = reviews;
         if (activeFilter !== 'all') filtered = reviews.filter(r => parseInt(r.rating) === parseInt(activeFilter));
@@ -3243,7 +3243,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             </div>
           </div>`;
 
-        // Filter tabs
+        
         const tabsHtml = `
           <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;">
             ${['all',5,4,3,2,1].map(f => {
@@ -3305,7 +3305,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         }
       }
 
-      // ── Image Preview Modal ──────────────────────────────────────────────────
+      
       let currentImageZoom = 1;
 
       function openImagePreview(imagePath, title) {
@@ -3314,10 +3314,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const container = document.getElementById('imagePreviewContainer');
         container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#ccc;"><i class="bi bi-hourglass-split" style="font-size:36px;opacity:0.5;animation:spin 1s linear infinite;"></i></div>';
         
-        // Use the image server endpoint to bypass .htaccess restrictions
+        
         const imageUrl = `../api/image_serve.php?path=${encodeURIComponent(imagePath)}`;
         
-        // Verify file exists first using the verification endpoint
+        
         fetch(`../api/verify_document.php?path=${encodeURIComponent(imagePath)}`)
           .then(r => r.json())
           .then(data => {
@@ -3335,7 +3335,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               return;
             }
             
-            // File exists, now load it through the image server
+            
             const img = document.createElement('img');
             img.id = 'previewImage';
             img.className = 'preview-image';
@@ -3407,7 +3407,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         document.getElementById('zoomLevel').textContent = '100%';
       }
 
-      // ── Incident Logs ────────────────────────────────────────────────────────
+      
       let _incFilter = 'all';
       let _incidents = [];
 
@@ -3743,11 +3743,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     </script>
 
 
-<!-- ══════════════════════════════════════════════════════════════
-     QR CHANGE REQUESTS — ADMIN BOTTOM SHEET
-══════════════════════════════════════════════════════════════ -->
 
-<!-- Main sheet overlay -->
+
+
+
+
 <div class="sheet-ol" id="qrRequestsSheetOl" onclick="if(event.target===this)closeQrRequestsSheet()">
   <div class="sheet" style="max-height:94vh;">
     <div class="sh-hand"></div>
@@ -3772,7 +3772,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
   </div>
 </div>
 
-<!-- Approve confirm dialog -->
+
 <div class="confirm-ol" id="qrApproveConfirmOl" onclick="if(event.target===this)closeQrApproveConfirm()">
   <div class="confirm-card">
     <div class="confirm-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669;"><i class="bi bi-check-circle-fill"></i></div>
@@ -3785,7 +3785,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
   </div>
 </div>
 
-<!-- Reject confirm dialog -->
+
 <div class="confirm-ol" id="qrRejectConfirmOl" onclick="if(event.target===this)closeQrRejectConfirm()">
   <div class="confirm-card">
     <div class="confirm-icon"><i class="bi bi-x-circle-fill"></i></div>
@@ -3823,7 +3823,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 </style>
 
 <script>
-  // ── QR Change Requests — Admin ───────────────────────────────────────────
+  
   var _qrPendingId = null;
 
   function openQrRequestsSheet() {
@@ -3912,7 +3912,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     }).join('');
   }
 
-  // Approve flow
+  
   function openQrApproveConfirm(id) {
     _qrPendingId = id;
     document.getElementById('qrApproveConfirmOl').classList.add('on');
@@ -3943,7 +3943,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       .catch(() => { btn.disabled = false; btn.textContent = 'Approve'; toast('Network error.', 'e'); });
   }
 
-  // Reject flow
+  
   function openQrRejectConfirm(id) {
     _qrPendingId = id;
     document.getElementById('qrRejectRemarks').value = '';
@@ -3978,7 +3978,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       .catch(() => { btn.disabled = false; btn.textContent = 'Reject'; toast('Network error.', 'e'); });
   }
 
-  // Badge poll
+  
   function pollQrRequestCount() {
     fetch('../api/qr_change_api.php?action=pending_count', { cache: 'no-store' })
       .then(r => r.json())
@@ -3994,7 +3994,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
 
 
-  // Safe HTML escape
+  
   function qrEsc(str) {
     if (!str) return '';
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

@@ -463,7 +463,7 @@
       background: var(--bg-card);
     }
 
-/* ── Report an Issue Modal styles ── */
+
 .report-modal-ol {
   position: absolute;
   inset: 0;
@@ -695,7 +695,7 @@
   box-shadow: 0 10px 20px rgba(232, 130, 12, .32);
 }
 
-/* ── Report Success Modal styles ── */
+
 .report-success-ol {
   position: absolute;
   inset: 0;
@@ -780,4 +780,4 @@
   font-family: 'Poppins', sans-serif;
   cursor: pointer;
   box-shadow: 0 6px 14px rgba(232,130,12,0.28);
-}
+}

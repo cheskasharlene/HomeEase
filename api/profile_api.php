@@ -14,12 +14,12 @@ if (empty($_SESSION['user_id'])) { respond(false, 'Not logged in.'); }
 
 $uid = $_SESSION['user_id'];
 
-// Handle GET requests
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
     
     if ($action === 'get_notification_preference') {
-        // Ensure column exists
+        
         $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS push_notifications TINYINT(1) DEFAULT 1");
         
         $stmt = $conn->prepare("SELECT push_notifications FROM users WHERE id=?");

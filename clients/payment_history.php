@@ -163,10 +163,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         <div class="scroll">
             <div style="padding: 18px 16px 0;">
-                <!-- Statistics Section -->
+                
                 <div id="statsContainer" class="payment-stats" style="display:none;"></div>
                 
-                <!-- Payment List -->
+                
                 <div id="paymentListContainer">
                     <div class="empty-state">
                         <div class="empty-state-icon"><i class="bi bi-hourglass-split"></i></div>
@@ -248,10 +248,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
                     return;
                 }
 
-                // Load statistics
+                
                 await loadStatistics();
 
-                // Render payment list
+                
                 if (data.payments.length === 0) {
                     document.getElementById('paymentListContainer').innerHTML = `
                         <div class="empty-state">
@@ -339,7 +339,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
             }
         }
 
-        // Load payments on page load
+        
         document.addEventListener('DOMContentLoaded', loadPayments);
     </script>
 </body>

@@ -1,8 +1,8 @@
 <?php
-/**
- * Admin Verification Documents API
- * Manages document verification and approval for service providers
- */
+
+
+
+
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
@@ -11,7 +11,7 @@ error_reporting(0);
 require_once __DIR__ . '/db.php';
 ensureNormalizationSchema($conn);
 
-// Check if user is admin
+
 if (empty($_SESSION['admin_id']) && empty($_SESSION['is_admin'])) {
     http_response_code(401);
     respond(false, 'Unauthorized. Admin access required.');
@@ -19,9 +19,9 @@ if (empty($_SESSION['admin_id']) && empty($_SESSION['is_admin'])) {
 
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
-/**
- * GET: Retrieve all pending verification documents
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications') {
     $stmt = $conn->prepare(
         "SELECT 
@@ -77,9 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'pending_verifications')
     respond(true, '', ['providers' => array_values($providers)]);
 }
 
-/**
- * GET: Retrieve documents for a specific provider
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
     $provider_id = (int)($_GET['provider_id'] ?? 0);
     
@@ -129,9 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
     respond(true, '', ['documents' => $documents]);
 }
 
-/**
- * POST: Approve a document (document type for provider)
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_document') {
     $provider_id = (int)($_POST['provider_id'] ?? 0);
     $doc_type = $_POST['doc_type'] ?? '';
@@ -159,9 +159,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_document') {
     respond(true, 'Document approved');
 }
 
-/**
- * POST: Reject a document (clear the file path for a document type)
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
     $provider_id = (int)($_POST['provider_id'] ?? 0);
     $doc_type = $_POST['doc_type'] ?? '';
@@ -171,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
         respond(false, 'Provider ID and document type required');
     }
 
-    // Map document type to column
+    
     $column_map = [
         'valid_id' => 'valid_id',
         'barangay_clearance' => 'barangay_clearance',
@@ -187,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
         respond(false, 'Invalid document type');
     }
 
-    // Get current file path
+    
     $get_stmt = $conn->prepare("SELECT `" . $db_column . "` FROM service_providers WHERE provider_id = ?");
     $get_stmt->bind_param('i', $provider_id);
     $get_stmt->execute();
@@ -200,7 +200,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
 
     $file_path = $doc_result[$db_column];
     
-    // Delete file
+    
     if ($file_path) {
         $file_full_path = __DIR__ . '/../' . $file_path;
         if (file_exists($file_full_path)) {
@@ -208,13 +208,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
         }
     }
 
-    // Clear the document from database
+    
     $del_stmt = $conn->prepare("UPDATE service_providers SET `" . $db_column . "` = NULL WHERE provider_id = ?");
     $del_stmt->bind_param('i', $provider_id);
     $del_stmt->execute();
     $del_stmt->close();
 
-    // Update normalized document status to rejected
+    
     $normalizedType = ($doc_type === 'selfie') ? 'selfie_verification' : $doc_type;
     $docUpdate = $conn->prepare("UPDATE provider_documents SET verified_status='rejected', verified_at=NOW(), verification_notes=? WHERE provider_id=? AND document_type=?");
     if ($docUpdate) {
@@ -223,13 +223,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
         $docUpdate->close();
     }
 
-    // Update status to rejected
+    
     $status_stmt = $conn->prepare("UPDATE service_providers SET verification_status = 'rejected' WHERE provider_id = ?");
     $status_stmt->bind_param('i', $provider_id);
     $status_stmt->execute();
     $status_stmt->close();
 
-    // Add notification
+    
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         type VARCHAR(50) NOT NULL DEFAULT 'general',
@@ -260,9 +260,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_document') {
     respond(true, 'Document rejected and notification sent to provider');
 }
 
-/**
- * POST: Approve all documents for a provider
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
     $provider_id = (int)($_POST['provider_id'] ?? 0);
 
@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
         respond(false, 'Provider ID required');
     }
 
-    // Update service_providers verification status
+    
     $update_stmt = $conn->prepare(
         "UPDATE service_providers 
          SET is_verified = 1, verification_status = 'approved', verification_approved_at = NOW()
@@ -288,9 +288,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
     respond(true, 'Provider verified successfully');
 }
 
-/**
- * POST: Reject verification for a provider
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_provider') {
     $provider_id = (int)($_POST['provider_id'] ?? 0);
     $reason = trim($_POST['reason'] ?? 'No reason provided');
@@ -299,13 +299,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_provider') {
         respond(false, 'Provider ID required');
     }
 
-    // Ensure rejection_reason column exists
+    
     $chkCol = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'rejection_reason'");
     if ($chkCol && $chkCol->num_rows === 0) {
         @$conn->query("ALTER TABLE service_providers ADD COLUMN rejection_reason TEXT NULL");
     }
 
-    // Update service_providers verification status to rejected & set is_verified to 0
+    
     $update_stmt = $conn->prepare(
         "UPDATE service_providers 
          SET verification_status = 'rejected', rejection_reason = ?, is_verified = 0, verification_approved_at = NULL
@@ -322,7 +322,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_provider') {
     }
     $update_stmt->close();
 
-    // Also update normalized provider_documents table
+    
     $docUpdate = $conn->prepare("UPDATE provider_documents SET verified_status='rejected', verified_at=NOW(), verification_notes=? WHERE provider_id=?");
     if ($docUpdate) {
         $docUpdate->bind_param('si', $reason, $provider_id);
@@ -330,15 +330,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'reject_provider') {
         $docUpdate->close();
     }
 
-    // Send notification to worker
+    
     sendProviderNotification($conn, $provider_id, 'verification_rejected', 'Verification Rejected', 'Your document verification was rejected. Reason: ' . $reason, 'bi-x-circle', $provider_id);
 
     respond(true, 'Provider verification rejected');
 }
 
-/**
- * GET: Get verification statistics
- */
+
+
+
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'statistics') {
     $pending_stmt = $conn->prepare(
         "SELECT COUNT(DISTINCT provider_id) as count FROM service_providers WHERE verification_status IN ('submitted', 'partial')"

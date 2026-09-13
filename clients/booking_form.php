@@ -17,15 +17,15 @@ if ($row) {
   $_SESSION['user_address'] = $row['address'] ?? '';
 }
 
-// Check if service is pre-selected
+
 $serviceName = isset($_GET['svc']) ? trim($_GET['svc']) : '';
 if (!$serviceName) {
-  // No service selected, redirect to service selection
+  
   header('Location: service_selection.php');
   exit;
 }
 
-// Location confirmed by location_picker.php
+
 $preselectedLat  = isset($_GET['lat'])  ? (float)$_GET['lat']  : '';
 $preselectedLng  = isset($_GET['lng'])  ? (float)$_GET['lng']  : '';
 $preselectedAddr = isset($_GET['addr']) ? trim($_GET['addr'])  : '';
@@ -107,13 +107,13 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
             <input class="fi" type="text" id="uAddress" placeholder="Your address" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
           </div>
           <p style="font-size:10.5px;color:#94a3b8;margin:6px 0 0 0;font-weight:600;line-height:1.4;"><i class="bi bi-info-circle-fill" style="margin-right:3px;"></i>Locked to profile data. To update, go to <a href="profile.php" style="color:#E8820C;text-decoration:underline;font-weight:700;">Profile Settings</a>.</p>
-          <!-- Hidden GPS coords + pre-confirmed address from location picker -->
+          
           <input type="hidden" id="customerLat" value="<?= htmlspecialchars($preselectedLat) ?>">
           <input type="hidden" id="customerLng" value="<?= htmlspecialchars($preselectedLng) ?>">
           <input type="hidden" id="detectedAddress" value="<?= htmlspecialchars($preselectedAddr) ?>">
         </div>
 
-        <!-- GPS Location Display Card -->
+        
         <div class="fg" style="margin-bottom:14px;">
           <label class="fl" style="font-family:'Poppins',sans-serif;font-size:13px;">📍 Service Location <span style="color:#ef4444;">*</span></label>
           <div id="gpsCard" style="display:flex;align-items:center;gap:12px;padding:13px 14px;background:linear-gradient(135deg,#FFF8F0,#FFF3E0);border:1.5px solid #FFE0B2;border-radius:14px;">
@@ -127,7 +127,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           </div>
         </div>
 
-        <!-- Dynamic service-specific fields -->
+        
         <div id="serviceSpecificFields"></div>
 
         <div class="fg" id="pricingSection" style="display:none;">
@@ -157,7 +157,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           <span class="pp-val" id="ppValLegacy">₱0</span>
         </div>
 
-        <!-- Real-time notice -->
+        
         <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:14px;border:1.5px solid #6EE7B7;margin-bottom:4px;">
           <i class="bi bi-lightning-charge-fill" style="color:#059669;font-size:18px;"></i>
           <div>
@@ -175,7 +175,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           <input class="fi" type="text" id="bNotes" placeholder="Any special instructions?">  
         </div>
 
-        <!-- Payment Method Section -->
+        
         <div class="fg">
           <label class="fl">Payment Method <span style="color:#ef4444;">*</span></label>
           <div class="payment-options">
@@ -213,7 +213,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           <div class="payment-error" id="paymentError"></div>
         </div>
 
-        <!-- GCash Payment Section (Hidden by default) -->
+        
         <div class="fg" id="gcashSection" style="display:none;">
           <label class="fl">GCash Number <span style="color:#ef4444;">*</span></label>
           <div class="gcash-input-wrapper">
@@ -236,7 +236,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           </div>
         </div>
 
-        <!-- Bank Transfer Payment Section (Hidden by default) -->
+        
         <div class="fg" id="bankSection" style="display:none;">
           <label class="fl">Account Number <span style="color:#ef4444;">*</span></label>
           <div class="bank-input-wrapper">

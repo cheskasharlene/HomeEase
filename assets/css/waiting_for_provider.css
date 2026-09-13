@@ -1,6 +1,6 @@
-/* =============================================
-   HomeEase — Waiting for Provider (Angkas-style)
-   ============================================= */
+
+
+
 
 * {
   box-sizing: border-box;
@@ -14,7 +14,7 @@ body {
   overflow: hidden;
   height: 100dvh;
   height: 100svh;
-  /* safe viewport — avoids browser chrome overlap */
+  
 }
 
 .wfp-shell {
@@ -31,7 +31,7 @@ body {
 
 
 
-/* ---- TOP BAR ---- */
+
 .wfp-topbar {
   position: absolute;
   top: 0;
@@ -80,7 +80,7 @@ body {
   letter-spacing: 0.2px;
 }
 
-/* ---- MAP ---- */
+
 #wfpMap {
   position: absolute;
   inset: 0;
@@ -89,7 +89,7 @@ body {
   height: 100%;
 }
 
-/* ---- RECENTER BUTTON ---- */
+
 .wfp-recenter {
   position: absolute;
   bottom: calc(var(--sheet-h, 260px) + 16px);
@@ -114,7 +114,7 @@ body {
   transform: scale(0.9);
 }
 
-/* ---- BOTTOM SHEET ---- */
+
 .wfp-sheet {
   position: absolute;
   bottom: 0;
@@ -128,11 +128,11 @@ body {
   max-height: 80dvh;
   display: flex;
   flex-direction: column;
-  /* Collapsed by default — translateY is set by JS */
+  
   will-change: transform;
 }
 
-/* Collapsed state: only the handle + peek of status banner visible */
+
 .wfp-sheet.collapsed {
   transform: translateY(calc(100% - 72px));
 }
@@ -144,7 +144,7 @@ body {
 .wfp-sheet-handle {
   width: 100%;
   padding: 14px 0 10px;
-  /* bigger tap/drag target */
+  
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,7 +166,7 @@ body {
   border-radius: 3px;
 }
 
-/* ---- STATUS BANNER ---- */
+
 .wfp-status-banner {
   background: linear-gradient(135deg, #E8820C, #F5A623);
   padding: 14px 20px;
@@ -196,7 +196,7 @@ body {
   font-weight: 900;
 }
 
-/* Searching dots animation */
+
 .wfp-dots span {
   display: inline-block;
   animation: wfpBounce 1.4s infinite ease-in-out;
@@ -226,7 +226,7 @@ body {
   }
 }
 
-/* Pulsing ring for searching state */
+
 .wfp-search-ring {
   width: 28px;
   height: 28px;
@@ -243,7 +243,7 @@ body {
   }
 }
 
-/* ---- PROVIDER CARD ---- */
+
 .wfp-provider-card {
   margin: 0 14px 14px;
   background: #fff;
@@ -347,7 +347,7 @@ body {
   box-shadow: none;
 }
 
-/* ---- BOTTOM PRICE BAR ---- */
+
 .wfp-price-bar {
   display: flex;
   align-items: center;
@@ -394,7 +394,7 @@ body {
   font-family: 'Poppins', sans-serif;
 }
 
-/* ---- CANCEL BUTTON ---- */
+
 .wfp-cancel-wrap {
   padding: 0 14px 8px;
 }
@@ -425,7 +425,7 @@ body {
   font-size: 15px;
 }
 
-/* ---- ACCEPTED STATE BANNER ---- */
+
 .wfp-status-banner.accepted {
   background: linear-gradient(135deg, #059669, #10b981);
 }
@@ -434,14 +434,14 @@ body {
   background: linear-gradient(135deg, #1d4ed8, #3b82f6);
 }
 
-/* ---- SEARCHING OVERLAY ON MAP ---- */
+
 .wfp-radar {
   position: absolute;
   z-index: 50;
   pointer-events: none;
 }
 
-/* ---- Map Custom Markers ---- */
+
 .wfp-marker-customer {
   width: 30px;
   height: 30px;
@@ -490,7 +490,7 @@ body {
   }
 }
 
-/* ---- EMPTY / ERROR STATE ---- */
+
 .wfp-error-state {
   padding: 24px 20px;
   text-align: center;
@@ -514,7 +514,7 @@ body {
   margin-top: 6px;
 }
 
-/* ---- Tips carousel ---- */
+
 .wfp-tips {
   margin: 0 14px 14px;
   display: flex;
@@ -566,26 +566,26 @@ body {
   line-height: 1.4;
 }
 
-/* ---- Sheet scroll area ---- */
+
 .wfp-sheet-body {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* iOS momentum scroll */
+  
   touch-action: pan-y;
-  /* allow vertical touch scroll */
+  
   overscroll-behavior: contain;
-  /* stop scroll leaking to map */
+  
   padding-bottom: 8px;
   min-height: 0;
-  /* needed for flex child to scroll */
+  
 }
 
 .wfp-sheet-body::-webkit-scrollbar {
   display: none;
 }
 
-/* Leaflet overrides */
+
 .leaflet-control-attribution {
   font-size: 9px !important;
   opacity: 0.6;
@@ -595,7 +595,7 @@ body {
   display: none !important;
 }
 
-/* ---- TOP BAR CENTER & GPS STATUS ---- */
+
 .wfp-topbar-center {
   flex: 1;
   display: flex;
@@ -650,7 +650,7 @@ body {
   border: 1.5px solid #6EE7B7;
 }
 
-/* ---- CONFIRM OVERLAYS / MODALS ---- */
+
 body.modal-open {
   overflow: hidden;
 }
@@ -810,7 +810,7 @@ body.modal-open {
 }
 
 
-/* ---- Dark mode support ---- */
+
 @media (prefers-color-scheme: dark) {
   .wfp-sheet {
     background: #1A1A2E;

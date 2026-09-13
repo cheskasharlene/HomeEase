@@ -1,6 +1,6 @@
 <?php
-// Simulate a POST login request and capture raw output
-// DELETE THIS FILE AFTER DEBUGGING
+
+
 
 $url = 'http://localhost/homeease/api/login.php';
 $data = json_encode(['email' => 'test@gmail.com', 'password' => '12345678']);
@@ -10,7 +10,7 @@ curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HEADER, true); // include response headers
+curl_setopt($ch, CURLOPT_HEADER, true); 
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -27,7 +27,7 @@ echo bin2hex(substr($body, 0, 200)) . "\n\n";
 echo "=== RAW BODY (text) ===\n";
 echo htmlspecialchars($body) . "\n";
 
-// Check if valid JSON
+
 $decoded = json_decode($body, true);
 echo "\n=== JSON DECODE ===\n";
 if ($decoded === null) {

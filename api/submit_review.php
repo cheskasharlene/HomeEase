@@ -1,18 +1,18 @@
 <?php
-/**
- * submit_review.php — Client Review & Rating Submission
- * -------------------------------------------------------
- * Accepts POST with: booking_id, provider_id, rating (1–5), comment (optional)
- * Returns JSON { "success": true/false, "message": "..." }
- */
+
+
+
+
+
+
 
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 ini_set('display_errors', 0);
 error_reporting(0);
 
-// ── 1. AUTHENTICATION CHECK ──────────────────────────────────────────────────
-// Only logged-in clients may submit reviews.
+
+
 if (empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorised. Please log in.']);
     exit;
@@ -23,14 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// ── 2. INPUT SANITISATION ────────────────────────────────────────────────────
+
 $userId     = (int) $_SESSION['user_id'];
 $bookingId  = (int) ($_POST['booking_id']  ?? 0);
 $providerId = (int) ($_POST['provider_id'] ?? 0);
 $rating     = (int) ($_POST['rating']      ?? 0);
 $comment    = trim($_POST['comment'] ?? '');
 
-// Basic format validation — DB constraints will catch the rest.
+
 if ($bookingId <= 0 || $providerId <= 0) {
     echo json_encode(['success' => false, 'message' => 'Invalid booking or provider ID.']);
     exit;
@@ -40,12 +40,12 @@ if ($rating < 1 || $rating > 5) {
     exit;
 }
 
-// Sanitise comment: allow empty (nullable), strip harmful tags.
+
 $comment = $comment !== '' ? htmlspecialchars_decode(strip_tags($comment)) : null;
 
-// ── 3. PDO DATABASE CONNECTION ───────────────────────────────────────────────
-// Re-use the same credentials already defined in db.php without
-// importing the whole file (which creates a MySQLi $conn we don't need).
+
+
+
 $dbHost = getenv('DB_HOST') ?: 'localhost';
 $dbName = getenv('DB_NAME') ?: 'homease_db';
 $dbUser = getenv('DB_USER') ?: 'root';
@@ -59,7 +59,7 @@ try {
         [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false, // Force native prepared statements
+            PDO::ATTR_EMULATE_PREPARES   => false, 
         ]
     );
 } catch (PDOException $e) {
@@ -67,11 +67,11 @@ try {
     exit;
 }
 
-// ── 4. BOOKING OWNERSHIP & COMPLETION VERIFICATION ──────────────────────────
-// Confirm that:
-//   (a) The booking exists and belongs to THIS client (user_id = $userId).
-//   (b) The booking's provider matches the submitted provider_id (prevents spoofing).
-//   (c) The booking has a completed/done status — you can't review a pending job.
+
+
+
+
+
 try {
     $stmt = $pdo->prepare("
         SELECT id, status, provider_id
@@ -88,26 +88,26 @@ try {
 }
 
 if (!$booking) {
-    // Either the booking doesn't exist or it belongs to another user.
+    
     echo json_encode(['success' => false, 'message' => 'Booking not found or access denied.']);
     exit;
 }
 
-// Confirm the provider_id the client submitted matches what's on the booking.
+
 if ((int) $booking['provider_id'] !== $providerId) {
     echo json_encode(['success' => false, 'message' => 'Provider mismatch for this booking.']);
     exit;
 }
 
-// Only allow reviews for completed bookings.
+
 $status = strtolower(trim($booking['status']));
 if (!in_array($status, ['completed', 'done'], true)) {
     echo json_encode(['success' => false, 'message' => 'You can only review a completed booking.']);
     exit;
 }
 
-// ── 5. INSERT / UPDATE REVIEW ────────────────────────────────────────────────
-// Supports both fresh review submissions and edits via ON DUPLICATE KEY UPDATE.
+
+
 try {
     $insertStmt = $pdo->prepare("
         INSERT INTO provider_reviews
@@ -131,9 +131,9 @@ try {
     exit;
 }
 
-// ── 7. UPDATE CACHED PROVIDER RATING ─────────────────────────────────────────
-// Recalculate the provider's average rating from all their reviews and store
-// it back on service_providers so listing pages don't need an expensive JOIN.
+
+
+
 try {
     $ratingStmt = $pdo->prepare("
         UPDATE service_providers
@@ -149,11 +149,11 @@ try {
         ':provider_id2' => $providerId,
     ]);
 } catch (PDOException $e) {
-    // Non-critical: the review is already saved; just log silently.
+    
     error_log('submit_review.php: Failed to update cached rating for provider ' . $providerId);
 }
 
-// ── 8. SUCCESS RESPONSE ──────────────────────────────────────────────────────
+
 echo json_encode([
     'success' => true,
     'message' => 'Review submitted successfully! Thank you for your feedback.',

@@ -120,7 +120,7 @@
       padding: 0;
     }
 
-    /* Fix: #home screen must fill width and align to top */
+    
     #home {
       align-items: stretch;
       justify-content: flex-start;
@@ -138,7 +138,7 @@
       display: none;
     }
 
-    /* HEADER */
+    
     .h-hdr {
       background: linear-gradient(135deg, #E8820C 0%, #F5A623 35%, #FFB347 65%, #FDECC8 100%) !important;
       border-radius: 0 0 28px 28px !important;
@@ -285,7 +285,7 @@
       transform: scale(1.1);
     }
 
-    /* SECTION HEADERS */
+    
     .sec-row {
       display: flex;
       align-items: center;
@@ -318,7 +318,7 @@
       cursor: pointer;
     }
 
-    /* ─── AD-STYLE SERVICE CARDS ──────────────────────────────────────────── */
+    
     .svc-ads-scroll {
       display: flex;
       gap: 14px;
@@ -352,12 +352,12 @@
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
 
-    /* Layered background + pattern */
+    
     .sac-bg {
       position: absolute;
       inset: 0;
       z-index: 0;
-      /* make gradient partially transparent so photo shows through */
+      
       opacity: 0.78;
     }
     .sac-img {
@@ -469,7 +469,7 @@
     }
     .sac-tap i { font-size: 10px; }
 
-    /* ─── SERVICE DETAIL OVERLAY & PANEL ──────────────────────────────────── */
+    
     .svc-detail-overlay {
       position: fixed;
       inset: 0;
@@ -632,8 +632,8 @@
     .sdp-book-btn:active { transform: scale(.97); }
     .sdp-book-btn i { font-size: 18px; }
 
-    /* ─── UPGRADED AD CARD LAYOUT ─────────────────────────────────────────── */
-    /* Make cards wider and more banner-like */
+    
+    
     .svc-ad-card {
       min-width: 260px !important;
       height: 220px !important;
@@ -700,8 +700,8 @@
     }
     .sac-cta i { font-size: 11px; }
 
-    /* ─── UPGRADED DETAIL PANEL ────────────────────────────────────────────── */
-    /* Hero gradient header */
+    
+    
     .sdp-hero {
       display: flex;
       align-items: center;
@@ -780,12 +780,12 @@
       line-height: 1.1;
     }
 
-    /* Stats row */
+    
     .sdp-stats {
       display: none !important;
     }
 
-    /* Price chips */
+    
     .sdp-chips {
       display: flex;
       flex-wrap: wrap;
@@ -812,7 +812,7 @@
       padding: 0 4px;
     }
 
-    /* Section labels */
+    
     .sdp-section-lbl {
       font-family: 'Poppins', sans-serif;
       font-size: 13px;
@@ -823,7 +823,7 @@
       margin-top: 4px;
     }
 
-    /* Description */
+    
     .sdp-desc {
       font-family: 'Nunito', sans-serif;
       font-size: 14px;
@@ -832,7 +832,7 @@
       margin-bottom: 18px;
     }
 
-    /* Features checklist */
+    
     .sdp-features {
       display: flex;
       flex-direction: column;
@@ -850,7 +850,7 @@
     }
     .sdp-feat-item i { font-size: 15px; flex-shrink: 0; }
 
-    /* How it works steps */
+    
     .sdp-steps {
       display: flex;
       flex-direction: column;
@@ -884,7 +884,7 @@
       line-height: 1.3;
     }
 
-    /* Highlights grid */
+    
     .sdp-highlights {
       display: flex;
       flex-direction: column;
@@ -911,7 +911,7 @@
       flex-shrink: 0;
     }
 
-    /* Guarantee banner */
+    
     .sdp-guarantee {
       display: flex;
       align-items: flex-start;
@@ -928,7 +928,7 @@
     }
     .sdp-guarantee i { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
 
-    /* Dark mode overrides for new elements */
+    
     body.dark .svc-detail-panel { background: #201A10; }
     body.dark .sdp-feat-item { color: #FFF3DC; }
     body.dark .sdp-title { color: #fff; }
@@ -937,7 +937,7 @@
     body.dark .sdp-section-lbl { color: #FFF3DC; }
     body.dark .sdp-guarantee { color: #EBCB93; }
 
-    /* ─── TRUSTED PROS — PORTRAIT CARDS (horizontal scroll) ─────────────── */
+    
     .pro-row {
       display: flex;
       flex-direction: row;
@@ -949,7 +949,7 @@
     }
     .pro-row::-webkit-scrollbar { display: none; }
 
-    /* Portrait card shell */
+    
     .pro-portrait-card {
       flex-shrink: 0;
       width: 158px;
@@ -977,7 +977,7 @@
     }
     .pro-portrait-card:active { transform: translateY(-3px) scale(.97); }
 
-    /* Full-bleed cover photo header */
+    
     .ppc-header {
       position: relative;
       height: 148px;
@@ -986,7 +986,7 @@
       background: linear-gradient(135deg,#E8820C,#F5A623);
     }
 
-    /* Photo fills the entire header */
+    
     .ppc-cover {
       position: absolute;
       inset: 0;
@@ -997,7 +997,7 @@
       display: block;
     }
 
-    /* Initials fallback — shown via onerror */
+    
     .ppc-cover-initials {
       position: absolute;
       inset: 0;
@@ -1012,7 +1012,7 @@
       z-index: 1;
     }
 
-    /* Bottom gradient fade into card body */
+    
     .ppc-header-fade {
       position: absolute;
       bottom: 0; left: 0; right: 0;
@@ -1022,7 +1022,7 @@
       pointer-events: none;
     }
 
-    /* TOP PRO ribbon */
+    
     .ppc-top-badge {
       position: absolute;
       top: 8px; left: 8px;
@@ -1043,7 +1043,7 @@
     }
     .ppc-top-badge i { font-size: 8px; color: #FFD700; }
 
-    /* Verified tick — bottom-right corner of photo */
+    
     .ppc-verified-badge {
       position: absolute;
       bottom: 10px; right: 10px;
@@ -1058,7 +1058,7 @@
     }
     .ppc-verified-badge i { font-size: 15px; color: #10b981; }
 
-    /* Body below photo */
+    
     .ppc-body {
       padding: 12px 12px 14px;
       display: flex;
@@ -1123,7 +1123,7 @@
     .ppc-book:hover { transform: scale(1.05); box-shadow: 0 7px 18px rgba(0,0,0,.22); }
     .ppc-book:active { transform: scale(.95); }
 
-    /* Dark mode */
+    
     body.dark .pro-portrait-card { background: #2A2216; border-color: #4A3E28; }
     body.dark .ppc-name { color: #FFF3DC; }
     body.dark .ppc-avatar-ring { background: #2A2216; }
@@ -1160,7 +1160,7 @@
     }
     .pro-card:active { transform: scale(.98); }
 
-    /* Subtle left accent stripe */
+    
     .pro-card::before {
       content: '';
       position: absolute;
@@ -1170,7 +1170,7 @@
       border-radius: 0 4px 4px 0;
     }
 
-    /* TOP PRO ribbon */
+    
     .pro-top-badge {
       position: absolute;
       top: 10px; right: 10px;
@@ -1189,7 +1189,7 @@
     }
     .pro-top-badge i { font-size: 9px; }
 
-    /* Avatar with gradient ring */
+    
     .pro-avatar-wrap {
       width: 62px;
       height: 62px;
@@ -1224,7 +1224,7 @@
       text-shadow: 0 1px 4px rgba(0,0,0,.2);
     }
 
-    /* Info section */
+    
     .pro-info {
       flex: 1;
       min-width: 0;
@@ -1295,7 +1295,7 @@
     }
     .pro-jobs i { font-size: 10px; color: #F5A623; }
 
-    /* Book button */
+    
     .pro-book-btn {
       flex-shrink: 0;
       border: none;
@@ -1317,11 +1317,11 @@
     .pro-book-btn:active { transform: scale(.95); }
     .pro-book-btn i { font-size: 12px; }
 
-    /* Dark mode */
+    
     body.dark .pro-card { background: #2A2216; border-color: #4A3E28; }
     body.dark .pro-name { color: #FFF3DC; }
 
-    /* SERVICES GRID (kept for fallback) */
+    
     .svc-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -1440,7 +1440,7 @@
       opacity: .8;
     }
 
-    /* Per-service color themes */
+    
     .svc-card[data-svc="cleaning"]    { --svc-accent: linear-gradient(135deg, #38BDF8, #0EA5E9); --svc-border: #BAE6FD; }
     .svc-card[data-svc="House Cleaner"]    { --svc-accent: linear-gradient(135deg, #38BDF8, #0EA5E9); --svc-border: #BAE6FD; }
     .svc-card[data-svc="plumbing"]    { --svc-accent: linear-gradient(135deg, #818CF8, #6366F1); --svc-border: #C7D2FE; }
@@ -1773,7 +1773,7 @@
       cursor: pointer;
     }
 
-    /* Regular tip – horizontal layout */
+    
     .tip-item {
       background: var(--card);
       border-radius: 16px;
@@ -1982,11 +1982,11 @@
       height: 8px;
     }
 
-    /* ═══════════════════════════════════════════
-       MOBILE RESPONSIVE IMPROVEMENTS
-    ═══════════════════════════════════════════ */
+    
 
-    /* Animation improvements */
+
+
+    
     @media (prefers-reduced-motion: reduce) {
       * {
         animation-duration: 0.01ms !important;
@@ -1995,7 +1995,7 @@
       }
     }
 
-    /* Small screens (< 360px) */
+    
     @media (max-width: 359px) {
       :root {
         --page-gutter: 12px;
@@ -2109,7 +2109,7 @@
       }
     }
 
-    /* Medium screens (360px - 420px) */
+    
     @media (max-width: 420px) {
       .svc-card:hover {
         transform: translateY(-4px) scale(1.01) !important;
@@ -2124,7 +2124,7 @@
       }
     }
 
-    /* Large screens (> 420px) */
+    
     @media (min-width: 768px) {
       .h-scroll {
         max-width: 600px !important;
@@ -2136,7 +2136,7 @@
       }
     }
 
-    /* Landscape mode optimization */
+    
     @media (max-height: 500px) and (orientation: landscape) {
       .h-hdr {
         padding: 36px 20px 18px !important;
@@ -2160,16 +2160,16 @@
       }
     }
 
-    /* ═══════════════════════════════════════════
-       ADDITIONAL UI ENHANCEMENTS
-    ═══════════════════════════════════════════ */
+    
 
-    /* Scroll behavior improvement */
+
+
+    
     .h-scroll {
       scroll-behavior: smooth;
     }
 
-    /* Touch target optimization (minimum 44x44px for accessibility) */
+    
     .ni {
       min-height: 44px !important;
       justify-content: center !important;
@@ -2181,7 +2181,7 @@
       min-height: 44px !important;
     }
 
-    /* Better focus states for keyboard navigation */
+    
     .svc-card:focus-visible,
     .pop-card:focus-visible,
     .worker-card:focus-visible,
@@ -2191,7 +2191,7 @@
       outline-offset: 2px;
     }
 
-    /* Loading animation for content */
+    
     @keyframes shimmer {
       0% {
         background-position: -1000px 0;
@@ -2207,7 +2207,7 @@
       animation: shimmer 2s infinite;
     }
 
-    /* Improved scrollbar (webkit browsers) */
+    
     .h-scroll::-webkit-scrollbar {
       width: 6px;
     }
@@ -2225,7 +2225,7 @@
       background: rgba(245, 166, 35, 0.6);
     }
 
-    /* Better text rendering */
+    
     .h-name,
     .sec-ttl,
     .svc-nm,
@@ -2375,7 +2375,7 @@
       color: #EBCB93;
     }
 
-    /* ─── Our Services Grid Layout (2-Column Grid matching reference) ─── */
+    
     .svc-ads-grid {
       display: grid !important;
       grid-template-columns: repeat(2, 1fr) !important;
@@ -2521,7 +2521,7 @@
       opacity: 0.85 !important;
     }
 
-    /* Redesign CTA button into a clean circular arrow button */
+    
     .svc-ads-grid .sac-cta {
       background: rgba(255, 255, 255, 0.25) !important;
       backdrop-filter: blur(4px) !important;
@@ -2542,7 +2542,7 @@
     }
 
     .svc-ads-grid .sac-cta::after {
-      content: "\F138" !important; /* bi-arrow-right */
+      content: "\F138" !important; 
       font-family: "bootstrap-icons" !important;
       font-size: 11px !important;
       font-weight: 800 !important;
@@ -2553,7 +2553,7 @@
       display: none !important;
     }
 
-    /* Worker ads remain completely visually static on hover and click */
+    
     .svc-ad-card:hover,
     .svc-ad-card:active,
     .svc-ads-grid .svc-ad-card:hover,

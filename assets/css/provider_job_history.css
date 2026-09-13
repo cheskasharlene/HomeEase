@@ -278,7 +278,7 @@ body {
     .h-pb {
       height: 90px;
     }
-    /* DARK MODE */
+    
     body.dark { background: #0f0f14; }
     body.dark .screen { background: #14141c; }
     body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }

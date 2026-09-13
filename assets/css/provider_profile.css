@@ -1,6 +1,6 @@
-/* ── Provider Profile Page CSS ── */
 
-/* Screen fix */
+
+
 .screen {
   display: none !important;
   position: absolute;
@@ -19,7 +19,7 @@
   justify-content: flex-start;
 }
 
-/* Profile main scroll */
+
 .p-scroll {
   flex: 1;
   overflow-y: auto;
@@ -31,7 +31,7 @@
   display: none;
 }
 
-/* Profile header */
+
 .p-hdr {
   background: linear-gradient(145deg, #C86500 0%, #E8820C 25%, #F5A623 60%, #FFB347 100%);
   padding: 52px 22px 20px;
@@ -226,7 +226,7 @@
   pointer-events: none;
 }
 
-/* Stats bar */
+
 .p-stats {
   display: flex;
   align-items: stretch;
@@ -298,7 +298,7 @@ body.pending .p-status-row {
   letter-spacing: 0.3px;
 }
 
-/* Profile body */
+
 .p-body {
   padding: 18px 18px 0;
 }
@@ -317,7 +317,7 @@ body.pending .p-status-row {
   padding-left: 4px;
 }
 
-/* Profile rows */
+
 .p-row {
   display: flex !important;
   align-items: center !important;
@@ -342,7 +342,7 @@ body.pending .p-status-row {
   transform: scale(0.98);
 }
 
-/* Row icon container - constrains SVG size */
+
 .p-row-ic {
   width: 44px !important;
   height: 44px !important;
@@ -388,7 +388,7 @@ body.pending .p-status-row {
   flex-shrink: 0;
 }
 
-/* ── Settings Screen ── */
+
 #settingsScreen {
   position: absolute;
   inset: 0;
@@ -1048,7 +1048,7 @@ body.pending .p-status-row {
   box-shadow: 0 8px 16px rgba(232, 130, 12, .28);
 }
 
-/* ── Bottom Nav ── */
+
 .bnav {
   position: absolute;
   bottom: 0;
@@ -1089,7 +1089,7 @@ body.pending .p-status-row {
   font-weight: 700;
 }
 
-/* ── Loading Splash ── */
+
 #ml {
   position: absolute;
   inset: 0;
@@ -1177,7 +1177,7 @@ body.pending .p-status-row {
   }
 }
 
-/* ── Dark mode overrides ── */
+
 body.dark .p-stats {
   background: var(--bg-card);
   border-color: var(--border-col);
@@ -1216,7 +1216,7 @@ body.dark .bnav {
   display:none;
 }
 
-/* ── Modals (Help Center & Terms and Conditions) ── */
+
 .modal-overlay {
   display: none;
   position: fixed;
@@ -1265,7 +1265,7 @@ body.dark .bnav {
   }
 }
 
-/* Dark mode support for modals */
+
 body.dark .modal-card {
   background: var(--bg-card, #1e293b) !important;
   border-color: var(--border-col, #334155) !important;

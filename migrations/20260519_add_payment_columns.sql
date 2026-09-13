@@ -1,5 +1,5 @@
--- Migration: add payment receiver and expected fields
--- Run in MySQL: source migrations/20260519_add_payment_columns.sql
+
+
 
 CREATE TABLE IF NOT EXISTS payments (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -32,6 +32,6 @@ CREATE TABLE IF NOT EXISTS disputes (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Extend booking status for online payment flow
+
 ALTER TABLE bookings
   MODIFY COLUMN status ENUM('pending','awaiting_payment','progress','done','cancelled') NOT NULL DEFAULT 'pending';

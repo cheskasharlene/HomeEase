@@ -49,9 +49,9 @@ if ($appBase === '') {
   <link href="<?= htmlspecialchars(rtrim($appBase, '/')) ?>/assets/css/main.css?v=<?= time() ?>" rel="stylesheet">
   <link href="<?= htmlspecialchars(rtrim($appBase, '/')) ?>/assets/css/profile.css?v=<?= time() ?>" rel="stylesheet">
   <style>
-    /* ── Profile Page Critical CSS ── */
+    
 
-    /* Screen fix - hide all screens but show the profile screen (only one on this page) */
+    
     .screen {
       display: none !important;
       position: absolute;
@@ -63,7 +63,7 @@ if ($appBase === '') {
       justify-content: flex-start !important;
     }
 
-    /* Profile screen layout */
+    
     #profile {
       display: flex !important;
       flex-direction: column;
@@ -73,7 +73,7 @@ if ($appBase === '') {
       inset: 0;
     }
 
-    /* Profile main scroll - ensure it doesn't overlap navbar */
+    
     .p-scroll {
       flex: 1;
       overflow-y: auto;
@@ -88,7 +88,7 @@ if ($appBase === '') {
       display: none;
     }
 
-    /* Profile header */
+    
     .p-hdr {
       background: linear-gradient(145deg, #C86500 0%, #E8820C 25%, #F5A623 60%, #FFB347 100%);
       padding: 52px 22px 24px;
@@ -212,7 +212,7 @@ if ($appBase === '') {
       color: #fff;
     }
 
-    /* Profile body */
+    
     .p-body {
       padding: 18px 18px 0;
     }
@@ -231,7 +231,7 @@ if ($appBase === '') {
       padding-left: 4px;
     }
 
-    /* Profile rows */
+    
     .p-row {
       display: flex !important;
       align-items: center !important;
@@ -256,7 +256,7 @@ if ($appBase === '') {
       transform: scale(0.98);
     }
 
-    /* Row icon container - CRITICAL: constrains SVG size */
+    
     .p-row-ic {
       width: 44px !important;
       height: 44px !important;
@@ -302,7 +302,7 @@ if ($appBase === '') {
       flex-shrink: 0;
     }
 
-    /* Form styles (inside subSheet) */
+    
     .s-fg {
       margin-bottom: 14px;
     }
@@ -360,7 +360,7 @@ if ($appBase === '') {
       margin-top: 8px;
     }
 
-    /* Loading splash */
+    
     #ml {
       position: absolute;
       inset: 0;
@@ -457,7 +457,7 @@ if ($appBase === '') {
       }
     }
 
-    /* Contact Support Modal Styles */
+    
     .contact-card {
       border: 1.5px solid var(--border-col);
       border-radius: 16px;
@@ -665,7 +665,7 @@ if ($appBase === '') {
       </div>
     </div>
 
-    <!-- Help Center Modal -->
+    
     <div class="modal-overlay" id="helpCenterModal" onclick="if(event.target===this)closeHelpCenter()"
       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
       <div class="modal-card"
@@ -678,7 +678,7 @@ if ($appBase === '') {
               class="bi bi-x-lg"></i></button>
         </div>
         <div style="max-height:70vh;overflow-y:auto;padding:24px;">
-          <!-- Account Section -->
+          
           <div style="margin-bottom:28px;">
             <div
               style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">
@@ -718,7 +718,7 @@ if ($appBase === '') {
             </div>
           </div>
 
-          <!-- General Section -->
+          
           <div style="margin-bottom:28px;">
             <div
               style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">
@@ -747,7 +747,7 @@ if ($appBase === '') {
             </div>
           </div>
 
-          <!-- Booking Section -->
+          
           <div style="margin-bottom:28px;">
             <div
               style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">
@@ -798,7 +798,7 @@ if ($appBase === '') {
             </div>
           </div>
 
-          <!-- Payment Section -->
+          
           <div style="margin-bottom:28px;">
             <div
               style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">
@@ -838,7 +838,7 @@ if ($appBase === '') {
             </div>
           </div>
 
-          <!-- Service Questions Section -->
+          
           <div>
             <div
               style="font-size:14px;font-weight:800;color:#E8820C;text-transform:uppercase;letter-spacing:.8px;margin-bottom:16px;">
@@ -892,7 +892,7 @@ if ($appBase === '') {
       </div>
     </div>
 
-    <!-- Terms of Service Modal -->
+    
     <div class="modal-overlay" id="tosModal" onclick="if(event.target===this)closeTermsOfService()"
       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
       <div class="modal-card"
@@ -964,7 +964,7 @@ if ($appBase === '') {
       </div>
     </div>
 
-    <!-- Privacy Policy Modal -->
+    
     <div class="modal-overlay" id="privacyModal" onclick="if(event.target===this)closePrivacyPolicy()"
       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;overflow-y:auto;">
       <div class="modal-card"
@@ -1095,7 +1095,7 @@ if ($appBase === '') {
       </div>
     </div>
 
-    <!-- Contact Support Modal -->
+    
     <div class="modal-overlay" id="contactSupportModal" onclick="if(event.target===this)closeContactSupport()"
       style="display:none;position:fixed;inset:0;background:var(--modal-ol, rgba(0,0,0,.5));z-index:200;overflow-y:auto;align-items:center;justify-content:center;">
       <div class="modal-card"
@@ -1113,7 +1113,7 @@ if ($appBase === '') {
           </p>
           
           <div style="display:flex;flex-direction:column;gap:12px;">
-            <!-- Email Contact Card -->
+            
             <div class="contact-card">
               <div style="width:40px;height:40px;border-radius:12px;background:rgba(245, 166, 35, 0.12);display:flex;align-items:center;justify-content:center;color:var(--teal, #E8820C);font-size:18px;flex-shrink:0;">
                 <i class="bi bi-envelope-fill"></i>
@@ -1124,7 +1124,7 @@ if ($appBase === '') {
               </div>
             </div>
 
-            <!-- Phone Contact Card -->
+            
             <div class="contact-card">
               <div style="width:40px;height:40px;border-radius:12px;background:rgba(16, 185, 129, 0.12);display:flex;align-items:center;justify-content:center;color:#059669;font-size:18px;flex-shrink:0;">
                 <i class="bi bi-telephone-fill"></i>
@@ -1202,7 +1202,7 @@ if ($appBase === '') {
           <div class="s-fg"><label class="s-lbl">New Password</label>
             <div class="s-iw"><i class="bi bi-lock-fill s-ico"></i><input type="password" class="s-fi" id="s_npwd"
                 placeholder="Min. 8 characters" oninput="updateSecPwdStrength(this.value)"><i class="bi bi-eye-fill s-eye" onclick="tPwd('s_npwd',this)"></i></div>
-            <!-- Password strength meter -->
+            
             <div id="secPwdStrength" style="display:none;margin-top:6px;">
               <div style="display:flex;gap:4px;margin-bottom:5px;">
                 <div id="spbar1" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
@@ -1250,7 +1250,7 @@ if ($appBase === '') {
       </div>
     </div>
 
-    <!-- Report Issue Modal Overlay -->
+    
     <div class="report-modal-ol" id="reportModalOl" onclick="if(event.target===this)closeReportModal()">
       <div class="report-modal-card">
         <div class="report-modal-hdr">
@@ -1307,7 +1307,7 @@ if ($appBase === '') {
       </div>
     </div>
 
-    <!-- Report Success Modal Overlay -->
+    
     <div class="report-success-ol" id="reportSuccessOl" onclick="if(event.target===this)closeReportSuccess()">
       <div class="report-success-card">
         <div class="report-success-icon"><i class="bi bi-check-circle-fill"></i></div>
@@ -1319,7 +1319,7 @@ if ($appBase === '') {
       </div>
     </div>
 
-  </div><!-- /shell -->
+  </div>
 
   <script src="<?= htmlspecialchars(rtrim($appBase, '/')) ?>/assets/js/app.js"></script>
   <script>

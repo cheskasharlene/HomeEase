@@ -14,7 +14,7 @@ if ($userId <= 0 && $providerId <= 0) {
     exit;
 }
 
-// Ensure chat_messages table exists
+
 $conn->query("CREATE TABLE IF NOT EXISTS chat_messages (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     booking_id   INT NOT NULL,
@@ -35,7 +35,7 @@ if ($bookingId <= 0) {
     exit;
 }
 
-// ── Verify access: client must own booking, provider must have accepted it ──
+
 if ($userId > 0) {
     $chk = $conn->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? LIMIT 1");
     $chk->bind_param('ii', $bookingId, $userId);
@@ -60,11 +60,11 @@ if ($userId > 0) {
     $senderId   = $providerId;
 }
 
-// ── GET: fetch messages (optionally after a given id) ──
+
 if ($method === 'GET') {
     $afterId = (int)($_GET['after_id'] ?? 0);
 
-    // Mark unread messages from the other side as read
+    
     $otherRole = ($senderRole === 'client') ? 'provider' : 'client';
     $markRead = $conn->prepare(
         "UPDATE chat_messages SET is_read = 1
@@ -86,7 +86,7 @@ if ($method === 'GET') {
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // Unread count for the requester (messages from the other side not yet read)
+    
     $unreadStmt = $conn->prepare(
         "SELECT COUNT(*) AS cnt FROM chat_messages
          WHERE booking_id = ? AND sender_role = ? AND is_read = 0"
@@ -105,7 +105,7 @@ if ($method === 'GET') {
     exit;
 }
 
-// ── POST: send a message ──
+
 if ($method === 'POST' && $action === 'send') {
     $message = trim((string)($_POST['message'] ?? ''));
     if ($message === '') {

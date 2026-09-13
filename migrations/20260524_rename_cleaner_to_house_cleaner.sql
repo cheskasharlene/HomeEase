@@ -1,5 +1,5 @@
--- Migration: rename Cleaner / Cleaning to House Cleaner
--- Apply to the live database to normalize stored service labels and icon keys.
+
+
 
 START TRANSACTION;
 

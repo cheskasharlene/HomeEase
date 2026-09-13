@@ -15,7 +15,7 @@ body {
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-width: none;
-      /* Clearance so form inputs and submit button scroll cleanly above fixed bottom nav without overlapping. */
+      
       padding-bottom: calc(140px + env(safe-area-inset-bottom));
     }
 
@@ -696,7 +696,7 @@ body {
       line-height: 1.35;
     }
 
-    /* Required field indicator */
+    
     .req-asterisk,
     .upload-slot .req-asterisk,
     .upload-slot-text .req-asterisk {
@@ -712,7 +712,7 @@ body {
       max-width: none !important;
     }
 
-    /* Upload wrapper container for grouping slot, feedback, and preview */
+    
     .upload-wrapper {
       display: flex;
       flex-direction: column;
@@ -729,7 +729,7 @@ body {
       margin: 0;
     }
 
-    /* Upload feedback for success indicators */
+    
     .upload-feedback {
       display: none;
       align-items: center;
@@ -783,7 +783,7 @@ body {
       flex-shrink: 0;
     }
 
-    /* Compact file attachment preview container */
+    
     .upload-preview {
       display: none;
       width: 100%;
@@ -835,7 +835,7 @@ body {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
-    /* Thumbnail element */
+    
     .attach-thumb-wrap {
       width: 44px;
       height: 44px;
@@ -901,7 +901,7 @@ body {
       opacity: 1;
     }
 
-    /* File info element */
+    
     .attach-info {
       flex: 1 1 0%;
       min-width: 0;
@@ -995,7 +995,7 @@ body {
       text-decoration: underline;
     }
 
-    /* Remove button */
+    
     .attach-remove-btn {
       width: 30px;
       height: 30px;
@@ -1026,7 +1026,7 @@ body {
       transform: scale(0.95);
     }
 
-    /* Lightbox Modal styles */
+    
     .attach-lightbox-overlay {
       position: fixed;
       inset: 0;
@@ -1176,7 +1176,7 @@ body {
       transform: translateY(-1px);
     }
 
-    /* Validation message */
+    
     .validation-message {
       font-size: 12px;
       font-weight: 700;
@@ -1296,7 +1296,7 @@ body {
       cursor: pointer;
     }
 
-    /* Request cards */
+    
     .req-list {
       display: flex;
       flex-direction: column;
@@ -1400,7 +1400,7 @@ body {
       transition: all .2s;
     }
 
-    /* Schedule */
+    
     .sched-list {
       display: flex;
       flex-direction: column;
@@ -1551,7 +1551,7 @@ body {
       line-height: 1.5;
     }
 
-    /* Earnings */
+    
     .earn-card {
       margin: 0 12px;
       background: #fff;
@@ -1811,11 +1811,11 @@ body {
           }
         }
 
-    /* ═══════════════════════════════════════════
-       POST-VERIFICATION UI ENHANCEMENTS
-    ═══════════════════════════════════════════ */
+    
 
-    /* Enhanced verified pill styling */
+
+
+    
     .verified-pill {
       animation: slideInPill 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
       gap: 5px;
@@ -1855,7 +1855,7 @@ body {
 
 
 
-    /* Section title with accent bar */
+    
     .sec-row {
       background: linear-gradient(90deg, transparent 0%, rgba(245, 166, 35, 0.02) 50%, transparent 100%);
       margin-top: 4px;
@@ -1893,7 +1893,7 @@ body {
       transform: translateX(2px);
     }
 
-    /* Enhanced request cards */
+    
     .req-card {
       transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
       position: relative;
@@ -1939,7 +1939,7 @@ body {
       transform: scale(0.98);
     }
 
-    /* Enhanced schedule cards */
+    
     .sched-card {
       transition: all 0.2s ease;
     }
@@ -1962,7 +1962,7 @@ body {
       }
     }
 
-    /* Enhanced earnings card */
+    
     .earn-card {
       transition: all 0.2s ease;
       position: relative;
@@ -1995,7 +1995,7 @@ body {
       transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
-    /* Enhanced review cards */
+    
     .rev-card {
       transition: all 0.2s ease;
     }
@@ -2012,7 +2012,7 @@ body {
       transform: scale(1.08);
     }
 
-    /* Verified dashboard list animations */
+    
     .req-list,
     .sched-list,
     .rev-list {
@@ -2051,7 +2051,7 @@ body {
       }
     }
 
-    /* Responsive adjustments for verified dashboard */
+    
     @media (max-width: 640px) {
 
 
@@ -2064,9 +2064,9 @@ body {
       }
     }
 
-    /* ═══════════════════════════════════════════
-       DARK MODE
-    ═══════════════════════════════════════════ */
+    
+
+
     body.dark {
       background: var(--bg-body);
     }
@@ -2075,12 +2075,12 @@ body {
       background: var(--bg-screen);
     }
 
-    /* Header */
+    
     body.dark .ph-hdr {
       background: linear-gradient(135deg, #7A3800 0%, #A85A00 30%, #C8780A 60%, #8B6200 100%) !important;
     }
 
-    /* Bottom nav */
+    
     body.dark .bnav {
       background: var(--nav-bg) !important;
       border-top-color: var(--nav-border) !important;
@@ -2094,7 +2094,7 @@ body {
       color: var(--ni-on);
     }
 
-    /* Cards */
+    
     body.dark .verify-card,
     body.dark .req-card,
     body.dark .sched-card,
@@ -2108,7 +2108,7 @@ body {
       box-shadow: 0 3px 14px rgba(0, 0, 0, .3);
     }
 
-    /* Text colours */
+    
     body.dark .verify-card h2,
     body.dark .sched-title,
     body.dark .req-name,
@@ -2133,7 +2133,7 @@ body {
       color: var(--tm);
     }
 
-    /* Inputs */
+    
     body.dark .vinput,
     body.dark .vtextarea,
     body.dark .service-select {
@@ -2142,7 +2142,7 @@ body {
       color: var(--td);
     }
 
-    /* Upload slots */
+    
     body.dark .upload-slot {
       background: rgba(0, 0, 0, 0.15);
       border-color: var(--border-col);
@@ -2154,7 +2154,7 @@ body {
       background: rgba(255, 255, 255, 0.05);
     }
 
-    /* Upload feedback and previews */
+    
     body.dark .upload-feedback.success {
       background: rgba(16, 185, 129, 0.15);
       border-color: rgba(16, 185, 129, 0.3);
@@ -2210,7 +2210,7 @@ body {
       color: #F1F5F9;
     }
 
-    /* Validation messages */
+    
     body.dark .validation-message.error {
       background: rgba(239, 68, 68, 0.15);
       border-color: rgba(239, 68, 68, 0.3);
@@ -2223,36 +2223,36 @@ body {
       color: #10b981;
     }
 
-    /* Restriction note */
+    
     body.dark .restriction-note {
       background: rgba(168, 62, 0, 0.15);
       border-color: rgba(212, 121, 10, 0.3);
       color: var(--plight);
     }
 
-    /* Section divider */
+    
     body.dark .section-divider {
       background: var(--border-col);
     }
 
-    /* Earnings bar track */
+    
     body.dark .earn-bar-track {
       background: var(--border-col);
     }
 
-    /* Secondary button */
+    
     body.dark .verify-secondary-btn {
       background: var(--bg-card);
       border-color: var(--border-col);
       color: var(--tm);
     }
 
-    /* Pending status */
+    
     body.dark .status-icon.pending {
       background: rgba(212, 121, 10, 0.15);
     }
 
-    /* Sched status badges */
+    
     body.dark .sched-status.pending {
       background: rgba(212, 121, 10, 0.15);
       color: #f59e0b;
@@ -2266,21 +2266,21 @@ body {
       color: #34d399;
     }
 
-    /* Dynamic placeholder */
+    
     body.dark .dynamic-placeholder {
       background: rgba(0, 0, 0, 0.15);
       border-color: var(--border-col);
       color: var(--tm);
     }
 
-    /* Service card unselected */
+    
     body.dark .service-card {
       background: var(--bg-card);
       border-color: var(--border-col);
       color: var(--tm);
     }
 
-    /* ── Shared Modals Design System (Consistent with provider_profile.css) ── */
+    
     .modal-overlay {
       display: none;
       position: fixed;
@@ -2333,7 +2333,7 @@ body {
       }
     }
 
-    /* Dark mode support for modals */
+    
     body.dark .modal-card {
       background: var(--bg-card, #1e293b) !important;
       border-color: var(--border-col, #334155) !important;

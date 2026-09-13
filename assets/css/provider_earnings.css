@@ -1,8 +1,8 @@
-/* ================================================================
-   provider_earnings.css  –  Enhanced Earnings & Remittance UI
-   ================================================================ */
 
-/* ── Base ─────────────────────────────────────────────────────── */
+
+
+
+
 body {
   background: #fff;
 }
@@ -13,7 +13,7 @@ body {
   justify-content: flex-start;
 }
 
-/* ── Scroll Container ─────────────────────────────────────────── */
+
 #earnScroll {
   width: 100%;
   flex: 1;
@@ -27,7 +27,7 @@ body {
   display: none;
 }
 
-/* ── Header Gradient ──────────────────────────────────────────── */
+
 .earn-hdr {
   width: 100%;
   padding: 50px 22px 28px;
@@ -38,7 +38,7 @@ body {
   overflow: hidden;
 }
 
-/* Dot-grid texture */
+
 .earn-hdr::before {
   content: '';
   position: absolute;
@@ -48,7 +48,7 @@ body {
   pointer-events: none;
 }
 
-/* Decorative orb */
+
 .earn-hdr::after {
   content: '';
   position: absolute;
@@ -60,7 +60,7 @@ body {
   pointer-events: none;
 }
 
-/* ── Header Top Row ───────────────────────────────────────────── */
+
 .earn-hdr-top {
   display: flex;
   align-items: center;
@@ -101,7 +101,7 @@ body {
   flex: 1;
 }
 
-/* ── Remittance Button ────────────────────────────────────────── */
+
 .earn-remit-btn {
   margin-left: auto;
   display: flex;
@@ -128,7 +128,7 @@ body {
 }
 .earn-remit-btn:active { transform: scale(.95); }
 
-/* ── Earnings Summary Card ────────────────────────────────────── */
+
 .earn-summary-card {
   background: rgba(255,255,255,.16);
   backdrop-filter: blur(10px);
@@ -169,7 +169,7 @@ body {
   text-shadow: 0 1px 4px rgba(0,0,0,.1);
 }
 
-/* ── Body ─────────────────────────────────────────────────────── */
+
 .earn-body {
   padding: 6px 4px 0;
 }
@@ -188,7 +188,7 @@ body {
   color: #1A1A2E;
 }
 
-/* ── Earnings List ────────────────────────────────────────────── */
+
 .earn-list {
   display: flex;
   flex-direction: column;
@@ -250,7 +250,7 @@ body {
 .earn-card-status.completed { background: #d1fae5; color: #065f46; }
 .earn-card-status.pending   { background: #fef3c7; color: #b45309; }
 
-/* ── Empty State ──────────────────────────────────────────────── */
+
 .empty-state {
   text-align: center;
   padding: 48px 24px;
@@ -266,7 +266,7 @@ body {
   font-weight: 600;
 }
 
-/* ── Bottom Nav ───────────────────────────────────────────────── */
+
 .bnav {
   position: absolute;
   bottom: 0;
@@ -296,20 +296,20 @@ body {
 .ni.on, .ni.on i, .ni.on .nl { color: #F5A623; }
 .nl { font-size: 10px; font-weight: 700; }
 
-/* ================================================================
-   REMITTANCE MODAL  –  Constrained inside .shell (position:absolute)
-   ================================================================ */
+
+
+
 
 .remit-modal-overlay {
   display: none;
-  /* Use absolute so it stays inside the .shell container, not viewport */
+  
   position: absolute;
   inset: 0;
   background: rgba(26, 20, 8, .55);
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
   z-index: 200;
-  align-items: flex-end;        /* slide up from bottom */
+  align-items: flex-end;        
   justify-content: center;
   opacity: 0;
   transition: opacity .26s ease;
@@ -320,7 +320,7 @@ body {
   opacity: 1;
 }
 
-/* ── Modal Card ───────────────────────────────────────────────── */
+
 .remit-modal-card {
   width: 100%;
   background: #fff;
@@ -329,18 +329,18 @@ body {
   box-shadow: 0 -8px 40px rgba(0,0,0,.18);
   display: flex;
   flex-direction: column;
-  /* Slide-up entrance */
+  
   transform: translateY(30px);
   transition: transform .28s cubic-bezier(.22,.84,.36,1);
   max-height: 88%;
-  /* No hard max-width – fills the shell width */
+  
 }
 
 .remit-modal-overlay.on .remit-modal-card {
   transform: translateY(0);
 }
 
-/* ── Pull Handle ──────────────────────────────────────────────── */
+
 .remit-modal-card::before {
   content: '';
   display: block;
@@ -352,7 +352,7 @@ body {
   flex-shrink: 0;
 }
 
-/* ── Modal Header ─────────────────────────────────────────────── */
+
 .remit-modal-header {
   padding: 12px 20px 14px;
   display: flex;
@@ -387,7 +387,7 @@ body {
 .remit-modal-header button:hover  { background: #EDE8E0; color: #1A1A2E; }
 .remit-modal-header button:active { transform: scale(.9); }
 
-/* ── Modal Body ───────────────────────────────────────────────── */
+
 .remit-modal-body {
   padding: 0;
   overflow-y: auto;
@@ -396,7 +396,7 @@ body {
 }
 .remit-modal-body::-webkit-scrollbar { display: none; }
 
-/* ── Amount Card ──────────────────────────────────────────────── */
+
 .remit-amount-card {
   background: linear-gradient(135deg, #FFF6EB 0%, #FFEAD2 100%);
   border: 1.5px solid #FFD8A8;
@@ -437,7 +437,7 @@ body {
   letter-spacing: -0.5px;
 }
 
-/* ── Details Box ──────────────────────────────────────────────── */
+
 .remit-details-box {
   background: #FDFBF7;
   border: 1.5px solid #EDE8E0;
@@ -468,7 +468,7 @@ body {
   max-width: 58%;
 }
 
-/* ── Badges ───────────────────────────────────────────────────── */
+
 .remit-badge {
   font-size: 10px;
   font-weight: 700;
@@ -483,7 +483,7 @@ body {
 .remit-badge.overdue   { background: #FEE2E2; color: #991B1B; }
 .remit-badge.submitted { background: #EDE9FE; color: #5B21B6; }
 
-/* ── Section Title ────────────────────────────────────────────── */
+
 .remit-title-text {
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
@@ -492,7 +492,7 @@ body {
   margin: 14px 18px 10px;
 }
 
-/* ── History List ─────────────────────────────────────────────── */
+
 .remit-history-list {
   padding: 0 18px;
   margin-bottom: 16px;
@@ -557,14 +557,14 @@ body {
   color: #1A1A2E;
 }
 
-/* ── Divider ──────────────────────────────────────────────────── */
+
 .remit-divider {
   height: 1px;
   background: #EDE8E0;
   margin: 0 18px 16px;
 }
 
-/* ── Footer Buttons ───────────────────────────────────────────── */
+
 .remit-modal-footer {
   padding: 0 18px 24px;
   display: flex;
@@ -633,7 +633,7 @@ body {
 }
 .remit-btn-secondary:active { transform: scale(.97); }
 
-/* ── Pay View overrides ───────────────────────────────────────── */
+
 #remitPayView .remit-modal-footer {
   flex-direction: row;
 }
@@ -642,7 +642,7 @@ body {
   flex: 1;
 }
 
-/* QR Image */
+
 #remitPayView img {
   max-width: 200px;
   width: 100%;
@@ -653,7 +653,7 @@ body {
   margin: 0 auto 8px;
 }
 
-/* File input */
+
 #remitReceiptInput {
   padding: 10px;
   height: auto;
@@ -668,21 +668,21 @@ body {
 }
 #remitReceiptInput:focus { border-color: #F5A623; outline: none; }
 
-/* ================================================================
-   DARK MODE
-   ================================================================ */
+
+
+
 body.dark { background: #0f0f14; }
 body.dark .screen { background: #14141c; }
 
-/* Nav */
+
 body.dark .bnav { background: #1c1c28 !important; border-top-color: #2a2a3a !important; }
 body.dark .ni   { color: #5a5a72; }
 body.dark .ni.on, body.dark .ni.on i, body.dark .ni.on .nl { color: #F5A623; }
 
-/* Section title */
+
 body.dark .sec-ttl { color: #e8e8f0; }
 
-/* Earn cards */
+
 body.dark .earn-card           { background: #1e1e2c; border-color: #2a2a3a; }
 body.dark .earn-card-service   { color: #e8e8f0; }
 body.dark .earn-card-meta      { color: #6b6b88; }
@@ -690,7 +690,7 @@ body.dark .earn-card-status.completed { background: #052e1c; color: #34d399; }
 body.dark .earn-card-status.pending   { background: #2d2306; color: #f59e0b; }
 body.dark .empty-state, body.dark .empty-txt { color: #6b6b88; }
 
-/* Remit modal */
+
 body.dark .remit-modal-overlay { background: rgba(0,0,0,.7); }
 
 body.dark .remit-modal-card {
@@ -738,9 +738,9 @@ body.dark .remit-btn-secondary:hover {
   border-color: #F5A623;
 }
 
-/* ================================================================
-   QR CARD  –  Pay via GCash view
-   ================================================================ */
+
+
+
 .remit-qr-card {
   margin: 0 18px 16px;
   background: linear-gradient(160deg, #007aff 0%, #0055d4 100%);
@@ -755,7 +755,7 @@ body.dark .remit-btn-secondary:hover {
   overflow: hidden;
 }
 
-/* Subtle shimmer layer */
+
 .remit-qr-card::before {
   content: '';
   position: absolute;
@@ -795,9 +795,9 @@ body.dark .remit-btn-secondary:hover {
   color: rgba(255,255,255,.7);
 }
 
-/* ================================================================
-   RECEIPT UPLOAD AREA
-   ================================================================ */
+
+
+
 .remit-upload-area {
   margin: 0 18px 4px;
   border: 2px dashed #E0D8CE;
@@ -870,14 +870,14 @@ body.dark .remit-btn-secondary:hover {
 }
 
 .remit-file-name::before {
-  content: '\F26E';               /* bi-file-earmark-check */
+  content: '\F26E';               
   font-family: 'bootstrap-icons';
   font-size: 13px;
 }
 
-/* ================================================================
-   IN-APP TOAST  –  position:absolute inside .shell
-   ================================================================ */
+
+
+
 .app-toast {
   position: absolute;
   top: 20px;
@@ -895,7 +895,7 @@ body.dark .remit-btn-secondary:hover {
   padding: 13px 16px;
   box-shadow: 0 8px 32px rgba(0,0,0,.22);
 
-  /* Hidden by default */
+  
   opacity: 0;
   transform: translateY(-10px) scale(.97);
   pointer-events: none;
@@ -908,7 +908,7 @@ body.dark .remit-btn-secondary:hover {
   pointer-events: auto;
 }
 
-/* Type variants */
+
 .app-toast--success { background: #064e3b; }
 .app-toast--error   { background: #7f1d1d; }
 .app-toast--warn    { background: #78350f; }
@@ -933,20 +933,20 @@ body.dark .remit-btn-secondary:hover {
   flex: 1;
 }
 
-/* ================================================================
-   SPINNER KEYFRAME  –  used by inline submit spinner
-   ================================================================ */
+
+
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
 
-/* ================================================================
-   DARK MODE  –  new elements
-   ================================================================ */
 
-/* QR card keeps its brand blue in dark mode */
 
-/* Upload area */
+
+
+
+
+
 body.dark .remit-upload-area {
   background: #14141c;
   border-color: #2a2a3a;
@@ -964,9 +964,9 @@ body.dark .remit-upload-placeholder span { color: #e8e8f0; }
 body.dark .remit-upload-placeholder small { color: #6b6b88; }
 body.dark .remit-upload-placeholder i { color: #F5A623; }
 
-/* Toast — already dark backgrounds, stays as-is */
 
-/* File input (legacy fallback, not used now) */
+
+
 body.dark #remitReceiptInput {
   background: #14141c;
   border-color: #2a2a3a;

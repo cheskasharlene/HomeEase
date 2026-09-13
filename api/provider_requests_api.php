@@ -24,10 +24,10 @@ $action = trim((string) ($_GET['action'] ?? $_POST['action'] ?? ''));
 ensureBookingRequestsTable($conn);
 
 if ($method === 'GET' && $action === 'live_feed') {
-    // Purge any expired unclaimed bookings older than 3 minutes
+    
     cancelExpiredMatchingBookings($conn);
 
-    // Return ALL live pending bookings matching provider's service category created within 3 minutes
+    
     $providerStmt = $conn->prepare("SELECT s.name AS service_category, LOWER(COALESCE(sp.availability_status, 'offline')) AS availability_status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
     if (!$providerStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error.']);
@@ -46,7 +46,7 @@ if ($method === 'GET' && $action === 'live_feed') {
     $provService = strtolower(trim((string)($providerRow['service_category'] ?? '')));
     $provAvailability = strtolower(trim((string)($providerRow['availability_status'] ?? 'offline')));
     
-    // Enforce online status to receive live booking requests.
+    
     $isOnline = in_array($provAvailability, ['available', 'online'], true);
     if (!$isOnline) {
         ob_end_clean();
@@ -61,7 +61,7 @@ if ($method === 'GET' && $action === 'live_feed') {
         exit;
     }
 
-    // Check if provider has a truly active booking (not done/completed/cancelled)
+    
     $hasActive = false;
     $activeStmt = $conn->prepare(
         "SELECT COUNT(*) AS cnt
@@ -79,8 +79,8 @@ if ($method === 'GET' && $action === 'live_feed') {
         $hasActive = (int)($activeRow['cnt'] ?? 0) > 0;
     }
 
-    // Get all pending bookings of matching service type (created within 3 minutes timeout window)
-    // Build SELECT dynamically based on whether GPS columns exist in bookings table
+    
+    
     $bCols = [];
     $bColRes = $conn->query("SHOW COLUMNS FROM bookings");
     if ($bColRes) { while ($bc = $bColRes->fetch_assoc()) $bCols[] = $bc['Field']; }
@@ -131,7 +131,7 @@ if ($method === 'GET' && $action === 'live_feed') {
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // Also filter by service key matching
+    
     if ($provService !== '') {
         $rows = array_values(array_filter($rows, function($row) use ($provService) {
             return serviceMatches($provService, (string)($row['service'] ?? ''));
@@ -150,7 +150,7 @@ if ($method === 'GET' && $action === 'live_feed') {
     exit;
 }
 
-// Provider: get payment info for a booking
+
 if ($method === 'GET' && $action === 'payment') {
     $bookingId = (int)($_GET['booking_id'] ?? 0);
     if ($bookingId <= 0) { echo json_encode(['success' => false, 'message' => 'Invalid booking id']); exit; }
@@ -168,7 +168,7 @@ if ($method === 'GET' && $action === 'payment') {
     exit;
 }
 
-// Provider: get complete booking detail
+
 if ($method === 'GET' && ($action === 'booking_detail' || $action === 'detail')) {
     $bookingId = (int)($_GET['booking_id'] ?? 0);
     if ($bookingId <= 0) {
@@ -231,7 +231,7 @@ if ($method === 'GET') {
 
     $filter = strtolower(trim((string) ($_GET['filter'] ?? 'all')));
 
-    // First, get the provider's service category
+    
     $providerStmt = $conn->prepare("SELECT s.name AS service_category, LOWER(COALESCE(sp.availability_status, 'offline')) AS availability_status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
     if (!$providerStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
@@ -249,7 +249,7 @@ if ($method === 'GET') {
 
     $providerService = (string) ($providerRow['service_category'] ?? '');
     $providerAvailability = strtolower(trim((string) ($providerRow['availability_status'] ?? 'offline')));
-    // Do not prevent offline providers from viewing their requests. Availability remains a display-only indicator.
+    
 
     $where = 'br.provider_id = ?';
     $types = 'i';
@@ -300,7 +300,7 @@ if ($method === 'GET') {
     exit;
 }
 
-// Accept directly from live feed by booking_id
+
 if ($method === 'POST' && $action === 'accept_booking') {
     $bookingId = (int)($_POST['booking_id'] ?? 0);
     if ($bookingId <= 0) {
@@ -310,7 +310,7 @@ if ($method === 'POST' && $action === 'accept_booking') {
 
     $conn->begin_transaction();
     try {
-        // Lock the booking row
+        
         $stmt = $conn->prepare("SELECT id, status, service, user_id FROM bookings WHERE id = ? FOR UPDATE");
         $stmt->bind_param('i', $bookingId);
         $stmt->execute();
@@ -322,7 +322,7 @@ if ($method === 'POST' && $action === 'accept_booking') {
             throw new RuntimeException('This booking has already been accepted by another provider.');
         }
 
-        // Get provider's service category
+        
         $provStmt = $conn->prepare("SELECT s.name AS service_category FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
         $provStmt->bind_param('i', $providerId);
         $provStmt->execute();
@@ -334,7 +334,7 @@ if ($method === 'POST' && $action === 'accept_booking') {
             throw new RuntimeException('This service does not match your specialty.');
         }
 
-        // Ensure a booking_request row exists for this provider (upsert)
+        
         $conn->query("INSERT IGNORE INTO booking_requests
             (booking_id, provider_id, service, fixed_price, date, time_slot, address, details, status, created_at)
             SELECT id, {$providerId}, service, price, date, time_slot, address, notes, 'pending', NOW()
@@ -369,17 +369,17 @@ if ($method === 'POST' && $action === 'accept_booking') {
 
         updateAssignedProvider($conn, $bookingId, $providerId);
 
-        // Mark this provider's request as accepted
+        
         $conn->query("UPDATE booking_requests SET status='accepted', responded_at=NOW() WHERE booking_id={$bookingId} AND provider_id={$providerId}");
-        // Close all other providers' requests
+        
         $conn->query("UPDATE booking_requests SET status='closed', responded_at=NOW() WHERE booking_id={$bookingId} AND provider_id<>{$providerId} AND status='pending'");
 
         notifyHomeownerAccepted($conn, $bookingId, $providerId);
-        // Create expected payment record for this booking (unique fractional amount)
+        
         try {
             createExpectedPayment($conn, $bookingId, $providerId);
         } catch (Throwable $ee) {
-            // non-fatal: log silently
+            
         }
         $conn->commit();
         echo json_encode(['success' => true, 'message' => 'Booking accepted!', 'booking_id' => $bookingId]);
@@ -400,7 +400,7 @@ if ($method === 'POST' && $action === 'accept') {
 
     $conn->begin_transaction();
     try {
-        // Get provider's service category
+        
         $provStmt = $conn->prepare("SELECT s.name AS service_category FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
         $provStmt->bind_param('i', $providerId);
         $provStmt->execute();
@@ -412,7 +412,7 @@ if ($method === 'POST' && $action === 'accept') {
         }
         $providerService = (string) ($provRow['service_category'] ?? '');
 
-        // Get request with booking details
+        
         $stmt = $conn->prepare("SELECT booking_id, status, service FROM booking_requests WHERE id = ? AND provider_id = ? FOR UPDATE");
         $stmt->bind_param('ii', $requestId, $providerId);
         $stmt->execute();
@@ -427,7 +427,7 @@ if ($method === 'POST' && $action === 'accept') {
             throw new RuntimeException('Request is already closed.');
         }
 
-        // Validate service type matches
+        
         $requestService = (string) ($row['service'] ?? '');
         if (!serviceMatches($providerService, $requestService)) {
             throw new RuntimeException('This request service does not match your specialty.');
@@ -483,7 +483,7 @@ if ($method === 'POST' && $action === 'accept') {
         try {
             createExpectedPayment($conn, $bookingId, $providerId);
         } catch (Throwable $ee) {
-            // ignore
+            
         }
         $conn->commit();
         echo json_encode(['success' => true, 'message' => 'Booking accepted successfully.', 'booking_id' => $bookingId]);
@@ -516,7 +516,7 @@ if ($method === 'POST' && ($action === 'decline' || $action === 'decline_booking
         exit;
     }
 
-    // Check if a booking_request record already exists for this provider and booking
+    
     $chk = $conn->prepare("SELECT id FROM booking_requests WHERE booking_id = ? AND provider_id = ? LIMIT 1");
     $existingId = 0;
     if ($chk) {
@@ -560,7 +560,7 @@ if ($method === 'POST' && $action === 'complete') {
         exit;
     }
 
-    // Verify this provider owns the accepted request
+    
     $chk = $conn->prepare("SELECT id FROM booking_requests WHERE booking_id = ? AND provider_id = ? AND status = 'accepted' LIMIT 1");
     $chk->bind_param('ii', $bookingId, $providerId);
     $chk->execute();
@@ -570,7 +570,7 @@ if ($method === 'POST' && $action === 'complete') {
     }
     $chk->close();
 
-    // Block completion until online payment is confirmed
+    
     $payStmt = $conn->prepare("SELECT payment_method, payment_status FROM payments WHERE booking_id = ? LIMIT 1");
     if ($payStmt) {
         $payStmt->bind_param('i', $bookingId);
@@ -614,7 +614,7 @@ if ($method === 'POST' && $action === 'complete') {
         $updR->execute();
         $updR->close();
 
-        // Notify the client
+        
         $bkRow = $conn->query("SELECT user_id, service FROM bookings WHERE id = {$bookingId} LIMIT 1")->fetch_assoc();
         if ($bkRow) {
             $uid = (int)$bkRow['user_id'];
@@ -623,7 +623,7 @@ if ($method === 'POST' && $action === 'complete') {
                 VALUES ({$uid}, 'Service Complete', 'Your {$svc} service has been completed. Please leave a review!', 'house_cleaner', 0, NOW())");
         }
 
-        // Automatically update worker's daily remittance aggregate
+        
         ensureRemittancesForProvider($conn, $providerId);
 
         $conn->commit();
@@ -642,7 +642,7 @@ if ($method === 'POST' && $action === 'update_location') {
     $lat = (float)($_POST['lat'] ?? 0);
     $lng = (float)($_POST['lng'] ?? 0);
 
-    // Safely ensure columns exist (no crash if already present)
+    
     _safeAddColumn($conn, 'bookings', 'provider_lat', 'DECIMAL(10,8) NULL');
     _safeAddColumn($conn, 'bookings', 'provider_lng', 'DECIMAL(11,8) NULL');
 
@@ -656,7 +656,7 @@ if ($method === 'POST' && $action === 'update_location') {
     exit;
 }
 
-// Fallthrough - unknown request
+
 ob_end_clean();
 echo json_encode(['success' => false, 'message' => 'Unknown request.']);
 
@@ -687,10 +687,10 @@ if (!function_exists('ensureBookingRequestsTable')) {
     }
 }
 
-/**
- * Safely add a column only if it doesn't already exist.
- * Prevents fatal mysqli_sql_exception: Duplicate column name.
- */
+
+
+
+
 function _safeAddColumn(mysqli $conn, string $table, string $column, string $definition): void
 {
     $res = $conn->query("SHOW COLUMNS FROM `{$table}` LIKE '{$column}'");
@@ -815,15 +815,15 @@ function notifyHomeownerAccepted(mysqli $conn, int $bookingId, int $providerId):
     }
 }
 
-/**
- * Create an expected payment row with a unique fractional amount and expiry
- */
+
+
+
 function createExpectedPayment(mysqli $conn, int $bookingId, int $providerId): void
 {
     require_once __DIR__ . '/db.php';
     ensurePaymentsTable($conn);
 
-    // Check if payment row already exists
+    
     $chk = $conn->prepare("SELECT id, payment_method FROM payments WHERE booking_id = ? LIMIT 1");
     $existing = null;
     if ($chk) {
@@ -833,7 +833,7 @@ function createExpectedPayment(mysqli $conn, int $bookingId, int $providerId): v
         $chk->close();
     }
 
-    // Get base price and user_id
+    
     $pstmt = $conn->prepare("SELECT price, user_id FROM bookings WHERE id = ? LIMIT 1");
     $pstmt->bind_param('i', $bookingId);
     $pstmt->execute();
@@ -842,14 +842,14 @@ function createExpectedPayment(mysqli $conn, int $bookingId, int $providerId): v
     $base = (float)($prow['price'] ?? 0);
     $userId = (int)($prow['user_id'] ?? 0);
 
-    // Generate unique fractional cents between 1 and 99
+    
     $fraction = mt_rand(1, 99) / 100.0;
     $expected = round($base + $fraction, 2);
 
     $expires = date('Y-m-d H:i:s', strtotime('+30 minutes'));
 
     if ($existing) {
-        // If payment method is not 'cash', update the existing payment record with provider_id, fractional amount and expiry!
+        
         if (strtolower($existing['payment_method']) !== 'cash') {
             $upd = $conn->prepare("UPDATE payments SET amount = ?, receiver_provider_id = ?, expected_until = ?, updated_at = NOW() WHERE id = ?");
             if ($upd) {
@@ -860,7 +860,7 @@ function createExpectedPayment(mysqli $conn, int $bookingId, int $providerId): v
             }
         }
     } else {
-        // Create new
+        
         $ins = $conn->prepare("INSERT INTO payments (booking_id, user_id, amount, payment_status, receiver_provider_id, expected_until, created_at) VALUES (?, ?, ?, 'pending', ?, ?, NOW())");
         if ($ins) {
             $ins->bind_param('iidis', $bookingId, $userId, $expected, $providerId, $expires);

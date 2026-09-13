@@ -14,7 +14,7 @@ $providerId = (int) ($_SESSION['provider_id'] ?? 0);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action = trim($_POST['action'] ?? $_GET['action'] ?? '');
 
-// Handle photo upload
+
 if ($method === 'POST' && $action === 'upload_photo') {
     $conn->query("ALTER TABLE service_providers ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255) DEFAULT NULL");
     
@@ -65,7 +65,7 @@ if ($method === 'POST' && $action === 'upload_photo') {
     exit;
 }
 
-// Handle get photo URL
+
 if ($method === 'GET' && $action === 'get_photo') {
     $conn->query("ALTER TABLE service_providers ADD COLUMN IF NOT EXISTS profile_photo VARCHAR(255) DEFAULT NULL");
     

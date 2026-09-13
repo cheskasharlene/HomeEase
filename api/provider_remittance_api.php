@@ -11,17 +11,17 @@ if (empty($_SESSION['provider_id'])) {
     respond(false, 'Not logged in.');
 }
 
-// Retrieve provider ID (consistent with provider session setup)
+
 $providerId = (int)$_SESSION['provider_id'];
 
 $action = $_GET['action'] ?? $_POST['action'] ?? 'list';
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Ensure worker's remittances are calculated and synced
+
 ensureRemittancesForProvider($conn, $providerId);
 
 if ($method === 'GET' && $action === 'list') {
-    // 1. Get current active/pending/overdue remittance
+    
     $stmt = $conn->prepare("SELECT id, reference_no, amount_due, amount_paid, status, due_date, date_remitted, submitted_at, payment_method, receipt_path 
                             FROM remittances 
                             WHERE provider_id = ? 
@@ -34,7 +34,7 @@ if ($method === 'GET' && $action === 'list') {
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    // Map rows for consistent front-end format
+    
     $remittances = [];
     foreach ($rows as $r) {
         $remittances[] = [
@@ -60,7 +60,7 @@ if ($method === 'POST' && $action === 'submit_payment') {
         respond(false, 'Invalid remittance ID.');
     }
 
-    // Verify remittance belongs to provider and is in a payable state
+    
     $stmt = $conn->prepare("SELECT id, amount_due, status, due_date FROM remittances WHERE id = ? AND provider_id = ? LIMIT 1");
     $stmt->bind_param("ii", $remitId, $providerId);
     $stmt->execute();
@@ -75,7 +75,7 @@ if ($method === 'POST' && $action === 'submit_payment') {
         respond(false, 'This remittance has already been paid.');
     }
 
-    // Handle receipt file upload
+    
     if (!isset($_FILES['receipt']) || $_FILES['receipt']['error'] !== UPLOAD_ERR_OK) {
         respond(false, 'Receipt image upload is required.');
     }
@@ -102,7 +102,7 @@ if ($method === 'POST' && $action === 'submit_payment') {
         respond(false, 'Failed to save receipt image.');
     }
 
-    // Update remittance status to submitted
+    
     $amountDue = (float)$remit['amount_due'];
     $updateStmt = $conn->prepare("UPDATE remittances SET status = 'submitted', amount_paid = ?, payment_method = 'GCash', receipt_path = ?, submitted_at = NOW() WHERE id = ?");
     $updateStmt->bind_param("dsi", $amountDue, $dbPath, $remitId);
@@ -113,11 +113,11 @@ if ($method === 'POST' && $action === 'submit_payment') {
         respond(false, 'Failed to update remittance record.');
     }
 
-    // Get provider's name
+    
     $provRes = $conn->query("SELECT full_name FROM service_providers WHERE provider_id = $providerId");
     $provName = ($provRes && $prow = $provRes->fetch_assoc()) ? $prow['full_name'] : 'Worker';
 
-    // Notify Admin
+    
     $notifTitle = 'Remittance Payment Submitted';
     $notifMsg = 'Worker ' . $provName . ' has submitted a remittance payment of ₱' . number_format($amountDue, 2) . ' for due date ' . date('M d, Y', strtotime($remit['due_date'])) . '.';
     

@@ -50,12 +50,12 @@ if ($section === 'auth' && $action === 'logout') {
     respond(true, 'Logged out.');
 }
 
-/**
- * Shared revenue computation logic for Revenue Analytics and Admin Overview.
- * Single source of truth for platform revenue.
- */
+
+
+
+
 function getRevenueAnalyticsSummaryData($conn) {
-    // Sync remittances first to ensure database calculations are accurate for all providers
+    
     $provRes = $conn->query("SELECT provider_id FROM service_providers");
     if ($provRes) {
         while ($prow = $provRes->fetch_assoc()) {
@@ -107,15 +107,15 @@ function getRevenueAnalyticsSummaryData($conn) {
         }
     }
 
-    // Query total completed bookings included in platform revenue calculation
+    
     $bkRes = $conn->query("SELECT COUNT(*) AS total_completed FROM bookings WHERE status IN ('completed', 'done')");
     $bkRow = $bkRes ? $bkRes->fetch_assoc() : ['total_completed' => 0];
     $completedBookings = (int)($bkRow['total_completed'] ?? 0);
 
-    // Calculate Average HomeEase Revenue earned per completed booking
+    
     $avgRevenuePerBooking = ($completedBookings > 0 && $totalReceived > 0) ? round($totalReceived / $completedBookings, 2) : 0.00;
 
-    // Month-over-Month Revenue Growth calculation
+    
     $growthDiff = $monthReceived - $lastMonthReceived;
     $growthPct = 0.0;
     $growthDirection = 'flat';
@@ -131,7 +131,7 @@ function getRevenueAnalyticsSummaryData($conn) {
         $growthDirection = 'flat';
     }
 
-    // Reuse the exact same chart data logic from Revenue Analytics (paid remittances in the last 6 months)
+    
     $revRows = [];
     $res = $conn->query("SELECT DATE_FORMAT(date_remitted,'%b') AS mo, COALESCE(SUM(amount_paid),0) AS rev
         FROM remittances 
@@ -167,7 +167,7 @@ if ($section === 'stats') {
     $r = $conn->query("SELECT COUNT(*) FROM bookings");
     $stats['total_bookings'] = (int)($r ? $r->fetch_row()[0] : 0);
 
-    // Reuse the exact same query and data from Revenue Analytics (single source of truth)
+    
     $stats['total_revenue'] = $revSummary['total_revenue'];
     $stats['month_revenue'] = $revSummary['month_revenue'];
     $stats['pending_remittance'] = $revSummary['pending_remittance'];
@@ -197,7 +197,7 @@ if ($section === 'stats') {
     if ($res) while ($rr = $res->fetch_assoc()) $topSvc[] = $rr;
     $stats['top_services'] = $topSvc;
 
-    // Recent bookings (last 5)
+    
     $recent = [];
     $res = $conn->query("SELECT b.id, COALESCE(s.name, b.service) AS service, b.status, b.price, b.date, u.name AS user_name
         FROM bookings b
@@ -258,7 +258,7 @@ if ($section === 'users') {
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $stmt->close();
-        // Return new state
+        
         $r = $conn->query("SELECT disabled FROM users WHERE id = $id");
         $dis = (bool)($r ? $r->fetch_row()[0] : false);
         respond(true, $dis ? 'User disabled.' : 'User enabled.', ['disabled' => $dis]);
@@ -303,8 +303,8 @@ if ($section === 'workers') {
         }
 
         if ($verificationFilter === 'pending') {
-            // Show workers with verification_status = 'pending' or 'submitted'
-            // These are applications waiting for admin review
+            
+            
             $where[] = "(sp.verification_status = 'pending' OR sp.verification_status = 'submitted' OR sp.verification_status = 'pending_review' OR COALESCE(sp.valid_id,'') <> '')";
         }
         
@@ -405,7 +405,7 @@ if ($section === 'workers') {
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) respond(false, 'Invalid ID.');
         
-        // Check if verification_status column exists
+        
         $hasVerificationStatus = false;
         $colCheck = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'verification_status'");
         if ($colCheck && $colCheck->num_rows > 0) $hasVerificationStatus = true;
@@ -414,7 +414,7 @@ if ($section === 'workers') {
         $cur = $r ? (int)$r->fetch_row()[0] : 0;
         $new = $cur ? 0 : 1;
         
-        // Update both columns for consistency
+        
         if ($hasVerificationStatus) {
             $verStatus = $new ? 'verified' : 'not_verified';
             $conn->query("UPDATE service_providers SET is_verified=$new, verification_status='$verStatus', verification_approved_at=" . ($new ? 'NOW()' : 'NULL') . " WHERE provider_id=$id");
@@ -427,7 +427,7 @@ if ($section === 'workers') {
 }
 
 if ($section === 'services') {
-    // Ensure table exists
+    
     $conn->query("CREATE TABLE IF NOT EXISTS services (
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
@@ -551,7 +551,7 @@ if ($section === 'offers') {
     }
 }
 
-// ── BOOKINGS (admin) ─────────────────────────────────────────────────────────
+
 if ($section === 'bookings') {
 
     if ($method === 'GET' && $action === 'list') {
@@ -628,12 +628,12 @@ if ($section === 'bookings') {
         $stmt->bind_param("ii", $workerId, $bookingId);
         $stmt->execute(); $ok = $stmt->affected_rows >= 0; $stmt->close();
 
-        // Also update booking_requests if exists
+        
         $conn->query("UPDATE booking_requests SET status='accepted' WHERE booking_id=$bookingId AND provider_id=$workerId AND status='pending'");
         $conn->query("UPDATE booking_requests SET status='closed' WHERE booking_id=$bookingId AND provider_id<>$workerId AND status='pending'");
         sendProviderNotification($conn, $workerId, 'booking_assigned', 'Booking Assigned', "You have been assigned to booking #{$bookingId} by administrator.", 'bi-calendar-check', $bookingId);
 
-        // Fetch worker name for response
+        
         $r = $conn->query("SELECT sp.full_name AS name, sp.contact_number AS phone, s.name AS specialty, sp.rating FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id=$workerId");
         $worker = $r ? $r->fetch_assoc() : null;
         respond($ok, $ok ? 'Worker assigned.' : 'Failed.', ['worker' => $worker]);
@@ -684,7 +684,7 @@ if ($section === 'reviews') {
         $id = (int)($_POST['id'] ?? 0);
         if (!$id) respond(false, 'Invalid review ID.');
         
-        // Find provider_id before deleting
+        
         $stmt = $conn->prepare("SELECT provider_id FROM provider_reviews WHERE id=?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
@@ -694,7 +694,7 @@ if ($section === 'reviews') {
         if (!$r) respond(false, 'Review not found.');
         $provider_id = $r['provider_id'];
 
-        // Delete review
+        
         $stmt2 = $conn->prepare("DELETE FROM provider_reviews WHERE id=?");
         $stmt2->bind_param("i", $id);
         $stmt2->execute();
@@ -702,7 +702,7 @@ if ($section === 'reviews') {
         $stmt2->close();
 
         if ($ok) {
-            // Recalculate rating
+            
             $upStmt = $conn->prepare("
                 UPDATE service_providers sp 
                 LEFT JOIN (
@@ -724,9 +724,9 @@ if ($section === 'reviews') {
     }
 }
 
-// ── ADMIN NOTIFICATIONS ───────────────────────────────────────────────────────
+
 if ($section === 'admin_notifications') {
-    // Ensure table exists
+    
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
         id INT AUTO_INCREMENT PRIMARY KEY,
         type VARCHAR(50) NOT NULL DEFAULT 'general',
@@ -860,7 +860,7 @@ if ($section === 'incidents') {
         $stmt->bind_param("ss", $norm_status, $id);
         if ($stmt->execute()) {
             $stmt->close();
-            // Fetch reporter and reported user details to see if either is a provider
+            
             $resReport = $conn->query("SELECT reporter_id, reporter_role, reported_user_id, reported_user_role, category FROM incident_reports WHERE report_id = '" . $conn->real_escape_string($id) . "'");
             if ($resReport && $reportData = $resReport->fetch_assoc()) {
                 if ($reportData['reporter_role'] === 'provider') {
@@ -896,7 +896,7 @@ if ($section === 'incidents') {
         $stmt->bind_param("ss", $notes, $id);
         if ($stmt->execute()) {
             $stmt->close();
-            // Notify reporter of updates if they are a provider
+            
             $resReport = $conn->query("SELECT reporter_id, reporter_role, category FROM incident_reports WHERE report_id = '" . $conn->real_escape_string($id) . "'");
             if ($resReport && $reportData = $resReport->fetch_assoc()) {
                 if ($reportData['reporter_role'] === 'provider') {

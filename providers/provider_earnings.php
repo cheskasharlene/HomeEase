@@ -6,25 +6,25 @@ if (empty($_SESSION['provider_id'])) {
 }
 require_once __DIR__ . '/../api/db.php';
 require_once __DIR__ . '/provider_access.php';
-// Enforce section access (using the existing mysqli connection $conn)
+
 enforceProviderSectionAccess('earnings', $conn);
 $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Service Provider');
 
-// Retrieve provider ID from session (assumes $_SESSION['user_id'] per requirements, falls back to $_SESSION['provider_id'])
+
 $providerId = (int) ($_SESSION['user_id'] ?? $_SESSION['provider_id'] ?? 0);
 
 if ($providerId > 0 && $conn instanceof mysqli) {
   ensureRemittancesForProvider($conn, $providerId);
 }
 
-// Initialize earnings variables with strict null-coalescing defaults
+
 $todayEarnings = 0.00;
 $thisMonthEarnings = 0.00;
 $totalEarnings = 0.00;
 $recentEarnings = [];
 
 if ($providerId > 0 && $conn instanceof mysqli) {
-  // 1. "TODAY" Earnings: Sum of completed/done booking prices matching today's date
+  
   $todayDateStr = date('Y-m-d');
   
   $queryToday = "SELECT SUM(price) AS today_sum 
@@ -41,9 +41,9 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     $stmtToday->close();
   }
 
-  // 2. "THIS MONTH" Earnings: Sum of completed/done booking prices in the current calendar month and year
-  $currentMonth = date('n'); // 1-12
-  $currentYear  = date('Y'); // 4-digit year
+  
+  $currentMonth = date('n'); 
+  $currentYear  = date('Y'); 
   
   $queryThisMonth = "SELECT SUM(price) AS this_month_sum 
                      FROM bookings 
@@ -61,7 +61,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     $stmtThisMonth->close();
   }
 
-  // 3. "TOTAL EARNINGS": Sum of all-time completed/done booking prices for this provider
+  
   $queryTotal = "SELECT SUM(price) AS total_sum 
                  FROM bookings 
                  WHERE provider_id = ? 
@@ -75,7 +75,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     $stmtTotal->close();
   }
 
-  // 4. "Recent Earnings" List: 10 most recent bookings (completed, done, and pending), ordered by date descending
+  
   $queryRecent = "SELECT service, date, price, status 
                   FROM bookings 
                   WHERE provider_id = ? 
@@ -117,7 +117,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
   <div class="shell" id="app" style="position:relative;">
     <div class="screen" id="earnings">
       <div id="earnScroll">
-        <!-- Header -->
+        
         <div class="earn-hdr">
           <div class="earn-hdr-top">
             <div class="earn-back" onclick="goPage('provider_profile.php')">
@@ -129,7 +129,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
             </button>
           </div>
           
-          <!-- Earnings Summary Card -->
+          
           <div class="earn-summary-card">
             <div class="earn-summary-item">
               <div class="earn-sum-lbl">Today</div>
@@ -146,7 +146,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
           </div>
         </div>
 
-        <!-- Earnings List -->
+        
         <div class="earn-body">
           <div class="sec-row">
             <div class="sec-ttl">Recent Earnings</div>
@@ -160,9 +160,9 @@ if ($providerId > 0 && $conn instanceof mysqli) {
                 $statusClass = ($status === 'completed' || $status === 'done') ? 'completed' : 'pending';
                 $statusLabel = ($status === 'completed' || $status === 'done') ? 'Completed' : 'Pending';
                 
-                // Formulate the date label dynamically based on status (matching the mock logic)
+                
                 $dateText = $item['date'] ?? 'No date';
-                // If it is in YYYY-MM-DD format, parse and format it dynamically for high-fidelity presentation
+                
                 $ts = strtotime($dateText);
                 $formattedDate = $ts ? date('M j, Y', $ts) : $dateText;
                 $dateLabel = (($status === 'completed' || $status === 'done') ? 'Completed on ' : 'Scheduled for ') . htmlspecialchars($formattedDate);
@@ -204,7 +204,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
       </div>
     </div>
 
-    <!-- Remittance Modal – INSIDE .shell for mobile containment -->
+    
     <div class="remit-modal-overlay" id="remitModal" onclick="handleRemitOverlayClick(event)">
       <div class="remit-modal-card">
         <div class="remit-modal-header">
@@ -215,7 +215,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
         </div>
         <div class="remit-modal-body">
 
-          <!-- ── Details View ── -->
+          
           <div id="remitDetailsView">
             <div class="remit-amount-card">
               <div class="remit-amount-lbl">Amount Due</div>
@@ -255,11 +255,11 @@ if ($providerId > 0 && $conn instanceof mysqli) {
             </div>
           </div>
 
-          <!-- ── History View ── -->
+          
           <div id="remitHistoryView" style="display:none;">
             <div class="remit-title-text">Payment History</div>
             <div class="remit-history-list">
-              <!-- Populated by JS -->
+              
               <div class="remit-history-item">
                 <div class="remit-history-info">
                   <div class="remit-history-ref">REF-2026-00712</div>
@@ -279,11 +279,11 @@ if ($providerId > 0 && $conn instanceof mysqli) {
             </div>
           </div>
 
-          <!-- ── Pay View ── -->
+          
           <div id="remitPayView" style="display:none;">
             <div class="remit-title-text">Pay via GCash</div>
 
-            <!-- QR Card -->
+            
             <div class="remit-qr-card">
               <img src="../assets/images/admin_gcash_qr.png" alt="Admin GCash QR Code" class="remit-qr-img">
               <div class="remit-qr-account">
@@ -297,7 +297,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
             <form id="remitPaymentForm" onsubmit="submitRemitPayment(event)">
               <input type="hidden" id="remitPayId" name="remittance_id">
 
-              <!-- File Upload -->
+              
               <div class="remit-upload-area" id="remitUploadArea" onclick="document.getElementById('remitReceiptInput').click()">
                 <div class="remit-upload-placeholder" id="remitUploadPlaceholder">
                   <i class="bi bi-cloud-arrow-up-fill"></i>
@@ -323,7 +323,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
 
     </div>
 
-    <!-- In-App Toast Notification -->
+    
     <div id="appToast" class="app-toast">
       <div class="app-toast-icon" id="appToastIcon"><i class="bi bi-check-circle-fill"></i></div>
       <div class="app-toast-text" id="appToastText">Done!</div>
@@ -568,7 +568,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
       }
     });
 
-    /* ── In-App Toast ────────────────────────────────────────── */
+    
     let _toastTimer = null;
     function showToast(message, type = 'success') {
       const toast   = document.getElementById('appToast');
@@ -587,7 +587,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
       }, 3500);
     }
 
-    /* ── Receipt upload preview ──────────────────────────────── */
+    
     function handleReceiptChange(e) {
       const file = e.target.files[0];
       if (!file) return;

@@ -119,7 +119,7 @@ function ensureProviderNotificationsTable(mysqli $conn): void
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
     $conn->query($sql);
 
-    // Add columns if they don't exist yet (for existing installs)
+    
     $conn->query("ALTER TABLE provider_notifications ADD COLUMN IF NOT EXISTS type VARCHAR(40) DEFAULT 'general'");
     $conn->query("ALTER TABLE provider_notifications ADD COLUMN IF NOT EXISTS reference_id INT DEFAULT NULL");
 }

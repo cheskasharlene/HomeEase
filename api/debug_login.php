@@ -1,16 +1,16 @@
 <?php
-// Temporary debug script - DELETE AFTER FIXING
+
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
 header('Content-Type: text/plain');
 
-// 1. Test DB connection
+
 require 'db.php';
 echo "1. DB Connection: OK\n";
 
-// 2. Check if users table exists and has correct columns
+
 $result = $conn->query("DESCRIBE users");
 if (!$result) {
     echo "2. users table ERROR: " . $conn->error . "\n";
@@ -21,7 +21,7 @@ if (!$result) {
     }
 }
 
-// 3. Check service_providers table
+
 $result2 = $conn->query("DESCRIBE service_providers");
 if (!$result2) {
     echo "3. service_providers table ERROR: " . $conn->error . "\n";
@@ -32,12 +32,12 @@ if (!$result2) {
     }
 }
 
-// 4. Count users
+
 $r = $conn->query("SELECT COUNT(*) as cnt FROM users");
 $row = $r->fetch_assoc();
 echo "4. Total users: " . $row['cnt'] . "\n";
 
-// 5. Test raw login query
+
 $email = 'test@gmail.com';
 $stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role FROM users WHERE email = ?");
 if (!$stmt) {
@@ -54,12 +54,12 @@ if (!$stmt) {
     }
 }
 
-// 6. Simulate full login response
+
 echo "\n--- Simulating login API response ---\n";
 ob_start();
 $_SERVER['REQUEST_METHOD'] = 'POST';
 $fakeInput = json_encode(['email' => 'test@gmail.com', 'password' => '12345678']);
-// We can't re-require db.php (already loaded), just test respond()
+
 echo json_encode(['success' => false, 'message' => 'Invalid email or password.']);
 $output = ob_get_clean();
 echo "respond() output: " . $output . "\n";

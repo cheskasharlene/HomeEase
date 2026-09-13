@@ -1,6 +1,6 @@
-/**
- * HomeEase Unified Geolocation & Median.co Bridge Helper
- */
+
+
+
 (function(window) {
   'use strict';
 
@@ -18,7 +18,7 @@
     var timeout = options.timeout || 15000;
     var maximumAge = options.maximumAge || 0;
 
-    // Check Median JS Bridge first if available
+    
     var medianObj = (window.median && window.median.geolocation) ? window.median.geolocation :
                     (window.gonative && window.gonative.geolocation) ? window.gonative.geolocation : null;
 
@@ -88,14 +88,14 @@
 
     function getFriendlyErrorMessage(code) {
       switch (code) {
-        case 1: // PERMISSION_DENIED
+        case 1: 
           if (isMedianApp()) {
             return 'Location permission denied. Enable Location in Median app settings and phone settings.';
           }
           return 'Permission denied — enable location in your browser settings.';
-        case 2: // POSITION_UNAVAILABLE
+        case 2: 
           return 'Location unavailable. Check your GPS signal.';
-        case 3: // TIMEOUT
+        case 3: 
           return 'Location timed out. Please try again.';
         default:
           return 'Could not detect location.';

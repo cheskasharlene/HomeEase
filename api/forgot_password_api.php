@@ -1,11 +1,11 @@
 <?php
-/**
- * forgot_password_api.php
- *
- * Handles two actions:
- *   verify_email  – checks that the email exists in the correct table
- *   reset_password – validates new password rules and updates the hash
- */
+
+
+
+
+
+
+
 
 session_start();
 
@@ -27,10 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action    = trim($_POST['action']    ?? '');
 $email     = trim($_POST['email']     ?? '');
-$acctType  = trim($_POST['acct_type'] ?? 'user');   // 'user' | 'provider'
+$acctType  = trim($_POST['acct_type'] ?? 'user');   
 $newPass   = $_POST['new_password']   ?? '';
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+
 
 function isProviderAcct(string $type): bool
 {
@@ -54,7 +54,7 @@ function validatePasswordRules(string $pass): ?string
     return null;
 }
 
-// ── Action: verify_email ─────────────────────────────────────────────────────
+
 
 if ($action === 'verify_email') {
     if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -88,14 +88,14 @@ if ($action === 'verify_email') {
     respond(true, 'Email verified.');
 }
 
-// ── Action: reset_password ───────────────────────────────────────────────────
+
 
 if ($action === 'reset_password') {
     if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
         respond(false, 'Invalid request.');
     }
 
-    // Server-side password validation
+    
     $err = validatePasswordRules($newPass);
     if ($err !== null) {
         respond(false, $err);
@@ -104,7 +104,7 @@ if ($action === 'reset_password') {
     $hashed = password_hash($newPass, PASSWORD_BCRYPT);
 
     if (isProviderAcct($acctType)) {
-        // Confirm the account still exists before updating
+        
         $chk = $conn->prepare(
             "SELECT provider_id FROM service_providers WHERE email = ? LIMIT 1"
         );

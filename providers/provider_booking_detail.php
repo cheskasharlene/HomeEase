@@ -113,7 +113,7 @@ if ($rawNotes !== '') {
   <link rel="stylesheet" href="../assets/css/accepted_booking.css">
   <link rel="stylesheet" href="../assets/css/booking_detail.css">
   <style>
-    /* Screen layout overrides */
+    
     .screen.pbd-screen {
       justify-content: flex-start;
       background: var(--bg-screen, #FFF7EE);
@@ -126,7 +126,7 @@ if ($rawNotes !== '') {
     }
     .pbd-scroll::-webkit-scrollbar { display: none; }
 
-    /* Hero Header */
+    
     .pbd-hero {
       width: 100%;
       padding: 48px 22px 24px;
@@ -178,7 +178,7 @@ if ($rawNotes !== '') {
       background: rgba(255, 255, 255, 0.6);
     }
 
-    /* Cards */
+    
     .pbd-card {
       background: #ffffff;
       border-radius: 20px;
@@ -206,7 +206,7 @@ if ($rawNotes !== '') {
       gap: 6px;
     }
 
-    /* Status Banner Card */
+    
     .pbd-status-card {
       display: flex;
       align-items: center;
@@ -271,7 +271,7 @@ if ($rawNotes !== '') {
       text-transform: uppercase;
     }
 
-    /* Key-Value Rows */
+    
     .pbd-row {
       display: flex;
       justify-content: space-between;
@@ -303,7 +303,7 @@ if ($rawNotes !== '') {
       word-break: break-word;
     }
 
-    /* Option Items */
+    
     .pbd-option-badge {
       display: inline-flex;
       align-items: center;
@@ -318,7 +318,7 @@ if ($rawNotes !== '') {
       margin: 3px;
     }
 
-    /* Customer Card */
+    
     .pbd-client-box {
       display: flex;
       align-items: center;
@@ -394,7 +394,7 @@ if ($rawNotes !== '') {
       border: 1px solid #CBD5E1;
     }
 
-    /* Receipt Preview */
+    
     .pbd-receipt-preview {
       margin-top: 12px;
       background: #F8FAFC;
@@ -424,7 +424,7 @@ if ($rawNotes !== '') {
       cursor: pointer;
     }
 
-    /* Review Card */
+    
     .pbd-review-stars {
       color: #F5A623;
       font-size: 16px;
@@ -447,7 +447,7 @@ if ($rawNotes !== '') {
       margin-top: 6px;
     }
 
-    /* Image Preview Modal */
+    
     .image-preview-overlay {
       position: fixed;
       inset: 0;
@@ -518,7 +518,7 @@ if ($rawNotes !== '') {
       transition: transform 0.2s ease;
     }
 
-    /* Fixed Bottom Navigation */
+    
     .bnav {
       position: fixed;
       left: 50%;
@@ -535,7 +535,7 @@ if ($rawNotes !== '') {
     <div class="screen pbd-screen">
       <div class="pbd-scroll">
 
-        <!-- Top Hero Bar -->
+        
         <div class="pbd-hero">
           <div>
             <div class="pbd-title">Booking Details</div>
@@ -549,7 +549,7 @@ if ($rawNotes !== '') {
         </div>
 
         <?php if (!$booking): ?>
-          <!-- Empty / Not Found State -->
+          
           <div class="pbd-card" style="text-align:center;padding:40px 20px;margin-top:30px;">
             <div style="font-size:44px;margin-bottom:12px;">🔍</div>
             <h3 style="font-family:'Poppins',sans-serif;font-size:17px;color:#1E293B;margin-bottom:6px;">Booking Not Found</h3>
@@ -560,7 +560,7 @@ if ($rawNotes !== '') {
           </div>
         <?php else: ?>
 
-          <!-- Status & Price Hero Card -->
+          
           <div class="pbd-status-card">
             <div class="pbd-status-left">
               <?php if ($isDone): ?>
@@ -582,7 +582,7 @@ if ($rawNotes !== '') {
             </div>
           </div>
 
-          <!-- Service Summary Card -->
+          
           <div class="pbd-card">
             <div class="pbd-card-head">
               <div class="pbd-card-title">
@@ -629,7 +629,7 @@ if ($rawNotes !== '') {
             <?php endif; ?>
           </div>
 
-          <!-- Customer Information Card -->
+          
           <div class="pbd-card">
             <div class="pbd-card-head">
               <div class="pbd-card-title">
@@ -666,7 +666,7 @@ if ($rawNotes !== '') {
             <?php endif; ?>
           </div>
 
-          <!-- Payment Information Card -->
+          
           <div class="pbd-card">
             <div class="pbd-card-head">
               <div class="pbd-card-title">
@@ -727,7 +727,7 @@ if ($rawNotes !== '') {
             <?php endif; ?>
           </div>
 
-          <!-- Customer Review Card -->
+          
           <div class="pbd-card">
             <div class="pbd-card-head">
               <div class="pbd-card-title">
@@ -771,9 +771,9 @@ if ($rawNotes !== '') {
         <?php endif; ?>
 
         <div style="height:30px;"></div>
-      </div><!-- /.pbd-scroll -->
+      </div>
 
-      <!-- Fixed Bottom Nav -->
+      
       <div class="bnav">
         <div class="ni" onclick="goPage('provider_home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni on" onclick="goPage('provider_requests.php?tab=completed')"><i class="bi bi-clipboard-check-fill"></i><span class="nl">Requests</span></div>
@@ -783,7 +783,7 @@ if ($rawNotes !== '') {
     </div>
   </div>
 
-  <!-- Receipt Image Modal -->
+  
   <div class="image-preview-overlay" id="receiptModal" onclick="if(event.target===this)closeReceiptModal()">
     <div class="image-preview-modal">
       <div class="image-preview-header">
@@ -815,7 +815,7 @@ if ($rawNotes !== '') {
       }
     }
 
-    /* Receipt Image Viewer */
+    
     let _receiptZoom = 1.0;
     function openReceiptModal(url) {
       const modal = document.getElementById('receiptModal');

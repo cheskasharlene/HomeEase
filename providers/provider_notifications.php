@@ -1,4 +1,4 @@
-<?php /* provider_notifications.php */
+<?php  
 session_start();
 if (empty($_SESSION['provider_id'])) {
   header('Location: provider_index.php');
@@ -132,7 +132,7 @@ if ($stmt) {
     </div>
   </div>
 
-  <!-- Persistent toast element -->
+  
   <div class="he-toast" id="heToast"></div>
 
   <script src="../assets/js/app.js"></script>

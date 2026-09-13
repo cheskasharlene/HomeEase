@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// If user is already logged in, redirect them
+
 if (!empty($_SESSION['user_id'])) {
     header('Location: home.php');
     exit;
@@ -25,7 +25,7 @@ if (!empty($_SESSION['provider_id'])) {
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/main.css">
   <style>
-    /* ── Page shell ── */
+    
     .fp-shell {
       width: 100%;
       max-width: 420px;
@@ -50,7 +50,7 @@ if (!empty($_SESSION['provider_id'])) {
       }
     }
 
-    /* ── Header banner ── */
+    
     .fp-hdr {
       padding: 48px 24px 28px;
       background:
@@ -127,7 +127,7 @@ if (!empty($_SESSION['provider_id'])) {
       line-height: 1.45;
     }
 
-    /* ── Body ── */
+    
     .fp-body {
       flex: 1;
       overflow-y: auto;
@@ -137,11 +137,11 @@ if (!empty($_SESSION['provider_id'])) {
     }
     .fp-body::-webkit-scrollbar { display: none; }
 
-    /* ── Steps ── */
+    
     .fp-step { display: none; }
     .fp-step.active { display: block; }
 
-    /* ── Step indicator ── */
+    
     .fp-steps-row {
       display: flex;
       align-items: center;
@@ -161,7 +161,7 @@ if (!empty($_SESSION['provider_id'])) {
     }
     .fp-step-dot.done { background: var(--success); }
 
-    /* ── Alert ── */
+    
     .fp-alert {
       display: none;
       align-items: center;
@@ -179,7 +179,7 @@ if (!empty($_SESSION['provider_id'])) {
     .fp-alert.error   { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
     .fp-alert.success { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
 
-    /* ── Form fields ── */
+    
     .fp-fg { margin-bottom: 16px; }
     .fp-lbl {
       font-size: 12px;
@@ -224,7 +224,7 @@ if (!empty($_SESSION['provider_id'])) {
       display: flex; align-items: center;
     }
 
-    /* ── Password strength (reuse shared pattern) ── */
+    
     .pwd-strength-wrap { margin-top: 6px; }
     .pwd-bars { display: flex; gap: 4px; margin-bottom: 6px; }
     .pwd-bar {
@@ -242,7 +242,7 @@ if (!empty($_SESSION['provider_id'])) {
     .pwd-req.met { color: #059669; }
     .pwd-req i { font-size: 6px; }
 
-    /* ── Button ── */
+    
     .fp-btn {
       width: 100%;
       padding: 15px;
@@ -286,7 +286,7 @@ if (!empty($_SESSION['provider_id'])) {
     .fp-btn.loading .btn-label  { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Info note ── */
+    
     .fp-note {
       font-size: 12px;
       color: var(--tm);
@@ -302,7 +302,7 @@ if (!empty($_SESSION['provider_id'])) {
     }
     .fp-note a:hover { text-decoration: underline; }
 
-    /* ── Success screen ── */
+    
     .fp-success-wrap {
       text-align: center;
       padding: 20px 0;
@@ -336,7 +336,7 @@ if (!empty($_SESSION['provider_id'])) {
       margin-bottom: 28px;
     }
 
-    /* ── Account type toggle ── */
+    
     .fp-acct-row { display: flex; gap: 10px; margin-bottom: 18px; }
     .fp-acct-btn {
       flex: 1; padding: 11px 8px; border-radius: 13px;
@@ -359,7 +359,7 @@ if (!empty($_SESSION['provider_id'])) {
 <body>
   <div class="fp-shell">
 
-    <!-- Header -->
+    
     <div class="fp-hdr">
       <button class="fp-back" onclick="window.location.href='index.php'" aria-label="Back to login">
         <i class="bi bi-arrow-left"></i>
@@ -369,23 +369,23 @@ if (!empty($_SESSION['provider_id'])) {
       <div class="fp-hdr-sub">Don't worry — we'll help you get back in.</div>
     </div>
 
-    <!-- Body -->
+    
     <div class="fp-body">
 
-      <!-- Step dots -->
+      
       <div class="fp-steps-row">
         <div class="fp-step-dot active" id="dot1"></div>
         <div class="fp-step-dot" id="dot2"></div>
         <div class="fp-step-dot" id="dot3"></div>
       </div>
 
-      <!-- Shared alert -->
+      
       <div class="fp-alert" id="fpAlert">
         <i class="bi bi-exclamation-circle-fill"></i>
         <span id="fpAlertTxt"></span>
       </div>
 
-      <!-- ─── Step 1: Enter email & account type ─── -->
+      
       <div class="fp-step active" id="step1">
         <div style="font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;color:var(--txt-primary);margin-bottom:4px;">
           Verify your account
@@ -427,7 +427,7 @@ if (!empty($_SESSION['provider_id'])) {
         </p>
       </div>
 
-      <!-- ─── Step 2: Set new password ─── -->
+      
       <div class="fp-step" id="step2">
         <div style="font-family:'Poppins',sans-serif;font-size:16px;font-weight:700;color:var(--txt-primary);margin-bottom:4px;">
           Set a new password
@@ -446,7 +446,7 @@ if (!empty($_SESSION['provider_id'])) {
             </button>
           </div>
 
-          <!-- Strength meter -->
+          
           <div class="pwd-strength-wrap" id="fpPwdStrength" style="display:none;">
             <div class="pwd-bars">
               <div class="pwd-bar" id="fpbar1"></div>
@@ -484,7 +484,7 @@ if (!empty($_SESSION['provider_id'])) {
         </p>
       </div>
 
-      <!-- ─── Step 3: Success ─── -->
+      
       <div class="fp-step" id="step3">
         <div class="fp-success-wrap">
           <div class="fp-success-ic"><i class="bi bi-check-lg"></i></div>
@@ -548,7 +548,7 @@ if (!empty($_SESSION['provider_id'])) {
       if (currentStep > 1) goToStep(currentStep - 1);
     }
 
-    /* ── Step 1: Verify email exists ── */
+    
     async function doStep1() {
       const email = document.getElementById('fpEmail').value.trim();
       if (!email) { showAlert('Please enter your email address.'); return; }
@@ -578,7 +578,7 @@ if (!empty($_SESSION['provider_id'])) {
       }
     }
 
-    /* ── Step 2: Set new password ── */
+    
     async function doStep2() {
       const newPwd  = document.getElementById('fpNewPwd').value;
       const confirm = document.getElementById('fpConfirmPwd').value;
@@ -613,7 +613,7 @@ if (!empty($_SESSION['provider_id'])) {
       }
     }
 
-    /* ── Password strength meter ── */
+    
     function updateFpStrength(val) {
       const wrap = document.getElementById('fpPwdStrength');
       wrap.style.display = val.length > 0 ? 'block' : 'none';
@@ -639,7 +639,7 @@ if (!empty($_SESSION['provider_id'])) {
       clearAlert();
     }
 
-    /* ── Toggle password visibility ── */
+    
     function toggleFpPwd(id, btn) {
       const inp  = document.getElementById(id);
       const show = inp.type === 'password';
@@ -647,7 +647,7 @@ if (!empty($_SESSION['provider_id'])) {
       btn.querySelector('i').className = show ? 'bi bi-eye-slash-fill' : 'bi bi-eye-fill';
     }
 
-    /* ── Enter key support ── */
+    
     document.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
       if (currentStep === 1) doStep1();

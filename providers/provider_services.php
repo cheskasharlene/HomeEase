@@ -1,4 +1,4 @@
-<?php /* provider_services.php */
+<?php  
 session_start();
 if (empty($_SESSION['provider_id'])) {
   header('Location: provider_index.php');
@@ -20,7 +20,7 @@ $serviceBaseFees = [
   'Appliance Technician' => 800
 ];
 
-// Fetch provider's active service details directly via service_id
+
 $stmt = $conn->prepare("
   SELECT s.id, s.name, s.description, s.icon
   FROM service_providers sp

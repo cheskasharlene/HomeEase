@@ -233,7 +233,7 @@
       margin: 0;
     }
 
-    /* Dark mode for bnav */
+    
     body.dark .bnav {
       background: var(--bg-card) !important;
       border-top-color: var(--border-col) !important;
@@ -281,7 +281,7 @@
       background: var(--bg-input) !important;
     }
 
-    /* Payment Method Section */
+    
     .payment-options {
       display: flex;
       flex-direction: column;
@@ -356,7 +356,7 @@
       font-weight: 700;
     }
 
-    /* GCash Payment Section */
+    
     .gcash-input-wrapper {
       display: flex;
       gap: 8px;
@@ -438,7 +438,7 @@
       font-size: 16px;
     }
 
-    /* Bank Transfer Payment Section */
+    
     .bank-input-wrapper {
       display: flex;
       gap: 8px;
@@ -476,7 +476,7 @@
       font-size: 16px;
     }
 
-    /* Dark mode support */
+    
     body.dark .payment-label {
       background: var(--bg-input);
       border-color: var(--border-col);
@@ -516,7 +516,7 @@
       background: rgba(16, 185, 129, 0.1);
     }
 
-    /* Proof of Payment Upload Styling */
+    
     .proof-upload-wrapper {
       margin-top: 14px;
       padding-top: 14px;
@@ -747,7 +747,7 @@
     .tm-review-txt { font-size: 12px; color: #5E564D; line-height: 1.4; }
     .tm-review-date { font-size: 10px; color: #999; margin-top: 4px; }
 
-    /* Auto-filled field styling */
+    
     .fi[data-autofilled="true"] {
       background: linear-gradient(to right, #FFF8EE 0%, #FFFBF5 100%);
       border-color: #F3DFC2;
@@ -766,7 +766,7 @@
       pointer-events: none;
     }
 
-    /* Dark mode styling for auto-filled fields */
+    
     body.dark .fi[data-autofilled="true"] {
       background: linear-gradient(to right, #2A2216 0%, #332A1C 100%);
       border-color: #4A3E28;

@@ -134,7 +134,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
                 </div>
                 <i class="bi bi-chevron-right p-row-arrow"></i>
               </div>
-              <!-- Earnings removed: now accessible via bottom navigation -> provider_earnings.php -->
+              
               <div class="p-row" onclick="goPage('provider_reviews.php')">
                 <div class="p-row-ic"><svg viewBox="0 0 24 24" fill="none">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
@@ -273,7 +273,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           <button onclick="closeHelpCenter()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
         </div>
         <div style="max-height:70vh;overflow-y:auto;padding:24px;">
-          <!-- Account Section -->
+          
           <div style="margin-bottom:28px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Account</div>
             <div class="faq-item">
@@ -296,7 +296,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </div>
           </div>
 
-          <!-- Verification Section -->
+          
           <div style="margin-bottom:28px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Verification</div>
             <div class="faq-item">
@@ -319,7 +319,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </div>
           </div>
 
-          <!-- Booking & Jobs Section -->
+          
           <div style="margin-bottom:28px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Booking & Jobs</div>
             <div class="faq-item">
@@ -351,7 +351,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </div>
           </div>
 
-          <!-- Earnings & Payments Section -->
+          
           <div style="margin-bottom:28px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Earnings & Payments</div>
             <div class="faq-item">
@@ -374,7 +374,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </div>
           </div>
 
-          <!-- Conduct & Responsibilities Section -->
+          
           <div style="margin-bottom:28px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Conduct & Responsibilities</div>
             <div class="faq-item">
@@ -401,7 +401,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </div>
           </div>
 
-          <!-- Ratings & Reviews Section -->
+          
           <div style="margin-bottom:28px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Ratings & Reviews</div>
             <div class="faq-item">
@@ -415,7 +415,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </div>
           </div>
 
-          <!-- Support Section -->
+          
           <div style="margin-bottom:28px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:16px;font-size:16px;border-bottom:2px solid #e8820c;padding-bottom:8px;">Support</div>
             <div class="faq-item">
@@ -439,13 +439,13 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           <button onclick="closeTermsModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#6b7280;"><i class="bi bi-x-lg"></i></button>
         </div>
         <div style="max-height:70vh;overflow-y:auto;padding:24px;line-height:1.7;color:#4b5563;font-size:14px;">
-          <!-- 1. Introduction -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">1. Introduction</div>
             <p style="margin:0;">These Terms and Conditions govern the use of the HomeEase platform by individuals registering as Service Providers. By registering, submitting requirements, and continuing to use the platform, you acknowledge that you have read, understood, and agreed to comply with these terms.</p>
           </div>
 
-          <!-- 2. Eligibility -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">2. Eligibility</div>
             <p style="margin:0 0 8px 0;">To qualify as a Service Provider on HomeEase, you must:</p>
@@ -458,7 +458,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <p style="margin:8px 0 0 0;">HomeEase reserves the right to approve, reject, suspend, or terminate any application at its discretion.</p>
           </div>
 
-          <!-- 3. Verification Requirements -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">3. Verification Requirements</div>
             <p style="margin:0 0 8px 0;">Service Providers agree to submit authentic and valid documents during the verification process.</p>
@@ -471,7 +471,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <p style="margin:8px 0 0 0;">Verification status may be reviewed periodically by HomeEase.</p>
           </div>
 
-          <!-- 4. Professional Conduct -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">4. Professional Conduct</div>
             <p style="margin:0 0 8px 0;">Service Providers agree to:</p>
@@ -492,7 +492,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </ul>
           </div>
 
-          <!-- 5. Materials, Supplies, and Equipment Responsibility -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">5. Materials, Supplies, and Equipment Responsibility</div>
             <p style="margin:0 0 8px 0;">Service Providers are solely responsible for bringing and providing all necessary tools, equipment, materials, and supplies required to perform the services they offer through HomeEase.</p>
@@ -506,7 +506,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </ul>
           </div>
 
-          <!-- 6. Bookings and Service Completion -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">6. Bookings and Service Completion</div>
             <p style="margin:0 0 8px 0;">Service Providers may receive booking requests through the HomeEase platform based on their availability status.</p>
@@ -522,7 +522,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <p style="margin:8px 0 0 0;">Any misuse of the service completion process may result in client complaints, investigations, warnings, suspension, or permanent removal from the platform.</p>
           </div>
 
-          <!-- 7. Payments and Fees -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">7. Payments and Fees</div>
             <p style="margin:0 0 8px 0;">Service Providers agree that:</p>
@@ -535,7 +535,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <p style="margin:8px 0 0 0;">Violation of this provision may lead to disciplinary action.</p>
           </div>
 
-          <!-- 8. Ratings and Reviews -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">8. Ratings and Reviews</div>
             <p style="margin:0 0 8px 0;">Clients may submit ratings and reviews based on their experience.</p>
@@ -548,7 +548,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </ul>
           </div>
 
-          <!-- 9. Reports and Complaints -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">9. Reports and Complaints</div>
             <p style="margin:0 0 8px 0;">HomeEase may investigate reports submitted by clients concerning fraud, misconduct, negligence, unprofessional behavior, or other violations.</p>
@@ -561,7 +561,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <p style="margin:8px 0 0 0;">Failure to cooperate may result in disciplinary action.</p>
           </div>
 
-          <!-- 10. Suspension and Termination -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">10. Suspension and Termination</div>
             <p style="margin:0 0 8px 0;">HomeEase reserves the right to suspend, restrict, deactivate, or permanently terminate a Service Provider account for reasons including, but not limited to:</p>
@@ -577,7 +577,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </ul>
           </div>
 
-          <!-- 11. Limitation of Liability -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">11. Limitation of Liability</div>
             <p style="margin:0 0 8px 0;">HomeEase acts solely as a platform that connects homeowners and service providers.</p>
@@ -590,7 +590,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             </ul>
           </div>
 
-          <!-- 12. Amendments -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">12. Amendments</div>
             <p style="margin:0 0 8px 0;">HomeEase reserves the right to revise or update these Terms and Conditions at any time.</p>
@@ -598,14 +598,14 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <p style="margin:0;">Continued use of HomeEase constitutes acceptance of the updated terms.</p>
           </div>
 
-          <!-- 13. Governing Law -->
+          
           <div style="margin-bottom:20px;">
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">13. Governing Law</div>
             <p style="margin:0 0 8px 0;">These Terms and Conditions shall be governed by and interpreted in accordance with the laws of the Republic of the Philippines.</p>
             <p style="margin:0;">Any dispute arising from these Terms and Conditions shall be subject to the jurisdiction of the appropriate courts within the Philippines.</p>
           </div>
 
-          <!-- 14. Acknowledgment and Agreement -->
+          
           <div>
             <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;border-bottom:2px solid #e8820c;padding-bottom:8px;text-transform:uppercase;">14. Acknowledgment and Agreement</div>
             <p style="margin:0 0 8px 0;">By selecting "I Agree," submitting verification requirements, registering as a Service Provider, or continuing to use the HomeEase platform, you acknowledge and agree that:</p>
@@ -705,7 +705,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               <div class="edit-fg">
                 <label class="edit-flbl">New Password</label>
                 <input class="edit-fin" id="sheetNewPassword" type="password" placeholder="New password" oninput="updateProviderPwdStrength(this.value)">
-                <!-- Password strength meter -->
+                
                 <div id="provPwdStrength" style="display:none;margin-top:7px;">
                   <div style="display:flex;gap:4px;margin-bottom:5px;">
                     <div id="ppbar1" style="flex:1;height:4px;border-radius:4px;background:#EDE8E0;transition:background 0.25s;"></div>
@@ -742,7 +742,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       </div>
     </div>
 
-    <!-- Report Issue Modal Overlay -->
+    
     <div class="report-modal-ol" id="reportModalOl" onclick="if(event.target===this)closeReportModal()">
       <div class="report-modal-card">
         <div class="report-modal-hdr">
@@ -798,7 +798,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       </div>
     </div>
 
-    <!-- Report Success Modal Overlay -->
+    
     <div class="report-success-ol" id="reportSuccessOl" onclick="if(event.target===this)closeReportSuccess()">
       <div class="report-success-card">
         <div class="report-success-icon"><i class="bi bi-check-circle-fill"></i></div>
@@ -1384,12 +1384,12 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
     refreshProviderUi();
   </script>
 
-  <!-- ══════════════════════════════════════════════════════════════
-       QR CHANGE REQUEST SCREEN
-  ══════════════════════════════════════════════════════════════ -->
+  
+
+
   <div id="qrChangeScreen" style="display:none;position:absolute;inset:0;background:var(--bg-screen,#f8fafc);z-index:150;flex-direction:column;overflow:hidden;">
 
-    <!-- Header -->
+    
     <div style="display:flex;align-items:center;gap:12px;padding:52px 18px 16px;background:var(--bg-screen,#f8fafc);flex-shrink:0;border-bottom:1px solid var(--border-col,#e5e7eb);">
       <button onclick="closeQrChangeScreen()" style="width:36px;height:36px;border-radius:50%;border:none;background:var(--bg-card,#fff);color:var(--txt-muted,#64748b);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <i class="bi bi-arrow-left"></i>
@@ -1400,19 +1400,19 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       </div>
     </div>
 
-    <!-- Scrollable body -->
+    
     <div style="flex:1;overflow-y:auto;padding:18px 18px 100px;">
 
-      <!-- Alert banner -->
+      
       <div id="qrChangeAlert" style="display:none;border-radius:12px;padding:11px 14px;font-size:13px;font-weight:700;margin-bottom:14px;"></div>
 
-      <!-- Info notice -->
+      
       <div style="background:linear-gradient(135deg,rgba(5,150,105,.08),rgba(16,185,129,.04));border:1.5px solid rgba(5,150,105,.2);border-radius:14px;padding:14px 16px;margin-bottom:18px;display:flex;gap:12px;align-items:flex-start;">
         <i class="bi bi-info-circle-fill" style="color:#059669;font-size:18px;flex-shrink:0;margin-top:1px;"></i>
         <div style="font-size:12px;color:#065f46;line-height:1.55;font-weight:600;">To update your GCash or Bank Transfer QR code, fill out this form. An admin will review your request before the change takes effect. This process protects your account from unauthorized payment changes.</div>
       </div>
 
-      <!-- Current Payment Method (read-only) -->
+      
       <div style="background:var(--bg-card,#fff);border-radius:16px;border:1.5px solid var(--border-col,#e5e7eb);padding:16px;margin-bottom:16px;">
         <div style="font-size:11px;font-weight:800;color:var(--txt-muted,#64748b);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;">Current Payment Method</div>
         <div id="qrCurrentInfo">
@@ -1422,17 +1422,17 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         </div>
       </div>
 
-      <!-- Form -->
+      
       <div style="background:var(--bg-card,#fff);border-radius:16px;border:1.5px solid var(--border-col,#e5e7eb);padding:16px;margin-bottom:16px;">
         <div style="font-size:11px;font-weight:800;color:var(--txt-muted,#64748b);text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px;">Change Request Details</div>
 
-        <!-- Reason -->
+        
         <div style="margin-bottom:16px;">
           <label style="display:block;font-size:12px;font-weight:700;color:var(--txt-primary,#0f172a);margin-bottom:6px;">Reason for Change <span style="color:#ef4444;">*</span></label>
           <textarea id="qrChangeReason" rows="4" placeholder="Explain why you need to change your QR code (e.g., account blocked, limit reached, account migration)..." style="width:100%;border:1.5px solid var(--border-col,#e5e7eb);border-radius:12px;padding:11px 13px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--txt-primary,#0f172a);background:var(--bg-screen,#f8fafc);resize:vertical;outline:none;box-sizing:border-box;line-height:1.55;transition:border-color .2s;"></textarea>
         </div>
 
-        <!-- New QR Upload -->
+        
         <div>
           <label style="display:block;font-size:12px;font-weight:700;color:var(--txt-primary,#0f172a);margin-bottom:6px;">Upload New QR Code <span style="color:#ef4444;">*</span></label>
           <input type="file" id="qrNewFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="onQrFileSelected(this)">
@@ -1441,7 +1441,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             <div style="font-size:13px;font-weight:700;color:var(--txt-muted,#64748b);">Tap to upload QR image</div>
             <div style="font-size:11px;color:#94a3b8;margin-top:4px;">JPG, PNG, WEBP · max 5 MB</div>
           </div>
-          <!-- Preview -->
+          
           <div id="qrPreviewWrap" style="display:none;margin-top:12px;position:relative;">
             <img id="qrPreviewImg" src="" alt="QR Preview" style="width:100%;max-height:220px;object-fit:contain;border-radius:12px;border:1.5px solid var(--border-col,#e5e7eb);background:#f8fafc;">
             <button onclick="clearQrFile()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:none;background:#ef4444;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
@@ -1452,12 +1452,12 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         </div>
       </div>
 
-      <!-- Submit button -->
+      
       <button id="qrSubmitBtn" onclick="openQrConfirmModal()" style="width:100%;padding:15px;border-radius:50px;border:none;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-family:'Poppins',sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 20px rgba(5,150,105,.3);transition:all .2s;margin-bottom:20px;">
         <i class="bi bi-send-fill" style="margin-right:6px;"></i> Submit Request
       </button>
 
-      <!-- Request History -->
+      
       <div style="background:var(--bg-card,#fff);border-radius:16px;border:1.5px solid var(--border-col,#e5e7eb);overflow:hidden;">
         <div style="padding:14px 16px;border-bottom:1px solid var(--border-col,#e5e7eb);display:flex;align-items:center;justify-content:space-between;">
           <div style="font-size:13px;font-weight:800;color:var(--txt-primary,#0f172a);">My Past Requests</div>
@@ -1470,10 +1470,10 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         </div>
       </div>
 
-    </div><!-- /scroll -->
-  </div><!-- /qrChangeScreen -->
+    </div>
+  </div>
 
-  <!-- QR Submit Confirmation Modal -->
+  
   <div id="qrConfirmModal" style="display:none;position:absolute;inset:0;background:rgba(15,23,42,.52);z-index:200;align-items:center;justify-content:center;padding:20px;">
     <div style="width:100%;max-width:340px;background:var(--bg-card,#fff);border-radius:22px;padding:22px;box-shadow:0 20px 50px rgba(0,0,0,.18);transform:translateY(0);">
       <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#d1fae5,#a7f3d0);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
@@ -1503,7 +1503,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
   <script>
     var qrSelectedFile = null;
 
-    // Re-parent QR overlays into the #app shell so they respect mobile layout
+    
     (function() {
       var appShell = document.getElementById('app');
       var qrScreen = document.getElementById('qrChangeScreen');
