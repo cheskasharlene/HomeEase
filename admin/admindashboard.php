@@ -1260,7 +1260,6 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="detail-row"><span class="detail-lbl">Gmail</span><span class="detail-val" id="wkEmail" style="word-break:break-all;max-width:65%;">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Address</span><span class="detail-val" id="wkAddress" style="word-break:break-word;max-width:65%;">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Phone</span><span class="detail-val" id="wkPhone">–</span></div>
-          <div class="detail-row"><span class="detail-lbl">Availability</span><span class="detail-val" id="wkAvail">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val" id="wkStatus">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Rating</span><span class="detail-val" id="wkRating">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Jobs Done</span><span class="detail-val" id="wkJobs">–</span></div>
@@ -1703,14 +1702,14 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       function workerStateBadge(type, value) {
         const key = String(value || '').toLowerCase();
-        const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', busy: 'badge-amber' };
-        const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-amber', pending: 'badge-gray', 'pending verification': 'badge-gray' };
+        const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', unavailable: 'badge-gray', busy: 'badge-amber' };
+        const statusMap = { active: 'badge-green', available: 'badge-green', online: 'badge-green', inactive: 'badge-gray', unavailable: 'badge-gray', offline: 'badge-gray', paused: 'badge-gray', pending: 'badge-gray', 'pending verification': 'badge-gray' };
         const labelMap = {
-          availability: { online: 'Available', available: 'Available', offline: 'Unavailable', busy: 'On Job' },
-          status: { active: 'Online', inactive: 'Offline', paused: 'Paused', pending: 'Offline', 'pending verification': 'Offline' }
+          availability: { online: 'Available', available: 'Available', offline: 'Unavailable', unavailable: 'Unavailable', busy: 'On Job' },
+          status: { active: 'Available', available: 'Available', online: 'Available', inactive: 'Unavailable', unavailable: 'Unavailable', offline: 'Unavailable', paused: 'Unavailable', pending: 'Unavailable', 'pending verification': 'Unavailable' }
         };
         const map = type === 'availability' ? availabilityMap : statusMap;
-        const label = (labelMap[type] && labelMap[type][key]) || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '–');
+        const label = (labelMap[type] && labelMap[type][key]) || (key ? (key === 'online' ? 'Available' : (key === 'offline' ? 'Unavailable' : key.charAt(0).toUpperCase() + key.slice(1))) : '–');
         return `<span class="${map[key] || 'badge-gray'}">${label}</span>`;
       }
 
@@ -2444,7 +2443,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="li-body">
             <div class="li-name">${w.name}</div>
             <div class="li-sub">${w.specialty} · ${w.phone || 'No phone'}</div>
-            <div style="display:flex;gap:5px;margin-top:3px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', getWorkerVerificationBadgeState(w))}</div>
+            <div style="display:flex;gap:5px;margin-top:3px;">${workerStateBadge('availability', isWorkerSuspended(w) ? 'unavailable' : w.availability)}</div>
           </div>
           <div class="li-right" style="text-align:right;">
             <div style="font-size:11px;color:var(--txt-muted);">⭐ ${parseFloat(w.rating || 0).toFixed(1)}</div>
@@ -2570,7 +2569,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="li-body">
           <div class="li-name">${w.name} ${w.is_verified == 1 ? '<i class="bi bi-patch-check-fill" style="color:#10b981;font-size:12px;"></i>' : ''}</div>
           <div class="li-sub">${w.specialty} · ${w.phone || 'No phone'}</div>
-          <div style="display:flex;gap:5px;margin-top:4px;">${workerStateBadge('availability', w.availability)} ${workerStateBadge('status', getWorkerVerificationBadgeState(w))}</div>
+          <div style="display:flex;gap:5px;margin-top:4px;">${workerStateBadge('availability', isWorkerSuspended(w) ? 'unavailable' : w.availability)}</div>
         </div>
         <div class="li-right">
           <div class="act-btns">
@@ -2604,10 +2603,16 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         if (wkAddress) wkAddress.textContent = w.address || '–';
         const wkPhone = document.getElementById('wkPhone');
         if (wkPhone) wkPhone.textContent = w.phone || '–';
-        const wkAvail = document.getElementById('wkAvail');
-        if (wkAvail) wkAvail.innerHTML = workerStateBadge('availability', w.availability || 'offline');
+        const isPaused = isWorkerSuspended(w);
+        const isAvail = !isPaused && (getWorkerDisplayAvailability(w) === 'available');
+        const statusBadgeHtml = isAvail
+          ? '<span class="badge-green">Available</span>'
+          : '<span class="badge-gray">Unavailable</span>';
+
         const wkStatus = document.getElementById('wkStatus');
-        if (wkStatus) wkStatus.innerHTML = workerStateBadge('status', getWorkerVerificationBadgeState(w));
+        if (wkStatus) wkStatus.innerHTML = statusBadgeHtml;
+        const wkAvail = document.getElementById('wkAvail');
+        if (wkAvail) wkAvail.innerHTML = statusBadgeHtml;
         const wkRating = document.getElementById('wkRating');
         if (wkRating) wkRating.textContent = parseFloat(w.rating || 0).toFixed(1);
         const wkJobs = document.getElementById('wkJobs');
@@ -2786,7 +2791,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="li-sub">${u.booking_count} bookings · ${u.done_count} done · ${Number(u.booking_count || 0) > 0 ? 'Engaged User' : 'New User'}</div>
         </div>
         <div class="li-right">
-          ${u.disabled ? '<span class="badge-red">Disabled</span>' : '<span class="badge-green">Active</span>'}
+          ${u.disabled ? '<span class="badge-red">Disabled</span>' : ''}
           ${u.phone ? `<div style="font-size:11px;color:var(--txt-muted);">${u.phone}</div>` : ''}
         </div>
       </div>`).join('');
