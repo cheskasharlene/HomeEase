@@ -631,6 +631,7 @@ if ($section === 'bookings') {
         // Also update booking_requests if exists
         $conn->query("UPDATE booking_requests SET status='accepted' WHERE booking_id=$bookingId AND provider_id=$workerId AND status='pending'");
         $conn->query("UPDATE booking_requests SET status='closed' WHERE booking_id=$bookingId AND provider_id<>$workerId AND status='pending'");
+        sendProviderNotification($conn, $workerId, 'booking_assigned', 'Booking Assigned', "You have been assigned to booking #{$bookingId} by administrator.", 'bi-calendar-check', $bookingId);
 
         // Fetch worker name for response
         $r = $conn->query("SELECT sp.full_name AS name, sp.contact_number AS phone, s.name AS specialty, sp.rating FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id=$workerId");

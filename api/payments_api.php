@@ -315,6 +315,9 @@ if ($method === 'POST' && $action === 'submit') {
 
         // Notify client about next step for visibility in notifications page
         $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES ({$uid}, 'Payment Submitted', 'Your payment proof has been sent to the worker for confirmation.', 'wallet', 0, NOW())");
+        if ($providerId > 0) {
+            sendProviderNotification($conn, $providerId, 'payment', 'Payment Submitted', "Client submitted payment for booking #{$bookingId}. Review and confirm it.", 'bi-cash-coin', $bookingId);
+        }
         ob_end_clean(); echo json_encode(['success' => true, 'message' => 'Payment submitted. Awaiting worker confirmation.']); exit;
     } else {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Failed to record payment']); exit;

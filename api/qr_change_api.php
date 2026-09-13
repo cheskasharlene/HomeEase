@@ -150,6 +150,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
             $conn->commit();
+            sendProviderNotification($conn, $providerId, 'qr_change_approved', 'QR Change Approved', 'Your GCash/Bank Transfer QR code change request has been approved. Your new QR code is now active.', 'bi-qr-code-scan', $id);
             ob_end_clean();
             echo json_encode(['success' => true, 'message' => 'Request approved. Provider QR updated.']);
         } catch (Throwable $e) {
@@ -201,7 +202,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         $upd->execute();
         $upd->close();
 
-
+        sendProviderNotification($conn, $providerId, 'qr_change_rejected', 'QR Change Request Rejected', 'Your QR code change request was rejected. Reason: ' . $remarks, 'bi-x-circle', $id);
 
         ob_end_clean();
         echo json_encode(['success' => true, 'message' => 'Request rejected.']);
@@ -388,6 +389,8 @@ if ($method === 'POST' && $action === 'submit') {
         VALUES ('qr_change', 'New QR Change Request',
         '$provName submitted a GCash/Bank Transfer QR code change request.',
         $newId, $newId, 0, NOW())");
+
+    sendProviderNotification($conn, $providerId, 'qr_change_submitted', 'QR Change Request Submitted', 'Your GCash/Bank Transfer QR code change request has been submitted and is pending admin review.', 'bi-qr-code-scan', $newId);
 
     ob_end_clean();
     echo json_encode(['success' => true, 'message' => 'Your request has been submitted and is pending admin review.', 'request_id' => $newId]);

@@ -283,6 +283,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'approve_provider') {
     }
     $update_stmt->close();
 
+    sendProviderNotification($conn, $provider_id, 'verification_approved', 'Verification Approved', 'Your document verification has been approved by admin.', 'bi-check-circle', $provider_id);
+
     respond(true, 'Provider verified successfully');
 }
 

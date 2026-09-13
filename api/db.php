@@ -696,10 +696,9 @@ function sendProviderNotification($conn, $providerId, $type, $title, $message, $
 {
     ensureNormalizationSchema($conn);
     
-    $validTypes = ['remittance', 'warning', 'report', 'account_verified', 'verification_rejected', 'rejected', 'general'];
-    if (!in_array($type, $validTypes)) {
-        return false;
-    }
+    $providerId = (int)$providerId;
+    if ($providerId <= 0 || !($conn instanceof mysqli)) return false;
+    $type = !empty($type) ? trim((string)$type) : 'general';
     
     $stmt = $conn->prepare("INSERT INTO provider_notifications (provider_id, type, reference_id, title, message, icon, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())");
     if (!$stmt) return false;

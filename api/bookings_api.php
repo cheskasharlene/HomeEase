@@ -550,8 +550,8 @@ if ($method === 'POST' && $action === '') {
                                         sv.name AS service_category
                                  FROM service_providers sp
                                  LEFT JOIN services sv ON sv.id = sp.service_id
-                                 WHERE sp.status = 'active'
-                                   AND sp.availability_status = 'online'
+                                  WHERE sp.status = 'active'
+                                   AND (sp.availability_status = 'online' OR sp.availability_status = 'available')
                                    AND LOWER(COALESCE(sv.name, '')) = LOWER(?)
                                  ORDER BY sp.rating DESC, sp.jobs_done DESC"
                         );
@@ -593,6 +593,7 @@ if ($method === 'POST' && $action === '') {
                         $customer_address
                     );
                     $reqStmt->execute();
+                    sendProviderNotification($conn, $pid, 'booking_request', 'New Booking Request', "You have a new booking request for {$service} (#{$bid}).", 'bi-calendar-check', $bid);
                 }
                 $reqStmt->close();
             }
