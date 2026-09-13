@@ -1256,3 +1256,26 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
     setup();
   }
 })();
+
+// ────────────── Provider Heartbeat Auto-Ping ──────────────
+(function () {
+  if (window.location.pathname.toLowerCase().includes('/providers/')) {
+    function sendProviderHeartbeat() {
+      fetch('../api/provider_availability_api.php?action=heartbeat', { cache: 'no-store' }).catch(function () {});
+    }
+    sendProviderHeartbeat();
+    setInterval(sendProviderHeartbeat, 30000);
+  }
+})();
+
+// ────────────── User Heartbeat Auto-Ping ──────────────
+(function () {
+  const path = window.location.pathname.toLowerCase();
+  if (!path.includes('/admin/') && !path.includes('/providers/')) {
+    function sendUserHeartbeat() {
+      fetch('api/user_activity_api.php', { cache: 'no-store' }).catch(function () {});
+    }
+    sendUserHeartbeat();
+    setInterval(sendUserHeartbeat, 30000);
+  }
+})();

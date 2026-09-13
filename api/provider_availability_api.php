@@ -28,7 +28,17 @@ if (!in_array('availability_status', $cols, true)) {
     exit;
 }
 
+$action = $_GET['action'] ?? '';
+if ($action === 'heartbeat') {
+    updateProviderActivity($conn, $providerId);
+    echo json_encode(['success' => true]);
+    exit;
+}
+
 if ($method === 'GET') {
+    updateProviderActivity($conn, $providerId);
+    syncProviderOnlineStatuses($conn);
+
     $stmt = $conn->prepare('SELECT availability_status, COALESCE(is_verified, 0) AS is_verified FROM service_providers WHERE provider_id = ? LIMIT 1');
     if (!$stmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
@@ -90,7 +100,7 @@ if ($method === 'POST') {
     }
 
     $dbValue = $requested === 'online' ? 'online' : 'offline';
-    $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ? WHERE provider_id = ?');
+    $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ?, last_active = NOW() WHERE provider_id = ?');
     if (!$updateStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;

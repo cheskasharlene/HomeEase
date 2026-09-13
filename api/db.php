@@ -509,6 +509,8 @@ function ensureNormalizationSchema($conn)
 
     // Synchronize provider jobs_done count with database completed bookings
     syncProviderJobsDone($conn);
+    syncProviderOnlineStatuses($conn);
+    syncUserOnlineStatuses($conn);
 }
 
 /**
@@ -772,5 +774,84 @@ function cancelExpiredMatchingBookings($conn, $specificBookingId = 0)
     }
     return $cancelledCount;
 }
+
+/**
+ * Ensures last_active column exists on service_providers table and syncs online/offline statuses.
+ */
+function syncProviderOnlineStatuses($conn)
+{
+    if (!($conn instanceof mysqli)) return;
+
+    $resCol = @$conn->query("SHOW COLUMNS FROM service_providers LIKE 'last_active'");
+    if ($resCol && $resCol->num_rows === 0) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN last_active DATETIME NULL AFTER availability_status");
+    }
+
+    @$conn->query("UPDATE service_providers 
+                   SET availability_status = 'offline' 
+                   WHERE (availability_status = 'online' OR availability_status = 'available') 
+                     AND (last_active IS NULL OR last_active < DATE_SUB(NOW(), INTERVAL 2 MINUTE))");
+}
+
+/**
+ * Updates last_active timestamp for a logged-in service provider.
+ */
+function updateProviderActivity($conn, $providerId)
+{
+    $providerId = (int)$providerId;
+    if ($providerId <= 0 || !($conn instanceof mysqli)) return;
+
+    syncProviderOnlineStatuses($conn);
+
+    $stmt = $conn->prepare("UPDATE service_providers SET last_active = NOW() WHERE provider_id = ?");
+    if ($stmt) {
+        $stmt->bind_param("i", $providerId);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
+/**
+ * Ensures is_online and last_active columns exist on users table and syncs online/offline statuses.
+ */
+function syncUserOnlineStatuses($conn)
+{
+    if (!($conn instanceof mysqli)) return;
+
+    $resIsOnline = @$conn->query("SHOW COLUMNS FROM users LIKE 'is_online'");
+    if ($resIsOnline && $resIsOnline->num_rows === 0) {
+        @$conn->query("ALTER TABLE users ADD COLUMN is_online TINYINT(1) NOT NULL DEFAULT 0");
+    }
+
+    $resLastActive = @$conn->query("SHOW COLUMNS FROM users LIKE 'last_active'");
+    if ($resLastActive && $resLastActive->num_rows === 0) {
+        @$conn->query("ALTER TABLE users ADD COLUMN last_active DATETIME NULL");
+    }
+
+    @$conn->query("UPDATE users 
+                   SET is_online = 0 
+                   WHERE is_online = 1 
+                     AND (last_active IS NULL OR last_active < DATE_SUB(NOW(), INTERVAL 2 MINUTE))");
+}
+
+/**
+ * Updates last_active timestamp and sets is_online = 1 for a logged-in user.
+ */
+function updateUserActivity($conn, $userId)
+{
+    $userId = (int)$userId;
+    if ($userId <= 0 || !($conn instanceof mysqli)) return;
+
+    syncUserOnlineStatuses($conn);
+
+    $stmt = $conn->prepare("UPDATE users SET is_online = 1, last_active = NOW() WHERE id = ?");
+    if ($stmt) {
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $stmt->close();
+    }
+}
+
+
 
 

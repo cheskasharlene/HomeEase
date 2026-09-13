@@ -212,6 +212,7 @@ if ($section === 'stats') {
 
 if ($section === 'users') {
     if ($method === 'GET' && $action === 'list') {
+        syncUserOnlineStatuses($conn);
         $search = trim($_GET['search'] ?? '');
         $params = []; $types = ''; $where = "WHERE role != 'admin'";
         if ($search) {
@@ -223,7 +224,11 @@ if ($section === 'users') {
         $hasDisabled = $colRes && $colRes->num_rows > 0;
         $disabledSelect = $hasDisabled ? ", disabled" : ", 0 AS disabled";
 
-        $stmt = $conn->prepare("SELECT id, name, email, phone, address, role $disabledSelect,
+        $colOnline = $conn->query("SHOW COLUMNS FROM users LIKE 'is_online'");
+        $hasOnline = $colOnline && $colOnline->num_rows > 0;
+        $onlineSelect = $hasOnline ? ", COALESCE(is_online, 0) AS is_online" : ", 0 AS is_online";
+
+        $stmt = $conn->prepare("SELECT id, name, email, phone, address, role $disabledSelect $onlineSelect,
             (SELECT COUNT(*) FROM bookings WHERE user_id=users.id) AS booking_count,
             (SELECT COUNT(*) FROM bookings WHERE user_id=users.id AND status='done') AS done_count,
             (CASE WHEN EXISTS(SELECT 1 FROM users u2 WHERE u2.id=users.id AND u2.password IS NOT NULL) THEN 1 ELSE 0 END) AS active
@@ -239,6 +244,7 @@ if ($section === 'users') {
             $row['booking_count'] = (int)$row['booking_count'];
             $row['done_count'] = (int)$row['done_count'];
             $row['disabled'] = (bool)($row['disabled'] ?? false);
+            $row['is_online'] = (bool)($row['is_online'] ?? false);
         }
         respond(true, '', ['users' => $rows]);
     }
@@ -281,6 +287,7 @@ if ($section === 'workers') {
 
     if ($method === 'GET' && $action === 'list') {
         syncProviderJobsDone($conn);
+        syncProviderOnlineStatuses($conn);
         $search = trim($_GET['search'] ?? '');
         $filter = trim($_GET['filter'] ?? '');
         $verificationFilter = trim($_GET['verification_filter'] ?? '');

@@ -46,6 +46,10 @@ if ($user) {
         $_SESSION['user_address'] = $user['address'] ?? '';
         $_SESSION['user_role']  = $user['role'];
 
+        if ($user['role'] !== 'admin') {
+            updateUserActivity($conn, $user['id']);
+        }
+
         if ($user['role'] === 'admin') {
             $_SESSION['admin_id']   = $user['id'];
             $_SESSION['admin_name'] = $user['name'];
@@ -90,6 +94,8 @@ if ($provider) {
         $_SESSION['provider_phone']    = $provider['contact_number'];
         $_SESSION['provider_address']  = $provider['address'];
         $_SESSION['provider_specialty']= $provider['service_category'];
+
+        updateProviderActivity($conn, $provider['provider_id']);
 
         respond(true, 'Login successful!', [
             'redirect' => 'providers/provider_home.php',

@@ -1066,6 +1066,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             placeholder="Search users..." oninput="debounce(loadUsers,320)()"></div>
         <select class="wk-dd" id="usStatusFilter" onchange="loadUsers()">
           <option value="all">Status: All</option>
+          <option value="online">Online</option>
+          <option value="offline">Offline</option>
           <option value="active">Active</option>
           <option value="disabled">Disabled / Suspended</option>
         </select>
@@ -2762,8 +2764,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           const users = allUsers.filter(u => {
             const q = String(search || '').toLowerCase().trim();
             const matchesSearch = !q || String(u.name || '').toLowerCase().includes(q) || String(u.email || '').toLowerCase().includes(q);
-            const userStatus = u.disabled ? 'disabled' : 'active';
-            const matchesStatus = statusFilter === 'all' || statusFilter === userStatus;
+            let matchesStatus = statusFilter === 'all';
+            if (statusFilter === 'online') matchesStatus = u.is_online && !u.disabled;
+            else if (statusFilter === 'offline') matchesStatus = !u.is_online && !u.disabled;
+            else if (statusFilter === 'disabled') matchesStatus = u.disabled;
+            else if (statusFilter === 'active') matchesStatus = !u.disabled;
             return matchesSearch && matchesStatus;
           });
 
@@ -2792,9 +2797,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="li-name" style="${u.disabled ? 'text-decoration:line-through;color:var(--txt-muted);' : ''}">${u.name}</div>
           <div class="li-sub">${u.email}</div>
           <div class="li-sub">${u.booking_count} bookings · ${u.done_count} done · ${Number(u.booking_count || 0) > 0 ? 'Engaged User' : 'New User'}</div>
+          <div style="display:flex;gap:5px;margin-top:3px;">
+            ${u.disabled ? '<span class="badge-red">Disabled</span>' : (u.is_online ? '<span class="badge-green">Online</span>' : '<span class="badge-gray">Offline</span>')}
+          </div>
         </div>
         <div class="li-right">
-          ${u.disabled ? '<span class="badge-red">Disabled</span>' : ''}
           ${u.phone ? `<div style="font-size:11px;color:var(--txt-muted);">${u.phone}</div>` : ''}
         </div>
       </div>`).join('');
@@ -2811,7 +2818,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const noteEl = document.getElementById('usFilterNote');
         if (!noteEl) return;
         const parts = [];
-        if (statusFilter !== 'all') parts.push(`Status: ${statusFilter === 'disabled' ? 'Disabled / Suspended' : 'Active'}`);
+        if (statusFilter !== 'all') {
+          const labelMap = { online: 'Online', offline: 'Offline', active: 'Active', disabled: 'Disabled / Suspended' };
+          parts.push(`Status: ${labelMap[statusFilter] || statusFilter}`);
+        }
         noteEl.textContent = parts.length
           ? `Showing ${count} user(s) · ${parts.join(' · ')}`
           : `Showing: All users (${count})`;
@@ -2825,6 +2835,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       <div style="font-size:16px;font-weight:800;color:var(--txt-primary);">${u.name}</div>
       <div style="font-size:12px;color:var(--txt-muted);">${u.email}</div>
     </div>
+    <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val">${u.is_online ? '<span class="badge-green">Online</span>' : '<span class="badge-gray">Offline</span>'}</span></div>
     <div class="detail-row"><span class="detail-lbl">Phone</span><span class="detail-val">${u.phone || '–'}</span></div>
     <div class="detail-row"><span class="detail-lbl">Address</span><span class="detail-val">${u.address || '–'}</span></div>
     <div class="detail-row"><span class="detail-lbl">Total Bookings</span><span class="detail-val">${u.booking_count}</span></div>
