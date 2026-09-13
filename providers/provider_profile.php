@@ -79,7 +79,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
           <div class="p-status-row" id="profileStatusRow">
             <div class="p-status-text">Status: <span id="profileAvailLabel"><?= ($isVerified && $availabilityStatus === 'online') ? 'Online' : 'Offline' ?></span></div>
             <label class="p-status-switch <?= $isVerified ? '' : 'disabled' ?>" id="profileStatusSwitchWrap">
-              <input type="checkbox" id="profileAvailToggle" <?= ($isVerified && $availabilityStatus === 'online') ? 'checked' : '' ?> disabled>
+              <input type="checkbox" id="profileAvailToggle" <?= ($isVerified && $availabilityStatus === 'online') ? 'checked' : '' ?> <?= $isVerified ? '' : 'disabled' ?>>
               <span class="p-status-slider"></span>
             </label>
           </div>
@@ -856,15 +856,16 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       document.body.classList.add(state);
 
       const toggle = document.getElementById('profileAvailToggle');
-      const lbl = document.getElementById('profileAvailLabel');
       const wrap = document.getElementById('profileStatusSwitchWrap');
-      const allowToggle = false;
+      const isVerified = state === 'verified';
 
-      if (toggle && lbl && wrap) {
-        toggle.disabled = true;
-        wrap.classList.add('disabled');
-        lbl.textContent = state === 'verified' ? 'Online' : 'Offline';
-        toggle.checked = state === 'verified';
+      if (toggle && wrap) {
+        toggle.disabled = !isVerified;
+        if (!isVerified) {
+          wrap.classList.add('disabled');
+        } else {
+          wrap.classList.remove('disabled');
+        }
       }
     }
 
