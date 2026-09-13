@@ -145,10 +145,10 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         <div class="ni" onclick="goPage('../home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('service_selection.php')" style="cursor:pointer;"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni on">
+        <div class="ni ni-bell on">
           <div class="ni-bell-wrap">
             <i class="bi bi-bell-fill"></i>
-            <div class="ndot" id="navNotifDot" style="display:none;"></div>
+            <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
           </div>
           <span class="nl">Notifications</span>
         </div>
@@ -163,9 +163,21 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         localStorage.setItem('he_unread_notifs', String(c));
       } catch (e) {}
 
+      // Update navbar bell badge
+      const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
+      badges.forEach(b => {
+        if (c > 0) {
+          b.textContent = c > 99 ? '99+' : String(c);
+          b.style.display = 'flex';
+        } else {
+          b.style.display = 'none';
+        }
+      });
+
+      // Ensure no legacy nav dots ever display
       const dots = document.querySelectorAll('#navNotifDot, .bnav .ndot');
       dots.forEach(d => {
-        d.style.display = c > 0 ? 'block' : 'none';
+        d.style.display = 'none';
       });
 
       if (typeof window.updateHomeownerNotificationDot === 'function') {

@@ -190,14 +190,26 @@ if ($uid > 0) {
     window._allPros = [];
 
     function updateNotificationDot(unreadCount) {
-      window.HE.unreadNotifs = Math.max(0, Number(unreadCount) || 0);
+      const c = Math.max(0, Number(unreadCount) || 0);
+      window.HE.unreadNotifs = c;
+      try {
+        localStorage.setItem('he_unread_notifs', String(c));
+      } catch (e) {}
+
+      const badges = document.querySelectorAll('#navBellBadge, .ni-badge');
+      badges.forEach(b => {
+        if (c > 0) {
+          b.textContent = c > 99 ? '99+' : String(c);
+          b.style.display = 'flex';
+        } else {
+          b.style.display = 'none';
+        }
+      });
+
       const dots = document.querySelectorAll('#navNotifDot, .bnav .ndot');
       dots.forEach(dot => {
-        dot.style.display = window.HE.unreadNotifs > 0 ? 'block' : 'none';
+        dot.style.display = 'none';
       });
-      try {
-        localStorage.setItem('he_unread_notifs', String(window.HE.unreadNotifs));
-      } catch (e) {}
     }
 
     async function checkUnreadNotifications() {
@@ -658,16 +670,18 @@ if ($uid > 0) {
       document.getElementById('proProfileOverlay').classList.remove('on');
       document.body.style.overflow = '';
     }
-    const notifDotStyle = (window.HE.unreadNotifs || 0) > 0 ? 'display:block;' : 'display:none;';
+    const initUnread = Math.max(0, Number(window.HE.unreadNotifs) || 0);
+    const notifBadgeStyle = initUnread > 0 ? 'display:flex;' : 'display:none;';
+    const notifBadgeText = initUnread > 99 ? '99+' : String(initUnread);
     document.getElementById('navContainer').innerHTML = `
       <div class="bnav">
         <div class="ni on"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage('clients/booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage('clients/service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage('clients/notifications.php')">
+        <div class="ni ni-bell" onclick="goPage('clients/notifications.php')">
           <div class="ni-bell-wrap">
             <i class="bi bi-bell-fill"></i>
-            <div class="ndot" id="navNotifDot" style="${notifDotStyle}"></div>
+            <span class="ni-badge" id="navBellBadge" style="${notifBadgeStyle}">${notifBadgeText}</span>
           </div>
           <span class="nl">Notifications</span>
         </div>

@@ -551,10 +551,10 @@ if ($appBase === '') {
             onclick="goPage('<?= htmlspecialchars(rtrim($appBase, '/')) ?>/clients/service_selection.php')">
             <div class="nb-c"><i class="bi bi-plus-lg"></i></div>
           </div>
-          <div class="ni" onclick="goPage('<?= htmlspecialchars(rtrim($appBase, '/')) ?>/clients/notifications.php')">
+          <div class="ni ni-bell" onclick="goPage('<?= htmlspecialchars(rtrim($appBase, '/')) ?>/clients/notifications.php')">
             <div class="ni-bell-wrap">
               <i class="bi bi-bell-fill"></i>
-              <div class="ndot" id="navNotifDot" style="display:none;"></div>
+              <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
             </div>
             <span class="nl">Notifications</span>
           </div>
@@ -1343,10 +1343,10 @@ if ($appBase === '') {
         <div class="ni" onclick="goPage(APP_BASE + '/home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
         <div class="ni" onclick="goPage(APP_BASE + '/clients/booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
         <div class="ni" onclick="goPage(APP_BASE + '/clients/service_selection.php')"><div class="nb-c"><i class="bi bi-plus-lg"></i></div></div>
-        <div class="ni" onclick="goPage(APP_BASE + '/clients/notifications.php')">
+        <div class="ni ni-bell" onclick="goPage(APP_BASE + '/clients/notifications.php')">
           <div class="ni-bell-wrap">
             <i class="bi bi-bell-fill"></i>
-            <div class="ndot" id="navNotifDot" style="display:none;"></div>
+            <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
           </div>
           <span class="nl">Notifications</span>
         </div>

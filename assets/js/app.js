@@ -1112,6 +1112,9 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
   }
 
   function setup() {
+    const path = window.location.pathname.toLowerCase();
+    if (!path.includes('/providers/')) return;
+
     try {
       const cached = parseInt(localStorage.getItem('he_provider_unread_notifs') || '0', 10);
       if (!isNaN(cached)) updateBadge(cached);
@@ -1138,13 +1141,13 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
   }
 })();
 
-// ── Homeowner Nav Bell Badge & Notification Dot ────────────────────────────
-// Polls client notifications API and keeps red dot synchronized
+// ── Homeowner Nav Bell Badge & Notification Indicator ───────────────────────
+// Polls client notifications API and keeps red circular number badge synchronized
 // on every homeowner page that has a bottom navigation.
 (function initHomeownerNotificationDot() {
   let _lastCount = -1;
 
-  function updateDots(count) {
+  function updateBadge(count) {
     const unread = Math.max(0, Number(count) || 0);
     const prev = _lastCount;
     _lastCount = unread;
@@ -1153,10 +1156,15 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
       localStorage.setItem('he_unread_notifs', String(unread));
     } catch (e) {}
 
-    let dots = document.querySelectorAll('#navNotifDot, .bnav .ndot');
+    // Find all badge elements and ensure legacy dots are hidden
+    let badges = document.querySelectorAll('#navBellBadge, .ni-badge');
+    const dots = document.querySelectorAll('#navNotifDot, .bnav .ndot');
+    dots.forEach(dot => {
+      dot.style.display = 'none';
+    });
 
-    // Auto-inject .ndot into .bnav bell item if missing
-    if (!dots.length) {
+    // Auto-inject .ni-badge into .bnav bell item if missing
+    if (!badges.length) {
       const bellItem = document.querySelector('.bnav .ni[onclick*="notifications.php"], .bnav .ni.on[onclick*="notifications.php"]');
       if (bellItem) {
         let wrap = bellItem.querySelector('.ni-bell-wrap');
@@ -1169,33 +1177,38 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
             wrap.appendChild(icon);
           }
         }
-        if (wrap && !wrap.querySelector('.ndot')) {
-          const dot = document.createElement('div');
-          dot.className = 'ndot';
-          dot.id = 'navNotifDot';
-          dot.style.display = unread > 0 ? 'block' : 'none';
-          wrap.appendChild(dot);
-          dots = [dot];
+        if (wrap && !wrap.querySelector('.ni-badge')) {
+          const badge = document.createElement('span');
+          badge.className = 'ni-badge';
+          badge.id = 'navBellBadge';
+          badge.style.display = unread > 0 ? 'flex' : 'none';
+          wrap.appendChild(badge);
+          badges = [badge];
         }
       }
     }
 
-    dots.forEach(dot => {
-      dot.style.display = unread > 0 ? 'block' : 'none';
-    });
-
-    if (prev >= 0 && unread > prev) {
-      const wrap = document.querySelector('.bnav .ni-bell-wrap');
-      if (wrap) {
-        wrap.classList.remove('ni-bell-shake');
-        void wrap.offsetWidth;
-        wrap.classList.add('ni-bell-shake');
-        setTimeout(() => wrap.classList.remove('ni-bell-shake'), 600);
+    badges.forEach(badge => {
+      if (unread > 0) {
+        badge.textContent = unread > 99 ? '99+' : String(unread);
+        badge.style.display = 'flex';
+        if (prev >= 0 && unread > prev) {
+          const bellWrap = badge.closest('.ni-bell-wrap');
+          if (bellWrap) {
+            bellWrap.classList.remove('ni-bell-shake');
+            void bellWrap.offsetWidth;
+            bellWrap.classList.add('ni-bell-shake');
+            setTimeout(() => bellWrap.classList.remove('ni-bell-shake'), 600);
+          }
+        }
+      } else {
+        badge.style.display = 'none';
       }
-    }
+    });
   }
 
-  window.updateHomeownerNotificationDot = updateDots;
+  window.updateHomeownerNotificationDot = updateBadge;
+  window.updateHomeownerBellBadge = updateBadge;
 
   async function pollUnread() {
     const path = window.location.pathname.toLowerCase();
@@ -1209,15 +1222,18 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
       const res = await fetch(apiUrl, { cache: 'no-store' });
       const data = await res.json();
       if (data && data.success && typeof data.unread_count === 'number') {
-        updateDots(data.unread_count);
+        updateBadge(data.unread_count);
       }
     } catch (e) {}
   }
 
   function setup() {
+    const path = window.location.pathname.toLowerCase();
+    if (path.includes('/admin/') || path.includes('/providers/')) return;
+
     try {
       const cached = parseInt(localStorage.getItem('he_unread_notifs') || '0', 10);
-      if (!isNaN(cached)) updateDots(cached);
+      if (!isNaN(cached)) updateBadge(cached);
     } catch (e) {}
 
     pollUnread();
@@ -1229,7 +1245,7 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
     window.addEventListener('storage', (e) => {
       if (e.key === 'he_unread_notifs') {
         const c = parseInt(e.newValue || '0', 10);
-        updateDots(c);
+        updateBadge(c);
       }
     });
   }

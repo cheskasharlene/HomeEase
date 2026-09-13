@@ -179,10 +179,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         <div class="bnav">
             <div class="ni" onclick="goPage('../home.php')"><i class="bi bi-house-fill"></i><span class="nl">Home</span></div>
             <div class="ni" onclick="goPage('booking_history.php')"><i class="bi bi-calendar-check"></i><span class="nl">Bookings</span></div>
-            <div class="ni" onclick="goPage('notifications.php')">
+            <div class="ni ni-bell" onclick="goPage('notifications.php')">
                 <div class="ni-bell-wrap">
                     <i class="bi bi-bell-fill"></i>
-                    <div class="ndot" id="navNotifDot" style="display:none;"></div>
+                    <span class="ni-badge" id="navBellBadge" style="display:none;"></span>
                 </div>
                 <span class="nl">Notifications</span>
             </div>
