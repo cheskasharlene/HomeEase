@@ -1025,8 +1025,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         </select>
         <select class="wk-dd" id="wkAvailabilityFilter" onchange="loadWorkers()">
           <option value="all">Availability: All</option>
-          <option value="available">Available</option>
-          <option value="unavailable">Unavailable</option>
+          <option value="available">Online</option>
+          <option value="unavailable">Offline</option>
           <option value="on_job">On Job</option>
         </select>
         <select class="wk-dd" id="wkServiceFilter" onchange="loadWorkers()">
@@ -1705,11 +1705,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', unavailable: 'badge-gray', busy: 'badge-amber' };
         const statusMap = { active: 'badge-green', available: 'badge-green', online: 'badge-green', inactive: 'badge-gray', unavailable: 'badge-gray', offline: 'badge-gray', paused: 'badge-gray', pending: 'badge-gray', 'pending verification': 'badge-gray' };
         const labelMap = {
-          availability: { online: 'Available', available: 'Available', offline: 'Unavailable', unavailable: 'Unavailable', busy: 'On Job' },
-          status: { active: 'Available', available: 'Available', online: 'Available', inactive: 'Unavailable', unavailable: 'Unavailable', offline: 'Unavailable', paused: 'Unavailable', pending: 'Unavailable', 'pending verification': 'Unavailable' }
+          availability: { online: 'Online', available: 'Online', offline: 'Offline', unavailable: 'Offline', busy: 'On Job' },
+          status: { active: 'Online', available: 'Online', online: 'Online', inactive: 'Offline', unavailable: 'Offline', offline: 'Offline', paused: 'Offline', pending: 'Offline', 'pending verification': 'Offline' }
         };
         const map = type === 'availability' ? availabilityMap : statusMap;
-        const label = (labelMap[type] && labelMap[type][key]) || (key ? (key === 'online' ? 'Available' : (key === 'offline' ? 'Unavailable' : key.charAt(0).toUpperCase() + key.slice(1))) : '–');
+        const label = (labelMap[type] && labelMap[type][key]) || (key ? (key === 'online' || key === 'available' ? 'Online' : (key === 'offline' || key === 'unavailable' ? 'Offline' : key.charAt(0).toUpperCase() + key.slice(1))) : '–');
         return `<span class="${map[key] || 'badge-gray'}">${label}</span>`;
       }
 
@@ -2508,7 +2508,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         if (!noteEl) return;
         const parts = [];
         if (statusFilter !== 'all') parts.push(`Status: ${statusFilter.replace('_', ' ')}`);
-        if (availabilityFilter !== 'all') parts.push(`Availability: ${availabilityFilter.replace('_', ' ')}`);
+        if (availabilityFilter !== 'all') {
+          const availLabel = availabilityFilter === 'available' ? 'Online' : (availabilityFilter === 'unavailable' ? 'Offline' : availabilityFilter.replace('_', ' '));
+          parts.push(`Availability: ${availLabel}`);
+        }
         if (serviceFilter !== 'all') parts.push(`Service: ${serviceFilter}`);
         noteEl.textContent = parts.length
           ? `Showing ${count} worker(s) · ${parts.join(' · ')}`
@@ -2606,8 +2609,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         const isPaused = isWorkerSuspended(w);
         const isAvail = !isPaused && (getWorkerDisplayAvailability(w) === 'available');
         const statusBadgeHtml = isAvail
-          ? '<span class="badge-green">Available</span>'
-          : '<span class="badge-gray">Unavailable</span>';
+          ? '<span class="badge-green">Online</span>'
+          : '<span class="badge-gray">Offline</span>';
 
         const wkStatus = document.getElementById('wkStatus');
         if (wkStatus) wkStatus.innerHTML = statusBadgeHtml;

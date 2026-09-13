@@ -28,14 +28,14 @@ function statusPill(s) {
 
 function workerStateBadge(type, value) {
   const key = String(value || '').toLowerCase();
-  const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', busy: 'badge-amber' };
-  const statusMap = { active: 'badge-green', inactive: 'badge-gray', paused: 'badge-amber', pending: 'badge-gray', 'pending verification': 'badge-gray' };
+  const availabilityMap = { online: 'badge-green', available: 'badge-green', offline: 'badge-gray', unavailable: 'badge-gray', busy: 'badge-amber' };
+  const statusMap = { active: 'badge-green', available: 'badge-green', online: 'badge-green', inactive: 'badge-gray', unavailable: 'badge-gray', offline: 'badge-gray', paused: 'badge-amber', pending: 'badge-gray', 'pending verification': 'badge-gray' };
   const labelMap = {
-    availability: { online: 'Available', available: 'Available', offline: 'Unavailable', busy: 'On Job' },
-    status: { active: 'Online', inactive: 'Offline', paused: 'Paused', pending: 'Offline', 'pending verification': 'Offline' }
+    availability: { online: 'Online', available: 'Online', offline: 'Offline', unavailable: 'Offline', busy: 'On Job' },
+    status: { active: 'Online', available: 'Online', online: 'Online', inactive: 'Offline', unavailable: 'Offline', offline: 'Offline', paused: 'Paused', pending: 'Offline', 'pending verification': 'Offline' }
   };
   const map = type === 'availability' ? availabilityMap : statusMap;
-  const label = (labelMap[type] && labelMap[type][key]) || (key ? key.charAt(0).toUpperCase() + key.slice(1) : '–');
+  const label = (labelMap[type] && labelMap[type][key]) || (key ? (key === 'online' || key === 'available' ? 'Online' : (key === 'offline' || key === 'unavailable' ? 'Offline' : key.charAt(0).toUpperCase() + key.slice(1))) : '–');
   return `<span class="${map[key] || 'badge-gray'}">${label}</span>`;
 }
 
