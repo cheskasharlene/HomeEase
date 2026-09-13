@@ -669,7 +669,8 @@ body {
       justify-content: center;
     }
 
-    .upload-slot span {
+    .upload-slot .upload-slot-text > span,
+    .upload-slot span:not(.req-asterisk) {
       display: block;
       font-size: 13px;
       font-weight: 800;
@@ -696,10 +697,19 @@ body {
     }
 
     /* Required field indicator */
-    .req-asterisk {
-      color: #ef4444;
-      font-weight: 800;
-      margin-left: 2px;
+    .req-asterisk,
+    .upload-slot .req-asterisk,
+    .upload-slot-text .req-asterisk {
+      display: inline !important;
+      color: #ef4444 !important;
+      font-weight: 800 !important;
+      font-size: 13px !important;
+      line-height: inherit !important;
+      margin-left: 2px !important;
+      vertical-align: baseline !important;
+      white-space: nowrap !important;
+      width: auto !important;
+      max-width: none !important;
     }
 
     /* Upload wrapper container for grouping slot, feedback, and preview */
@@ -1740,7 +1750,8 @@ body {
           overflow: hidden;
         }
 
-        .upload-slot span {
+        .upload-slot .upload-slot-text > span,
+        .upload-slot span:not(.req-asterisk) {
           display: block;
           width: 100%;
           max-width: 100%;
@@ -2136,7 +2147,7 @@ body {
       background: rgba(0, 0, 0, 0.15);
       border-color: var(--border-col);
     }
-    body.dark .upload-slot span {
+    body.dark .upload-slot span:not(.req-asterisk) {
       color: var(--td);
     }
     body.dark .upload-slot i {

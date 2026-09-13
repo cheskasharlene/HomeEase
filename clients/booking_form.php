@@ -6,7 +6,7 @@ if (empty($_SESSION['user_id'])) {
 }
 
 require_once __DIR__ . '/../api/db.php';
-$stmt = $conn->prepare("SELECT name, phone FROM users WHERE id = ?");
+$stmt = $conn->prepare("SELECT name, phone, address FROM users WHERE id = ?");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
 $row = $stmt->get_result()->fetch_assoc();
@@ -14,6 +14,7 @@ $stmt->close();
 if ($row) {
   $_SESSION['user_name'] = $row['name'];
   $_SESSION['user_phone'] = $row['phone'];
+  $_SESSION['user_address'] = $row['address'] ?? '';
 }
 
 // Check if service is pre-selected
@@ -93,13 +94,17 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           </div>
           <div class="fg-row">
             <div class="fg" style="margin-bottom:0;">
-              <label class="fl">Full Name <span style="color:#ef4444;">*</span></label>
+              <label class="fl">Full Name <span style="color:#ef4444;margin-left:2px;">*</span></label>
               <input class="fi" type="text" id="uName" placeholder="Your full name" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
             </div>
             <div class="fg" style="margin-bottom:0;">
-              <label class="fl">Phone Number <span style="color:#ef4444;">*</span></label>
+              <label class="fl">Phone <span style="color:#ef4444;margin-left:2px;">*</span></label>
               <input class="fi" type="text" id="uPhone" placeholder="09XXXXXXXXX" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
             </div>
+          </div>
+          <div class="fg" style="margin-bottom:0;margin-top:10px;">
+            <label class="fl">Address <span style="color:#ef4444;margin-left:2px;">*</span></label>
+            <input class="fi" type="text" id="uAddress" placeholder="Your address" readonly style="background-color:#f8fafc;cursor:not-allowed;color:#64748b;border-color:#e2e8f0;">
           </div>
           <p style="font-size:10.5px;color:#94a3b8;margin:6px 0 0 0;font-weight:600;line-height:1.4;"><i class="bi bi-info-circle-fill" style="margin-right:3px;"></i>Locked to profile data. To update, go to <a href="profile.php" style="color:#E8820C;text-decoration:underline;font-weight:700;">Profile Settings</a>.</p>
           <!-- Hidden GPS coords + pre-confirmed address from location picker -->
@@ -476,6 +481,11 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           const addr = await reverseGeocode(lat, lng);
           const display = addr || `GPS locked (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
           document.getElementById('detectedAddress').value = display;
+          const addressField = document.getElementById('uAddress');
+          if (addressField && !addressField.value.trim()) {
+            addressField.value = display;
+            addressField.setAttribute('data-autofilled', 'true');
+          }
           setGpsCard('success', display);
         },
         (err) => {
@@ -532,8 +542,9 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
       }
 
       // Populate user info from session with validation
-      const nameField  = document.getElementById('uName');
-      const phoneField = document.getElementById('uPhone');
+      const nameField    = document.getElementById('uName');
+      const phoneField   = document.getElementById('uPhone');
+      const addressField = document.getElementById('uAddress');
 
       if (window.HE.user.name && window.HE.user.name.trim()) {
         nameField.value = window.HE.user.name;
@@ -543,9 +554,14 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
         phoneField.value = window.HE.user.phone;
         phoneField.setAttribute('data-autofilled', 'true');
       }
+      const initialAddress = (window.HE.user.address && window.HE.user.address.trim()) ? window.HE.user.address.trim() : preAddr;
+      if (addressField && initialAddress) {
+        addressField.value = initialAddress;
+        addressField.setAttribute('data-autofilled', 'true');
+      }
 
-      [nameField, phoneField].forEach(field => {
-        field.addEventListener('input', function() { this.removeAttribute('data-autofilled'); });
+      [nameField, phoneField, addressField].forEach(field => {
+        if (field) field.addEventListener('input', function() { this.removeAttribute('data-autofilled'); });
       });
 
       try {
@@ -1225,16 +1241,17 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
 
     async function submitBooking() {
       if (!selectedSvc) { toast('Please select a service first', 'e'); return; }
-      // Securely read name and phone from the server-initialized window.HE.user object
-      const uName   = (window.HE.user.name || '').trim();
-      const uPhone  = (window.HE.user.phone || '').trim();
-      const addr    = document.getElementById('detectedAddress').value.trim();
+      // Securely read name, phone, and address
+      const uName   = (document.getElementById('uName')?.value || window.HE.user.name || '').trim();
+      const uPhone  = (document.getElementById('uPhone')?.value || window.HE.user.phone || '').trim();
+      const uAddr   = (document.getElementById('uAddress')?.value || document.getElementById('detectedAddress')?.value || window.HE.user.address || '').trim();
       const notes   = document.getElementById('bNotes').value.trim();
       const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value;
       const price   = getPrice();
 
-      if (!uName)  { toast('Full Name is missing in your profile. Please add it first.', 'e'); return; }
-      if (!uPhone) { toast('Phone Number is missing in your profile. Please add it first.', 'e'); return; }
+      if (!uName)  { toast('Full Name is required. Please update it in your profile.', 'e'); return; }
+      if (!uPhone) { toast('Phone is required. Please update it in your profile.', 'e'); return; }
+      if (!uAddr)  { toast('Address is required. Please provide your address or confirm your location.', 'e'); return; }
       
       // Validate dynamic required fields
       const fields = serviceFields[selectedSvc?.name] || [];
@@ -1283,7 +1300,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
       fd.append('service', selectedSvc.name);
       fd.append('date', date);
       fd.append('time_slot', time);
-      fd.append('address', addr || 'GPS Location');
+      fd.append('address', uAddr);
       fd.append('notes', notes);
       fd.append('payment_method', paymentMethod);
       if (paymentMethod === 'gcash') {
@@ -1300,7 +1317,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
       fd.append('computed_price_client', price);
       fd.append('customer_name', uName);
       fd.append('customer_phone', uPhone);
-      fd.append('customer_address', addr || 'GPS Location');
+      fd.append('customer_address', uAddr);
       fd.append('realtime', '1');
       // GPS coordinates
       const lat = document.getElementById('customerLat').value;

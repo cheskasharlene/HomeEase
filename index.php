@@ -163,11 +163,9 @@ if (!empty($_SESSION['provider_id'])) {
       display: flex; align-items: center;
     }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
-    .row-sp { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; gap: 8px; }
-    .check-label { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--txt-muted, #8E8E93); cursor: pointer; user-select: none; }
-    .check-label input[type=checkbox] { accent-color: var(--teal, #F5A623); width: 14px; height: 14px; }
-    .link-btn { background: none; border: none; color: var(--teal, #F5A623); font-size: 12px; font-weight: 700; cursor: pointer; padding: 0; font-family: 'Nunito', sans-serif; }
-    .link-btn:hover { text-decoration: underline; }
+    .row-sp, .row-forgot { display: flex; align-items: center; justify-content: flex-start; margin-bottom: 18px; }
+    .link-btn { background: none; border: none; color: var(--teal, #F5A623); font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; font-family: 'Nunito', sans-serif; text-decoration: none; display: inline-block; transition: color 0.18s, text-decoration 0.18s; }
+    .link-btn:hover { text-decoration: underline; color: #E8820C; }
     .switch-row { text-align: center; margin-top: 18px; font-size: 12px; color: var(--txt-muted, #8E8E93); font-weight: 600; }
     .switch-row a { color: var(--teal, #F5A623); font-weight: 800; cursor: pointer; text-decoration: none; }
     .acct-type-row { display: flex; gap: 10px; margin-bottom: 18px; }
@@ -260,9 +258,8 @@ if (!empty($_SESSION['provider_id'])) {
           </div>
         </div>
 
-        <div class="row-sp">
-          <label class="check-label"><input type="checkbox" id="rememberMe"> Remember me</label>
-          <button class="link-btn" type="button" onclick="goForgot()">Forgot password?</button>
+        <div class="row-forgot">
+          <a href="forgot_password.php" class="link-btn" id="linkForgotPassword">Forgot Password?</a>
         </div>
 
         <button class="btn-main" id="btnLogin" onclick="doLogin()">

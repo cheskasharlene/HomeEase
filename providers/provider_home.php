@@ -256,15 +256,15 @@ $reviewPreview = $dashboardReviews[0] ?? null;
               </div>
               <div class="profile-grid">
                 <div>
-                  <label class="vlabel">Full Name</label>
+                  <label class="vlabel">Full Name <span class="req-asterisk">*</span></label>
                   <input id="profileName" class="vinput" type="text" value="<?= $providerName ?>">
                 </div>
                 <div>
-                  <label class="vlabel">Phone</label>
+                  <label class="vlabel">Phone <span class="req-asterisk">*</span></label>
                   <input id="profilePhone" class="vinput" type="text" value="<?= $providerPhone ?>">
                 </div>
                 <div class="full">
-                  <label class="vlabel">Address</label>
+                  <label class="vlabel">Address <span class="req-asterisk">*</span></label>
                   <input id="profileAddress" class="vinput" type="text" value="<?= $providerAddress ?>">
                 </div>
               </div>
@@ -1467,6 +1467,24 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         if (experienceValidation) {
           experienceValidation.style.display = 'none';
         }
+      }
+
+      // Check profile fields
+      const profileName = (document.getElementById('profileName')?.value || '').trim();
+      const profilePhone = (document.getElementById('profilePhone')?.value || '').trim();
+      const profileAddress = (document.getElementById('profileAddress')?.value || '').trim();
+
+      if (!profileName) {
+        errors.push('Full Name is required');
+        isValid = false;
+      }
+      if (!profilePhone) {
+        errors.push('Phone is required');
+        isValid = false;
+      }
+      if (!profileAddress) {
+        errors.push('Address is required');
+        isValid = false;
       }
 
       // Display all errors if any
