@@ -76,12 +76,15 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
       <div class="n-scroll">
         <div class="n-hdr">
           <div>
-            <div class="n-ttl">Notifications</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="n-ttl">Notifications</div>
+              <span class="notif-badge" id="nBadge" data-count="<?= (int)$unreadCount ?>" style="<?= $unreadCount > 0 ? 'display:inline-flex;' : 'display:none;' ?>"><?= $unreadCount > 0 ? ($unreadCount > 99 ? '99+' : $unreadCount) : '' ?></span>
+            </div>
             <div class="n-count-sub" id="nCount">
-              <?= $unreadCount > 0 ? "$unreadCount unread" : 'All caught up' ?>
+              <?= $unreadCount > 0 ? "<strong>$unreadCount</strong> unread &nbsp;·&nbsp; " . count($notifications) . " total" : (count($notifications) > 0 ? "All caught up · " . count($notifications) . " total" : "No notifications yet") ?>
             </div>
           </div>
-          <button class="n-markall" id="markAllBtn" onclick="markAllRead()">
+          <button class="n-markall" id="markAllBtn" onclick="markAllRead()" style="<?= $unreadCount ? '' : 'display:none;' ?>">
             <i class="bi bi-check2-all"></i> Mark all read
           </button>
         </div>
@@ -201,6 +204,20 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
         }
       }
 
+      /* Update header red badge */
+      const badgeEl = document.getElementById('nBadge');
+      if (badgeEl) {
+        if (unreadList.length > 0) {
+          badgeEl.textContent = unreadList.length > 99 ? '99+' : String(unreadList.length);
+          badgeEl.setAttribute('data-count', String(unreadList.length));
+          badgeEl.style.display = 'inline-flex';
+        } else {
+          badgeEl.textContent = '';
+          badgeEl.setAttribute('data-count', '0');
+          badgeEl.style.display = 'none';
+        }
+      }
+
       /* Sync with Home page and bottom nav */
       syncUnreadCount(unreadList.length);
 
@@ -241,22 +258,85 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
       document.getElementById('nBody').innerHTML = html;
     }
 
+    function resolveNotifIcon(n) {
+      const title = (n.title || '').toLowerCase();
+      const msg   = (n.msg || n.message || '').toLowerCase();
+      const icon  = (n.icon || '').toLowerCase();
+      const type  = (n.type || '').toLowerCase();
+
+      // Cancelled / Rejected / Declined
+      if (type === 'verification_rejected' || type === 'rejected' ||
+          title.includes('cancel') || title.includes('reject') || title.includes('decline') ||
+          icon.includes('x-circle') || msg.includes('cancelled') || msg.includes('rejected')) {
+        return { icon: 'bi-x-circle-fill', cls: 'danger' };
+      }
+
+      // Warning / Problem / Alert
+      if (type === 'warning' || title.includes('warning') || title.includes('problem') ||
+          icon.includes('exclamation') || msg.includes('problem reported')) {
+        return { icon: 'bi-exclamation-triangle-fill', cls: 'danger' };
+      }
+
+      // Report
+      if (type === 'report' || title.includes('report') || icon.includes('shield')) {
+        return { icon: 'bi-shield-fill-exclamation', cls: 'verif' };
+      }
+
+      // QR Code
+      if (title.includes('qr') || msg.includes('qr') || icon.includes('qr')) {
+        return { icon: 'bi-qr-code-scan', cls: title.includes('approved') ? 'remit' : 'verif' };
+      }
+
+      // Payment / Wallet / Remittance / Money
+      if (type === 'remittance' || title.includes('payment') || title.includes('remit') ||
+          icon.includes('wallet') || icon.includes('cash') || msg.includes('payment')) {
+        return { icon: 'bi-cash-stack', cls: 'remit' };
+      }
+
+      // Completed / Verified / Confirmed / Approved / Arrived
+      if (type === 'account_verified' || title.includes('verified') || title.includes('approved') ||
+          title.includes('complete') || title.includes('confirmed') || msg.includes('completed') ||
+          msg.includes('confirmed') || title.includes('arrived')) {
+        return { icon: 'bi-patch-check-fill', cls: 'remit' };
+      }
+
+      // Overdue / Clock / Expiration
+      if (icon.includes('clock') || title.includes('overdue') || msg.includes('overdue') || title.includes('expire')) {
+        return { icon: 'bi-clock-history', cls: 'general' };
+      }
+
+      // Booking / Schedule / Appointment / Request
+      if (title.includes('booking') || title.includes('request') || msg.includes('booking')) {
+        return { icon: 'bi-calendar-check-fill', cls: 'general' };
+      }
+
+      // Specific service icons
+      if (icon === 'plumbing' || title.includes('plumb')) return { icon: 'bi-wrench-adjustable-circle', cls: 'verif' };
+      if (icon === 'helper' || title.includes('helper')) return { icon: 'bi-person-arms-up', cls: 'general' };
+      if (icon === 'technician' || title.includes('technician') || title.includes('appliance')) return { icon: 'bi-tools', cls: 'purple' };
+      if (icon === 'laundry' || title.includes('laundry')) return { icon: 'bi-water', cls: 'cyan' };
+      if (icon === 'carpentry' || title.includes('carpentry')) return { icon: 'bi-hammer', cls: 'general' };
+      if (icon === 'gardening' || title.includes('garden')) return { icon: 'bi-flower1', cls: 'remit' };
+      if (icon === 'house_cleaner' || title.includes('clean')) return { icon: 'bi-stars', cls: 'general' };
+
+      // Explicit bi- icon provided
+      if (icon.startsWith('bi-')) return { icon: icon, cls: 'general' };
+      if (icon && icon !== 'general' && icon !== 'default') {
+        return { icon: 'bi-' + icon, cls: 'general' };
+      }
+
+      return { icon: 'bi-bell-fill', cls: 'general' };
+    }
+
     function notifCard(n) {
-      const imgSrc = SVC_IMGS[n.icon] || SVC_IMGS.house_cleaner;
+      const ic = resolveNotifIcon(n);
       return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead(${n.id})">
         <div class="n-read-ripple"></div>
-        ${!n.read ? '<div class="n-unread-bar"></div>' : ''}
-        <div class="n-ic"><img src="${imgSrc}" alt="" loading="lazy"></div>
-        <div class="n-content">
-          <div class="n-title-row">
-            <div class="n-title">${escHtml(n.title)}</div>
-            ${!n.read ? '<span class="n-unread-red-dot" aria-label="Unread"></span>' : ''}
-          </div>
-          <div class="n-msg">${escHtml(n.msg)}</div>
-          <div class="n-time">
-            ${n.read ? '<i class="bi bi-check2-all n-read-check"></i>' : ''}
-            ${escHtml(n.time)}
-          </div>
+        <div class="n-card-ic ${ic.cls}"><i class="bi ${ic.icon}"></i></div>
+        <div class="n-card-body">
+          <div class="n-card-ttl">${escHtml(n.title)}</div>
+          <div class="n-card-msg">${escHtml(n.msg)}</div>
+          <div class="n-card-time"><i class="bi bi-clock"></i> ${escHtml(n.time)}</div>
         </div>
       </div>`;
     }
@@ -291,42 +371,44 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
       n.read = true;
 
-      /* Immediately remove unread styles and red dot */
+      /* Immediately remove unread styles */
       const card = document.getElementById(`nc-${id}`);
       if (card) {
         card.classList.remove('unread');
-        const redDot = card.querySelector('.n-unread-red-dot');
-        if (redDot) {
-          redDot.style.opacity = '0';
-          redDot.style.transform = 'scale(0)';
-          setTimeout(() => redDot.remove(), 160);
-        }
-        const unreadBar = card.querySelector('.n-unread-bar');
-        if (unreadBar) unreadBar.remove();
-
-        const remainingUnread = (window.HE.notifications || []).filter(item => !item.read).length;
-        const countEl = document.getElementById('nCount');
-        const total = (window.HE.notifications || []).length;
-        if (countEl) {
-          if (remainingUnread > 0) {
-            countEl.innerHTML = `<strong>${remainingUnread}</strong> unread &nbsp;·&nbsp; ${total} total`;
-          } else {
-            countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
-          }
-        }
-        const markBtn = document.getElementById('markAllBtn');
-        if (markBtn) {
-          markBtn.style.display = remainingUnread ? '' : 'none';
-        }
-        syncUnreadCount(remainingUnread);
-
         card.classList.add('reading');
-        setTimeout(() => {
-          renderNotifs();
-        }, 280);
-      } else {
-        renderNotifs();
       }
+
+      const remainingUnread = (window.HE.notifications || []).filter(item => !item.read).length;
+      const countEl = document.getElementById('nCount');
+      const badgeEl = document.getElementById('nBadge');
+      const total = (window.HE.notifications || []).length;
+      if (countEl) {
+        if (remainingUnread > 0) {
+          countEl.innerHTML = `<strong>${remainingUnread}</strong> unread &nbsp;·&nbsp; ${total} total`;
+        } else {
+          countEl.textContent = total > 0 ? `All caught up · ${total} total` : 'No notifications yet';
+        }
+      }
+      if (badgeEl) {
+        if (remainingUnread > 0) {
+          badgeEl.textContent = remainingUnread > 99 ? '99+' : String(remainingUnread);
+          badgeEl.setAttribute('data-count', String(remainingUnread));
+          badgeEl.style.display = 'inline-flex';
+        } else {
+          badgeEl.textContent = '';
+          badgeEl.setAttribute('data-count', '0');
+          badgeEl.style.display = 'none';
+        }
+      }
+      const markBtn = document.getElementById('markAllBtn');
+      if (markBtn) {
+        markBtn.style.display = remainingUnread ? '' : 'none';
+      }
+      syncUnreadCount(remainingUnread);
+
+      setTimeout(() => {
+        renderNotifs();
+      }, 280);
 
       /* Persist to server */
       const form = new FormData();
@@ -346,13 +428,6 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
       const hasUnread = (window.HE.notifications || []).some(n => !n.read);
       if (!hasUnread) return;
 
-      document.querySelectorAll('.n-unread-red-dot').forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'scale(0)';
-      });
-      setTimeout(() => {
-        document.querySelectorAll('.n-unread-red-dot, .n-unread-bar').forEach(el => el.remove());
-      }, 160);
       document.querySelectorAll('.n-card.unread').forEach(el => el.classList.remove('unread'));
 
       window.HE.notifications.forEach(n => n.read = true);

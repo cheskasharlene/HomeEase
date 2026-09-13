@@ -144,23 +144,21 @@
   box-shadow: 0 2px 8px rgba(232,130,12,0.3);
 }
 
-/* ── Notification card ── */
+/* ── Notification card matching Admin Side (.admin-notif-item) ── */
 .n-card {
-  background: var(--bg-card);
-  border-radius: 18px;
-  padding: 14px 15px;
-  margin-bottom: 10px;
   display: flex;
-  gap: 13px;
   align-items: flex-start;
-  box-shadow:
-    0 2px 12px rgba(232,130,12,0.06),
-    0 1px 3px rgba(0,0,0,0.03);
+  gap: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  background: var(--bg-card);
+  border-radius: 14px;
+  border: 1px solid var(--border-col);
   cursor: pointer;
-  transition: transform 0.18s cubic-bezier(.34,1.4,.64,1), box-shadow 0.18s, opacity 0.3s, background 0.3s;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
   position: relative;
   overflow: hidden;
-  border: 1.5px solid var(--border-col);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 
   /* Entry animation */
   animation: notifSlideIn 0.32s cubic-bezier(.34,1.2,.64,1) both;
@@ -172,10 +170,11 @@
 }
 
 .n-card:hover {
-  transform: translateX(5px) scale(1.005);
-  box-shadow: 0 6px 20px rgba(232,130,12,0.13);
+  background: rgba(232, 130, 12, 0.04);
 }
-.n-card:active { transform: scale(0.99); }
+.n-card:active {
+  transform: translateY(0);
+}
 
 /* Staggered animation delays for first 10 cards */
 .n-card:nth-child(1)  { animation-delay: 0.00s; }
@@ -189,15 +188,35 @@
 .n-card:nth-child(9)  { animation-delay: 0.22s; }
 .n-card:nth-child(10) { animation-delay: 0.23s; }
 
-/* Unread card highlight */
+/* ── Unread card styling with top-right indicator ── */
 .n-card.unread {
-  border-left: 3px solid var(--g-start);
-  background:
-    linear-gradient(to right,
-      rgba(255,248,237,0.95) 0%,
-      rgba(255,255,255,0.75) 55%,
-      rgba(255,255,255,0)   100%),
-    var(--bg-card);
+  background: rgba(245, 166, 35, 0.06);
+  border-color: rgba(245, 166, 35, 0.28);
+}
+
+.n-card.unread::before {
+  content: '';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.22);
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.n-card.reading::before {
+  opacity: 0;
+  transform: scale(0);
+}
+
+/* Ensure title doesn't overlap the top-right indicator */
+.n-card.unread .n-card-ttl {
+  padding-right: 18px;
 }
 
 /* Mark-as-read ripple overlay */
@@ -212,105 +231,141 @@
 }
 .n-card.reading .n-read-ripple { opacity: 1; }
 
-/* Accent bar for unread */
-.n-unread-bar {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: linear-gradient(to bottom, var(--g-start), var(--g-light));
-  border-radius: 3px 0 0 3px;
+/* ── Unread notification number badge matching Admin Side (.notif-badge) ── */
+.notif-badge {
+  position: static;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.35);
 }
+.notif-badge:empty, .notif-badge[data-count='0'] { display: none !important; }
 
-/* ── Icon container ── */
-.n-ic {
-  width: 48px; height: 48px;
-  border-radius: 14px;
-  overflow: hidden;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-.n-ic img { width: 100%; height: 100%; object-fit: cover; }
-
-/* ── Content ── */
-.n-content { flex: 1; min-width: 0; }
-
-/* ── Title Row & Unread Red Dot ── */
-.n-title-row {
+/* ── Icon container matching Admin Side (.admin-notif-ic) ── */
+.n-card-ic {
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  border-radius: 13px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 3px;
-  min-width: 0;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
 }
 
-.n-title-row .n-title {
-  margin-bottom: 0;
+.n-card:hover .n-card-ic {
+  transform: scale(1.04);
+}
+
+.n-card-ic.verif,
+.n-card-ic.blue,
+.n-card-ic.ic-blue {
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: #2563eb;
+}
+
+.n-card-ic.general,
+.n-card-ic.orange,
+.n-card-ic.amber,
+.n-card-ic.ic-orange,
+.n-card-ic.ic-amber {
+  background: linear-gradient(135deg, #fef3c7, #fff8ef);
+  color: #d97706;
+}
+
+.n-card-ic.remit,
+.n-card-ic.green,
+.n-card-ic.emerald,
+.n-card-ic.ic-green,
+.n-card-ic.ic-emerald {
+  background: linear-gradient(135deg, #d1fae5, #ecfdf5);
+  color: #059669;
+}
+
+.n-card-ic.danger,
+.n-card-ic.warning,
+.n-card-ic.red,
+.n-card-ic.ic-red {
+  background: linear-gradient(135deg, #fee2e2, #fef2f2);
+  color: #dc2626;
+}
+
+.n-card-ic.purple,
+.n-card-ic.indigo,
+.n-card-ic.ic-purple,
+.n-card-ic.ic-indigo {
+  background: linear-gradient(135deg, #f3e8ff, #faf5ff);
+  color: #7c3aed;
+}
+
+.n-card-ic.cyan,
+.n-card-ic.ic-cyan {
+  background: linear-gradient(135deg, #cffafe, #ecfeff);
+  color: #0891b2;
+}
+
+/* ── Notification body matching Admin Side (.admin-notif-body) ── */
+.n-card-body {
   flex: 1;
   min-width: 0;
 }
 
-.n-unread-red-dot {
-  width: 8px;
-  height: 8px;
-  min-width: 8px;
-  min-height: 8px;
-  border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
-  flex-shrink: 0;
-  display: inline-block;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.n-title {
-  font-size: 13.5px;
+/* Title matching Admin Side (.admin-notif-ttl) */
+.n-card-ttl {
+  font-size: 13px;
   font-weight: 700;
   color: var(--td);
-  margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-bottom: 2px;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
-.n-msg {
+/* Message matching Admin Side (.admin-notif-msg) */
+.n-card-msg {
   font-size: 12px;
   color: var(--tm);
   line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  word-break: break-word;
 }
 
-.n-time {
-  font-size: 11px;
+/* Status tags matching Admin Side */
+.n-tag {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.n-tag.success { background: #d1fae5; color: #059669; }
+.n-tag.warning { background: #fef3c7; color: #d97706; }
+.n-tag.danger  { background: #fee2e2; color: #dc2626; }
+
+/* Time matching Admin Side (.admin-notif-time) */
+.n-card-time {
+  font-size: 10px;
   color: var(--plight);
-  margin-top: 7px;
+  margin-top: 4px;
   font-weight: 600;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
-
-.n-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: #ef4444;
-  flex-shrink: 0;
-  animation: dotPulse 2s infinite ease-in-out;
-}
-
-@keyframes dotPulse {
-  0%, 100% { transform: scale(1);   opacity: 1;   }
-  50%       { transform: scale(1.3); opacity: 0.7; }
-}
-
-/* ── Read checkmark ── */
-.n-read-check {
-  font-size: 12px;
-  color: var(--teal);
-  flex-shrink: 0;
+.n-card-time i {
+  font-size: 10.5px;
 }
 
 /* ── Dark mode ── */
@@ -319,16 +374,61 @@ body.dark .n-card {
   border-color: var(--border-col);
 }
 body.dark .n-card.unread {
-  background:
-    linear-gradient(to right, rgba(42,34,22,0.95) 0%, var(--bg-card) 65%);
-  border-left-color: var(--g-start);
+  background: rgba(245, 166, 35, 0.10);
+  border-color: rgba(245, 166, 35, 0.35);
 }
-body.dark .n-title       { color: var(--td); }
-body.dark .n-msg         { color: var(--tm); }
-body.dark .n-time        { color: var(--plight); }
-body.dark .n-unread-red-dot {
-  background: #ef4444;
-  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35);
+body.dark .n-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+body.dark .n-card-ttl {
+  color: var(--td);
+}
+body.dark .n-card-msg {
+  color: var(--tm);
+}
+body.dark .n-card-time {
+  color: var(--plight);
+}
+body.dark .n-card-ic.verif,
+body.dark .n-card-ic.blue,
+body.dark .n-card-ic.ic-blue {
+  background: rgba(37, 99, 235, 0.22);
+  color: #60a5fa;
+}
+body.dark .n-card-ic.general,
+body.dark .n-card-ic.orange,
+body.dark .n-card-ic.amber,
+body.dark .n-card-ic.ic-orange,
+body.dark .n-card-ic.ic-amber {
+  background: rgba(217, 119, 6, 0.22);
+  color: #fbbf24;
+}
+body.dark .n-card-ic.remit,
+body.dark .n-card-ic.green,
+body.dark .n-card-ic.emerald,
+body.dark .n-card-ic.ic-green,
+body.dark .n-card-ic.ic-emerald {
+  background: rgba(5, 150, 105, 0.22);
+  color: #34d399;
+}
+body.dark .n-card-ic.danger,
+body.dark .n-card-ic.warning,
+body.dark .n-card-ic.red,
+body.dark .n-card-ic.ic-red {
+  background: rgba(220, 38, 38, 0.22);
+  color: #f87171;
+}
+body.dark .n-card-ic.purple,
+body.dark .n-card-ic.indigo,
+body.dark .n-card-ic.ic-purple,
+body.dark .n-card-ic.ic-indigo {
+  background: rgba(124, 58, 237, 0.22);
+  color: #c084fc;
+}
+body.dark .n-card-ic.cyan,
+body.dark .n-card-ic.ic-cyan {
+  background: rgba(8, 145, 178, 0.22);
+  color: #22d3ee;
 }
 body.dark .n-day-lbl-text { color: var(--tm); }
 body.dark .n-ttl         { color: var(--td); }
