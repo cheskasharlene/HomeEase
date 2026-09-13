@@ -20,6 +20,9 @@ if ($bookingId <= 0) {
     exit;
 }
 
+// Auto-cancel any expired matching bookings (> 3 minutes unclaimed)
+cancelExpiredMatchingBookings($conn, $bookingId);
+
 // Fetch booking + provider info
 $sql = "SELECT b.id, COALESCE(sv.name, b.service) AS service, b.date, b.time_slot, b.address, b.price, b.status, b.created_at,
                b.provider_lat, b.provider_lng, b.customer_lat, b.customer_lng,
@@ -51,6 +54,33 @@ if (!$row) {
 }
 
 $status = $row['status'];
+$isTimeout = false;
+
+// Double check if pending and expired (>180 seconds)
+if ($status === 'pending' && !empty($row['created_at'])) {
+    $createdTs = strtotime($row['created_at']);
+    if (time() - $createdTs >= 180) {
+        cancelExpiredMatchingBookings($conn, $bookingId);
+        $status = 'cancelled';
+        $row['status'] = 'cancelled';
+        $isTimeout = true;
+    }
+}
+
+// Check if cancelled booking was due to matching timeout
+if ($status === 'cancelled') {
+    $logStmt = $conn->prepare("SELECT notes FROM booking_status_logs WHERE booking_id = ? AND new_status = 'cancelled' ORDER BY id DESC LIMIT 1");
+    if ($logStmt) {
+        $logStmt->bind_param('i', $bookingId);
+        $logStmt->execute();
+        $logRow = $logStmt->get_result()->fetch_assoc();
+        $logStmt->close();
+        if ($logRow && strpos((string)($logRow['notes'] ?? ''), 'Matching timeout') !== false) {
+            $isTimeout = true;
+        }
+    }
+}
+
 $hasProvider = !empty($row['provider_name']);
 
 // Count pending requests (how many providers were notified)
@@ -114,6 +144,9 @@ $response = [
     'customer_lng'    => $customerLng,
     'provider_lat'    => $providerLat,
     'provider_lng'    => $providerLng,
+    'created_at'      => (string)($row['created_at'] ?? ''),
+    'is_timeout'      => $isTimeout,
+    'message'         => $isTimeout ? 'No available workers. Please try again' : null,
 ];
 
 if ($hasProvider) {

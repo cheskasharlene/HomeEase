@@ -1093,14 +1093,33 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         }, 3000);
 
       } else if (data.status === 'cancelled') {
-        topBarTitle.textContent = 'Booking Cancelled';
-        banner.className = 'wfp-status-banner';
-        banner.style.background = 'linear-gradient(135deg, #EF4444, #F87171)';
-        spinner.style.display = 'none';
-        statusTxt.innerHTML = `Booking was cancelled.`;
-        provCard.style.display = 'none';
-        cancelWrap.style.display = 'none';
-        tipsSection.style.display = 'none';
+        const isTimeout = data.is_timeout || (data.message && data.message.indexOf('No available workers') !== -1);
+        if (isTimeout) {
+          topBarTitle.textContent = 'No Available Workers';
+          banner.className = 'wfp-status-banner';
+          banner.style.background = 'linear-gradient(135deg, #DC2626, #EF4444)';
+          spinner.style.display = 'none';
+          statusTxt.innerHTML = `No available workers. Please try again.`;
+          provCard.style.display = 'none';
+          cancelWrap.style.display = 'block';
+          const btnCancel = document.getElementById('btnCancel');
+          if (btnCancel) {
+            btnCancel.style.background = 'linear-gradient(135deg, #E8820C, #F5A623)';
+            btnCancel.style.color = '#ffffff';
+            btnCancel.onclick = function () { window.location.href = 'service_selection.php'; };
+            btnCancel.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Try Again';
+          }
+          tipsSection.style.display = 'none';
+        } else {
+          topBarTitle.textContent = 'Booking Cancelled';
+          banner.className = 'wfp-status-banner';
+          banner.style.background = 'linear-gradient(135deg, #EF4444, #F87171)';
+          spinner.style.display = 'none';
+          statusTxt.innerHTML = data.message || `Booking was cancelled.`;
+          provCard.style.display = 'none';
+          cancelWrap.style.display = 'none';
+          tipsSection.style.display = 'none';
+        }
 
       } else if (data.status === 'accepted' || data.has_provider || data.status === 'progress') {
         topBarTitle.textContent = 'Provider On the Way';

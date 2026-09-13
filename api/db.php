@@ -719,3 +719,58 @@ function sendUserNotification($conn, $userId, $title, $message, $icon = 'bell')
     return $ok;
 }
 
+/**
+ * Automatically cancel pending bookings that have been unclaimed for > 3 minutes (180 seconds).
+ * @param mysqli $conn
+ * @param int $specificBookingId Optional specific booking to check and cancel if expired
+ * @return int Number of bookings cancelled
+ */
+function cancelExpiredMatchingBookings($conn, $specificBookingId = 0)
+{
+    if (!$conn instanceof mysqli) return 0;
+
+    $where = "WHERE status = 'pending' AND created_at <= DATE_SUB(NOW(), INTERVAL 3 MINUTE)";
+    if ($specificBookingId > 0) {
+        $where .= " AND id = " . (int)$specificBookingId;
+    }
+
+    $sql = "SELECT id, user_id, created_at FROM bookings {$where}";
+    $res = $conn->query($sql);
+    if (!$res) return 0;
+
+    $cancelledCount = 0;
+    while ($row = $res->fetch_assoc()) {
+        $bid = (int)$row['id'];
+        $uid = (int)$row['user_id'];
+
+        $conn->begin_transaction();
+        try {
+            $stmt = $conn->prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ? AND status = 'pending'");
+            if ($stmt) {
+                $stmt->bind_param('i', $bid);
+                $stmt->execute();
+                $affected = $stmt->affected_rows;
+                $stmt->close();
+
+                if ($affected > 0) {
+                    // Close all pending booking requests for this booking
+                    $conn->query("UPDATE booking_requests SET status = 'closed', responded_at = NOW() WHERE booking_id = {$bid} AND status = 'pending'");
+
+                    // Log status change
+                    logBookingStatusChange($conn, $bid, 'pending', 'cancelled', 'system', 0, 'Matching timeout - No available workers');
+
+                    // Notify user
+                    sendUserNotification($conn, $uid, 'Booking Cancelled', 'No available workers. Please try again.', 'x-circle');
+
+                    $cancelledCount++;
+                }
+            }
+            $conn->commit();
+        } catch (Throwable $e) {
+            $conn->rollback();
+        }
+    }
+    return $cancelledCount;
+}
+
+

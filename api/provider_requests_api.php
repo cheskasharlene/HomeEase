@@ -24,7 +24,10 @@ $action = trim((string) ($_GET['action'] ?? $_POST['action'] ?? ''));
 ensureBookingRequestsTable($conn);
 
 if ($method === 'GET' && $action === 'live_feed') {
-    // Return ALL live pending bookings matching provider's service category
+    // Purge any expired unclaimed bookings older than 3 minutes
+    cancelExpiredMatchingBookings($conn);
+
+    // Return ALL live pending bookings matching provider's service category created within 3 minutes
     $providerStmt = $conn->prepare("SELECT s.name AS service_category, LOWER(COALESCE(sp.availability_status, 'offline')) AS availability_status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.provider_id = ? LIMIT 1");
     if (!$providerStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error.']);
@@ -76,7 +79,7 @@ if ($method === 'GET' && $action === 'live_feed') {
         $hasActive = (int)($activeRow['cnt'] ?? 0) > 0;
     }
 
-    // Get all pending bookings of matching service type (last 2 hours)
+    // Get all pending bookings of matching service type (created within 3 minutes timeout window)
     // Build SELECT dynamically based on whether GPS columns exist in bookings table
     $bCols = [];
     $bColRes = $conn->query("SHOW COLUMNS FROM bookings");
@@ -104,7 +107,7 @@ if ($method === 'GET' && $action === 'live_feed') {
             LEFT JOIN payments p ON p.booking_id = b.id
             WHERE b.status = 'pending'
               AND LOWER(b.service) LIKE ?
-              AND b.created_at >= DATE_SUB(NOW(), INTERVAL 2 HOUR)
+              AND b.created_at >= DATE_SUB(NOW(), INTERVAL 3 MINUTE)
               AND NOT EXISTS (
                   SELECT 1 FROM booking_requests br2
                   WHERE br2.booking_id = b.id AND br2.status = 'accepted'
