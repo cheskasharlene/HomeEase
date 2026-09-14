@@ -19,7 +19,7 @@ if (empty($_SESSION['user_id'])) {
     rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="../assets/css/main.css">
-  <link rel="stylesheet" href="../assets/css/accepted_booking.css">
+  <link rel="stylesheet" href="../assets/css/accepted_booking.css?v=<?= time() ?>">
   <link rel="stylesheet" href="../assets/css/booking_detail.css">
   <style>
     .screen.booking-detail-screen { justify-content: flex-start; }

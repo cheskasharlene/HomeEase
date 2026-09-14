@@ -489,16 +489,6 @@ body {
   filter: drop-shadow(0 6px 14px rgba(245,166,35,0.32));
 }
 
-.bnav .ni.on::after {
-  content: '';
-  display: block;
-  width: 36px;
-  height: 4px;
-  background: linear-gradient(90deg, #E8820C, #F5A623);
-  border-radius: 4px;
-  margin-top: 6px;
-}
-
 .ab-hide {
   display: none;
 }
