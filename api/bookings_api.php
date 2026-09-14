@@ -582,7 +582,7 @@ if ($method === 'POST' && $action === '') {
                         continue;
                     }
                     $reqStmt->bind_param(
-                        'iisdssssssssss',
+                        'iisdsssssssss',
                         $bid,
                         $pid,
                         $service,
