@@ -1343,9 +1343,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     async function fetchChatMessages() {
       try {
-        const res = await fetch('../api/chat_api.php?booking_id=' + BOOKING_ID + '&after_id=' + chatLastId + '&_t=' + Date.now(), { cache: 'no-store' });
+        const res = await fetch('../api/chat_api.php?booking_id=' + BOOKING_ID + '&after_id=' + chatLastId + '&role=client&_t=' + Date.now(), { cache: 'no-store' });
         const data = await res.json();
-        if (!data.success) return;
+        if (!data.success) {
+          console.warn('Chat fetch warning:', data.message);
+          return;
+        }
         myRole = data.my_role || 'client';
         if (data.messages && data.messages.length) {
           appendChatMessages(data.messages);
@@ -1356,9 +1359,10 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           b.textContent = data.unread;
           b.style.display = 'inline';
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error('Chat fetch error:', e);
+      }
     }
-
 
     document.getElementById('btnCancelDismiss').addEventListener('click', closeCancelModal);
     document.getElementById('btnCancelConfirm').addEventListener('click', confirmCancelBooking);
@@ -1391,12 +1395,18 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       if (!msg) return;
       inp.value = '';
       const fd = new FormData();
-      fd.append('action', 'send'); fd.append('booking_id', BOOKING_ID); fd.append('message', msg);
+      fd.append('action', 'send'); fd.append('booking_id', BOOKING_ID); fd.append('message', msg); fd.append('role', 'client');
       try {
         const res = await fetch('../api/chat_api.php', { method: 'POST', body: fd });
         const data = await res.json();
-        if (data.success) fetchChatMessages();
-      } catch (e) { }
+        if (data.success) {
+          fetchChatMessages();
+        } else {
+          console.warn('Send chat message warning:', data.message);
+        }
+      } catch (e) {
+        console.error('Send chat message error:', e);
+      }
     }
 
     function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }

@@ -1065,14 +1065,19 @@ if ($bookingId > 0) {
     async function fetchChat() {
       if (!BID) return;
       try {
-        const data = await (await fetch(API + 'chat_api.php?booking_id=' + BID + '&after_id=' + chatLast + '&_t=' + Date.now(), { cache: 'no-store' })).json();
-        if (!data.success) return;
+        const data = await (await fetch(API + 'chat_api.php?booking_id=' + BID + '&after_id=' + chatLast + '&role=provider&_t=' + Date.now(), { cache: 'no-store' })).json();
+        if (!data.success) {
+          console.warn('Chat fetch warning:', data.message);
+          return;
+        }
         myRole = data.my_role || 'provider';
         if (data.messages?.length) {
           appendMsgs(data.messages);
           chatLast = data.messages[data.messages.length - 1].id;
         }
-      } catch (e) { }
+      } catch (e) {
+        console.error('Chat fetch error:', e);
+      }
     }
 
     function appendMsgs(msgs) {
@@ -1097,8 +1102,17 @@ if ($bookingId > 0) {
       if (!msg || !BID) return;
       inp.value = '';
       const fd = new FormData();
-      fd.append('action', 'send'); fd.append('booking_id', BID); fd.append('message', msg);
-      try { const d = await (await fetch(API + 'chat_api.php', { method: 'POST', body: fd })).json(); if (d.success) fetchChat(); } catch (e) { }
+      fd.append('action', 'send'); fd.append('booking_id', BID); fd.append('message', msg); fd.append('role', 'provider');
+      try {
+        const d = await (await fetch(API + 'chat_api.php', { method: 'POST', body: fd })).json();
+        if (d.success) {
+          fetchChat();
+        } else {
+          console.warn('Send chat message warning:', d.message);
+        }
+      } catch (e) {
+        console.error('Send chat message error:', e);
+      }
     }
 
     function handleChatKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }

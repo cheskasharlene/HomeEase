@@ -15,7 +15,7 @@ if ($userId <= 0 && $providerId <= 0) {
 }
 
 
-$conn->query("CREATE TABLE IF NOT EXISTS chat_messages (
+@$conn->query("CREATE TABLE IF NOT EXISTS chat_messages (
     id           INT AUTO_INCREMENT PRIMARY KEY,
     booking_id   INT NOT NULL,
     sender_role  ENUM('client','provider') NOT NULL,
@@ -23,7 +23,7 @@ $conn->query("CREATE TABLE IF NOT EXISTS chat_messages (
     message      TEXT NOT NULL,
     created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_read      TINYINT(1) NOT NULL DEFAULT 0,
-    INDEX idx_booking_chat (booking_id, created_at)
+    INDEX idx_booking_chat (booking_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
 $method   = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -35,36 +35,60 @@ if ($bookingId <= 0) {
     exit;
 }
 
+// ── Role & Access Verification ──
+$bStmt = $conn->prepare("SELECT id, user_id, provider_id FROM bookings WHERE id = ? LIMIT 1");
+$bStmt->bind_param('i', $bookingId);
+$bStmt->execute();
+$booking = $bStmt->get_result()->fetch_assoc();
+$bStmt->close();
 
-if ($userId > 0) {
-    $chk = $conn->prepare("SELECT id FROM bookings WHERE id = ? AND user_id = ? LIMIT 1");
-    $chk->bind_param('ii', $bookingId, $userId);
-    $chk->execute();
-    if (!$chk->get_result()->fetch_assoc()) {
-        echo json_encode(['success' => false, 'message' => 'Access denied.']);
-        exit;
-    }
-    $chk->close();
-    $senderRole = 'client';
-    $senderId   = $userId;
-} else {
-    $chk = $conn->prepare("SELECT id FROM booking_requests WHERE booking_id = ? AND provider_id = ? AND status = 'accepted' LIMIT 1");
-    $chk->bind_param('ii', $bookingId, $providerId);
-    $chk->execute();
-    if (!$chk->get_result()->fetch_assoc()) {
-        echo json_encode(['success' => false, 'message' => 'Access denied.']);
-        exit;
-    }
-    $chk->close();
-    $senderRole = 'provider';
-    $senderId   = $providerId;
+if (!$booking) {
+    echo json_encode(['success' => false, 'message' => 'Booking not found.']);
+    exit;
 }
 
+$isClient = ($userId > 0 && (int)$booking['user_id'] === $userId);
+$isProvider = false;
+
+if ($providerId > 0) {
+    if ((int)$booking['provider_id'] === $providerId) {
+        $isProvider = true;
+    } else {
+        $rChk = $conn->prepare("SELECT id FROM booking_requests WHERE booking_id = ? AND provider_id = ? LIMIT 1");
+        $rChk->bind_param('ii', $bookingId, $providerId);
+        $rChk->execute();
+        if ($rChk->get_result()->fetch_assoc()) {
+            $isProvider = true;
+        }
+        $rChk->close();
+    }
+}
+
+if ($isClient && !$isProvider) {
+    $senderRole = 'client';
+    $senderId   = $userId;
+} elseif ($isProvider && !$isClient) {
+    $senderRole = 'provider';
+    $senderId   = $providerId;
+} elseif ($isClient && $isProvider) {
+    // If session has both IDs and user is both client & provider for this booking,
+    // determine role based on request parameter or fallback to client
+    $requestedRole = trim((string)($_GET['role'] ?? $_POST['role'] ?? ''));
+    if ($requestedRole === 'provider') {
+        $senderRole = 'provider';
+        $senderId   = $providerId;
+    } else {
+        $senderRole = 'client';
+        $senderId   = $userId;
+    }
+} else {
+    echo json_encode(['success' => false, 'message' => 'Access denied.']);
+    exit;
+}
 
 if ($method === 'GET') {
     $afterId = (int)($_GET['after_id'] ?? 0);
 
-    
     $otherRole = ($senderRole === 'client') ? 'provider' : 'client';
     $markRead = $conn->prepare(
         "UPDATE chat_messages SET is_read = 1
@@ -78,7 +102,7 @@ if ($method === 'GET') {
         "SELECT id, sender_role, sender_id, message, created_at, is_read
          FROM chat_messages
          WHERE booking_id = ? AND id > ?
-         ORDER BY created_at ASC
+         ORDER BY id ASC
          LIMIT 100"
     );
     $stmt->bind_param('ii', $bookingId, $afterId);
