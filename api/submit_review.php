@@ -13,6 +13,8 @@ error_reporting(0);
 
 
 
+require_once __DIR__ . '/db.php';
+
 if (empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorised. Please log in.']);
     exit;
@@ -46,10 +48,10 @@ $comment = $comment !== '' ? htmlspecialchars_decode(strip_tags($comment)) : nul
 
 
 
-$dbHost = getenv('DB_HOST') ?: 'localhost';
-$dbName = getenv('DB_NAME') ?: 'homease_db';
-$dbUser = getenv('DB_USER') ?: 'root';
-$dbPass = getenv('DB_PASS') ?: '';
+$dbHost = defined('DB_HOST') ? DB_HOST : (getenv('DB_HOST') ?: 'localhost');
+$dbName = defined('DB_NAME') ? DB_NAME : (getenv('DB_NAME') ?: 'homease_db');
+$dbUser = defined('DB_USER') ? DB_USER : (getenv('DB_USER') ?: 'root');
+$dbPass = defined('DB_PASS') ? DB_PASS : (getenv('DB_PASS') ?: '');
 
 try {
     $pdo = new PDO(
@@ -63,6 +65,7 @@ try {
         ]
     );
 } catch (PDOException $e) {
+    error_log("submit_review.php PDO connection error: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Database connection failed.']);
     exit;
 }

@@ -990,7 +990,9 @@ if ($bookingId > 0) {
       try {
         const d = await (await fetch(API + 'provider_requests_api.php', { method: 'POST', body: fd })).json();
         closeMarkCompleteConfirm();
-        if (d.success) { showJobCompleteModal(); }
+        if (d.success) {
+          window.location.href = 'provider_requests.php';
+        }
         else {
           const msg = d.message || 'Error.';
           // If server blocked completion due to payment, show blocking modal
@@ -1038,16 +1040,11 @@ if ($bookingId > 0) {
 
     /* ===== JOB COMPLETION MODAL ===== */
     function showJobCompleteModal() {
-      const ov = document.getElementById('jobCompleteOverlay');
-      ov.classList.add('show');
-      document.body.classList.add('modal-open');
+      window.location.href = 'provider_requests.php';
     }
 
     function closeJobCompleteModal(navigate) {
-      const ov = document.getElementById('jobCompleteOverlay');
-      ov.classList.remove('show');
-      document.body.classList.remove('modal-open');
-      if (navigate) goPage('provider_requests.php');
+      window.location.href = 'provider_requests.php';
     }
 
     /* ===== CANNOT COMPLETE INFO MODAL ===== */
