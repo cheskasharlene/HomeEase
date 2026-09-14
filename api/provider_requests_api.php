@@ -561,17 +561,30 @@ if ($method === 'POST' && $action === 'complete') {
         exit;
     }
 
-    
-    $chk = $conn->prepare("SELECT id FROM booking_requests WHERE booking_id = ? AND provider_id = ? AND status = 'accepted' LIMIT 1");
-    $chk->bind_param('ii', $bookingId, $providerId);
+    $chk = $conn->prepare("
+        SELECT b.id, b.status 
+        FROM bookings b 
+        LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ? 
+        WHERE b.id = ? AND (b.provider_id = ? OR br.provider_id = ? OR br.status IN ('accepted', 'closed')) 
+        LIMIT 1
+    ");
+    $chk->bind_param('iiii', $providerId, $bookingId, $providerId, $providerId);
     $chk->execute();
-    if (!$chk->get_result()->fetch_assoc()) {
+    $bRow = $chk->get_result()->fetch_assoc();
+    $chk->close();
+
+    if (!$bRow) {
         echo json_encode(['success' => false, 'message' => 'No accepted booking found.']);
         exit;
     }
-    $chk->close();
 
-    
+    $currentBkStatus = strtolower((string)($bRow['status'] ?? ''));
+    if ($currentBkStatus === 'done' || $currentBkStatus === 'completed') {
+        ob_end_clean();
+        echo json_encode(['success' => true, 'message' => 'Booking marked as complete.']);
+        exit;
+    }
+
     $payStmt = $conn->prepare("SELECT payment_method, payment_status FROM payments WHERE booking_id = ? LIMIT 1");
     if ($payStmt) {
         $payStmt->bind_param('i', $bookingId);
@@ -591,18 +604,10 @@ if ($method === 'POST' && $action === 'complete') {
 
     $conn->begin_transaction();
     try {
-        $oldStatus = null;
-        $stOld = $conn->prepare("SELECT status FROM bookings WHERE id = ? LIMIT 1");
-        if ($stOld) {
-            $stOld->bind_param('i', $bookingId);
-            $stOld->execute();
-            $oldRow = $stOld->get_result()->fetch_assoc();
-            $stOld->close();
-            $oldStatus = $oldRow['status'] ?? null;
-        }
+        $oldStatus = $bRow['status'] ?? null;
 
-        $upd = $conn->prepare("UPDATE bookings SET status = 'done' WHERE id = ?");
-        $upd->bind_param('i', $bookingId);
+        $upd = $conn->prepare("UPDATE bookings SET status = 'done', provider_id = COALESCE(NULLIF(provider_id, 0), ?) WHERE id = ?");
+        $upd->bind_param('ii', $providerId, $bookingId);
         $upd->execute();
         $upd->close();
 
@@ -610,12 +615,11 @@ if ($method === 'POST' && $action === 'complete') {
             logBookingStatusChange($conn, $bookingId, $oldStatus, 'done', 'provider', $providerId, 'Marked complete by provider');
         }
 
-        $updR = $conn->prepare("UPDATE booking_requests SET status = 'closed', responded_at = NOW() WHERE booking_id = ? AND provider_id = ? AND status = 'accepted'");
+        $updR = $conn->prepare("UPDATE booking_requests SET status = 'closed', responded_at = NOW() WHERE booking_id = ? AND (provider_id = ? OR status = 'accepted')");
         $updR->bind_param('ii', $bookingId, $providerId);
         $updR->execute();
         $updR->close();
 
-        
         $bkRow = $conn->query("SELECT user_id, service FROM bookings WHERE id = {$bookingId} LIMIT 1")->fetch_assoc();
         if ($bkRow) {
             $uid = (int)$bkRow['user_id'];
@@ -624,7 +628,6 @@ if ($method === 'POST' && $action === 'complete') {
                 VALUES ({$uid}, 'Service Complete', 'Your {$svc} service has been completed. Please leave a review!', 'house_cleaner', 0, NOW())");
         }
 
-        
         ensureRemittancesForProvider($conn, $providerId);
 
         $conn->commit();

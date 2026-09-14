@@ -47,7 +47,7 @@ if ($providerId > 0) {
     $select .= ', u.name AS user_name, u.phone AS user_phone, u.address AS user_address';
     $select .= ', b.customer_lat, b.customer_lng';
 
-    $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ? AND br.status IN ('accepted', 'closed')";
+    $join = "LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ?";
     $join .= ' LEFT JOIN users u ON b.user_id = u.id';
 
     if ($bookingId > 0) {
