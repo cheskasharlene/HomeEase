@@ -173,7 +173,11 @@ if ($stmt) {
 
     /* ── Time helpers ── */
     function providerTimeAgo(ts) {
-      const diff = Math.floor((Date.now() - new Date(ts)) / 1000);
+      if (!ts) return 'Just now';
+      const normalized = typeof ts === 'string' ? ts.replace(' ', 'T') : ts;
+      const parsed = new Date(normalized);
+      if (isNaN(parsed.getTime())) return 'Just now';
+      const diff = Math.floor((Date.now() - parsed.getTime()) / 1000);
       if (diff < 60)    return 'Just now';
       if (diff < 3600)  return Math.floor(diff / 60) + 'm ago';
       if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
@@ -182,12 +186,18 @@ if ($stmt) {
 
     /* ── Day label helpers ── */
     function dayKey(dateStr) {
-      const d = new Date(dateStr);
+      if (!dateStr) return '';
+      const normalized = typeof dateStr === 'string' ? dateStr.replace(' ', 'T') : dateStr;
+      const d = new Date(normalized);
+      if (isNaN(d.getTime())) return '';
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
     function dayLabel(key) {
-      const today     = dayKey(new Date().toISOString());
-      const yesterday = dayKey(new Date(Date.now() - 864e5).toISOString());
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      const yestDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      const yesterday = `${yestDate.getFullYear()}-${String(yestDate.getMonth()+1).padStart(2,'0')}-${String(yestDate.getDate()).padStart(2,'0')}`;
+
       if (key === today)     return 'Today';
       if (key === yesterday) return 'Yesterday';
       const [y, m, d] = key.split('-');

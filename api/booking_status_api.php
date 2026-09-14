@@ -59,7 +59,7 @@ $isTimeout = false;
 
 if ($status === 'pending' && !empty($row['created_at'])) {
     $createdTs = strtotime($row['created_at']);
-    if (time() - $createdTs >= 180) {
+    if ($createdTs !== false && $createdTs > 0 && (time() - $createdTs) >= 180) {
         cancelExpiredMatchingBookings($conn, $bookingId);
         $status = 'cancelled';
         $row['status'] = 'cancelled';

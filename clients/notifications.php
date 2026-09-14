@@ -128,13 +128,19 @@ $unreadCount = count(array_filter($notifications, fn($n) => !$n['read']));
 
     /* ── Day label helpers ── */
     function dayKey(dateStr) {
-      const d = new Date(dateStr);
+      if (!dateStr) return '';
+      const normalized = typeof dateStr === 'string' ? dateStr.replace(' ', 'T') : dateStr;
+      const d = new Date(normalized);
+      if (isNaN(d.getTime())) return '';
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
 
     function dayLabel(key) {
-      const today     = dayKey(new Date().toISOString());
-      const yesterday = dayKey(new Date(Date.now() - 864e5).toISOString());
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      const yestDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+      const yesterday = `${yestDate.getFullYear()}-${String(yestDate.getMonth()+1).padStart(2,'0')}-${String(yestDate.getDate()).padStart(2,'0')}`;
+
       if (key === today)     return 'Today';
       if (key === yesterday) return 'Yesterday';
       const [y, m, d] = key.split('-');

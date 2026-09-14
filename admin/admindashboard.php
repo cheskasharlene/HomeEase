@@ -3125,8 +3125,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }
 
       function getTimeAgo(dateStr) {
+        if (!dateStr) return 'Just now';
         const now = new Date();
-        const d = new Date(dateStr.replace(' ', 'T'));
+        const d = new Date(typeof dateStr === 'string' ? dateStr.replace(' ', 'T') : dateStr);
+        if (isNaN(d.getTime())) return 'Just now';
         const diffMs = now - d;
         const mins = Math.floor(diffMs / 60000);
         if (mins < 1) return 'Just now';

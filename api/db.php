@@ -1,4 +1,25 @@
 <?php
+date_default_timezone_set('Asia/Manila');
+
+define("DB_HOST", getenv('DB_HOST') ?: "localhost");
+define("DB_USER", getenv('DB_USER') ?: "root");
+define("DB_PASS", getenv('DB_PASS') ?: "");
+define("DB_NAME", getenv('DB_NAME') ?: "homease_db");
+
+
+mysqli_report(MYSQLI_REPORT_OFF);
+
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+if ($conn->connect_error) {
+    header("Content-Type: application/json; charset=utf-8");
+    http_response_code(500);
+    echo json_encode(["success" => false, "message" => "DB connection failed: " . $conn->connect_error]);
+    exit;
+}
+
+$conn->set_charset("utf8mb4");
+$conn->query("SET time_zone = '+08:00'");
 
 
 
@@ -787,9 +808,15 @@ function syncProviderOnlineStatuses($conn)
     }
 
     @$conn->query("UPDATE service_providers 
+                   SET last_active = NOW() 
+                   WHERE (availability_status = 'online' OR availability_status = 'available') 
+                     AND last_active IS NULL");
+
+    @$conn->query("UPDATE service_providers 
                    SET availability_status = 'offline' 
                    WHERE (availability_status = 'online' OR availability_status = 'available') 
-                     AND (last_active IS NULL OR last_active < DATE_SUB(NOW(), INTERVAL 2 MINUTE))");
+                     AND last_active IS NOT NULL 
+                     AND last_active < DATE_SUB(NOW(), INTERVAL 10 MINUTE)");
 }
 
 
@@ -800,14 +827,14 @@ function updateProviderActivity($conn, $providerId)
     $providerId = (int)$providerId;
     if ($providerId <= 0 || !($conn instanceof mysqli)) return;
 
-    syncProviderOnlineStatuses($conn);
-
     $stmt = $conn->prepare("UPDATE service_providers SET last_active = NOW() WHERE provider_id = ?");
     if ($stmt) {
         $stmt->bind_param("i", $providerId);
         $stmt->execute();
         $stmt->close();
     }
+
+    syncProviderOnlineStatuses($conn);
 }
 
 
