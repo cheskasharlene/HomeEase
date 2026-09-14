@@ -107,7 +107,7 @@ if ($method === 'GET' && $action === 'live_feed') {
             LEFT JOIN payments p ON p.booking_id = b.id
             WHERE b.status = 'pending'
               AND LOWER(b.service) LIKE ?
-              AND b.created_at >= DATE_SUB(NOW(), INTERVAL 3 MINUTE)
+              AND b.created_at >= ?
               AND NOT EXISTS (
                   SELECT 1 FROM booking_requests br2
                   WHERE br2.booking_id = b.id AND br2.status = 'accepted'
@@ -120,13 +120,14 @@ if ($method === 'GET' && $action === 'live_feed') {
             LIMIT 30";
 
     $like = '%' . $provService . '%';
+    $threeMinsAgo = phNow(-180);
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         ob_end_clean();
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
     }
-    $stmt->bind_param('isi', $providerId, $like, $providerId);
+    $stmt->bind_param('issi', $providerId, $like, $threeMinsAgo, $providerId);
     $stmt->execute();
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();

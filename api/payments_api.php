@@ -83,7 +83,7 @@ if ($method === 'POST' && in_array($action, ['provider_confirm', 'provider_rejec
                 logBookingStatusChange($conn, (int)$prow['booking_id'], $oldStatus, 'progress', 'provider', $providerId, 'Payment confirmed by provider');
             }
             $uid2 = (int) $prow['user_id'];
-            $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES ({$uid2}, 'Payment Verified', 'Your payment has been confirmed by the worker.', 'wallet', 0, NOW())");
+            sendUserNotification($conn, $uid2, 'Payment Verified', 'Your payment has been confirmed by the worker.', 'wallet');
             $conn->commit();
             ob_end_clean();
             echo json_encode(['success' => true, 'message' => 'Payment confirmed']);
@@ -102,14 +102,15 @@ if ($method === 'POST' && in_array($action, ['provider_confirm', 'provider_rejec
         $bkid = (int) $prow['booking_id'];
         $paymentRef = $prow['payment_reference'] ?? '';
         $matches = $paymentRef !== '';
-        $ins = $conn->prepare("INSERT INTO disputes (booking_id, payment_id, provider_id, reason, matches_system, status, created_at) VALUES (?, ?, ?, ?, ?, 'open', NOW())");
+        $nowStr = phNow();
+        $ins = $conn->prepare("INSERT INTO disputes (booking_id, payment_id, provider_id, reason, matches_system, status, created_at) VALUES (?, ?, ?, ?, ?, 'open', ?)");
         $ms = $matches ? 1 : 0;
-        $ins->bind_param('iiisi', $bkid, $paymentId, $providerId, $reason, $ms);
+        $ins->bind_param('iiisis', $bkid, $paymentId, $providerId, $reason, $ms, $nowStr);
         $ins->execute();
         $ins->close();
 
         $uid2 = (int) $prow['user_id'];
-        $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES ({$uid2}, 'Payment Problem Reported', 'The worker reported a problem with your payment. Admin review has been requested.', 'exclamation-triangle', 0, NOW())");
+        sendUserNotification($conn, $uid2, 'Payment Problem Reported', 'The worker reported a problem with your payment. Admin review has been requested.', 'exclamation-triangle');
         @$conn->query("UPDATE service_providers SET warnings = COALESCE(warnings,0) + 1 WHERE provider_id = " . $providerId);
 
         ob_end_clean();
@@ -314,7 +315,7 @@ if ($method === 'POST' && $action === 'submit') {
 
 
         
-        $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES ({$uid}, 'Payment Submitted', 'Your payment proof has been sent to the worker for confirmation.', 'wallet', 0, NOW())");
+        sendUserNotification($conn, $uid, 'Payment Submitted', 'Your payment proof has been sent to the worker for confirmation.', 'wallet');
         if ($providerId > 0) {
             sendProviderNotification($conn, $providerId, 'payment', 'Payment Submitted', "Client submitted payment for booking #{$bookingId}. Review and confirm it.", 'bi-cash-coin', $bookingId);
         }

@@ -868,12 +868,7 @@ if ($section === 'incidents') {
                     sendProviderNotification($conn, (int)$reportData['reporter_id'], 'report', 'Report Status Updated', $msg, 'shield-fill-exclamation');
                 } else if ($reportData['reporter_role'] === 'client') {
                     $msg = "Your report regarding " . $reportData['category'] . " has been updated to: " . $norm_status . ".";
-                    $notifStmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Report Status Updated', ?, 'exclamation-triangle', 0, NOW())");
-                    if ($notifStmt) {
-                        $notifStmt->bind_param("is", $reportData['reporter_id'], $msg);
-                        $notifStmt->execute();
-                        $notifStmt->close();
-                    }
+                    sendUserNotification($conn, (int)$reportData['reporter_id'], 'Report Status Updated', $msg, 'exclamation-triangle');
                 }
                 if ($reportData['reported_user_role'] === 'provider') {
                     $msg = "An incident report involving you has been updated to: " . $norm_status . ".";
@@ -939,9 +934,7 @@ if ($section === 'incidents') {
         if (!$reporter_id || !$role) respond(false, 'User ID and role are required.');
 
         if ($role === 'client' || $role === 'homeowner') {
-            $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Admin Warning', ?, 'exclamation-triangle', 0, NOW())");
-            $stmt->bind_param("is", $reporter_id, $message);
-            if ($stmt->execute()) {
+            if (sendUserNotification($conn, $reporter_id, 'Admin Warning', $message, 'exclamation-triangle')) {
                 respond(true, 'Warning notification sent to Client.');
             }
         } else if ($role === 'provider' || $role === 'service provider') {

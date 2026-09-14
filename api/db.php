@@ -1,50 +1,33 @@
 <?php
 date_default_timezone_set('Asia/Manila');
 
-define("DB_HOST", getenv('DB_HOST') ?: "localhost");
-define("DB_USER", getenv('DB_USER') ?: "root");
-define("DB_PASS", getenv('DB_PASS') ?: "");
-define("DB_NAME", getenv('DB_NAME') ?: "homease_db");
+if (!function_exists('phNow')) {
+    function phNow($offsetSeconds = 0)
+    {
+        return date('Y-m-d H:i:s', time() + (int)$offsetSeconds);
+    }
+}
 
+if (!defined("DB_HOST")) {
+    define("DB_HOST", getenv('DB_HOST') ?: "localhost");
+    define("DB_USER", getenv('DB_USER') ?: "root");
+    define("DB_PASS", getenv('DB_PASS') ?: "");
+    define("DB_NAME", getenv('DB_NAME') ?: "homease_db");
+}
 
 mysqli_report(MYSQLI_REPORT_OFF);
 
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
-if ($conn->connect_error) {
-    header("Content-Type: application/json; charset=utf-8");
-    http_response_code(500);
-    echo json_encode(["success" => false, "message" => "DB connection failed: " . $conn->connect_error]);
-    exit;
+if (!isset($conn) || !($conn instanceof mysqli)) {
+    $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+    if ($conn->connect_error) {
+        header("Content-Type: application/json; charset=utf-8");
+        http_response_code(500);
+        echo json_encode(["success" => false, "message" => "DB connection failed: " . $conn->connect_error]);
+        exit;
+    }
+    $conn->set_charset("utf8mb4");
+    @$conn->query("SET time_zone = '+08:00'");
 }
-
-$conn->set_charset("utf8mb4");
-$conn->query("SET time_zone = '+08:00'");
-
-
-
-
-
-
-
-define("DB_HOST", getenv('DB_HOST') ?: "localhost");
-define("DB_USER", getenv('DB_USER') ?: "root");
-define("DB_PASS", getenv('DB_PASS') ?: "");
-define("DB_NAME", getenv('DB_NAME') ?: "homease_db");
-
-
-mysqli_report(MYSQLI_REPORT_OFF);
-
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
-if ($conn->connect_error) {
-    header("Content-Type: application/json; charset=utf-8");
-    http_response_code(500);
-    echo json_encode(["success" => false, "message" => "DB connection failed: " . $conn->connect_error]);
-    exit;
-}
-
-$conn->set_charset("utf8mb4");
 
 function respond($success, $message = "", $data = [])
 {
@@ -239,10 +222,11 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
     
     $transactionId = 'TXN-' . date('YmdHis') . '-' . $bookingId . '-' . mt_rand(1000, 9999);
 
+    $nowStr = phNow();
     $stmt = $conn->prepare(
         "INSERT INTO payments 
         (booking_id, user_id, payment_method, payment_reference, amount, payment_status, transaction_id, payment_proof_path, created_at) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())"
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if (!$stmt) {
@@ -250,7 +234,7 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
     }
 
     $stmt->bind_param(
-        'iissdsss',
+        'iissdssss',
         $bookingId,
         $userId,
         $method,
@@ -258,7 +242,8 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
         $amount,
         $status,
         $transactionId,
-        $proofPath
+        $proofPath,
+        $nowStr
     );
 
     if ($stmt->execute()) {
@@ -579,12 +564,13 @@ function ensureBookingStatusLogsTable($conn)
 function logBookingStatusChange($conn, $bookingId, $oldStatus, $newStatus, $changedByRole = 'system', $changedById = null, $notes = null)
 {
     ensureBookingStatusLogsTable($conn);
+    $nowStr = phNow();
     $stmt = $conn->prepare("INSERT INTO booking_status_logs (booking_id, old_status, new_status, changed_by_role, changed_by_id, notes, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, NOW())");
+        VALUES (?, ?, ?, ?, ?, ?, ?)");
     if (!$stmt) {
         return false;
     }
-    $stmt->bind_param('isssis', $bookingId, $oldStatus, $newStatus, $changedByRole, $changedById, $notes);
+    $stmt->bind_param('isssiss', $bookingId, $oldStatus, $newStatus, $changedByRole, $changedById, $notes, $nowStr);
     $ok = $stmt->execute();
     $stmt->close();
     if ($ok && in_array(strtolower((string)$newStatus), ['done', 'completed', 'cancelled'])) {
@@ -622,13 +608,14 @@ function upsertBookingDetail($conn, $bookingId, $fieldName, $fieldValue)
         return false;
     }
 
+    $nowStr = phNow();
     $stmt = $conn->prepare("INSERT INTO booking_details (booking_id, field_name, field_value, created_at)
-        VALUES (?, ?, ?, NOW())
+        VALUES (?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE field_value = VALUES(field_value)");
     if (!$stmt) {
         return false;
     }
-    $stmt->bind_param('iss', $bookingId, $fieldName, $fieldValue);
+    $stmt->bind_param('isss', $bookingId, $fieldName, $fieldValue, $nowStr);
     $ok = $stmt->execute();
     $stmt->close();
     return $ok;
@@ -721,10 +708,11 @@ function sendProviderNotification($conn, $providerId, $type, $title, $message, $
     if ($providerId <= 0 || !($conn instanceof mysqli)) return false;
     $type = !empty($type) ? trim((string)$type) : 'general';
     
-    $stmt = $conn->prepare("INSERT INTO provider_notifications (provider_id, type, reference_id, title, message, icon, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, NOW())");
+    $nowStr = phNow();
+    $stmt = $conn->prepare("INSERT INTO provider_notifications (provider_id, type, reference_id, title, message, icon, is_read, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?)");
     if (!$stmt) return false;
     
-    $stmt->bind_param("isisss", $providerId, $type, $referenceId, $title, $message, $icon);
+    $stmt->bind_param("isissss", $providerId, $type, $referenceId, $title, $message, $icon, $nowStr);
     $ok = $stmt->execute();
     $stmt->close();
     return $ok;
@@ -733,9 +721,10 @@ function sendProviderNotification($conn, $providerId, $type, $title, $message, $
 function sendUserNotification($conn, $userId, $title, $message, $icon = 'bell')
 {
     if (!$conn instanceof mysqli || (int)$userId <= 0) return false;
-    $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, ?, ?, ?, 0, NOW())");
+    $nowStr = phNow();
+    $stmt = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, ?, ?, ?, 0, ?)");
     if (!$stmt) return false;
-    $stmt->bind_param("isss", $userId, $title, $message, $icon);
+    $stmt->bind_param("issss", $userId, $title, $message, $icon, $nowStr);
     $ok = $stmt->execute();
     $stmt->close();
     return $ok;
@@ -751,37 +740,43 @@ function cancelExpiredMatchingBookings($conn, $specificBookingId = 0)
 {
     if (!$conn instanceof mysqli) return 0;
 
-    $where = "WHERE status = 'pending' AND created_at <= DATE_SUB(NOW(), INTERVAL 3 MINUTE)";
+    $threeMinsAgo = phNow(-180);
+    $where = "WHERE status = 'pending' AND created_at <= ?";
     if ($specificBookingId > 0) {
         $where .= " AND id = " . (int)$specificBookingId;
     }
 
-    $sql = "SELECT id, user_id, created_at FROM bookings {$where}";
-    $res = $conn->query($sql);
-    if (!$res) return 0;
+    $stmt = $conn->prepare("SELECT id, user_id, created_at FROM bookings {$where}");
+    if (!$stmt) return 0;
+    $stmt->bind_param('s', $threeMinsAgo);
+    $stmt->execute();
+    $res = $stmt->get_result();
 
     $cancelledCount = 0;
+    $nowStr = phNow();
     while ($row = $res->fetch_assoc()) {
         $bid = (int)$row['id'];
         $uid = (int)$row['user_id'];
 
         $conn->begin_transaction();
         try {
-            $stmt = $conn->prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ? AND status = 'pending'");
-            if ($stmt) {
-                $stmt->bind_param('i', $bid);
-                $stmt->execute();
-                $affected = $stmt->affected_rows;
-                $stmt->close();
+            $upStmt = $conn->prepare("UPDATE bookings SET status = 'cancelled' WHERE id = ? AND status = 'pending'");
+            if ($upStmt) {
+                $upStmt->bind_param('i', $bid);
+                $upStmt->execute();
+                $affected = $upStmt->affected_rows;
+                $upStmt->close();
 
                 if ($affected > 0) {
-                    
-                    $conn->query("UPDATE booking_requests SET status = 'closed', responded_at = NOW() WHERE booking_id = {$bid} AND status = 'pending'");
-
+                    $reqUp = $conn->prepare("UPDATE booking_requests SET status = 'closed', responded_at = ? WHERE booking_id = ? AND status = 'pending'");
+                    if ($reqUp) {
+                        $reqUp->bind_param('si', $nowStr, $bid);
+                        $reqUp->execute();
+                        $reqUp->close();
+                    }
                     
                     logBookingStatusChange($conn, $bid, 'pending', 'cancelled', 'system', 0, 'Matching timeout - No available workers');
 
-                    
                     sendUserNotification($conn, $uid, 'Booking Cancelled', 'No available workers. Please try again.', 'x-circle');
 
                     $cancelledCount++;
@@ -792,6 +787,7 @@ function cancelExpiredMatchingBookings($conn, $specificBookingId = 0)
             $conn->rollback();
         }
     }
+    $stmt->close();
     return $cancelledCount;
 }
 
@@ -807,16 +803,22 @@ function syncProviderOnlineStatuses($conn)
         @$conn->query("ALTER TABLE service_providers ADD COLUMN last_active DATETIME NULL AFTER availability_status");
     }
 
-    @$conn->query("UPDATE service_providers 
-                   SET last_active = NOW() 
-                   WHERE (availability_status = 'online' OR availability_status = 'available') 
-                     AND last_active IS NULL");
+    $nowStr = phNow();
+    $tenMinsAgo = phNow(-600);
 
-    @$conn->query("UPDATE service_providers 
-                   SET availability_status = 'offline' 
-                   WHERE (availability_status = 'online' OR availability_status = 'available') 
-                     AND last_active IS NOT NULL 
-                     AND last_active < DATE_SUB(NOW(), INTERVAL 10 MINUTE)");
+    $stmt1 = $conn->prepare("UPDATE service_providers SET last_active = ? WHERE (availability_status = 'online' OR availability_status = 'available') AND last_active IS NULL");
+    if ($stmt1) {
+        $stmt1->bind_param('s', $nowStr);
+        $stmt1->execute();
+        $stmt1->close();
+    }
+
+    $stmt2 = $conn->prepare("UPDATE service_providers SET availability_status = 'offline' WHERE (availability_status = 'online' OR availability_status = 'available') AND last_active IS NOT NULL AND last_active < ?");
+    if ($stmt2) {
+        $stmt2->bind_param('s', $tenMinsAgo);
+        $stmt2->execute();
+        $stmt2->close();
+    }
 }
 
 
@@ -827,9 +829,10 @@ function updateProviderActivity($conn, $providerId)
     $providerId = (int)$providerId;
     if ($providerId <= 0 || !($conn instanceof mysqli)) return;
 
-    $stmt = $conn->prepare("UPDATE service_providers SET last_active = NOW() WHERE provider_id = ?");
+    $nowStr = phNow();
+    $stmt = $conn->prepare("UPDATE service_providers SET last_active = ? WHERE provider_id = ?");
     if ($stmt) {
-        $stmt->bind_param("i", $providerId);
+        $stmt->bind_param("si", $nowStr, $providerId);
         $stmt->execute();
         $stmt->close();
     }
@@ -854,10 +857,13 @@ function syncUserOnlineStatuses($conn)
         @$conn->query("ALTER TABLE users ADD COLUMN last_active DATETIME NULL");
     }
 
-    @$conn->query("UPDATE users 
-                   SET is_online = 0 
-                   WHERE is_online = 1 
-                     AND (last_active IS NULL OR last_active < DATE_SUB(NOW(), INTERVAL 2 MINUTE))");
+    $twoMinsAgo = phNow(-120);
+    $stmt = $conn->prepare("UPDATE users SET is_online = 0 WHERE is_online = 1 AND (last_active IS NULL OR last_active < ?)");
+    if ($stmt) {
+        $stmt->bind_param('s', $twoMinsAgo);
+        $stmt->execute();
+        $stmt->close();
+    }
 }
 
 
@@ -870,9 +876,10 @@ function updateUserActivity($conn, $userId)
 
     syncUserOnlineStatuses($conn);
 
-    $stmt = $conn->prepare("UPDATE users SET is_online = 1, last_active = NOW() WHERE id = ?");
+    $nowStr = phNow();
+    $stmt = $conn->prepare("UPDATE users SET is_online = 1, last_active = ? WHERE id = ?");
     if ($stmt) {
-        $stmt->bind_param("i", $userId);
+        $stmt->bind_param("si", $nowStr, $userId);
         $stmt->execute();
         $stmt->close();
     }

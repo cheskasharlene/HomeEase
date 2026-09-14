@@ -100,12 +100,13 @@ if ($method === 'POST') {
     }
 
     $dbValue = $requested === 'online' ? 'online' : 'offline';
-    $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ?, last_active = NOW() WHERE provider_id = ?');
+    $nowStr = phNow();
+    $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ?, last_active = ? WHERE provider_id = ?');
     if (!$updateStmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);
         exit;
     }
-    $updateStmt->bind_param('si', $dbValue, $providerId);
+    $updateStmt->bind_param('ssi', $dbValue, $nowStr, $providerId);
     $updateStmt->execute();
     $updateStmt->close();
 

@@ -433,10 +433,11 @@ if ($method === 'POST' && $action === '') {
 
     $serviceId = (int) ($serviceRow['id'] ?? 0);
 
+    $nowStr = phNow();
     $col_list = "user_id, service, date, address, price, status, created_at";
-    $val_list = "?, ?, ?, ?, ?, 'pending', NOW()";
-    $types = "isssd";
-    $params = [$uid, $service, $date, $address, $price];
+    $val_list = "?, ?, ?, ?, ?, 'pending', ?";
+    $types = "isssds";
+    $params = [$uid, $service, $date, $address, $price, $nowStr];
 
     if (in_array('service_id', $bcols, true) && $serviceId > 0) {
         $col_list .= ", service_id";
@@ -567,10 +568,12 @@ if ($method === 'POST' && $action === '') {
         }
 
         if (!empty($providers)) {
+            $reqNow = phNow();
+            $reqExp = phNow(1800);
             $reqStmt = $conn->prepare(
                 "INSERT INTO booking_requests
                 (booking_id, provider_id, service, fixed_price, date, time_slot, address, details, customer_name, customer_phone, customer_address, status, created_at, expires_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NOW(), DATE_ADD(NOW(), INTERVAL 30 MINUTE))"
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)"
             );
             if ($reqStmt) {
                 foreach ($providers as $p) {
@@ -579,7 +582,7 @@ if ($method === 'POST' && $action === '') {
                         continue;
                     }
                     $reqStmt->bind_param(
-                        'iisdsssssss',
+                        'iisdssssssssss',
                         $bid,
                         $pid,
                         $service,
@@ -590,7 +593,9 @@ if ($method === 'POST' && $action === '') {
                         $notes,
                         $customer_name,
                         $customer_phone,
-                        $customer_address
+                        $customer_address,
+                        $reqNow,
+                        $reqExp
                     );
                     $reqStmt->execute();
                     sendProviderNotification($conn, $pid, 'booking_request', 'New Booking Request', "You have a new booking request for {$service} (#{$bid}).", 'bi-calendar-check', $bid);
@@ -601,12 +606,7 @@ if ($method === 'POST' && $action === '') {
 
         $msg = "Your $service booking on $date has been received.";
         $icon = _svcIcon($service);
-        $ns = $conn->prepare("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at) VALUES (?, 'Booking Received', ?, ?, 0, NOW())");
-        if ($ns) {
-            $ns->bind_param("iss", $uid, $msg, $icon);
-            $ns->execute();
-            $ns->close();
-        }
+        sendUserNotification($conn, $uid, 'Booking Received', $msg, $icon);
         ob_end_clean();
         echo json_encode([
             'success' => true,
