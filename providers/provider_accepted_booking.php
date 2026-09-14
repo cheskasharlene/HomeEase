@@ -1017,8 +1017,12 @@ if ($bookingId > 0) {
       chatOpen = true;
       const ov = document.getElementById('chatOverlay');
       const dr = document.getElementById('chatDrawer');
-      ov.style.opacity = '1'; ov.style.pointerEvents = 'all';
-      dr.style.transform = 'translateY(0)';
+      if (ov) { ov.style.opacity = '1'; ov.style.pointerEvents = 'all'; }
+      if (dr) { dr.style.transform = 'translateY(0)'; }
+      fetchChat();
+      if (!chatTimer) {
+        chatTimer = setInterval(fetchChat, 8000);
+      }
       scrollChat();
     }
 
@@ -1027,8 +1031,9 @@ if ($bookingId > 0) {
       chatOpen = false;
       const ov = document.getElementById('chatOverlay');
       const dr = document.getElementById('chatDrawer');
-      ov.style.opacity = '0'; ov.style.pointerEvents = 'none';
-      dr.style.transform = 'translateY(100%)';
+      if (ov) { ov.style.opacity = '0'; ov.style.pointerEvents = 'none'; }
+      if (dr) { dr.style.transform = 'translateY(100%)'; }
+      if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
     }
 
     /* ===== JOB COMPLETION MODAL ===== */
@@ -1060,24 +1065,24 @@ if ($bookingId > 0) {
       document.body.classList.remove('modal-open');
     }
 
-    function startChat() { fetchChat(); chatTimer = setInterval(fetchChat, 3000); }
-
     async function fetchChat() {
       if (!BID) return;
       try {
-        const data = await (await fetch(API + 'chat_api.php?booking_id=' + BID + '&after_id=' + chatLast + '&role=provider&_t=' + Date.now(), { cache: 'no-store' })).json();
-        if (!data.success) {
-          console.warn('Chat fetch warning:', data.message);
-          return;
-        }
+        const res = await fetch('../booking_messages.php?booking_id=' + BID + '&after_id=' + chatLast + '&role=provider&_t=' + Date.now(), {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+        if (!res.ok) return;
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (err) { return; }
+        if (!data.success) return;
         myRole = data.my_role || 'provider';
         if (data.messages?.length) {
           appendMsgs(data.messages);
           chatLast = data.messages[data.messages.length - 1].id;
         }
-      } catch (e) {
-        console.error('Chat fetch error:', e);
-      }
+      } catch (e) {}
     }
 
     function appendMsgs(msgs) {
@@ -1101,17 +1106,29 @@ if ($bookingId > 0) {
       const msg = inp.value.trim();
       if (!msg || !BID) return;
       inp.value = '';
-      const fd = new FormData();
-      fd.append('action', 'send'); fd.append('booking_id', BID); fd.append('message', msg); fd.append('role', 'provider');
+
+      const params = new URLSearchParams();
+      params.append('action', 'send');
+      params.append('booking_id', BID);
+      params.append('message', msg);
+      params.append('role', 'provider');
+
       try {
-        const d = await (await fetch(API + 'chat_api.php', { method: 'POST', body: fd })).json();
-        if (d.success) {
+        const res = await fetch('../booking_messages.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: params
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (err) { alert('Server error: ' + text.substring(0, 150)); return; }
+        if (data.success) {
           fetchChat();
         } else {
-          console.warn('Send chat message warning:', d.message);
+          alert('Chat error: ' + (data.message || 'Unable to send message.'));
         }
       } catch (e) {
-        console.error('Send chat message error:', e);
+        alert('Network error sending message: ' + e.message);
       }
     }
 
@@ -1244,9 +1261,7 @@ if ($bookingId > 0) {
     document.addEventListener('DOMContentLoaded', () => {
       initMap();
       setTimeout(() => { map.invalidateSize(); }, 200);
-      loadBooking().then(() => {
-        startChat();
-      });
+      loadBooking();
       window.addEventListener('resize', syncSheetHeight);
     });
   </script>

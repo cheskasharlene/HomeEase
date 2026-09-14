@@ -1321,9 +1321,14 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       chatOpen = true;
       const ov = document.getElementById('chatOverlay');
       const dr = document.getElementById('chatDrawer');
-      ov.style.opacity = '1'; ov.style.pointerEvents = 'all';
-      dr.style.transform = 'translateY(0)';
-      document.getElementById('chatUnreadBubble').style.display = 'none';
+      if (ov) { ov.style.opacity = '1'; ov.style.pointerEvents = 'all'; }
+      if (dr) { dr.style.transform = 'translateY(0)'; }
+      const b = document.getElementById('chatUnreadBubble');
+      if (b) b.style.display = 'none';
+      fetchChatMessages();
+      if (!chatTimer) {
+        chatTimer = setInterval(fetchChatMessages, 8000);
+      }
       scrollChat();
     }
 
@@ -1332,23 +1337,23 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       chatOpen = false;
       const ov = document.getElementById('chatOverlay');
       const dr = document.getElementById('chatDrawer');
-      ov.style.opacity = '0'; ov.style.pointerEvents = 'none';
-      dr.style.transform = 'translateY(100%)';
-    }
-
-    function startChat() {
-      fetchChatMessages();
-      chatTimer = setInterval(fetchChatMessages, 3000);
+      if (ov) { ov.style.opacity = '0'; ov.style.pointerEvents = 'none'; }
+      if (dr) { dr.style.transform = 'translateY(100%)'; }
+      if (chatTimer) { clearInterval(chatTimer); chatTimer = null; }
     }
 
     async function fetchChatMessages() {
+      if (!BOOKING_ID) return;
       try {
-        const res = await fetch('../api/chat_api.php?booking_id=' + BOOKING_ID + '&after_id=' + chatLastId + '&role=client&_t=' + Date.now(), { cache: 'no-store' });
-        const data = await res.json();
-        if (!data.success) {
-          console.warn('Chat fetch warning:', data.message);
-          return;
-        }
+        const res = await fetch('../booking_messages.php?booking_id=' + BOOKING_ID + '&after_id=' + chatLastId + '&role=client&_t=' + Date.now(), {
+          cache: 'no-store',
+          credentials: 'same-origin'
+        });
+        if (!res.ok) return;
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (err) { return; }
+        if (!data.success) return;
         myRole = data.my_role || 'client';
         if (data.messages && data.messages.length) {
           appendChatMessages(data.messages);
@@ -1356,12 +1361,9 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         }
         if (data.unread > 0 && !chatOpen) {
           const b = document.getElementById('chatUnreadBubble');
-          b.textContent = data.unread;
-          b.style.display = 'inline';
+          if (b) { b.textContent = data.unread; b.style.display = 'inline'; }
         }
-      } catch (e) {
-        console.error('Chat fetch error:', e);
-      }
+      } catch (e) {}
     }
 
     document.getElementById('btnCancelDismiss').addEventListener('click', closeCancelModal);
@@ -1386,7 +1388,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     function scrollChat() {
       const box = document.getElementById('chatMsgs');
-      box.scrollTop = box.scrollHeight;
+      if (box) box.scrollTop = box.scrollHeight;
     }
 
     async function sendMessage() {
@@ -1394,18 +1396,29 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
       const msg = inp.value.trim();
       if (!msg) return;
       inp.value = '';
-      const fd = new FormData();
-      fd.append('action', 'send'); fd.append('booking_id', BOOKING_ID); fd.append('message', msg); fd.append('role', 'client');
+
+      const params = new URLSearchParams();
+      params.append('action', 'send');
+      params.append('booking_id', BOOKING_ID);
+      params.append('message', msg);
+      params.append('role', 'client');
+
       try {
-        const res = await fetch('../api/chat_api.php', { method: 'POST', body: fd });
-        const data = await res.json();
+        const res = await fetch('../booking_messages.php', {
+          method: 'POST',
+          credentials: 'same-origin',
+          body: params
+        });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch (err) { alert('Server error: ' + text.substring(0, 150)); return; }
         if (data.success) {
           fetchChatMessages();
         } else {
-          console.warn('Send chat message warning:', data.message);
+          alert('Chat error: ' + (data.message || 'Unable to send message.'));
         }
       } catch (e) {
-        console.error('Send chat message error:', e);
+        alert('Network error sending message: ' + e.message);
       }
     }
 
@@ -1427,7 +1440,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     async function boot() {
       initMap();
       startPolling();
-      startChat();
       window.addEventListener('resize', syncSheetHeight);
       window.addEventListener('popstate', goBack);
 

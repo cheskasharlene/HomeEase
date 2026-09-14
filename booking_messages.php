@@ -3,15 +3,17 @@ session_start();
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
+header('Access-Control-Allow-Headers: Content-Type');
+
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
+
 ini_set('display_errors', 0);
 error_reporting(0);
 
-require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/api/db.php';
 
 $userId     = (int)($_SESSION['user_id']     ?? 0);
 $providerId = (int)($_SESSION['provider_id'] ?? 0);
@@ -59,7 +61,6 @@ if ($requestedRole === 'provider' && $providerId > 0) {
     $senderRole = 'client';
     $senderId   = $userId;
 } elseif ($providerId > 0) {
-    // If session contains both user_id and provider_id, default to provider if on provider request
     $senderRole = 'provider';
     $senderId   = $providerId;
 } elseif ($userId > 0) {
@@ -83,7 +84,6 @@ if ($debug) {
     exit;
 }
 
-// Safe SQL prepare helper
 function prepareStmt($conn, $sql) {
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
