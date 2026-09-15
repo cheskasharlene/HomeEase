@@ -29,11 +29,13 @@ if (!isset($conn) || !($conn instanceof mysqli)) {
     @$conn->query("SET time_zone = '+08:00'");
 }
 
-function respond($success, $message = "", $data = [])
-{
-    header("Content-Type: application/json; charset=utf-8");
-    echo json_encode(array_merge(["success" => $success, "message" => $message], $data));
-    exit;
+if (!function_exists('respond')) {
+    function respond($success, $message = "", $data = [])
+    {
+        header("Content-Type: application/json; charset=utf-8");
+        echo json_encode(array_merge(["success" => $success, "message" => $message], $data));
+        exit;
+    }
 }
 
 function ensurePolicyAcceptedColumns($conn)

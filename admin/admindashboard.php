@@ -2160,7 +2160,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             legend.innerHTML = '';
             Object.entries(bd).forEach(([st, cnt]) => {
               const pct = cnt / total; const dash = pct * circ;
-              const circle = document.createElementNS('http:
+              const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
               circle.setAttribute('cx', '40'); circle.setAttribute('cy', '40'); circle.setAttribute('r', '30');
               circle.setAttribute('fill', 'none'); circle.setAttribute('stroke', colors[st] || '#e5e7eb');
               circle.setAttribute('stroke-width', '12');
@@ -3176,7 +3176,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       (function init() {
         setTimeout(() => {
           const ml = document.getElementById('ml');
-          if (ml) { ml.style.opacity = '0'; setTimeout(() => ml.style.display = 'none', 200); }
+          if (ml) { 
+            ml.classList.remove('on');
+            ml.style.opacity = '0'; 
+            setTimeout(() => ml.style.display = 'none', 200); 
+          }
         }, 800);
         loadOverview();
         loadAdminNotifCount();

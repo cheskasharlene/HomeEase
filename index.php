@@ -279,6 +279,7 @@ if (!empty($_SESSION['provider_id'])) {
 
     
         <span class="acct-type-lbl">I am a…</span>
+        <input type="hidden" id="regAccountType" value="user" />
         <div class="acct-type-row">
           <div class="acct-type-btn active" id="typeUser" onclick="setAccountType('user')">
             <i class="bi bi-person-fill"></i>
@@ -397,6 +398,8 @@ if (!empty($_SESSION['provider_id'])) {
 
     function setAccountType(type) {
       accountType = type;
+      const inp = document.getElementById('regAccountType');
+      if (inp) inp.value = type;
       document.getElementById('typeUser').classList.toggle('active', type === 'user');
       document.getElementById('typeProvider').classList.toggle('active', type === 'provider');
       document.getElementById('regSpecialtyWrap').style.display = type === 'provider' ? 'block' : 'none';
@@ -504,6 +507,10 @@ if (!empty($_SESSION['provider_id'])) {
 
     function doRegister() {
       clearAlert('regErr'); clearAlert('regOk');
+      const typeInp = document.getElementById('regAccountType');
+      if (typeInp && typeInp.value) {
+        accountType = typeInp.value;
+      }
       const first = document.getElementById('regFirst').value.trim();
       const last = document.getElementById('regLast').value.trim();
       const email = document.getElementById('regEmail').value.trim();

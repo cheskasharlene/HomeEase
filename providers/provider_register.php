@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -7,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-require __DIR__ . '/../api/db.php';
+require_once __DIR__ . '/../api/db.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
 $first = trim($input['first'] ?? '');
@@ -50,11 +52,25 @@ $chk->close();
 $chk2 = $conn->prepare("SELECT id FROM users WHERE email = ?");
 $chk2->bind_param("s", $email);
 $chk2->execute();
-$chk2->store_result();
-if ($chk2->num_rows > 0) {
-    respond(false, 'This email is already registered as a homeowner account.');
-}
+$uRes = $chk2->get_result()->fetch_assoc();
 $chk2->close();
+if ($uRes) {
+    $existingUserId = (int)$uRes['id'];
+    $bChk = $conn->prepare("SELECT COUNT(*) AS cnt FROM bookings WHERE user_id = ?");
+    $bChk->bind_param("i", $existingUserId);
+    $bChk->execute();
+    $bRow = $bChk->get_result()->fetch_assoc();
+    $bChk->close();
+    $bookingCount = (int)($bRow['cnt'] ?? 0);
+    if ($bookingCount === 0) {
+        $delUser = $conn->prepare("DELETE FROM users WHERE id = ?");
+        $delUser->bind_param("i", $existingUserId);
+        $delUser->execute();
+        $delUser->close();
+    } else {
+        respond(false, 'This email is already registered as a homeowner account with active bookings.');
+    }
+}
 
 $hashed = password_hash($pass, PASSWORD_BCRYPT);
 

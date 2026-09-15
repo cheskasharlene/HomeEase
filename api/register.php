@@ -15,6 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $input   = json_decode(file_get_contents('php://input'), true);
+$acctType = strtolower(trim($input['account_type'] ?? 'user'));
+if ($acctType === 'provider') {
+    require_once __DIR__ . '/../providers/provider_register.php';
+    exit;
+}
+
 $first   = trim($input['first']    ?? '');
 $last    = trim($input['last']     ?? '');
 $name    = trim("$first $last");
