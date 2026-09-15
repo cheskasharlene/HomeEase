@@ -208,7 +208,8 @@ if ($isDirectApiCall) {
     require_once __DIR__ . '/db.php';
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $userId = (int)($_SESSION['user_id'] ?? 0);
+        $input = json_decode(file_get_contents('php://input'), true) ?: [];
+        $userId = (int)($_SESSION['user_id'] ?? $input['user_id'] ?? 0);
         if ($userId <= 0) {
             respond(false, 'Unauthorized. Please log in first.');
         }

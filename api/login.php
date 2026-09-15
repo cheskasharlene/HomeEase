@@ -65,7 +65,13 @@ if ($user) {
         respond(true, 'Login successful!', [
             'redirect' => 'home.php',
             'role'     => 'user',
-            'user'     => ['id'=>$user['id'],'name'=>$user['name'],'email'=>$user['email'],'role'=>'user']
+            'user'     => [
+                'id' => $user['id'],
+                'name' => $user['name'],
+                'email' => $user['email'],
+                'role' => 'user',
+                'policy_accepted' => (!empty($user['policy_accepted']) || !empty($user['policy_accepted_at'])) ? 1 : 0
+            ]
         ]);
     }
 }
