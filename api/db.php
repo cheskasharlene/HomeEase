@@ -36,6 +36,21 @@ function respond($success, $message = "", $data = [])
     exit;
 }
 
+function ensurePolicyAcceptedColumns($conn)
+{
+    if (!$conn || !($conn instanceof mysqli)) return;
+    $chk = $conn->query("SHOW COLUMNS FROM users LIKE 'policy_accepted'");
+    if ($chk && $chk->num_rows === 0) {
+        @$conn->query("ALTER TABLE users ADD COLUMN policy_accepted TINYINT(1) NOT NULL DEFAULT 0 AFTER status");
+        @$conn->query("UPDATE users SET policy_accepted = 1 WHERE policy_accepted_at IS NOT NULL");
+    }
+    $chk2 = $conn->query("SHOW COLUMNS FROM users LIKE 'policy_accepted_at'");
+    if ($chk2 && $chk2->num_rows === 0) {
+        @$conn->query("ALTER TABLE users ADD COLUMN policy_accepted_at TIMESTAMP NULL DEFAULT NULL AFTER policy_accepted");
+    }
+}
+ensurePolicyAcceptedColumns($conn);
+
 
 
 

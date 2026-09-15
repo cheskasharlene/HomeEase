@@ -53,7 +53,10 @@ $stmt->close();
 
 $hashed_pass = password_hash($pass, PASSWORD_BCRYPT);
 
-$stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password) VALUES (?, ?, ?, ?, ?)");
+$stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password, policy_accepted, policy_accepted_at) VALUES (?, ?, ?, ?, ?, 0, NULL)");
+if (!$stmt) {
+    $stmt = $conn->prepare("INSERT INTO users (name, email, phone, address, password) VALUES (?, ?, ?, ?, ?)");
+}
 if (!$stmt) {
     respond(false, 'DB error: ' . $conn->error);
 }
@@ -62,16 +65,24 @@ $stmt->bind_param("sssss", $name, $email, $phone, $address, $hashed_pass);
 if ($stmt->execute()) {
     $user_id = $conn->insert_id;
 
-    $_SESSION['user_id']      = $user_id;
-    $_SESSION['user_name']    = $name;
-    $_SESSION['user_email']   = $email;
-    $_SESSION['user_phone']   = $phone;
-    $_SESSION['user_address'] = $address;
-    $_SESSION['user_role']    = 'user';
+    $_SESSION['user_id']            = $user_id;
+    $_SESSION['user_name']          = $name;
+    $_SESSION['user_email']         = $email;
+    $_SESSION['user_phone']         = $phone;
+    $_SESSION['user_address']       = $address;
+    $_SESSION['user_role']          = 'user';
+    $_SESSION['policy_accepted']    = 0;
+    $_SESSION['policy_accepted_at'] = null;
 
     respond(true, 'Account created successfully!', [
         'redirect' => 'home.php',
-        'user' => ['id' => $user_id, 'name' => $name, 'email' => $email, 'role' => 'user']
+        'user' => [
+            'id' => $user_id,
+            'name' => $name,
+            'email' => $email,
+            'role' => 'user',
+            'policy_accepted' => 0
+        ]
     ]);
 } else {
     respond(false, 'Registration failed: ' . $stmt->error);

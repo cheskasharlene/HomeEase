@@ -21,7 +21,7 @@ $colRes = $conn->query("SHOW COLUMNS FROM users LIKE 'disabled'");
 $hasDisabled = $colRes && $colRes->num_rows > 0;
 $disabledCol = $hasDisabled ? ", disabled" : "";
 
-$stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role $disabledCol FROM users WHERE email = ?");
+$stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role, policy_accepted, policy_accepted_at $disabledCol FROM users WHERE email = ?");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
@@ -39,12 +39,14 @@ if ($user) {
             $upd->bind_param("si", $hashed, $user['id']);
             $upd->execute(); $upd->close();
         }
-        $_SESSION['user_id']    = $user['id'];
-        $_SESSION['user_name']  = $user['name'];
-        $_SESSION['user_email'] = $user['email'];
-        $_SESSION['user_phone'] = $user['phone'] ?? '';
-        $_SESSION['user_address'] = $user['address'] ?? '';
-        $_SESSION['user_role']  = $user['role'];
+        $_SESSION['user_id']            = $user['id'];
+        $_SESSION['user_name']          = $user['name'];
+        $_SESSION['user_email']         = $user['email'];
+        $_SESSION['user_phone']         = $user['phone'] ?? '';
+        $_SESSION['user_address']       = $user['address'] ?? '';
+        $_SESSION['user_role']          = $user['role'];
+        $_SESSION['policy_accepted']    = (!empty($user['policy_accepted']) || !empty($user['policy_accepted_at'])) ? 1 : 0;
+        $_SESSION['policy_accepted_at'] = $user['policy_accepted_at'] ?? null;
 
         if ($user['role'] !== 'admin') {
             updateUserActivity($conn, $user['id']);

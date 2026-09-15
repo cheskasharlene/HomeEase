@@ -16,8 +16,12 @@ else
 $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
 require_once __DIR__ . '/api/db.php';
+require_once __DIR__ . '/api/policy_content.php';
+
 $unreadNotifsCount = 0;
 $uid = (int) ($_SESSION['user_id'] ?? 0);
+$policyAccepted = 1;
+
 if ($uid > 0) {
   $stmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM notifications WHERE user_id = ? AND is_read = 0");
   if ($stmt) {
@@ -27,7 +31,26 @@ if ($uid > 0) {
     $unreadNotifsCount = (int) ($res['cnt'] ?? 0);
     $stmt->close();
   }
+
+  // Check policy acceptance status for homeowner
+  if (($_SESSION['user_role'] ?? 'user') === 'user') {
+    $chkStmt = $conn->prepare("SELECT policy_accepted, policy_accepted_at FROM users WHERE id = ?");
+    if ($chkStmt) {
+      $chkStmt->bind_param("i", $uid);
+      $chkStmt->execute();
+      $uRes = $chkStmt->get_result()->fetch_assoc();
+      $chkStmt->close();
+      if ($uRes) {
+        $hasAccepted = (!empty($uRes['policy_accepted']) || !empty($uRes['policy_accepted_at']));
+        $policyAccepted = $hasAccepted ? 1 : 0;
+        $_SESSION['policy_accepted'] = $policyAccepted;
+      }
+    }
+  }
 }
+
+$needsPolicyOnboarding = ($policyAccepted === 0);
+$policyData = $needsPolicyOnboarding ? getPolicyContent() : null;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -173,6 +196,89 @@ if ($uid > 0) {
       <div id="navContainer"></div>
     </div>
   </div>
+
+  <?php if ($needsPolicyOnboarding): ?>
+  <!-- ── POLICY ONBOARDING MODAL ── -->
+  <div id="policyOnboardingModal" class="policy-onboard-overlay" role="dialog" aria-modal="true" aria-labelledby="policyModalTitle">
+    <div class="policy-onboard-card" id="policyCard">
+      <!-- Modal Header -->
+      <div class="policy-onboard-header">
+        <div class="policy-icon-badge">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="policy-header-title" id="policyModalTitle">Welcome to HomeEase</div>
+        <div class="policy-header-subtitle">Please review and accept our policies to continue to your home dashboard.</div>
+
+        <!-- Progress Stepper: Privacy Policy → Terms of Service -->
+        <div class="policy-stepper-wrap" aria-label="Onboarding Steps">
+          <div class="policy-step-pill active" id="pillStep1">
+            <span class="step-num"><i class="bi bi-shield-lock-fill"></i></span>
+            <span class="step-label">Privacy Policy</span>
+          </div>
+          <div class="policy-step-arrow">
+            <i class="bi bi-arrow-right"></i>
+          </div>
+          <div class="policy-step-pill" id="pillStep2">
+            <span class="step-num"><i class="bi bi-file-text-fill"></i></span>
+            <span class="step-label">Terms of Service</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: Privacy Policy Content -->
+      <div class="policy-step-content" id="policyStep1View">
+        <div class="policy-scroll-box" id="policyScrollBox1">
+          <div class="policy-section-header">
+            <div class="policy-section-title">HomeEase Privacy Policy</div>
+            <div class="policy-section-sub">Please review how we collect, protect, and handle your information.</div>
+          </div>
+          <div class="policy-text-body">
+            <?= $policyData['privacy_policy']['html'] ?>
+          </div>
+        </div>
+        <div class="policy-onboard-footer">
+          <button type="button" class="btn-policy-primary" id="btnPolicyNext" onclick="goToPolicyStep(2)">
+            <span>Next: Terms of Service</span>
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Terms of Service Content (hidden initially) -->
+      <div class="policy-step-content" id="policyStep2View" style="display: none;">
+        <div class="policy-scroll-box" id="policyScrollBox2">
+          <div class="policy-section-header">
+            <div class="policy-section-title">HomeEase Terms of Service</div>
+            <div class="policy-section-sub">Please review the rules, agreements, and responsibilities for using HomeEase.</div>
+          </div>
+          <div class="policy-text-body">
+            <?= $policyData['terms_of_service']['html'] ?>
+          </div>
+        </div>
+        <div class="policy-onboard-footer">
+          <button type="button" class="btn-policy-secondary" id="btnPolicyBack" onclick="goToPolicyStep(1)">
+            <i class="bi bi-arrow-left"></i>
+            <span>Back</span>
+          </button>
+          <button type="button" class="btn-policy-primary" id="btnPolicyAccept" onclick="submitPolicyAcceptance()">
+            <span id="btnAcceptLabel">Agree &amp; Continue</span>
+            <i class="bi bi-check2-circle" id="btnAcceptIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Success Celebration Screen -->
+      <div class="policy-success-screen" id="policySuccessView" style="display: none;">
+        <div class="success-icon-wrap">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="success-title">You're All Set!</div>
+        <div class="success-subtitle">Welcome to HomeEase. Loading your dashboard…</div>
+      </div>
+
+    </div>
+  </div>
+  <?php endif; ?>
 
   <script src="assets/js/app.js"></script>
   <script>
@@ -706,6 +812,101 @@ if ($uid > 0) {
 
     updateGreeting();
     setInterval(updateGreeting, 60000); // Update every 60 seconds
+
+    <?php if ($needsPolicyOnboarding): ?>
+    // Lock background scrolling while onboarding modal is displayed
+    document.body.style.overflow = 'hidden';
+
+    // Prevent dismiss with Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('policyOnboardingModal')) {
+        e.preventDefault();
+      }
+    });
+
+    function goToPolicyStep(step) {
+      const step1 = document.getElementById('policyStep1View');
+      const step2 = document.getElementById('policyStep2View');
+      const pill1 = document.getElementById('pillStep1');
+      const pill2 = document.getElementById('pillStep2');
+      const box1 = document.getElementById('policyScrollBox1');
+      const box2 = document.getElementById('policyScrollBox2');
+
+      if (step === 2) {
+        step1.style.display = 'none';
+        step2.style.display = 'flex';
+        pill1.classList.remove('active');
+        pill1.classList.add('completed');
+        pill1.querySelector('.step-num').innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+        pill2.classList.add('active');
+        if (box2) box2.scrollTop = 0;
+      } else {
+        step2.style.display = 'none';
+        step1.style.display = 'flex';
+        pill2.classList.remove('active');
+        pill1.classList.remove('completed');
+        pill1.classList.add('active');
+        pill1.querySelector('.step-num').innerHTML = '<i class="bi bi-shield-lock-fill"></i>';
+        if (box1) box1.scrollTop = 0;
+      }
+    }
+
+    async function submitPolicyAcceptance() {
+      const btn = document.getElementById('btnPolicyAccept');
+      const lbl = document.getElementById('btnAcceptLabel');
+      const icon = document.getElementById('btnAcceptIcon');
+      const backBtn = document.getElementById('btnPolicyBack');
+
+      if (!btn || btn.disabled) return;
+
+      btn.disabled = true;
+      if (backBtn) backBtn.disabled = true;
+      lbl.textContent = 'Saving…';
+      icon.className = 'bi bi-arrow-repeat spin';
+
+      try {
+        const res = await fetch('api/policy_content.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'accept' })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          const step2 = document.getElementById('policyStep2View');
+          const succ = document.getElementById('policySuccessView');
+          const header = document.querySelector('.policy-onboard-header');
+          if (step2) step2.style.display = 'none';
+          if (header) header.style.display = 'none';
+          if (succ) succ.style.display = 'flex';
+
+          setTimeout(() => {
+            const modal = document.getElementById('policyOnboardingModal');
+            if (modal) {
+              modal.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+              modal.style.opacity = '0';
+              modal.style.pointerEvents = 'none';
+              setTimeout(() => {
+                modal.remove();
+                document.body.style.overflow = '';
+              }, 350);
+            }
+          }, 700);
+        } else {
+          alert(data.message || 'Could not record policy acceptance. Please try again.');
+          btn.disabled = false;
+          if (backBtn) backBtn.disabled = false;
+          lbl.textContent = 'Agree & Continue';
+          icon.className = 'bi bi-check2-circle';
+        }
+      } catch (err) {
+        alert('Network error. Please check your connection and try again.');
+        btn.disabled = false;
+        if (backBtn) backBtn.disabled = false;
+        lbl.textContent = 'Agree & Continue';
+        icon.className = 'bi bi-check2-circle';
+      }
+    }
+    <?php endif; ?>
   </script>
 </body>
 
