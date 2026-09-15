@@ -25,7 +25,7 @@ function getPolicyContent()
 <div style="margin-bottom:20px;">
   <div style="font-weight:800;color:#0f172a;margin-bottom:12px;font-size:15px;">2. DEFINITIONS</div>
   <p style="margin:0 0 8px 0;"><strong>User:</strong> Any individual or entity using HOME EASE services.</p>
-  <p style="margin:0 0 8px 0;"><strong>Services:</strong> Booking of household services, AI recommendations, and GPS tracking features.</p>
+  <p style="margin:0 0 8px 0;"><strong>Services:</strong> Booking of household services and GPS tracking features.</p>
   <p style="margin:0 0 8px 0;"><strong>Content:</strong> Reviews, ratings, text, images, or materials submitted by users.</p>
   <p style="margin:0 0 8px 0;"><strong>Provider:</strong> HOME EASE platform operator.</p>
   <p style="margin:0;"><strong>Agreement:</strong> This Terms of Service and its future updates.</p>
