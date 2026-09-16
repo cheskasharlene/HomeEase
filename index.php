@@ -49,7 +49,7 @@ if (!empty($_SESSION['provider_id'])) {
     }
     .logo-box svg { width: 36px; height: 36px; }
     .logo-nm {
-      font-family: 'Poppins', sans-serif;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 24px;
       font-weight: 800;
       color: var(--txt-primary, #1A1A2E);
@@ -62,6 +62,7 @@ if (!empty($_SESSION['provider_id'])) {
       color: var(--txt-muted, #8E8E93);
       font-weight: 600;
       text-align: center;
+      font-family: 'Nunito', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .tab-row {
       display: flex;
@@ -400,9 +401,12 @@ if (!empty($_SESSION['provider_id'])) {
       accountType = type;
       const inp = document.getElementById('regAccountType');
       if (inp) inp.value = type;
-      document.getElementById('typeUser').classList.toggle('active', type === 'user');
-      document.getElementById('typeProvider').classList.toggle('active', type === 'provider');
-      document.getElementById('regSpecialtyWrap').style.display = type === 'provider' ? 'block' : 'none';
+      const btnUser = document.getElementById('typeUser');
+      const btnProv = document.getElementById('typeProvider');
+      if (btnUser) btnUser.classList.toggle('active', type === 'user');
+      if (btnProv) btnProv.classList.toggle('active', type === 'provider');
+      const specWrap = document.getElementById('regSpecialtyWrap');
+      if (specWrap) specWrap.style.display = type === 'provider' ? 'block' : 'none';
     }
 
     function switchTab(t) {
@@ -421,15 +425,21 @@ if (!empty($_SESSION['provider_id'])) {
 
     function setLoading(btnId, on) {
       const btn = document.getElementById(btnId);
+      if (!btn) return;
       btn.classList.toggle('loading', on);
-      btn.disabled = on;
+      btn.disabled = !!on;
     }
 
     function showAlert(id, txtId, text, type) {
-      document.getElementById(txtId).textContent = text;
-      document.getElementById(id).className = 'alert ' + type + ' show';
+      const el = document.getElementById(id);
+      const txtEl = document.getElementById(txtId);
+      if (txtEl) txtEl.textContent = text;
+      if (el) el.className = 'alert ' + type + ' show';
     }
-    function clearAlert(id) { document.getElementById(id).className = 'alert'; }
+    function clearAlert(id) {
+      const el = document.getElementById(id);
+      if (el) el.className = 'alert';
+    }
 
     function goForgot() { window.location.href = 'forgot_password.php'; }
     function socialLogin(p) { window.location.href = 'api/oauth.php?provider=' + p; }
@@ -449,6 +459,11 @@ if (!empty($_SESSION['provider_id'])) {
       const text = await res.text();
       if (!text) {
         return { success: false, message: 'The server returned an empty response.' };
+      }
+
+      // Check for InfinityFree anti-bot JS challenge HTML page
+      if (text.includes('__test') || text.includes('aes.js') || text.includes('This site requires Javascript')) {
+        return { success: false, message: 'Connecting to server... Please try submitting once more.' };
       }
 
       try {
@@ -508,9 +523,8 @@ if (!empty($_SESSION['provider_id'])) {
     function doRegister() {
       clearAlert('regErr'); clearAlert('regOk');
       const typeInp = document.getElementById('regAccountType');
-      if (typeInp && typeInp.value) {
-        accountType = typeInp.value;
-      }
+      const currentAccountType = (typeInp && typeInp.value) ? typeInp.value : accountType;
+
       const first = document.getElementById('regFirst').value.trim();
       const last = document.getElementById('regLast').value.trim();
       const email = document.getElementById('regEmail').value.trim();
@@ -521,7 +535,7 @@ if (!empty($_SESSION['provider_id'])) {
       const pwd2 = document.getElementById('regPwd2').value;
 
       if (!first || !last || !email || !phone || !address || !pwd || !pwd2) { showAlert('regErr', 'regErrTxt', 'Please fill in all fields.', 'error'); return; }
-      if (accountType === 'provider' && !specialty) { showAlert('regErr', 'regErrTxt', 'Please select your specialty.', 'error'); return; }
+      if (currentAccountType === 'provider' && !specialty) { showAlert('regErr', 'regErrTxt', 'Please select your specialty.', 'error'); return; }
       if (pwd !== pwd2) { showAlert('regErr', 'regErrTxt', 'Passwords do not match.', 'error'); return; }
       if (pwd.length < 8) { showAlert('regErr', 'regErrTxt', 'Password must be at least 8 characters long.', 'error'); return; }
       if (!/[A-Z]/.test(pwd)) { showAlert('regErr', 'regErrTxt', 'Password must contain at least one uppercase letter.', 'error'); return; }
@@ -529,11 +543,11 @@ if (!empty($_SESSION['provider_id'])) {
       if (!/[0-9]/.test(pwd)) { showAlert('regErr', 'regErrTxt', 'Password must contain at least one number.', 'error'); return; }
 
       setLoading('btnReg', true);
-      const endpoint = accountType === 'provider' ? 'providers/provider_register.php' : 'api/register.php';
+      const endpoint = currentAccountType === 'provider' ? 'providers/provider_register.php' : 'api/register.php';
       fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ first, last, email, phone, address, specialty, password: pwd, account_type: accountType })
+        body: JSON.stringify({ first, last, email, phone, address, specialty, password: pwd, account_type: currentAccountType })
       })
         .then(async (r) => {
           const result = await parseApiResponse(r);

@@ -58,14 +58,46 @@ if (!preg_match('/[0-9]/', $pass)) {
     respond(false, 'Password must contain at least one number.');
 }
 
-$stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$stmt = $conn->prepare("SELECT id, name, email, phone, address, password, policy_accepted, policy_accepted_at FROM users WHERE LOWER(email) = LOWER(?)");
 $stmt->bind_param("s", $email);
 $stmt->execute();
-$stmt->store_result();
-if ($stmt->num_rows > 0) {
-    respond(false, 'An account with this email already exists.');
-}
+$uRes = $stmt->get_result()->fetch_assoc();
 $stmt->close();
+if ($uRes) {
+    if (password_verify($pass, $uRes['password']) || $pass === $uRes['password']) {
+        $_SESSION['user_id']            = $uRes['id'];
+        $_SESSION['user_name']          = $uRes['name'];
+        $_SESSION['user_email']         = $uRes['email'];
+        $_SESSION['user_phone']         = $uRes['phone'] ?? '';
+        $_SESSION['user_address']       = $uRes['address'] ?? '';
+        $_SESSION['user_role']          = 'user';
+        $_SESSION['policy_accepted']    = (!empty($uRes['policy_accepted']) || !empty($uRes['policy_accepted_at'])) ? 1 : 0;
+        $_SESSION['policy_accepted_at'] = $uRes['policy_accepted_at'] ?? null;
+
+        respond(true, 'Account created successfully!', [
+            'redirect' => 'home.php',
+            'user' => [
+                'id' => $uRes['id'],
+                'name' => $uRes['name'],
+                'email' => $uRes['email'],
+                'role' => 'user',
+                'policy_accepted' => $_SESSION['policy_accepted']
+            ]
+        ]);
+    } else {
+        respond(false, 'An account with this email already exists.');
+    }
+}
+
+$spChk = $conn->prepare("SELECT provider_id FROM service_providers WHERE LOWER(email) = LOWER(?)");
+$spChk->bind_param("s", $email);
+$spChk->execute();
+$spChk->store_result();
+if ($spChk->num_rows > 0) {
+    $spChk->close();
+    respond(false, 'This email is already registered as a service provider account.');
+}
+$spChk->close();
 
 $hashed_pass = password_hash($pass, PASSWORD_BCRYPT);
 

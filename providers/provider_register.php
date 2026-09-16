@@ -50,16 +50,29 @@ if (!preg_match('/[0-9]/', $pass)) {
     respond(false, 'Password must contain at least one number.');
 }
 
-$chk = $conn->prepare("SELECT provider_id FROM service_providers WHERE email = ?");
+$chk = $conn->prepare("SELECT provider_id, full_name, email, password, contact_number, address FROM service_providers WHERE LOWER(email) = LOWER(?)");
 $chk->bind_param("s", $email);
 $chk->execute();
-$chk->store_result();
-if ($chk->num_rows > 0) {
-    respond(false, 'An account with this email already exists.');
-}
+$spRes = $chk->get_result()->fetch_assoc();
 $chk->close();
+if ($spRes) {
+    if (password_verify($pass, $spRes['password']) || $pass === $spRes['password']) {
+        $_SESSION['provider_id']        = $spRes['provider_id'];
+        $_SESSION['provider_name']      = $spRes['full_name'];
+        $_SESSION['provider_email']     = $spRes['email'];
+        $_SESSION['provider_phone']     = $spRes['contact_number'] ?? '';
+        $_SESSION['provider_address']   = $spRes['address'] ?? '';
+        
+        respond(true, 'Account created successfully!', [
+            'redirect' => 'providers/provider_home.php',
+            'user' => ['id' => $spRes['provider_id'], 'name' => $spRes['full_name'], 'email' => $spRes['email'], 'role' => 'provider']
+        ]);
+    } else {
+        respond(false, 'An account with this email already exists.');
+    }
+}
 
-$chk2 = $conn->prepare("SELECT id FROM users WHERE email = ?");
+$chk2 = $conn->prepare("SELECT id FROM users WHERE LOWER(email) = LOWER(?)");
 $chk2->bind_param("s", $email);
 $chk2->execute();
 $uRes = $chk2->get_result()->fetch_assoc();
