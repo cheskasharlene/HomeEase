@@ -14,18 +14,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     respond(false, 'Invalid request method.');
 }
 
-$input   = json_decode(file_get_contents('php://input'), true);
-$acctType = strtolower(trim($input['account_type'] ?? 'user'));
-if ($acctType === 'provider') {
+$rawInput = file_get_contents('php://input');
+$input    = json_decode($rawInput, true);
+if (!is_array($input) || empty($input)) {
+    $input = $_POST;
+}
+
+$acctType = strtolower(trim($input['account_type'] ?? $input['accountType'] ?? $input['role'] ?? $input['user_type'] ?? $input['type'] ?? 'user'));
+if (in_array($acctType, ['provider', 'service_provider', 'service provider'], true)) {
     require_once __DIR__ . '/../providers/provider_register.php';
     exit;
 }
 
 $first   = trim($input['first']    ?? '');
 $last    = trim($input['last']     ?? '');
+if (!$first && !$last && !empty($input['name'])) {
+    $parts = explode(' ', trim($input['name']), 2);
+    $first = $parts[0] ?? '';
+    $last  = $parts[1] ?? '';
+}
 $name    = trim("$first $last");
 $email   = trim($input['email']    ?? '');
-$phone   = trim($input['phone']    ?? '');
+$phone   = trim($input['phone']    ?? $input['contact_number'] ?? $input['contact'] ?? '');
 $address = trim($input['address']  ?? '');
 $pass    = trim($input['password'] ?? '');
 

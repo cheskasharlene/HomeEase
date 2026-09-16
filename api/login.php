@@ -8,7 +8,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require 'db.php';
 
-$input = json_decode(file_get_contents('php://input'), true);
+$rawInput = file_get_contents('php://input');
+$input = json_decode($rawInput, true);
+if (!is_array($input) || empty($input)) {
+    $input = $_POST;
+}
 $email = trim($input['email'] ?? '');
 $pass  = trim($input['password'] ?? '');
 
@@ -21,7 +25,7 @@ $colRes = $conn->query("SHOW COLUMNS FROM users LIKE 'disabled'");
 $hasDisabled = $colRes && $colRes->num_rows > 0;
 $disabledCol = $hasDisabled ? ", disabled" : "";
 
-$stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role, policy_accepted, policy_accepted_at $disabledCol FROM users WHERE email = ?");
+$stmt = $conn->prepare("SELECT id, name, email, password, phone, address, role, policy_accepted, policy_accepted_at $disabledCol FROM users WHERE LOWER(email) = LOWER(?)");
 $stmt->bind_param("s", $email);
 $stmt->execute();
 $user = $stmt->get_result()->fetch_assoc();
@@ -76,7 +80,7 @@ if ($user) {
     }
 }
 
-$stmt2 = $conn->prepare("SELECT sp.provider_id, sp.full_name, sp.email, sp.password, s.name AS service_category, sp.contact_number, sp.address, sp.status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE sp.email = ?");
+$stmt2 = $conn->prepare("SELECT sp.provider_id, sp.full_name, sp.email, sp.password, s.name AS service_category, sp.contact_number, sp.address, sp.status FROM service_providers sp LEFT JOIN services s ON s.id = sp.service_id WHERE LOWER(sp.email) = LOWER(?)");
 $stmt2->bind_param("s", $email);
 $stmt2->execute();
 $provider = $stmt2->get_result()->fetch_assoc();

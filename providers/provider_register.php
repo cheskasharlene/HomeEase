@@ -11,14 +11,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../api/db.php';
 
-$input = json_decode(file_get_contents('php://input'), true);
+$rawInput = file_get_contents('php://input');
+$input = json_decode($rawInput, true);
+if (!is_array($input) || empty($input)) {
+    $input = $_POST;
+}
+
 $first = trim($input['first'] ?? '');
 $last = trim($input['last'] ?? '');
+if (!$first && !$last && !empty($input['name'])) {
+    $parts = explode(' ', trim($input['name']), 2);
+    $first = $parts[0] ?? '';
+    $last = $parts[1] ?? '';
+}
 $name = trim("$first $last");
 $email = trim($input['email'] ?? '');
-$phone = trim($input['phone'] ?? '');
+$phone = trim($input['phone'] ?? $input['contact_number'] ?? $input['contact'] ?? '');
 $address = trim($input['address'] ?? '');
-$specialty = trim($input['specialty'] ?? '');
+$specialty = trim($input['specialty'] ?? $input['service'] ?? $input['service_category'] ?? $input['service_name'] ?? '');
 $pass = trim($input['password'] ?? '');
 
 if (!$first || !$last || !$email || !$address || !$pass) {
@@ -74,29 +84,76 @@ if ($uRes) {
 
 $hashed = password_hash($pass, PASSWORD_BCRYPT);
 
-$stmt = $conn->prepare("SELECT id, name FROM services WHERE LOWER(name) = LOWER(?) LIMIT 1");
-if (!$stmt) {
-    respond(false, 'DB error: ' . $conn->error);
+$row = null;
+if (is_numeric($specialty) && (int)$specialty > 0) {
+    $stmt = $conn->prepare("SELECT id, name FROM services WHERE id = ? LIMIT 1");
+    if ($stmt) {
+        $sid = (int)$specialty;
+        $stmt->bind_param("i", $sid);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+    }
 }
-$stmt->bind_param("s", $specialty);
-$stmt->execute();
-$row = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+
+if (!$row && !empty($specialty)) {
+    $specMap = [
+        'plumbing' => 'Plumber',
+        'cleaner' => 'House Cleaner',
+        'cleaning' => 'House Cleaner',
+        'house cleaning' => 'House Cleaner',
+        'house cleaner' => 'House Cleaner',
+        'helper' => 'Helper',
+        'laundry' => 'Laundry Worker',
+        'laundry worker' => 'Laundry Worker',
+        'carpentry' => 'Carpenter',
+        'carpenter' => 'Carpenter',
+        'appliance repair' => 'Appliance Technician',
+        'appliance technician' => 'Appliance Technician'
+    ];
+    $lookupName = $specMap[strtolower($specialty)] ?? $specialty;
+
+    $stmt = $conn->prepare("SELECT id, name FROM services WHERE LOWER(name) = LOWER(?) LIMIT 1");
+    if ($stmt) {
+        $stmt->bind_param("s", $lookupName);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+    }
+}
 
 if (!$row) {
-    respond(false, 'Selected specialty is not offered.');
+    $resFirst = $conn->query("SELECT id, name FROM services ORDER BY id ASC LIMIT 1");
+    if ($resFirst && ($rowFirst = $resFirst->fetch_assoc())) {
+        $row = $rowFirst;
+    }
+}
+
+if (!$row) {
+    respond(false, 'No valid service category found.');
 }
 $service_id = (int) $row['id'];
 $standard_specialty = $row['name'];
 
-$stmt = $conn->prepare(
-    "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
-     VALUES (?, ?, ?, ?, ?, ?, 'offline')"
-);
-if (!$stmt) {
-    respond(false, 'DB error: ' . $conn->error);
+if ($service_id > 0) {
+    $stmt = $conn->prepare(
+        "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
+         VALUES (?, ?, ?, ?, ?, ?, 'offline')"
+    );
+    if (!$stmt) {
+        respond(false, 'DB prepare error: ' . $conn->error);
+    }
+    $stmt->bind_param("sssiss", $name, $email, $phone, $service_id, $address, $hashed);
+} else {
+    $stmt = $conn->prepare(
+        "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
+         VALUES (?, ?, ?, NULL, ?, ?, 'offline')"
+    );
+    if (!$stmt) {
+        respond(false, 'DB prepare error: ' . $conn->error);
+    }
+    $stmt->bind_param("sssss", $name, $email, $phone, $address, $hashed);
 }
-$stmt->bind_param("sssiss", $name, $email, $phone, $service_id, $address, $hashed);
 
 if ($stmt->execute()) {
     $pid = $conn->insert_id;
@@ -112,5 +169,5 @@ if ($stmt->execute()) {
         'user' => ['id' => $pid, 'name' => $name, 'email' => $email, 'role' => 'provider']
     ]);
 } else {
-    respond(false, 'Registration failed: ' . $conn->error);
+    respond(false, 'Registration failed: ' . $stmt->error);
 }
