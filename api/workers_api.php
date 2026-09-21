@@ -82,7 +82,7 @@ if ($action === 'list') {
     $sql = "SELECT t.provider_id AS id, t.full_name AS name, s.name AS role, t.availability_status AS status,
                    t.jobs_done AS jobs, t.contact_number AS phone, t.rating, t.is_verified, t.profile_image,
                    t.valid_id, t.barangay_clearance, t.selfie_verification, t.proof_of_address, t.`tools_&_kits`,
-                   t.qr_gcash AS gcash_qr, t.qr_bank AS bank_qr, t.verification_status
+                   t.qr_gcash AS gcash_qr, t.qr_bank AS bank_qr, t.verification_status, t.work_experience
             FROM service_providers t
             LEFT JOIN services s ON s.id = t.service_id
             $where ORDER BY $orderBy";

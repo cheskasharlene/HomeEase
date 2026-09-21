@@ -314,7 +314,7 @@ if ($section === 'workers') {
             COALESCE(NULLIF(TRIM(sp.address), ''), u.address, '') AS address,
             sp.contact_number AS phone, sp.availability_status AS availability, sp.status, sp.rating, sp.jobs_done, sp.is_verified,
             $verificationSelect, sp.valid_id, sp.selfie_verification, sp.proof_of_address, sp.barangay_clearance, sp.`tools_&_kits`,
-            sp.gcash_qr, sp.bank_qr
+            sp.gcash_qr, sp.bank_qr, sp.work_experience
             FROM service_providers sp
             LEFT JOIN services s ON s.id = sp.service_id
             LEFT JOIN users u ON (u.email = sp.email AND sp.email != '')
@@ -336,7 +336,7 @@ if ($section === 'workers') {
             COALESCE(NULLIF(TRIM(sp.address), ''), u.address, '') AS address,
             sp.contact_number AS phone, sp.availability_status AS availability, sp.status, sp.rating, sp.jobs_done, sp.is_verified,
             $verificationSelect, sp.valid_id, sp.selfie_verification, sp.proof_of_address, sp.barangay_clearance, sp.`tools_&_kits`,
-            sp.gcash_qr, sp.bank_qr
+            sp.gcash_qr, sp.bank_qr, sp.work_experience
             FROM service_providers sp
             LEFT JOIN services s ON s.id = sp.service_id
             LEFT JOIN users u ON (u.email = sp.email AND sp.email != '')

@@ -12,7 +12,7 @@ require_once __DIR__ . '/db.php';
 ensureNormalizationSchema($conn);
 
 
-if (empty($_SESSION['admin_id']) && empty($_SESSION['is_admin'])) {
+if (empty($_SESSION['admin_id']) && empty($_SESSION['is_admin']) && (empty($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin')) {
     http_response_code(401);
     respond(false, 'Unauthorized. Admin access required.');
 }
@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
     $result = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    $existsStmt = $conn->prepare("SELECT provider_id FROM service_providers WHERE provider_id = ? LIMIT 1");
+    $existsStmt = $conn->prepare("SELECT provider_id, work_experience FROM service_providers WHERE provider_id = ? LIMIT 1");
     $existsStmt->bind_param('i', $provider_id);
     $existsStmt->execute();
     $providerExists = $existsStmt->get_result()->fetch_assoc();
@@ -126,7 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'provider_documents') {
         ];
     }
 
-    respond(true, '', ['documents' => $documents]);
+    respond(true, '', ['documents' => $documents, 'work_experience' => $providerExists['work_experience'] ?? null]);
 }
 
 

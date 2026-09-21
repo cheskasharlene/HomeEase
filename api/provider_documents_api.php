@@ -120,6 +120,9 @@ function initializeTables($conn) {
     if (!in_array('rejection_reason', $columns)) {
         $conn->query("ALTER TABLE service_providers ADD COLUMN rejection_reason TEXT NULL");
     }
+    if (!in_array('work_experience', $columns)) {
+        $conn->query("ALTER TABLE service_providers ADD COLUMN work_experience TEXT NULL");
+    }
 }
 
 
@@ -432,9 +435,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     }
 
     
+    $work_experience = trim($_POST['experience_description'] ?? $_POST['work_experience'] ?? '');
     $verification_status = count($uploaded_docs) >= count($required_docs) ? 'pending' : 'partial';
-    $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0 WHERE provider_id = ?");
-    $stmt->bind_param('si', $verification_status, $provider_id);
+    if ($work_experience !== '') {
+        $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0, work_experience = ? WHERE provider_id = ?");
+        $stmt->bind_param('ssi', $verification_status, $work_experience, $provider_id);
+    } else {
+        $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0 WHERE provider_id = ?");
+        $stmt->bind_param('si', $verification_status, $provider_id);
+    }
     $stmt->execute();
     $stmt->close();
 

@@ -405,6 +405,11 @@ function ensureNormalizationSchema($conn)
         @$conn->query("ALTER TABLE service_providers ADD COLUMN rejection_reason TEXT NULL");
     }
 
+    $resExp = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'work_experience'");
+    if ($resExp && $resExp->num_rows === 0) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN work_experience TEXT NULL");
+    }
+
     
     $resCat = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'service_category'");
     if ($resCat && $resCat->num_rows > 0) {

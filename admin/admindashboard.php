@@ -1265,6 +1265,10 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           <div class="detail-row"><span class="detail-lbl">Status</span><span class="detail-val" id="wkStatus">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Rating</span><span class="detail-val" id="wkRating">–</span></div>
           <div class="detail-row"><span class="detail-lbl">Jobs Done</span><span class="detail-val" id="wkJobs">–</span></div>
+          <div class="detail-row" style="align-items:flex-start;gap:8px;flex-direction:column;">
+            <span class="detail-lbl">Work Experience</span>
+            <div class="detail-val" id="wkExperience" style="width:100%;font-size:12.5px;font-weight:600;line-height:1.55;color:var(--txt-muted);text-align:left;word-break:break-word;white-space:pre-line;background:var(--bg-screen);border:1px solid var(--border-col);border-radius:12px;padding:10px 14px;box-sizing:border-box;">Not provided</div>
+          </div>
           <div class="detail-row" style="align-items:flex-start;gap:14px;flex-direction:column;">
             <span class="detail-lbl">Verification Documents</span>
             <div class="detail-val" id="wkVdocs" style="width:100%;font-size:12px;line-height:1.45;text-align:left;">
@@ -2622,6 +2626,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         if (wkRating) wkRating.textContent = parseFloat(w.rating || 0).toFixed(1);
         const wkJobs = document.getElementById('wkJobs');
         if (wkJobs) wkJobs.textContent = w.jobs_done || 0;
+        const wkExperience = document.getElementById('wkExperience');
+        const expText = String(w.work_experience || w.experience_description || w.working_experience || w.experience || '').trim();
+        if (wkExperience) {
+          wkExperience.textContent = expText || 'Not provided';
+          wkExperience.style.color = expText ? 'var(--txt-primary)' : 'var(--txt-muted)';
+        }
         const wkVdocs = document.getElementById('wkVdocs');
         if (wkVdocs) {
           wkVdocs.innerHTML = '<span style="color:var(--txt-muted);">Loading documents...</span>';
@@ -2663,8 +2673,15 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         fetch(`../api/admin_documents_api.php?action=provider_documents&provider_id=${encodeURIComponent(w.id)}`, { cache: 'no-store' })
           .then(r => r.json())
           .then(data => {
-            if (!data || !data.success || !data.documents) return;
-            renderWorkerDocuments(data.documents);
+            if (!data || !data.success) return;
+            if (data.documents) renderWorkerDocuments(data.documents);
+            if (data.work_experience && currentWorkerDetailId === w.id) {
+              const liveExp = String(data.work_experience).trim();
+              if (liveExp && wkExperience) {
+                wkExperience.textContent = liveExp;
+                wkExperience.style.color = 'var(--txt-primary)';
+              }
+            }
           })
           .catch(() => {
             
