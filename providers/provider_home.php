@@ -1133,7 +1133,16 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       try {
         const res = await fetch('../api/provider_documents_api.php?action=get_documents', { cache: 'no-store' });
         const data = await res.json();
-        if (!data || !data.success || !data.documents) return;
+        if (!data || !data.success) return;
+
+        if (data.work_experience !== undefined && data.work_experience !== null) {
+          const expEl = document.getElementById('experienceDescription');
+          if (expEl && String(data.work_experience).trim() !== '') {
+            expEl.value = data.work_experience;
+          }
+        }
+
+        if (!data.documents) return;
 
         const docMap = {
           valid_id: { inputId: 'uploadIdDoc', previewId: 'previewUploadIdDoc', nameId: 'fileNameUploadIdDoc', feedbackId: 'feedbackUploadIdDoc' },
@@ -1537,6 +1546,7 @@ $reviewPreview = $dashboardReviews[0] ?? null;
       fd.append('profile_phone', document.getElementById('profilePhone').value || '');
       fd.append('profile_address', document.getElementById('profileAddress').value || '');
       fd.append('experience_description', document.getElementById('experienceDescription').value || '');
+      fd.append('work_experience', document.getElementById('experienceDescription').value || '');
       
       // Map old field names to new API field names
       fd.append('valid_id', idDoc);

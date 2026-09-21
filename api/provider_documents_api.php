@@ -435,17 +435,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'upload_documents') {
     }
 
     
-    $work_experience = trim($_POST['experience_description'] ?? $_POST['work_experience'] ?? '');
+    $work_experience = trim($_POST['work_experience'] ?? $_POST['experience_description'] ?? '');
     $verification_status = count($uploaded_docs) >= count($required_docs) ? 'pending' : 'partial';
-    if ($work_experience !== '') {
-        $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0, work_experience = ? WHERE provider_id = ?");
+    
+    $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0, work_experience = ? WHERE provider_id = ?");
+    if ($stmt) {
         $stmt->bind_param('ssi', $verification_status, $work_experience, $provider_id);
+        $stmt->execute();
+        $stmt->close();
     } else {
-        $stmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0 WHERE provider_id = ?");
-        $stmt->bind_param('si', $verification_status, $provider_id);
+        
+        $fallbackStmt = $conn->prepare("UPDATE service_providers SET verification_status = ?, verification_submitted_at = NOW(), rejection_reason = NULL, is_verified = 0 WHERE provider_id = ?");
+        if ($fallbackStmt) {
+            $fallbackStmt->bind_param('si', $verification_status, $provider_id);
+            $fallbackStmt->execute();
+            $fallbackStmt->close();
+        }
     }
-    $stmt->execute();
-    $stmt->close();
 
     
     $conn->query("UPDATE provider_documents SET verified_status = 'submitted', verified_at = NULL WHERE provider_id = " . (int)$provider_id);
@@ -526,7 +532,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
         "SELECT valid_id, barangay_clearance, selfie_verification, proof_of_address, `tools_&_kits`, 
             qr_gcash AS gcash_qr,
             qr_bank AS bank_qr,
-            verification_status, verification_submitted_at, verification_approved_at
+            verification_status, verification_submitted_at, verification_approved_at, work_experience
          FROM service_providers 
          WHERE provider_id = ?"
     );
@@ -549,7 +555,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && $action === 'get_documents') {
     if (!isset($documents['gcash_qr']) && $result['gcash_qr']) $documents['gcash_qr'] = ['file_path' => $result['gcash_qr'], 'type' => 'gcash_qr'];
     if (!isset($documents['bank_qr']) && $result['bank_qr']) $documents['bank_qr'] = ['file_path' => $result['bank_qr'], 'type' => 'bank_qr'];
 
-    respond(true, '', ['documents' => $documents]);
+    respond(true, '', ['documents' => $documents, 'work_experience' => $result['work_experience'] ?? '']);
 }
 
 
