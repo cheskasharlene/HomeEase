@@ -135,6 +135,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
 
     ensureBookingRequestsTable($conn);
     ensureProviderReviewsTable($conn);
+    ensurePaymentsTable($conn);
 
     $serviceSelect = $hasServiceId ? 'COALESCE(sv.name, b.service)' : 'b.service';
     $select = "b.id, {$serviceSelect} AS service, b.date, b.address, b.status, b.created_at";
@@ -158,6 +159,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
     $providerJoinExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id)' : 'br.provider_id';
     $select .= ', sp.provider_id AS provider_id, sp.full_name AS provider_name, sp.contact_number AS provider_phone,';
     $select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, s_sp.name AS provider_service';
+    $select .= ', p.payment_method, p.payment_status, p.amount AS payment_amount, p.payment_reference, p.transaction_id, p.payment_proof_path';
 
         $serviceJoin = $hasServiceId ? 'LEFT JOIN services sv ON sv.id = b.service_id' : '';
         $sql = "SELECT $select
@@ -166,6 +168,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.status = 'accepted'
             LEFT JOIN service_providers sp ON sp.provider_id = $providerJoinExpr
             LEFT JOIN services s_sp ON s_sp.id = sp.service_id
+            LEFT JOIN payments p ON p.booking_id = b.id
             WHERE b.user_id = ? AND b.id = ?
             LIMIT 1";
 
@@ -217,10 +220,11 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
         $price = $row['price'] ?? 0;
     }
 
-    $userReviewStmt = $conn->prepare('SELECT id, rating, comment FROM provider_reviews WHERE booking_id = ? AND user_id = ? LIMIT 1');
+    $userReviewStmt = $conn->prepare('SELECT id, rating, comment, created_at FROM provider_reviews WHERE booking_id = ? AND user_id = ? LIMIT 1');
     $userReviewed = false;
     $userRating = 0;
     $userComment = '';
+    $userReviewCreatedAt = '';
     if ($userReviewStmt) {
         $userReviewStmt->bind_param('ii', $bookingId, $uid);
         $userReviewStmt->execute();
@@ -230,6 +234,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             $userReviewed = true;
             $userRating = (int) ($urRow['rating'] ?? 0);
             $userComment = (string) ($urRow['comment'] ?? '');
+            $userReviewCreatedAt = (string) ($urRow['created_at'] ?? '');
         }
     }
 
@@ -258,6 +263,13 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             'has_reviewed' => $userReviewed,
             'review_rating' => $userRating,
             'review_comment' => $userComment,
+            'review_created_at' => $userReviewCreatedAt,
+            'payment_method' => (string) ($row['payment_method'] ?? ''),
+            'payment_status' => (string) ($row['payment_status'] ?? ''),
+            'payment_amount' => (float) ($row['payment_amount'] ?? 0),
+            'payment_reference' => (string) ($row['payment_reference'] ?? ''),
+            'transaction_id' => (string) ($row['transaction_id'] ?? ''),
+            'payment_proof_path' => (string) ($row['payment_proof_path'] ?? ''),
         ]
     ]);
     exit;

@@ -172,6 +172,19 @@ if (!function_exists('ensureBookingRequestsTable')) {
     }
 }
 
+if (!function_exists('ensureProviderReviewsTable')) {
+    function ensureProviderReviewsTable($conn)
+    {
+        $conn->query("CREATE TABLE IF NOT EXISTS provider_reviews (
+            id INT AUTO_INCREMENT PRIMARY KEY, booking_id INT NOT NULL,
+            provider_id INT NOT NULL, user_id INT NOT NULL,
+            rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+            comment TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY idx_unique_booking_review (booking_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+}
+
 
 
 

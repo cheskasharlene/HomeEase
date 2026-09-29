@@ -579,19 +579,6 @@ if ($appBase === '') {
 
       <div class="st-scroll">
         <div class="st-sec">
-          <div class="st-sec-ttl">Notifications</div>
-          <div class="st-row">
-            <div class="st-ic orange"><i class="bi bi-bell-fill"></i></div>
-            <div class="st-row-info">
-              <div class="st-row-lbl">Push Notifications</div>
-              <div class="st-row-sub">Booking alerts & updates</div>
-            </div>
-            <div class="st-toggle on" id="pushNotifToggle" onclick="togglePushNotifications()"></div>
-          </div>
-        </div>
-
-
-        <div class="st-sec">
           <div class="st-sec-ttl">Support</div>
           <div class="st-row" id="stHelpRow" onclick="openHelpCenter()">
             <div class="st-ic orange"><i class="bi bi-question-circle-fill"></i></div>
@@ -1214,62 +1201,9 @@ if ($appBase === '') {
 
     function openSettingsScreen() {
       document.getElementById('settingsScreen').classList.add('on');
-      loadNotificationPreference();
     }
     function closeSettingsScreen() {
       document.getElementById('settingsScreen').classList.remove('on');
-    }
-
-    // Load notification preference from server
-    async function loadNotificationPreference() {
-      try {
-        const response = await fetch(APP_BASE + '/api/profile_api.php?action=get_notification_preference');
-        const data = await response.json();
-        if (data.success && data.hasOwnProperty('enabled')) {
-          const toggle = document.getElementById('pushNotifToggle');
-          if (data.enabled === 1 || data.enabled === true) {
-            toggle.classList.add('on');
-          } else {
-            toggle.classList.remove('on');
-          }
-        }
-      } catch (e) {
-        console.error('Error loading notification preference:', e);
-      }
-    }
-
-    // Toggle push notifications and save preference
-    async function togglePushNotifications() {
-      const toggle = document.getElementById('pushNotifToggle');
-      const isCurrentlyOn = toggle.classList.contains('on');
-      const newState = !isCurrentlyOn;
-
-      // Optimistically update UI
-      toggle.classList.toggle('on');
-
-      try {
-        const fd = new FormData();
-        fd.append('section', 'notifications');
-        fd.append('enabled', newState ? 1 : 0);
-
-        const response = await fetch(APP_BASE + '/api/profile_api.php', {
-          method: 'POST',
-          body: fd
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          // Preference saved successfully
-        } else {
-          // Revert toggle if save failed
-          toggle.classList.toggle('on');
-          console.error('Failed to save notification preference:', data.message);
-        }
-      } catch (e) {
-        // Revert toggle if request failed
-        toggle.classList.toggle('on');
-        console.error('Error saving notification preference:', e);
-      }
     }
 
     let activeSection = 'profile';
