@@ -3118,10 +3118,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           }
 
           let actionBtn = '';
-          if (isVerif && n.reference_id) {
-            actionBtn = `<button class="admin-notif-act-btn go" onclick="goToWorkerFromNotif(${n.reference_id}, ${n.id})" title="Review Worker"><i class="bi bi-arrow-right"></i></button>`;
-          } else if (isRemit && n.remittance_id) {
-            actionBtn = `<button class="admin-notif-act-btn go" onclick="goToRemittanceFromNotif(${n.remittance_id}, ${n.id})" title="Verify Remittance"><i class="bi bi-arrow-right"></i></button>`;
+          const workerId = n.provider_id || n.reference_id;
+          const remitId = n.remittance_id || n.reference_id || 0;
+          if (isVerif && workerId) {
+            actionBtn = `<button class="admin-notif-act-btn go" onclick="goToWorkerFromNotif(${workerId}, ${n.id})" title="Review Worker"><i class="bi bi-arrow-right"></i></button>`;
+          } else if (isRemit) {
+            actionBtn = `<button class="admin-notif-act-btn go" onclick="goToRemittanceFromNotif(${remitId}, ${n.id})" title="Verify Remittance"><i class="bi bi-arrow-right"></i></button>`;
           }
 
           return `
@@ -3188,6 +3190,30 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           }
           loadAdminNotifCount();
         }, 600);
+      }
+
+      async function goToRemittanceFromNotif(remittanceId, notifId) {
+        if (notifId) {
+          api('admin_notifications', 'mark_read', fd({ id: notifId }));
+        }
+        closeSheet('adminNotifSheetOl');
+        openSheet('remitSheetOl');
+        remitFilter = 'all';
+        const tabs = document.querySelectorAll('#remitSheetOl .stab');
+        if (tabs.length) tabs.forEach(e => e.classList.remove('on'));
+        const allTab = document.getElementById('remit-tab-all');
+        if (allTab) allTab.classList.add('on');
+        const sortEl = document.getElementById('remitSort');
+        if (sortEl) sortEl.value = 'name_asc';
+
+        const remits = await loadAdminRemittances();
+        if (remittanceId && remittanceId > 0 && remits && remits.length > 0) {
+          const remit = remits.find(r => r.id == remittanceId);
+          if (remit) {
+            openRemitDetail(remit);
+          }
+        }
+        loadAdminNotifCount();
       }
 
       (function init() {
@@ -4105,9 +4131,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           </div>
         `;
       }).join('');
+      return remittancesCache;
     } catch (err) {
       console.error(err);
       body.innerHTML = '<div class="empty-state"><p>Error loading remittances.</p></div>';
+      return [];
     }
   }
 
