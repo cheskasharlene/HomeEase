@@ -82,7 +82,8 @@ if ($bookingId > 0 && $userId > 0) {
       $booking['hours'] ?? 1,
       $booking['start_time'] ?? '',
       $booking['end_time'] ?? '',
-      $booking['completed_at'] ?? null
+      $booking['completed_at'] ?? null,
+      $booking['arrived_at'] ?? null
     );
 
     $providerIdResolved = (int) ($booking['provider_id'] ?? 0);
@@ -152,6 +153,7 @@ $serviceName = htmlspecialchars($booking['service'] ?? 'Service');
 $serviceIcon = getServiceIcon($booking['service'] ?? '');
 $rawStatus = strtolower(trim((string)($booking['status'] ?? 'pending')));
 $isDone = in_array($rawStatus, ['done', 'completed'], true);
+$isArrived = ($rawStatus === 'arrived');
 $isProgress = in_array($rawStatus, ['confirmed', 'progress', 'active', 'awaiting_payment'], true);
 $isCancelled = in_array($rawStatus, ['cancelled', 'canceled', 'declined'], true);
 
@@ -334,6 +336,11 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
       background: linear-gradient(135deg, #ecfdf5, #d1fae5);
       color: #065f46;
       border: 1.5px solid #a7f3d0;
+    }
+    .pbd-status-pill.arrived {
+      background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+      color: #0369a1;
+      border: 1.5px solid #7dd3fc;
     }
     .pbd-status-pill.progress {
       background: linear-gradient(135deg, #eff6ff, #dbeafe);
@@ -758,6 +765,8 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
             <div class="pbd-status-left">
               <?php if ($isDone): ?>
                 <span class="pbd-status-pill done" id="bookingStatusPill"><i class="bi bi-check-circle-fill"></i> Completed</span>
+              <?php elseif ($isArrived): ?>
+                <span class="pbd-status-pill arrived" id="bookingStatusPill"><i class="bi bi-geo-alt-fill"></i> Arrived</span>
               <?php elseif ($isProgress): ?>
                 <span class="pbd-status-pill progress" id="bookingStatusPill"><i class="bi bi-hourglass-split"></i> In Progress</span>
               <?php elseif ($isCancelled): ?>
@@ -789,6 +798,11 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
             <div class="pbd-row">
               <span class="pbd-lbl"><i class="bi bi-play-circle-fill" style="color:#E8820C;"></i> Scheduled Start</span>
               <span class="pbd-val" id="bookingScheduledStart"><?= htmlspecialchars($schPHP['scheduled_start'] ?? formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null)) ?></span>
+            </div>
+
+            <div class="pbd-row" id="arrivedAtRow" style="<?= (!empty($schPHP['formatted_arrived'])) ? '' : 'display:none;' ?>">
+              <span class="pbd-lbl" style="color:#0284C7;"><i class="bi bi-geo-alt-fill" style="color:#0284C7;"></i> Arrival Time</span>
+              <span class="pbd-val" style="color:#0284C7;font-weight:800;" id="bookingArrivedAt"><?= htmlspecialchars($schPHP['formatted_arrived'] ?? '—') ?></span>
             </div>
 
             <div class="pbd-row" id="completedAtRow" style="<?= ($isDone && !empty($schPHP['formatted_completed'])) ? '' : 'display:none;' ?>">
@@ -1106,6 +1120,7 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
         // Status & Price
         const rawStatus = (b.status || 'pending').toLowerCase();
         const isDone = (rawStatus === 'done' || rawStatus === 'completed');
+        const isArrived = (rawStatus === 'arrived');
         const isProgress = (rawStatus === 'confirmed' || rawStatus === 'progress' || rawStatus === 'active');
         const isCancelled = (rawStatus === 'cancelled' || rawStatus === 'canceled' || rawStatus === 'declined');
 
@@ -1114,6 +1129,9 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
           if (isDone) {
             pill.className = 'pbd-status-pill done';
             pill.innerHTML = '<i class="bi bi-check-circle-fill"></i> Completed';
+          } else if (isArrived) {
+            pill.className = 'pbd-status-pill arrived';
+            pill.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Arrived';
           } else if (isProgress) {
             pill.className = 'pbd-status-pill progress';
             pill.innerHTML = '<i class="bi bi-hourglass-split"></i> In Progress';
@@ -1139,6 +1157,17 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
 
         const schStartEl = document.getElementById('bookingScheduledStart');
         if (schStartEl) schStartEl.textContent = b.scheduled_start || formatSchedule(b.date, b.time_slot);
+
+        const arrRow = document.getElementById('arrivedAtRow');
+        const arrVal = document.getElementById('bookingArrivedAt');
+        if (arrRow && arrVal) {
+          if (b.formatted_arrived || b.arrived_at) {
+            arrVal.textContent = b.formatted_arrived || b.arrived_at;
+            arrRow.style.display = 'flex';
+          } else {
+            arrRow.style.display = 'none';
+          }
+        }
 
         const compRow = document.getElementById('completedAtRow');
         const compVal = document.getElementById('bookingCompletedAt');

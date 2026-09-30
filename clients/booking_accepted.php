@@ -359,6 +359,17 @@ if (isset($_GET['booking_id'])) {
               Receipt submitted. Waiting for your provider to confirm payment.
             </div>
 
+            <div id="paymentRejectedNote" class="ab-note ab-hide" style="background: #FEF2F2; border: 1.5px solid #FECACA; color: #991B1B; padding: 14px 16px; border-radius: 14px; margin-bottom: 12px;">
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <i class="bi bi-exclamation-triangle-fill" style="font-size: 18px; color: #DC2626; margin-top: 2px;"></i>
+                <div style="flex: 1;">
+                  <strong style="font-size: 14px; display: block; margin-bottom: 4px; color: #991B1B;">Payment Receipt Rejected</strong>
+                  <div id="paymentRejectionReason" style="font-size: 13px; line-height: 1.45; color: #7F1D1D; background: rgba(255,255,255,0.7); border: 1px solid #FCA5A5; padding: 8px 12px; border-radius: 8px; margin-top: 6px;"></div>
+                  <div style="font-size: 12px; font-weight: 700; margin-top: 8px; color: #991B1B;">Please upload a new, clear receipt image to proceed with your booking.</div>
+                </div>
+              </div>
+            </div>
+
             <div id="paymentCompletedNote" class="ab-note ab-note-success ab-hide">
               Payment confirmed! Your provider will proceed with the service.
               <div class="ab-note-actions" style="margin-top: 12px; width: 100%;">
@@ -566,6 +577,7 @@ if (isset($_GET['booking_id'])) {
       if (s === 'submitted') return 'Awaiting Confirmation';
       if (s === 'completed') return 'Confirmed';
       if (s === 'cancelled') return 'Cancelled';
+      if (s === 'rejected' || s === 'payment_rejected') return 'Receipt Rejected';
       return status || '-';
     }
 
@@ -981,8 +993,33 @@ if (isset($_GET['booking_id'])) {
       document.getElementById('cashPaymentNote').classList.add('ab-hide');
       document.getElementById('paymentWaitingNote').classList.add('ab-hide');
       document.getElementById('paymentCompletedNote').classList.add('ab-hide');
+      const rejNote = document.getElementById('paymentRejectedNote');
+      if (rejNote) rejNote.classList.add('ab-hide');
       document.getElementById('payNowContainer').classList.add('ab-hide');
       closePaymentExpiredModal();
+
+      if (status === 'rejected' || status === 'payment_rejected') {
+        closeUserPaymentModal();
+        closePaymentSuccessModal();
+        stopPaymentExpiryTimer();
+        stopPaymentPolling();
+        const rejText = p.rejection_reason || 'The receipt image or reference number was rejected by the provider.';
+        const reasonDiv = document.getElementById('paymentRejectionReason');
+        if (reasonDiv) reasonDiv.textContent = 'Reason: ' + rejText;
+        if (rejNote) rejNote.classList.remove('ab-hide');
+
+        document.getElementById('paymentMethod').value = method;
+        const payBtn = document.getElementById('payNowContainer');
+        if (payBtn) {
+          payBtn.classList.remove('ab-hide');
+          const btnChild = payBtn.querySelector('button');
+          if (btnChild) {
+            btnChild.innerHTML = '<i class="bi bi-cloud-arrow-up-fill" style="font-size: 16px;"></i> Re-upload Payment Receipt';
+          }
+        }
+        toggleQRDisplay(method);
+        return;
+      }
 
       if (method === 'cash') {
         document.getElementById('cashPaymentNote').classList.remove('ab-hide');

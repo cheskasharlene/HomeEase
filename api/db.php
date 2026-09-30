@@ -66,12 +66,13 @@ function ensurePaymentsTable($conn)
         user_id INT NOT NULL,
         payment_method_id INT NULL,
         payment_method ENUM('cash', 'gcash', 'bank') NOT NULL DEFAULT 'cash',
-        payment_status ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted') NOT NULL DEFAULT 'pending',
+        payment_status ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted', 'rejected') NOT NULL DEFAULT 'pending',
         payment_reference VARCHAR(255) NULL,
         amount DECIMAL(10, 2) NOT NULL,
         transaction_id VARCHAR(100) NULL,
         payment_proof_path VARCHAR(512) NULL,
         notes TEXT NULL,
+        rejection_reason TEXT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         UNIQUE KEY idx_booking_id (booking_id),
@@ -85,40 +86,46 @@ function ensurePaymentsTable($conn)
 
     $created = ($conn->query($sql) === TRUE || $conn->errno == 1050);
 
-    
-    @$conn->query("ALTER TABLE `payments` MODIFY COLUMN `payment_status` ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted') NOT NULL DEFAULT 'pending'");
+    // Modify enum column if exists
+    @$conn->query("ALTER TABLE `payments` MODIFY COLUMN `payment_status` ENUM('pending', 'completed', 'failed', 'cancelled', 'submitted', 'rejected') NOT NULL DEFAULT 'pending'");
 
-    
+    // Check payment_proof_path column
     $check = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'payment_proof_path'");
     if ($check && $check->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `payment_proof_path` VARCHAR(512) NULL AFTER `transaction_id`");
     }
 
-    
+    // Check rejection_reason column
+    $checkRej = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'rejection_reason'");
+    if ($checkRej && $checkRej->num_rows === 0) {
+        $conn->query("ALTER TABLE `payments` ADD COLUMN `rejection_reason` TEXT NULL AFTER `notes`");
+    }
+
+    // Check receiver_provider_id column
     $chk = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'receiver_provider_id'");
     if ($chk && $chk->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `receiver_provider_id` INT NULL AFTER `transaction_id`");
     }
 
-    
+    // Check expected_until column
     $chk2 = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'expected_until'");
     if ($chk2 && $chk2->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `expected_until` DATETIME NULL AFTER `receiver_provider_id`");
     }
 
-    
+    // Check payment_method_id column
     $chk3 = $conn->query("SHOW COLUMNS FROM `payments` LIKE 'payment_method_id'");
     if ($chk3 && $chk3->num_rows === 0) {
         $conn->query("ALTER TABLE `payments` ADD COLUMN `payment_method_id` INT NULL AFTER `user_id`");
     }
 
-    
+    // Add index if missing
     $idx2 = $conn->query("SHOW INDEX FROM `payments` WHERE Key_name = 'idx_payment_method_id'");
     if ($idx2 && $idx2->num_rows === 0) {
         @$conn->query("ALTER TABLE `payments` ADD INDEX `idx_payment_method_id` (`payment_method_id`)");
     }
 
-    
+    // Add unique index on payment_reference
     $idx = $conn->query("SHOW INDEX FROM `payments` WHERE Key_name = 'idx_payment_reference'");
     if ($idx && $idx->num_rows === 0) {
         @ $conn->query("ALTER TABLE `payments` ADD UNIQUE INDEX `idx_payment_reference` (`payment_reference`(190))");
@@ -127,9 +134,6 @@ function ensurePaymentsTable($conn)
     return $created;
 }
 
-
-
-
 function ensureBookingStatusEnum($conn)
 {
     $res = $conn->query("SHOW COLUMNS FROM bookings LIKE 'status'");
@@ -137,10 +141,11 @@ function ensureBookingStatusEnum($conn)
         return;
     }
     $type = (string) ($col['Type'] ?? '');
-    if (stripos($type, 'awaiting_payment') === false) {
-        @$conn->query("ALTER TABLE bookings MODIFY COLUMN status ENUM('pending','awaiting_payment','progress','done','cancelled') NOT NULL DEFAULT 'pending'");
+    if (stripos($type, 'payment_rejected') === false || stripos($type, 'arrived') === false || stripos($type, 'awaiting_payment') === false) {
+        @$conn->query("ALTER TABLE bookings MODIFY COLUMN status ENUM('pending','awaiting_payment','payment_rejected','progress','accepted','arrived','done','completed','cancelled') NOT NULL DEFAULT 'pending'");
     }
 }
+
 
 
 
@@ -306,7 +311,7 @@ function getPaymentByBooking($conn, $userId, $bookingId)
     $stmt = $conn->prepare(
         "SELECT id, booking_id, user_id, payment_method, payment_status, payment_reference,
                 amount, transaction_id, payment_proof_path, receiver_provider_id, expected_until,
-                notes, created_at, updated_at
+                notes, rejection_reason, created_at, updated_at
          FROM payments
          WHERE booking_id = ? AND user_id = ?
          LIMIT 1"
@@ -376,9 +381,21 @@ function ensureNormalizationSchema($conn)
     @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS provider_id INT NULL AFTER service_id");
     @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS start_time VARCHAR(32) NULL AFTER time_slot");
     @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS end_time VARCHAR(32) NULL AFTER start_time");
-    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS completed_at DATETIME NULL AFTER status");
+    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS arrived_at DATETIME NULL AFTER status");
+    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS completed_at DATETIME NULL AFTER arrived_at");
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_service_id (service_id)");
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_provider_id (provider_id)");
+
+    // Backfill arrived_at for existing arrived/done/completed bookings if null
+    @$conn->query("UPDATE bookings b
+        JOIN (
+            SELECT booking_id, MIN(created_at) AS first_arrived
+            FROM booking_status_logs
+            WHERE LOWER(new_status) = 'arrived'
+            GROUP BY booking_id
+        ) bsl ON bsl.booking_id = b.id
+        SET b.arrived_at = bsl.first_arrived
+        WHERE b.arrived_at IS NULL AND LOWER(b.status) IN ('arrived', 'done', 'completed')");
 
     // Backfill completed_at for existing done/completed bookings if null
     @$conn->query("UPDATE bookings b
@@ -622,7 +639,10 @@ function logBookingStatusChange($conn, $bookingId, $oldStatus, $newStatus, $chan
     $stmt->bind_param('isssiss', $bookingId, $oldStatus, $newStatus, $changedByRole, $changedById, $notes, $nowStr);
     $ok = $stmt->execute();
     $stmt->close();
-    if ($ok && in_array(strtolower((string)$newStatus), ['done', 'completed', 'cancelled'])) {
+    if ($ok && in_array(strtolower((string)$newStatus), ['arrived', 'done', 'completed', 'cancelled'])) {
+        if (strtolower((string)$newStatus) === 'arrived') {
+            @$conn->query("UPDATE bookings SET arrived_at = '$nowStr' WHERE id = " . (int)$bookingId . " AND arrived_at IS NULL");
+        }
         if (in_array(strtolower((string)$newStatus), ['done', 'completed'])) {
             @$conn->query("UPDATE bookings SET completed_at = '$nowStr' WHERE id = " . (int)$bookingId . " AND completed_at IS NULL");
         }
@@ -632,7 +652,7 @@ function logBookingStatusChange($conn, $bookingId, $oldStatus, $newStatus, $chan
 }
 
 if (!function_exists('calculateBookingTimes')) {
-    function calculateBookingTimes($date, $timeSlot = '', $hours = 1, $startTime = '', $endTime = '', $completedAt = null) {
+    function calculateBookingTimes($date, $timeSlot = '', $hours = 1, $startTime = '', $endTime = '', $completedAt = null, $arrivedAt = null) {
         $hours = max(1, (int)$hours);
         $dateStr = trim((string)$date);
         
@@ -679,6 +699,14 @@ if (!function_exists('calculateBookingTimes')) {
         $formattedStart = $startDt ? date('M j, Y - g:i A', $startDt) : ($dateStr ? $dateStr . ' ' . $startStr : $startStr);
         $formattedEnd   = $endDt ? date('M j, Y - g:i A', $endDt) : '—';
         
+        $formattedArrived = null;
+        if ($arrivedAt && $arrivedAt !== '0000-00-00 00:00:00') {
+            $aTs = strtotime($arrivedAt);
+            if ($aTs !== false) {
+                $formattedArrived = date('M j, Y - g:i A', $aTs);
+            }
+        }
+
         $formattedCompleted = null;
         if ($completedAt && $completedAt !== '0000-00-00 00:00:00') {
             $cTs = strtotime($completedAt);
@@ -692,6 +720,8 @@ if (!function_exists('calculateBookingTimes')) {
             'end_time'             => $endStr ?: ($endDt ? date('g:i A', $endDt) : ''),
             'scheduled_start'      => $formattedStart,
             'scheduled_end'        => $formattedEnd,
+            'arrived_at'           => $arrivedAt,
+            'formatted_arrived'    => $formattedArrived,
             'completed_at'         => $completedAt,
             'formatted_completed'  => $formattedCompleted,
         ];

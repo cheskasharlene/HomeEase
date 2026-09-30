@@ -29,10 +29,10 @@ $hasPrice = in_array('price', $cols, true);
 ensureBookingRequestsTable($conn);
 ensureProviderReviewsTable($conn);
 
-$acceptedStatuses = "('confirmed','progress','active','awaiting_payment')";
+$acceptedStatuses = "('confirmed','progress','active','awaiting_payment','payment_rejected','arrived')";
 
 if ($providerId > 0) {
-    $select = 'b.id, b.service, b.date, b.address, b.status, b.created_at';
+    $select = 'b.id, b.service, b.date, b.address, b.status, b.created_at, b.arrived_at, b.completed_at';
     if ($hasTimeSlot) {
         $select .= ', b.time_slot';
     }
@@ -120,7 +120,7 @@ if ($providerId > 0) {
     ]);
 }
 
-$select = 'b.id, b.service, b.date, b.address, b.status, b.created_at';
+$select = 'b.id, b.service, b.date, b.address, b.status, b.created_at, b.arrived_at, b.completed_at';
 if ($hasTimeSlot) {
     $select .= ', b.time_slot';
 }

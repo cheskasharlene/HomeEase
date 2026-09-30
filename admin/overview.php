@@ -258,6 +258,7 @@ function bookingStatusPill(s) {
   const map = {
     pending: 'badge-amber',
     awaiting_payment: 'badge-blue',
+    payment_rejected: 'badge-red',
     progress: 'badge-blue',
     done: 'badge-green',
     cancelled: 'badge-red'
@@ -265,6 +266,7 @@ function bookingStatusPill(s) {
   const labels = {
     pending: 'Pending',
     awaiting_payment: 'Awaiting Payment',
+    payment_rejected: 'Receipt Rejected',
     progress: 'In Progress',
     done: 'Done',
     cancelled: 'Cancelled'

@@ -20,6 +20,7 @@ include __DIR__ . '/includes/sidebar.php';
     <div class="stab on" data-bk="all" onclick="setBkFilter(this,'all')">All</div>
     <div class="stab" data-bk="pending" onclick="setBkFilter(this,'pending')">Pending</div>
     <div class="stab" data-bk="progress" onclick="setBkFilter(this,'progress')">In Progress</div>
+    <div class="stab" data-bk="arrived" onclick="setBkFilter(this,'arrived')">Arrived</div>
     <div class="stab" data-bk="done" onclick="setBkFilter(this,'done')">Done</div>
     <div class="stab" data-bk="cancelled" onclick="setBkFilter(this,'cancelled')">Cancelled</div>
   </div>

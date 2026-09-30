@@ -97,24 +97,55 @@ if ($method === 'POST' && in_array($action, ['provider_confirm', 'provider_rejec
     }
 
     if ($action === 'provider_reject') {
-        $reason = trim($_POST['reason'] ?? 'Rejected by worker');
+        $reason = trim($_POST['reason'] ?? '');
+        if ($reason === '') {
+            $reason = 'Payment receipt rejected by worker';
+        }
+        ensurePaymentsTable($conn);
+        ensureBookingStatusEnum($conn);
         ensureDisputesTable($conn);
         $bkid = (int) $prow['booking_id'];
         $paymentRef = $prow['payment_reference'] ?? '';
         $matches = $paymentRef !== '';
         $nowStr = phNow();
+
         $ins = $conn->prepare("INSERT INTO disputes (booking_id, payment_id, provider_id, reason, matches_system, status, created_at) VALUES (?, ?, ?, ?, ?, 'open', ?)");
         $ms = $matches ? 1 : 0;
         $ins->bind_param('iiisis', $bkid, $paymentId, $providerId, $reason, $ms, $nowStr);
         $ins->execute();
         $ins->close();
 
+        // Update payment record with rejected status and reason
+        $u1 = $conn->prepare("UPDATE payments SET payment_status='rejected', rejection_reason=?, updated_at=NOW() WHERE id = ?");
+        if ($u1) {
+            $u1->bind_param('si', $reason, $paymentId);
+            $u1->execute();
+            $u1->close();
+        }
+
+        // Get previous booking status for logging
+        $oldStatus = null;
+        $oldStmt = $conn->prepare("SELECT status FROM bookings WHERE id = ? LIMIT 1");
+        if ($oldStmt) {
+            $oldStmt->bind_param('i', $bkid);
+            $oldStmt->execute();
+            $oldRow = $oldStmt->get_result()->fetch_assoc();
+            $oldStmt->close();
+            $oldStatus = $oldRow['status'] ?? null;
+        }
+
+        // Update booking status to payment_rejected
+        $conn->query("UPDATE bookings SET status='payment_rejected' WHERE id = " . $bkid);
+        if ($oldStatus !== null && $oldStatus !== 'payment_rejected') {
+            logBookingStatusChange($conn, $bkid, $oldStatus, 'payment_rejected', 'provider', $providerId, 'Payment receipt rejected: ' . $reason);
+        }
+
         $uid2 = (int) $prow['user_id'];
-        sendUserNotification($conn, $uid2, 'Payment Problem Reported', 'The worker reported a problem with your payment. Admin review has been requested.', 'exclamation-triangle');
+        sendUserNotification($conn, $uid2, 'Payment Receipt Rejected', 'The worker rejected your payment receipt. Reason: ' . $reason . '. Please submit a new receipt.', 'exclamation-triangle');
         @$conn->query("UPDATE service_providers SET warnings = COALESCE(warnings,0) + 1 WHERE provider_id = " . $providerId);
 
         ob_end_clean();
-        echo json_encode(['success' => true, 'message' => 'Rejection recorded. Admin will review the dispute.']);
+        echo json_encode(['success' => true, 'message' => 'Payment receipt rejected. Client has been notified.']);
         exit;
     }
 }
@@ -248,7 +279,7 @@ if ($method === 'POST' && $action === 'submit') {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'This booking does not require online payment']); exit;
     }
 
-    if (!in_array($pay['payment_status'], ['pending'], true)) {
+    if (!in_array($pay['payment_status'], ['pending', 'rejected'], true)) {
         ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Payment has already been submitted or completed']); exit;
     }
 
@@ -299,7 +330,7 @@ if ($method === 'POST' && $action === 'submit') {
     ensureBookingStatusEnum($conn);
 
     
-    $upd = $conn->prepare("UPDATE payments SET payment_reference=?, amount=?, payment_proof_path=?, notes=?, payment_status='submitted', updated_at=NOW() WHERE id = ?");
+    $upd = $conn->prepare("UPDATE payments SET payment_reference=?, amount=?, payment_proof_path=?, notes=?, rejection_reason=NULL, payment_status='submitted', updated_at=NOW() WHERE id = ?");
     $notes = ($senderName !== '') ? 'Sender: ' . $senderName : null;
     $pid = (int)$pay['id'];
     $upd->bind_param('sdssi', $paymentReference, $amount, $proofPath, $notes, $pid);
@@ -311,8 +342,6 @@ if ($method === 'POST' && $action === 'submit') {
         if ($oldStatus !== 'awaiting_payment') {
             logBookingStatusChange($conn, $bookingId, $oldStatus, 'awaiting_payment', 'user', $uid, 'Client submitted payment proof');
         }
-
-
 
         
         sendUserNotification($conn, $uid, 'Payment Submitted', 'Your payment proof has been sent to the worker for confirmation.', 'wallet');

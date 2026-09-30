@@ -211,7 +211,10 @@ if ($bookingId > 0) {
         </div>
 
         <div style="padding: 0 14px 14px;">
-          <button class="mark-done-btn" id="btnMarkDone" onclick="markDone()">
+          <button class="mark-done-btn" id="btnArrived" onclick="markArrived()" style="background:linear-gradient(135deg,#0284C7,#06B6D4);box-shadow:0 4px 14px rgba(2,132,199,.3);">
+            <i class="bi bi-geo-alt-fill"></i> Arrived at Destination
+          </button>
+          <button class="mark-done-btn" id="btnMarkDone" onclick="markDone()" style="display:none;">
             <i class="bi bi-check2-circle"></i> Mark Job as Done
           </button>
           <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
@@ -311,6 +314,32 @@ if ($bookingId > 0) {
     </div>
   </div>
 
+  <div id="providerPaymentRejectModal" onclick="closeProviderPaymentRejectModal(event)" style="position:fixed;inset:0;z-index:960;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;opacity:0;transition:opacity .22s;padding:20px;">
+    <div style="width:100%;max-width:380px;background:#fff;border-radius:20px;padding:24px;text-align:left;box-shadow:0 20px 60px rgba(0,0,0,0.35);transform:scale(0.88);transition:transform .22s cubic-bezier(.34,1.56,.64,1);" onclick="event.stopPropagation()">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;background:#FEE2E2;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#DC2626;font-size:18px;">
+            <i class="bi bi-x-circle-fill"></i>
+          </div>
+          <h3 style="font-family:'Poppins',sans-serif;font-size:16px;font-weight:800;color:#1A1A2E;margin:0;">Reject Payment Receipt</h3>
+        </div>
+        <button onclick="closeProviderPaymentRejectModal()" style="width:28px;height:28px;border-radius:50%;border:none;background:#F5F0EA;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#7A7064;font-size:13px;">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+      <p style="font-size:13px;color:#5E564D;line-height:1.45;margin:0 0 14px;">Please specify the reason for rejecting this receipt. The client will be notified to resubmit a new proof of payment.</p>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">Rejection Reason <span style="color:#DC2626;">*</span></label>
+        <textarea id="paymentRejectReasonInput" rows="3" style="width:100%;border:1.5px solid #D1D5DB;border-radius:12px;padding:10px 12px;font-family:'Nunito',sans-serif;font-size:13px;color:#1F2937;outline:none;resize:none;box-sizing:border-box;" placeholder="e.g. Blurry receipt, reference number does not match, incorrect amount..."></textarea>
+        <div id="paymentRejectError" style="display:none;color:#DC2626;font-size:12px;font-weight:700;margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="mark-done-btn" style="background:#F3F4F6;color:#374151;border:1px solid #E5E7EB;flex:1;margin-top:0;font-size:13px;height:42px;" onclick="closeProviderPaymentRejectModal()">Cancel</button>
+        <button id="btnSubmitRejectPayment" class="mark-done-btn" style="background:#EF4444;color:#fff;flex:1;margin-top:0;font-size:13px;height:42px;" onclick="submitRejectPayment()">Submit Rejection</button>
+      </div>
+    </div>
+  </div>
+
   </div>
 
   <script src="../assets/js/app.js"></script>
@@ -363,28 +392,49 @@ if ($bookingId > 0) {
         const status = String(p.payment_status || '').toLowerCase();
         const banner = document.getElementById('paymentGateBanner');
         const markDoneBtn = document.getElementById('btnMarkDone');
+        const arrivedBtn = document.getElementById('btnArrived');
         const statusText = document.getElementById('statusText');
 
         document.getElementById('btnConfirmPayment').style.display = 'none';
         document.getElementById('btnRejectPayment').style.display = 'none';
         banner.style.display = 'none';
-        markDoneBtn.disabled = false;
-        markDoneBtn.style.opacity = '';
+        if (markDoneBtn) { markDoneBtn.disabled = false; markDoneBtn.style.opacity = ''; }
+        if (arrivedBtn) { arrivedBtn.disabled = false; arrivedBtn.style.opacity = ''; }
 
         if (method === 'cash') {
-          statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+          if (window.__booking_status === 'arrived') {
+            statusText.innerHTML = 'Arrived at client\'s location <span>📍</span>';
+          } else {
+            statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+          }
+          return;
+        }
+
+        if (status === 'rejected') {
+          window._paymentModalShown = false;
+          window._lastPaymentProofPath = null;
+          banner.style.display = 'block';
+          banner.style.background = '#FEF2F2';
+          banner.style.border = '1.5px solid #FECACA';
+          banner.style.color = '#991B1B';
+          banner.innerHTML = '<i class="bi bi-x-circle-fill"></i> Payment receipt rejected. Waiting for client to resubmit proof of payment.';
+          statusText.innerHTML = 'Waiting for client to resubmit receipt <span>⏳</span>';
+          if (markDoneBtn) { markDoneBtn.disabled = true; markDoneBtn.style.opacity = '0.55'; }
+          if (arrivedBtn) { arrivedBtn.disabled = true; arrivedBtn.style.opacity = '0.55'; }
           return;
         }
 
         if (status === 'pending') {
+          window._paymentModalShown = false;
+          window._lastPaymentProofPath = null;
           banner.style.display = 'block';
           banner.style.background = '#FFFBEB';
           banner.style.border = '1.5px solid #FDE68A';
           banner.style.color = '#92400E';
           banner.innerHTML = '<i class="bi bi-hourglass-split"></i> Waiting for the client to pay via ' + (method === 'gcash' ? 'GCash' : 'Bank Transfer') + ' and upload a receipt.';
           statusText.innerHTML = 'Waiting for client payment <span>💳</span>';
-          markDoneBtn.disabled = true;
-          markDoneBtn.style.opacity = '0.55';
+          if (markDoneBtn) { markDoneBtn.disabled = true; markDoneBtn.style.opacity = '0.55'; }
+          if (arrivedBtn) { arrivedBtn.disabled = true; arrivedBtn.style.opacity = '0.55'; }
           return;
         }
 
@@ -403,20 +453,24 @@ if ($bookingId > 0) {
           
           window.__current_payment_id = p.id;
           window.__payment_status = 'submitted'; // track for popup buttons
-          markDoneBtn.disabled = true;
-          markDoneBtn.style.opacity = '0.55';
+          if (markDoneBtn) { markDoneBtn.disabled = true; markDoneBtn.style.opacity = '0.55'; }
+          if (arrivedBtn) { arrivedBtn.disabled = true; arrivedBtn.style.opacity = '0.55'; }
           
-          if (!window._paymentModalShown) {
+          const newProofPath = p.payment_proof_path || '';
+          const imgUrl = '../' + newProofPath + (newProofPath ? ('?v=' + Date.now()) : '');
+          document.getElementById('paymentProofImage').src = imgUrl;
+          const refParts = [];
+          if (p.payment_reference && p.payment_reference !== 'N/A') {
+            refParts.push('Ref: ' + p.payment_reference);
+          }
+          if (p.notes && p.notes.trim() !== '') {
+            refParts.push(p.notes);
+          }
+          document.getElementById('paymentProofRef').textContent = refParts.join(' | ');
+
+          if (!window._paymentModalShown || window._lastPaymentProofPath !== newProofPath) {
              window._paymentModalShown = true;
-             document.getElementById('paymentProofImage').src = '../' + (p.payment_proof_path || '');
-             const refParts = [];
-             if (p.payment_reference && p.payment_reference !== 'N/A') {
-               refParts.push('Ref: ' + p.payment_reference);
-             }
-             if (p.notes && p.notes.trim() !== '') {
-               refParts.push(p.notes);
-             }
-             document.getElementById('paymentProofRef').textContent = refParts.join(' | ');
+             window._lastPaymentProofPath = newProofPath;
              
              const dot = document.getElementById('receiptUnreadDot');
              if (dot) dot.style.display = 'block';
@@ -432,7 +486,11 @@ if ($bookingId > 0) {
           banner.style.border = '1.5px solid #6EE7B7';
           banner.style.color = '#065F46';
           banner.innerHTML = '<i class="bi bi-check-circle-fill"></i> Payment confirmed. You can proceed with the service.';
-          statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+          if (window.__booking_status === 'arrived') {
+            statusText.innerHTML = 'Arrived at client\'s location <span>📍</span>';
+          } else {
+            statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+          }
 
           // Show receipt button for view-only access
           const viewBtn = document.getElementById('btnViewReceipt');
@@ -440,7 +498,8 @@ if ($bookingId > 0) {
 
           window.__current_payment_id = p.id;
           window.__payment_status = 'completed'; // view-only mode
-          document.getElementById('paymentProofImage').src = '../' + (p.payment_proof_path || '');
+          const compProofPath = p.payment_proof_path || '';
+          document.getElementById('paymentProofImage').src = '../' + compProofPath + (compProofPath ? ('?v=' + Date.now()) : '');
           const refParts = [];
           if (p.payment_reference && p.payment_reference !== 'N/A') {
             refParts.push('Ref: ' + p.payment_reference);
@@ -514,13 +573,67 @@ if ($bookingId > 0) {
       }
     }
 
-    async function rejectPayment() {
+    function openProviderPaymentRejectModal() {
+      const modal = document.getElementById('providerPaymentRejectModal');
+      const input = document.getElementById('paymentRejectReasonInput');
+      const err = document.getElementById('paymentRejectError');
+      if (input) input.value = '';
+      if (err) { err.textContent = ''; err.style.display = 'none'; }
+      if (!modal) return;
+      modal.style.display = 'flex';
+      void modal.offsetWidth;
+      modal.style.opacity = '1';
+      const card = modal.firstElementChild;
+      if (card) card.style.transform = 'scale(1)';
+      if (input) setTimeout(() => input.focus(), 150);
+    }
+
+    function closeProviderPaymentRejectModal(e) {
+      if (e && e.target !== document.getElementById('providerPaymentRejectModal')) return;
+      const modal = document.getElementById('providerPaymentRejectModal');
+      if (!modal) return;
+      modal.style.opacity = '0';
+      const card = modal.firstElementChild;
+      if (card) card.style.transform = 'scale(0.88)';
+      setTimeout(() => { modal.style.display = 'none'; }, 220);
+    }
+
+    function rejectPayment() {
       if (!window.__current_payment_id) return alert('No payment selected');
-      const reason = prompt('Please provide reason for rejection');
-      if (reason === null) return;
-      const fd = new FormData(); fd.append('payment_id', window.__current_payment_id); fd.append('reason', reason);
-      const res = await fetch('../api/payments_api.php?action=provider_reject', { method: 'POST', body: fd });
-      const j = await res.json(); if (j.success) { alert(j.message || 'Reported'); location.reload(); } else { alert(j.message || 'Failed'); }
+      closeProviderPaymentModal();
+      openProviderPaymentRejectModal();
+    }
+
+    async function submitRejectPayment() {
+      if (!window.__current_payment_id) return alert('No payment selected');
+      const input = document.getElementById('paymentRejectReasonInput');
+      const err = document.getElementById('paymentRejectError');
+      const reason = input ? input.value.trim() : '';
+      if (!reason) {
+        if (err) { err.textContent = 'Please enter a rejection reason.'; err.style.display = 'block'; }
+        if (input) input.focus();
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitRejectPayment');
+      if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+
+      try {
+        const fd = new FormData();
+        fd.append('payment_id', window.__current_payment_id);
+        fd.append('reason', reason);
+        const res = await fetch('../api/payments_api.php?action=provider_reject', { method: 'POST', body: fd });
+        const j = await res.json();
+        if (j.success) {
+          closeProviderPaymentRejectModal();
+          await loadProviderPayment();
+        } else {
+          if (err) { err.textContent = j.message || 'Failed to reject payment.'; err.style.display = 'block'; }
+        }
+      } catch (e) {
+        if (err) { err.textContent = 'An error occurred while submitting rejection.'; err.style.display = 'block'; }
+      }
+      if (btn) { btn.disabled = false; btn.textContent = 'Submit Rejection'; }
     }
 
     // Load payment state when page opens and poll while waiting
@@ -926,6 +1039,9 @@ if ($bookingId > 0) {
           return;
         }
 
+        window.__booking_status = bStatus;
+        updateActionButtons(bStatus);
+
         if (!BID && b.id) BID = b.id;
 
         document.getElementById('clientName').textContent = b.client_name || 'Client';
@@ -961,7 +1077,52 @@ if ($bookingId > 0) {
       } catch (e) { console.warn(e); }
     }
 
+    function updateActionButtons(bStatus) {
+      const arrivedBtn = document.getElementById('btnArrived');
+      const markDoneBtn = document.getElementById('btnMarkDone');
+      const statusText = document.getElementById('statusText');
+
+      if (bStatus === 'arrived') {
+        if (arrivedBtn) arrivedBtn.style.display = 'none';
+        if (markDoneBtn) markDoneBtn.style.display = 'flex';
+        if (statusText) statusText.innerHTML = 'Arrived at client\'s location <span>📍</span>';
+      } else {
+        if (arrivedBtn) arrivedBtn.style.display = 'flex';
+        if (markDoneBtn) markDoneBtn.style.display = 'none';
+        if (statusText) statusText.innerHTML = 'Head to the client\'s location <span>🚗</span>';
+      }
+    }
+
     /* ── ACTIONS ── */
+    async function markArrived() {
+      if (!BID) return;
+      const btn = document.getElementById('btnArrived');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Recording arrival…';
+      }
+      const fd = new FormData();
+      fd.append('action', 'arrived');
+      fd.append('booking_id', BID);
+      try {
+        const res = await fetch(API + 'provider_requests_api.php', { method: 'POST', body: fd });
+        const d = await res.json();
+        if (d.success) {
+          await loadBooking();
+          await loadProviderPayment();
+        } else {
+          alert(d.message || 'Error recording arrival.');
+        }
+      } catch (e) {
+        alert('Network error.');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="bi bi-geo-alt-fill"></i> Arrived at Destination';
+        }
+      }
+    }
+
     function markDone() {
       // Open branded confirmation modal instead of native confirm()
       showMarkCompleteConfirm();

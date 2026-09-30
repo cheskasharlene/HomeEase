@@ -587,6 +587,7 @@ if ($section === 'bookings') {
         $extraSelect = '';
         if (in_array('start_time', $hasCols, true)) $extraSelect .= ', b.start_time';
         if (in_array('end_time', $hasCols, true)) $extraSelect .= ', b.end_time';
+        if (in_array('arrived_at', $hasCols, true)) $extraSelect .= ', b.arrived_at';
         if (in_array('completed_at', $hasCols, true)) $extraSelect .= ', b.completed_at';
         if (in_array('hours', $hasCols, true)) $extraSelect .= ', b.hours';
 
@@ -617,12 +618,15 @@ if ($section === 'bookings') {
                 $r['hours'] ?? 1,
                 $r['start_time'] ?? '',
                 $r['end_time'] ?? '',
-                $r['completed_at'] ?? null
+                $r['completed_at'] ?? null,
+                $r['arrived_at'] ?? null
             );
             $r['start_time']          = $sch['start_time'];
             $r['end_time']            = $sch['end_time'];
             $r['scheduled_start']     = $sch['scheduled_start'];
             $r['scheduled_end']       = $sch['scheduled_end'];
+            $r['arrived_at']          = $sch['arrived_at'];
+            $r['formatted_arrived']   = $sch['formatted_arrived'];
             $r['completed_at']        = $sch['completed_at'];
             $r['formatted_completed'] = $sch['formatted_completed'];
         }
@@ -634,7 +638,7 @@ if ($section === 'bookings') {
     if ($method === 'POST' && $action === 'update_status') {
         $id     = (int)($_POST['id'] ?? 0);
         $status = trim($_POST['status'] ?? '');
-        $valid  = ['pending','awaiting_payment','progress','done','cancelled'];
+        $valid  = ['pending','awaiting_payment','progress','arrived','done','cancelled'];
         if (!$id || !in_array($status, $valid)) respond(false, 'Invalid data.');
         $oldStatus = null;
         $oldRes = $conn->query("SELECT status FROM bookings WHERE id=$id LIMIT 1");
@@ -642,8 +646,9 @@ if ($section === 'bookings') {
             $oldRow = $oldRes->fetch_assoc();
             $oldStatus = $oldRow['status'] ?? null;
         }
+        $arrExtra = ($status === 'arrived') ? ", arrived_at = COALESCE(arrived_at, NOW())" : "";
         $compExtra = ($status === 'done') ? ", completed_at = COALESCE(completed_at, NOW())" : "";
-        $conn->query("UPDATE bookings SET status='$status'{$compExtra} WHERE id=$id");
+        $conn->query("UPDATE bookings SET status='$status'{$arrExtra}{$compExtra} WHERE id=$id");
         if ($oldStatus !== null && $oldStatus !== $status) {
             logBookingStatusChange($conn, $id, $oldStatus, $status, 'admin', (int)($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0), 'Status changed by admin panel');
         }

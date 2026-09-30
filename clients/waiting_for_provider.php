@@ -1034,8 +1034,8 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
         currentStatus = data.status;
 
-        // Online payment still pending → payment page
-        if (data.status === 'awaiting_payment') {
+        // Online payment pending or rejected → payment page
+        if (data.status === 'awaiting_payment' || data.status === 'payment_rejected') {
           window.location.href = 'booking_accepted.php?booking_id=' + BOOKING_ID;
           return;
         }
@@ -1121,9 +1121,32 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           tipsSection.style.display = 'none';
         }
 
+      } else if (data.status === 'arrived') {
+        topBarTitle.textContent = 'Provider Arrived';
+        banner.className = 'wfp-status-banner accepted';
+        banner.style.background = 'linear-gradient(135deg, #0284C7, #06B6D4)';
+        spinner.style.display = 'none';
+        statusTxt.innerHTML = `Your provider has arrived at your location! <span>📍</span>`;
+        cancelWrap.style.display = 'none';
+        tipsSection.style.display = 'none';
+        document.getElementById('chatBtnWrap').style.display = 'block';
+
+        if (data.provider) {
+          const p = data.provider;
+          document.getElementById('provAvatar').textContent = p.initials || p.name.substring(0, 2).toUpperCase();
+          document.getElementById('provName').textContent = p.name;
+          document.getElementById('provMeta').textContent = p.service + ' · ' + p.jobs + ' jobs done';
+          const ratingVal = parseFloat(p.rating || 0);
+          document.getElementById('provRating').textContent =
+            ratingVal > 0 ? '⭐ ' + ratingVal.toFixed(1) + ' rating' : 'New Provider';
+          providerPhone = p.phone || '';
+          provCard.style.display = 'flex';
+        }
+
       } else if (data.status === 'accepted' || data.has_provider || data.status === 'progress') {
         topBarTitle.textContent = 'Provider On the Way';
         banner.className = 'wfp-status-banner accepted';
+        banner.style.background = '';
         spinner.style.display = 'none';
         statusTxt.innerHTML = `Your provider is on the way! <span>🏃</span>`;
         cancelWrap.style.display = 'none';

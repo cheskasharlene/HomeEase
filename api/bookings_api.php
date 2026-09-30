@@ -140,6 +140,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
     $hasStart = in_array('start_time', $cols, true);
     $hasEnd = in_array('end_time', $cols, true);
     $hasComp = in_array('completed_at', $cols, true);
+    $hasArr = in_array('arrived_at', $cols, true);
     $hasHours = in_array('hours', $cols, true);
 
     $serviceSelect = $hasServiceId ? 'COALESCE(sv.name, b.service)' : 'b.service';
@@ -149,6 +150,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
     }
     if ($hasStart) $select .= ', b.start_time';
     if ($hasEnd) $select .= ', b.end_time';
+    if ($hasArr) $select .= ', b.arrived_at';
     if ($hasComp) $select .= ', b.completed_at';
     if ($hasHours) $select .= ', b.hours';
     if ($hasNotes) {
@@ -168,7 +170,7 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
     $providerJoinExpr = $hasProviderId ? 'COALESCE(b.provider_id, br.provider_id)' : 'br.provider_id';
     $select .= ', sp.provider_id AS provider_id, sp.full_name AS provider_name, sp.contact_number AS provider_phone,';
     $select .= ' sp.rating AS provider_rating, sp.jobs_done AS provider_jobs, s_sp.name AS provider_service';
-    $select .= ', p.payment_method, p.payment_status, p.amount AS payment_amount, p.payment_reference, p.transaction_id, p.payment_proof_path';
+    $select .= ', p.payment_method, p.payment_status, p.amount AS payment_amount, p.payment_reference, p.transaction_id, p.payment_proof_path, p.rejection_reason';
 
         $serviceJoin = $hasServiceId ? 'LEFT JOIN services sv ON sv.id = b.service_id' : '';
         $sql = "SELECT $select
@@ -253,7 +255,8 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
         $row['hours'] ?? 1,
         $row['start_time'] ?? '',
         $row['end_time'] ?? '',
-        $row['completed_at'] ?? null
+        $row['completed_at'] ?? null,
+        $row['arrived_at'] ?? null
     );
 
     ob_end_clean();
@@ -268,6 +271,8 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             'end_time' => $sch['end_time'],
             'scheduled_start' => $sch['scheduled_start'],
             'scheduled_end' => $sch['scheduled_end'],
+            'arrived_at' => $sch['arrived_at'],
+            'formatted_arrived' => $sch['formatted_arrived'],
             'completed_at' => $sch['completed_at'],
             'formatted_completed' => $sch['formatted_completed'],
             'address' => (string) ($row['address'] ?? ''),

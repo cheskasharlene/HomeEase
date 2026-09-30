@@ -128,11 +128,12 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     function isAcceptedStatus(raw) {
       const s = String(raw || '').toLowerCase();
-      return s === 'confirmed' || s === 'progress' || s === 'active' || s === 'awaiting_payment';
+      return s === 'confirmed' || s === 'progress' || s === 'active' || s === 'awaiting_payment' || s === 'payment_rejected';
     }
 
     function needsPaymentPage(b) {
-      return String(b.status || '').toLowerCase() === 'awaiting_payment';
+      const s = String(b.status || '').toLowerCase();
+      return s === 'awaiting_payment' || s === 'payment_rejected';
     }
 
     function hasAssignedProvider(b) {
@@ -290,7 +291,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
     function openBookingDetail(id, status) {
       if (!id) return;
       const s = String(status || '').toLowerCase();
-      if (s === 'awaiting_payment') {
+      if (s === 'awaiting_payment' || s === 'payment_rejected') {
         window.location.href = `booking_accepted.php?booking_id=${encodeURIComponent(id)}`;
         return;
       }

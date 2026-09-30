@@ -1702,7 +1702,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
 
       function statusPill(s) {
         const key = String(s || '').toLowerCase();
-        const map = { pending: 'badge-amber', progress: 'badge-blue', done: 'badge-green', cancelled: 'badge-gray', active: 'badge-green', inactive: 'badge-red', available: 'badge-green', busy: 'badge-amber', offline: 'badge-gray' };
+        const map = { pending: 'badge-amber', progress: 'badge-blue', arrived: 'badge-purple', done: 'badge-green', cancelled: 'badge-gray', active: 'badge-green', inactive: 'badge-red', available: 'badge-green', busy: 'badge-amber', offline: 'badge-gray' };
         return `<span class="${map[key] || 'badge-gray'}">${key ? key.charAt(0).toUpperCase() + key.slice(1) : '–'}</span>`;
       }
 
@@ -2327,7 +2327,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         if (typeof b === 'string') b = JSON.parse(b);
         _currentBk = b;
         document.getElementById('bkDetailStatus').className = {
-          pending: 'badge-amber', progress: 'badge-blue', done: 'badge-green', cancelled: 'badge-gray'
+          pending: 'badge-amber', progress: 'badge-blue', arrived: 'badge-purple', done: 'badge-green', cancelled: 'badge-gray'
         }[b.status] || 'badge-gray';
         document.getElementById('bkDetailStatus').textContent = b.status;
 
@@ -2361,6 +2361,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
               <div class="detail-row"><span class="detail-lbl">Booking ID</span><span class="detail-val" style="font-weight:800;color:var(--teal);">#${b.id}</span></div>
               <div class="detail-row"><span class="detail-lbl">Service</span><span class="detail-val">${svcEmoji(b.service)} ${b.service}</span></div>
               <div class="detail-row"><span class="detail-lbl">Scheduled Start</span><span class="detail-val">${b.scheduled_start || ((b.date || '–') + ' ' + (b.time_slot || ''))}</span></div>
+              ${(b.formatted_arrived || b.arrived_at) ? `<div class="detail-row"><span class="detail-lbl" style="color:var(--teal);">Arrival Time</span><span class="detail-val" style="color:var(--teal);font-weight:800;">${b.formatted_arrived || b.arrived_at}</span></div>` : ''}
               ${((b.status === 'done' || b.status === 'completed') && (b.formatted_completed || b.completed_at)) ? `<div class="detail-row"><span class="detail-lbl" style="color:var(--teal);">Completion Time</span><span class="detail-val" style="color:var(--teal);font-weight:800;">${b.formatted_completed || b.completed_at}</span></div>` : ''}
               <div class="detail-row"><span class="detail-lbl">Price</span><span class="detail-val" style="color:var(--teal);font-size:15px;font-weight:800;">${php(b.price)}</span></div>
             </div>

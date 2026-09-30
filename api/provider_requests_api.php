@@ -554,6 +554,76 @@ if ($method === 'POST' && ($action === 'decline' || $action === 'decline_booking
     exit;
 }
 
+if ($method === 'POST' && $action === 'arrived') {
+    $bookingId = (int)($_POST['booking_id'] ?? 0);
+    if ($bookingId <= 0) {
+        echo json_encode(['success' => false, 'message' => 'Invalid booking ID.']);
+        exit;
+    }
+
+    $chk = $conn->prepare("
+        SELECT b.id, b.status, b.user_id, b.service 
+        FROM bookings b 
+        LEFT JOIN booking_requests br ON br.booking_id = b.id AND br.provider_id = ? 
+        WHERE b.id = ? AND (b.provider_id = ? OR br.provider_id = ? OR br.status IN ('accepted', 'closed')) 
+        LIMIT 1
+    ");
+    $chk->bind_param('iiii', $providerId, $bookingId, $providerId, $providerId);
+    $chk->execute();
+    $bRow = $chk->get_result()->fetch_assoc();
+    $chk->close();
+
+    if (!$bRow) {
+        echo json_encode(['success' => false, 'message' => 'No accepted booking found.']);
+        exit;
+    }
+
+    $currentBkStatus = strtolower((string)($bRow['status'] ?? ''));
+    if ($currentBkStatus === 'arrived') {
+        ob_end_clean();
+        echo json_encode(['success' => true, 'message' => 'Already marked as arrived.']);
+        exit;
+    }
+
+    if ($currentBkStatus === 'done' || $currentBkStatus === 'completed') {
+        ob_end_clean();
+        echo json_encode(['success' => true, 'message' => 'Booking is already completed.']);
+        exit;
+    }
+
+    $conn->begin_transaction();
+    try {
+        $oldStatus = $bRow['status'] ?? null;
+        $nowStr = phNow();
+        ensureBookingStatusEnum($conn);
+
+        $upd = $conn->prepare("UPDATE bookings SET status = 'arrived', arrived_at = ?, provider_id = COALESCE(NULLIF(provider_id, 0), ?) WHERE id = ?");
+        $upd->bind_param('sii', $nowStr, $providerId, $bookingId);
+        $upd->execute();
+        $upd->close();
+
+        if ($oldStatus !== null && $oldStatus !== 'arrived') {
+            logBookingStatusChange($conn, $bookingId, $oldStatus, 'arrived', 'provider', $providerId, 'Provider arrived at location');
+        }
+
+        $uid = (int)($bRow['user_id'] ?? 0);
+        if ($uid > 0) {
+            $svc = $conn->real_escape_string((string)($bRow['service'] ?? 'service'));
+            $conn->query("INSERT INTO notifications (user_id, title, message, icon, is_read, created_at)
+                VALUES ({$uid}, 'Provider Arrived', 'Your {$svc} provider has arrived at your location!', 'house_cleaner', 0, NOW())");
+        }
+
+        $conn->commit();
+        ob_end_clean();
+        echo json_encode(['success' => true, 'message' => 'Arrival recorded successfully.']);
+    } catch (Throwable $e) {
+        $conn->rollback();
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit;
+}
+
 if ($method === 'POST' && $action === 'complete') {
     $bookingId = (int)($_POST['booking_id'] ?? 0);
     if ($bookingId <= 0) {
@@ -582,6 +652,12 @@ if ($method === 'POST' && $action === 'complete') {
     if ($currentBkStatus === 'done' || $currentBkStatus === 'completed') {
         ob_end_clean();
         echo json_encode(['success' => true, 'message' => 'Booking marked as complete.']);
+        exit;
+    }
+
+    if ($currentBkStatus !== 'arrived') {
+        ob_end_clean();
+        echo json_encode(['success' => false, 'message' => 'Please tap "Arrived at Destination" before marking the job complete.']);
         exit;
     }
 

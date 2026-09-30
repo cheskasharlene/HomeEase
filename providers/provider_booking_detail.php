@@ -59,7 +59,8 @@ if ($booking) {
     $booking['hours'] ?? 1,
     $booking['start_time'] ?? '',
     $booking['end_time'] ?? '',
-    $booking['completed_at'] ?? null
+    $booking['completed_at'] ?? null,
+    $booking['arrived_at'] ?? null
   );
 }
 
@@ -91,6 +92,7 @@ $serviceName = htmlspecialchars($booking['service_name'] ?? $booking['service'] 
 $serviceIcon = getServiceIcon($booking['service_name'] ?? $booking['service'] ?? '');
 $rawStatus = strtolower(trim((string)($booking['status'] ?? 'pending')));
 $isDone = in_array($rawStatus, ['done', 'completed'], true);
+$isArrived = ($rawStatus === 'arrived');
 $isProgress = in_array($rawStatus, ['confirmed', 'progress', 'active', 'awaiting_payment'], true);
 $isCancelled = in_array($rawStatus, ['cancelled', 'canceled', 'declined'], true);
 
@@ -577,6 +579,8 @@ if ($rawNotes !== '') {
             <div class="pbd-status-left">
               <?php if ($isDone): ?>
                 <span class="pbd-status-pill done"><i class="bi bi-check-circle-fill"></i> Completed</span>
+              <?php elseif ($isArrived): ?>
+                <span class="pbd-status-pill arrived" style="background:linear-gradient(135deg,#e0f2fe,#bae6fd);color:#0369a1;border:1.5px solid #7dd3fc;"><i class="bi bi-geo-alt-fill"></i> Arrived</span>
               <?php elseif ($isProgress): ?>
                 <span class="pbd-status-pill progress"><i class="bi bi-hourglass-split"></i> In Progress</span>
               <?php elseif ($isCancelled): ?>
@@ -609,6 +613,13 @@ if ($rawNotes !== '') {
               <span class="pbd-lbl"><i class="bi bi-play-circle-fill" style="color:#E8820C;"></i> Scheduled Start</span>
               <span class="pbd-val"><?= htmlspecialchars($schPHP['scheduled_start'] ?? formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null)) ?></span>
             </div>
+
+            <?php if (!empty($schPHP['formatted_arrived'])): ?>
+              <div class="pbd-row">
+                <span class="pbd-lbl" style="color:#0284C7;"><i class="bi bi-geo-alt-fill" style="color:#0284C7;"></i> Arrival Time</span>
+                <span class="pbd-val" style="color:#0284C7;font-weight:800;"><?= htmlspecialchars($schPHP['formatted_arrived']) ?></span>
+              </div>
+            <?php endif; ?>
 
             <?php if ($isDone && !empty($schPHP['formatted_completed'])): ?>
               <div class="pbd-row">

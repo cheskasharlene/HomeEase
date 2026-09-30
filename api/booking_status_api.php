@@ -25,6 +25,7 @@ cancelExpiredMatchingBookings($conn, $bookingId);
 
 
 $sql = "SELECT b.id, COALESCE(sv.name, b.service) AS service, b.date, b.time_slot, b.address, b.price, b.status, b.created_at,
+               b.arrived_at, b.completed_at,
                b.provider_lat, b.provider_lng, b.customer_lat, b.customer_lng,
                br.provider_id AS req_provider_id, br.status AS req_status, br.responded_at,
                sp.full_name AS provider_name, sp.contact_number AS provider_phone,
@@ -130,23 +131,37 @@ if ($hasProvider && $providerLat === null) {
     $providerLng = $customerLng + sin($angle) * 0.012;
 }
 
+$sch = calculateBookingTimes(
+    $row['date'] ?? '',
+    $row['time_slot'] ?? '',
+    1,
+    '',
+    '',
+    $row['completed_at'] ?? null,
+    $row['arrived_at'] ?? null
+);
+
 $response = [
-    'success'         => true,
-    'booking_id'      => (int)$row['id'],
-    'status'          => $status,
-    'service'         => (string)($row['service'] ?? ''),
-    'date'            => (string)($row['date'] ?? ''),
-    'time_slot'       => (string)($row['time_slot'] ?? ''),
-    'price'           => (float)($row['price'] ?? 0),
-    'has_provider'    => $hasProvider,
-    'pending_requests'=> $pendingCount,
-    'customer_lat'    => $customerLat,
-    'customer_lng'    => $customerLng,
-    'provider_lat'    => $providerLat,
-    'provider_lng'    => $providerLng,
-    'created_at'      => (string)($row['created_at'] ?? ''),
-    'is_timeout'      => $isTimeout,
-    'message'         => $isTimeout ? 'No available workers. Please try again' : null,
+    'success'           => true,
+    'booking_id'        => (int)$row['id'],
+    'status'            => $status,
+    'service'           => (string)($row['service'] ?? ''),
+    'date'              => (string)($row['date'] ?? ''),
+    'time_slot'         => (string)($row['time_slot'] ?? ''),
+    'price'             => (float)($row['price'] ?? 0),
+    'has_provider'      => $hasProvider,
+    'pending_requests'  => $pendingCount,
+    'customer_lat'      => $customerLat,
+    'customer_lng'      => $customerLng,
+    'provider_lat'      => $providerLat,
+    'provider_lng'      => $providerLng,
+    'created_at'        => (string)($row['created_at'] ?? ''),
+    'arrived_at'        => $sch['arrived_at'],
+    'formatted_arrived' => $sch['formatted_arrived'],
+    'completed_at'      => $sch['completed_at'],
+    'formatted_completed' => $sch['formatted_completed'],
+    'is_timeout'        => $isTimeout,
+    'message'           => $isTimeout ? 'No available workers. Please try again' : null,
 ];
 
 if ($hasProvider) {
