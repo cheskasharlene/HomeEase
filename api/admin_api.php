@@ -579,7 +579,18 @@ if ($section === 'bookings') {
 
         $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        $sql = "SELECT b.id, COALESCE(s.name, b.service) AS service, b.date, b.time_slot, b.address, b.price, b.status,
+        $hasCols = [];
+        $cr = $conn->query("SHOW COLUMNS FROM bookings");
+        if ($cr) {
+            while ($c = $cr->fetch_assoc()) $hasCols[] = $c['Field'];
+        }
+        $extraSelect = '';
+        if (in_array('start_time', $hasCols, true)) $extraSelect .= ', b.start_time';
+        if (in_array('end_time', $hasCols, true)) $extraSelect .= ', b.end_time';
+        if (in_array('completed_at', $hasCols, true)) $extraSelect .= ', b.completed_at';
+        if (in_array('hours', $hasCols, true)) $extraSelect .= ', b.hours';
+
+        $sql = "SELECT b.id, COALESCE(s.name, b.service) AS service, b.date, b.time_slot{$extraSelect}, b.address, b.price, b.status,
                        b.notes, b.provider_id, b.created_at,
                        u.id AS user_id, u.name AS user_name, u.email AS user_email, u.phone AS user_phone,
                        t.full_name AS technician_name, t.contact_number AS tech_phone,
@@ -598,6 +609,25 @@ if ($section === 'bookings') {
         $stmt->execute();
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+
+        foreach ($rows as &$r) {
+            $sch = calculateBookingTimes(
+                $r['date'] ?? '',
+                $r['time_slot'] ?? '',
+                $r['hours'] ?? 1,
+                $r['start_time'] ?? '',
+                $r['end_time'] ?? '',
+                $r['completed_at'] ?? null
+            );
+            $r['start_time']          = $sch['start_time'];
+            $r['end_time']            = $sch['end_time'];
+            $r['scheduled_start']     = $sch['scheduled_start'];
+            $r['scheduled_end']       = $sch['scheduled_end'];
+            $r['completed_at']        = $sch['completed_at'];
+            $r['formatted_completed'] = $sch['formatted_completed'];
+        }
+        unset($r);
+
         respond(true, '', ['bookings' => $rows]);
     }
 
@@ -612,7 +642,8 @@ if ($section === 'bookings') {
             $oldRow = $oldRes->fetch_assoc();
             $oldStatus = $oldRow['status'] ?? null;
         }
-        $conn->query("UPDATE bookings SET status='$status' WHERE id=$id");
+        $compExtra = ($status === 'done') ? ", completed_at = COALESCE(completed_at, NOW())" : "";
+        $conn->query("UPDATE bookings SET status='$status'{$compExtra} WHERE id=$id");
         if ($oldStatus !== null && $oldStatus !== $status) {
             logBookingStatusChange($conn, $id, $oldStatus, $status, 'admin', (int)($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0), 'Status changed by admin panel');
         }

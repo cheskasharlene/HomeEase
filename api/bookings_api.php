@@ -137,11 +137,20 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
     ensureProviderReviewsTable($conn);
     ensurePaymentsTable($conn);
 
+    $hasStart = in_array('start_time', $cols, true);
+    $hasEnd = in_array('end_time', $cols, true);
+    $hasComp = in_array('completed_at', $cols, true);
+    $hasHours = in_array('hours', $cols, true);
+
     $serviceSelect = $hasServiceId ? 'COALESCE(sv.name, b.service)' : 'b.service';
     $select = "b.id, {$serviceSelect} AS service, b.date, b.address, b.status, b.created_at";
     if ($hasTimeSlot) {
         $select .= ', b.time_slot';
     }
+    if ($hasStart) $select .= ', b.start_time';
+    if ($hasEnd) $select .= ', b.end_time';
+    if ($hasComp) $select .= ', b.completed_at';
+    if ($hasHours) $select .= ', b.hours';
     if ($hasNotes) {
         $select .= ', b.notes';
     }
@@ -238,6 +247,15 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
         }
     }
 
+    $sch = calculateBookingTimes(
+        $row['date'] ?? '',
+        $row['time_slot'] ?? '',
+        $row['hours'] ?? 1,
+        $row['start_time'] ?? '',
+        $row['end_time'] ?? '',
+        $row['completed_at'] ?? null
+    );
+
     ob_end_clean();
     echo json_encode([
         'success' => true,
@@ -246,6 +264,12 @@ if ($method === 'GET' && ($action === 'detail' || $action === 'accepted_detail')
             'service' => (string) ($row['service'] ?? ''),
             'date' => (string) ($row['date'] ?? ''),
             'time_slot' => (string) ($row['time_slot'] ?? ''),
+            'start_time' => $sch['start_time'],
+            'end_time' => $sch['end_time'],
+            'scheduled_start' => $sch['scheduled_start'],
+            'scheduled_end' => $sch['scheduled_end'],
+            'completed_at' => $sch['completed_at'],
+            'formatted_completed' => $sch['formatted_completed'],
             'address' => (string) ($row['address'] ?? ''),
             'notes' => (string) ($row['notes'] ?? ''),
             'details' => (string) ($row['details'] ?? ''),
@@ -458,11 +482,24 @@ if ($method === 'POST' && $action === '') {
         $params[] = $serviceId;
     }
 
+    $schCreated = calculateBookingTimes($date, $time_slot, $hours);
     if (in_array('time_slot', $bcols)) {
         $col_list .= ", time_slot";
         $val_list .= ", ?";
         $types .= "s";
         $params[] = $time_slot;
+    }
+    if (in_array('start_time', $bcols)) {
+        $col_list .= ", start_time";
+        $val_list .= ", ?";
+        $types .= "s";
+        $params[] = $schCreated['start_time'];
+    }
+    if (in_array('end_time', $bcols)) {
+        $col_list .= ", end_time";
+        $val_list .= ", ?";
+        $types .= "s";
+        $params[] = $schCreated['end_time'];
     }
     if (in_array('notes', $bcols)) {
         $col_list .= ", notes";

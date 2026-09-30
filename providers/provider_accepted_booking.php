@@ -583,9 +583,9 @@ if ($bookingId > 0) {
 
     const MAP_STYLES = {
       standard: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, subdomains: 'abc' },
-      google: { url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO', maxZoom: 19, subdomains: 'abcd' },
-      dark: { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO', maxZoom: 19, subdomains: 'abcd' },
-      minimal: { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO', maxZoom: 19, subdomains: 'abcd' }
+      google: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, subdomains: 'abc' },
+      dark: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, subdomains: 'abc' },
+      minimal: { url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; OpenStreetMap contributors', maxZoom: 19, subdomains: 'abc' }
     };
 
     let currentStyleKey = localStorage.getItem('wfpMapStyle') || 'standard';

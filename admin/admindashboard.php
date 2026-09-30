@@ -2360,7 +2360,8 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
             <div style="padding:4px 0;">
               <div class="detail-row"><span class="detail-lbl">Booking ID</span><span class="detail-val" style="font-weight:800;color:var(--teal);">#${b.id}</span></div>
               <div class="detail-row"><span class="detail-lbl">Service</span><span class="detail-val">${svcEmoji(b.service)} ${b.service}</span></div>
-              <div class="detail-row"><span class="detail-lbl">Date & Time</span><span class="detail-val">${b.date || '–'} ${b.time_slot || ''}</span></div>
+              <div class="detail-row"><span class="detail-lbl">Scheduled Start</span><span class="detail-val">${b.scheduled_start || ((b.date || '–') + ' ' + (b.time_slot || ''))}</span></div>
+              ${((b.status === 'done' || b.status === 'completed') && (b.formatted_completed || b.completed_at)) ? `<div class="detail-row"><span class="detail-lbl" style="color:var(--teal);">Completion Time</span><span class="detail-val" style="color:var(--teal);font-weight:800;">${b.formatted_completed || b.completed_at}</span></div>` : ''}
               <div class="detail-row"><span class="detail-lbl">Price</span><span class="detail-val" style="color:var(--teal);font-size:15px;font-weight:800;">${php(b.price)}</span></div>
             </div>
           </div>

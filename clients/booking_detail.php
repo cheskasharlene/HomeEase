@@ -26,6 +26,10 @@ if ($bookingId > 0 && $userId > 0) {
   $hasPrice = in_array('price', $cols, true);
   $hasSupplyOption = in_array('supply_option', $cols, true);
   $hasSupplyFee = in_array('supply_fee', $cols, true);
+  $hasStart = in_array('start_time', $cols, true);
+  $hasEnd = in_array('end_time', $cols, true);
+  $hasComp = in_array('completed_at', $cols, true);
+  $hasHours = in_array('hours', $cols, true);
 
   ensureBookingRequestsTable($conn);
   ensureProviderReviewsTable($conn);
@@ -34,6 +38,10 @@ if ($bookingId > 0 && $userId > 0) {
   $serviceSelect = $hasServiceId ? 'COALESCE(sv.name, b.service)' : 'b.service';
   $select = "b.id, {$serviceSelect} AS service, b.date, b.address, b.status, b.created_at";
   if ($hasTimeSlot) $select .= ', b.time_slot';
+  if ($hasStart) $select .= ', b.start_time';
+  if ($hasEnd) $select .= ', b.end_time';
+  if ($hasComp) $select .= ', b.completed_at';
+  if ($hasHours) $select .= ', b.hours';
   if ($hasNotes) $select .= ', b.notes';
   if ($hasPrice) $select .= ', b.price';
   if ($hasSupplyOption) $select .= ', b.supply_option';
@@ -66,7 +74,17 @@ if ($bookingId > 0 && $userId > 0) {
     $stmt->close();
   }
 
+  $schPHP = null;
   if ($booking) {
+    $schPHP = calculateBookingTimes(
+      $booking['date'] ?? '',
+      $booking['time_slot'] ?? '',
+      $booking['hours'] ?? 1,
+      $booking['start_time'] ?? '',
+      $booking['end_time'] ?? '',
+      $booking['completed_at'] ?? null
+    );
+
     $providerIdResolved = (int) ($booking['provider_id'] ?? 0);
     if ($providerIdResolved <= 0) {
       $providerIdResolved = (int) ($booking['request_provider_id'] ?? 0);
@@ -747,9 +765,6 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
               <?php else: ?>
                 <span class="pbd-status-pill pending" id="bookingStatusPill"><i class="bi bi-clock-history"></i> Pending</span>
               <?php endif; ?>
-              <div class="pbd-status-time" id="bookingStatusTime">
-                <i class="bi bi-calendar3"></i> <span id="bookingScheduleText"><?= formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null) ?></span>
-              </div>
             </div>
             <div>
               <div class="pbd-status-price" id="statusPriceText">₱<?= number_format($displayPrice, 2) ?></div>
@@ -772,8 +787,13 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
             </div>
 
             <div class="pbd-row">
-              <span class="pbd-lbl"><i class="bi bi-clock-history"></i> Schedule</span>
-              <span class="pbd-val" id="bookingScheduleVal"><?= formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null) ?></span>
+              <span class="pbd-lbl"><i class="bi bi-play-circle-fill" style="color:#E8820C;"></i> Scheduled Start</span>
+              <span class="pbd-val" id="bookingScheduledStart"><?= htmlspecialchars($schPHP['scheduled_start'] ?? formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null)) ?></span>
+            </div>
+
+            <div class="pbd-row" id="completedAtRow" style="<?= ($isDone && !empty($schPHP['formatted_completed'])) ? '' : 'display:none;' ?>">
+              <span class="pbd-lbl" style="color:#059669;"><i class="bi bi-check-circle-fill" style="color:#059669;"></i> Completed At</span>
+              <span class="pbd-val" style="color:#059669;font-weight:800;" id="bookingCompletedAt"><?= htmlspecialchars($schPHP['formatted_completed'] ?? '—') ?></span>
             </div>
 
             <div class="pbd-row">
@@ -1020,11 +1040,7 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
     }
 
     function handleBack() {
-      if (document.referrer && (document.referrer.includes('booking_') || document.referrer.includes('home.php') || document.referrer.includes('notifications.php'))) {
-        history.back();
-      } else {
-        goPage('booking_history.php');
-      }
+      goPage('booking_history.php');
     }
 
     const SERVICE_ICONS = {
@@ -1110,9 +1126,6 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
           }
         }
 
-        const schedEl = document.getElementById('bookingScheduleText');
-        if (schedEl) schedEl.textContent = formatSchedule(b.date, b.time_slot);
-
         const price = Number(b.price || b.payment_amount || 0);
         const priceEl = document.getElementById('statusPriceText');
         if (priceEl) priceEl.textContent = formatPrice(price);
@@ -1124,8 +1137,19 @@ $paymentProofUrl = $paymentProofPath ? ('../' . ltrim($paymentProofPath, '/')) :
         const sIconEl = document.getElementById('serviceIcon');
         if (sIconEl) sIconEl.textContent = getServiceIcon(b.service || '');
 
-        const sSchedVal = document.getElementById('bookingScheduleVal');
-        if (sSchedVal) sSchedVal.textContent = formatSchedule(b.date, b.time_slot);
+        const schStartEl = document.getElementById('bookingScheduledStart');
+        if (schStartEl) schStartEl.textContent = b.scheduled_start || formatSchedule(b.date, b.time_slot);
+
+        const compRow = document.getElementById('completedAtRow');
+        const compVal = document.getElementById('bookingCompletedAt');
+        if (compRow && compVal) {
+          if (isDone && (b.formatted_completed || b.completed_at)) {
+            compVal.textContent = b.formatted_completed || b.completed_at;
+            compRow.style.display = 'flex';
+          } else {
+            compRow.style.display = 'none';
+          }
+        }
 
         const sAddrEl = document.getElementById('bookingAddress');
         if (sAddrEl) sAddrEl.textContent = b.address || '—';

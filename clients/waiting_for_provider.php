@@ -597,22 +597,22 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
         subdomains: 'abc'
       },
       google: {
-        url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19,
-        subdomains: 'abcd'
+        subdomains: 'abc'
       },
       dark: {
-        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19,
-        subdomains: 'abcd'
+        subdomains: 'abc'
       },
       minimal: {
-        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19,
-        subdomains: 'abcd'
+        subdomains: 'abc'
       }
     };
 

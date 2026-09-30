@@ -51,6 +51,18 @@ if ($bookingId > 0 && $providerId > 0) {
   }
 }
 
+$schPHP = null;
+if ($booking) {
+  $schPHP = calculateBookingTimes(
+    $booking['date'] ?? '',
+    $booking['time_slot'] ?? '',
+    $booking['hours'] ?? 1,
+    $booking['start_time'] ?? '',
+    $booking['end_time'] ?? '',
+    $booking['completed_at'] ?? null
+  );
+}
+
 function getServiceIcon(string $service): string {
   $map = [
     'House Cleaner'        => '🧹',
@@ -572,9 +584,6 @@ if ($rawNotes !== '') {
               <?php else: ?>
                 <span class="pbd-status-pill done"><i class="bi bi-check-circle-fill"></i> <?= htmlspecialchars(ucfirst($rawStatus)) ?></span>
               <?php endif; ?>
-              <div class="pbd-status-time">
-                <i class="bi bi-calendar3"></i> <?= formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null) ?>
-              </div>
             </div>
             <div>
               <div class="pbd-status-price">₱<?= number_format($displayPrice, 2) ?></div>
@@ -597,9 +606,16 @@ if ($rawNotes !== '') {
             </div>
 
             <div class="pbd-row">
-              <span class="pbd-lbl"><i class="bi bi-clock-history"></i> Schedule</span>
-              <span class="pbd-val"><?= formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null) ?></span>
+              <span class="pbd-lbl"><i class="bi bi-play-circle-fill" style="color:#E8820C;"></i> Scheduled Start</span>
+              <span class="pbd-val"><?= htmlspecialchars($schPHP['scheduled_start'] ?? formatBookingDate($booking['date'] ?? null, $booking['time_slot'] ?? null)) ?></span>
             </div>
+
+            <?php if ($isDone && !empty($schPHP['formatted_completed'])): ?>
+              <div class="pbd-row">
+                <span class="pbd-lbl" style="color:#059669;"><i class="bi bi-check-circle-fill" style="color:#059669;"></i> Completed At</span>
+                <span class="pbd-val" style="color:#059669;font-weight:800;"><?= htmlspecialchars($schPHP['formatted_completed']) ?></span>
+              </div>
+            <?php endif; ?>
 
             <div class="pbd-row">
               <span class="pbd-lbl"><i class="bi bi-geo-alt-fill"></i> Location</span>

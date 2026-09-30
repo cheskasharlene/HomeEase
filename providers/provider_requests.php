@@ -738,8 +738,8 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
           maxBoundsViscosity: 1.0
         });
         previewMap.fitBounds(ST_BOUNDS);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: '© CARTO', maxZoom: 19, subdomains: 'abcd'
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors', maxZoom: 19, subdomains: 'abc'
         }).addTo(previewMap);
       }
       setTimeout(() => previewMap.invalidateSize(), 350);

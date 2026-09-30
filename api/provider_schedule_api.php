@@ -64,7 +64,8 @@ if ($method === 'POST' && $action === 'update_status') {
         exit;
     }
 
-    $sql = "UPDATE bookings SET status = ? WHERE id = ? AND $ownerClause";
+    $completedClause = ($dbStatus === 'done') ? ", completed_at = COALESCE(completed_at, NOW())" : "";
+    $sql = "UPDATE bookings SET status = ?{$completedClause} WHERE id = ? AND $ownerClause";
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
         echo json_encode(['success' => false, 'message' => 'DB error: ' . $conn->error]);

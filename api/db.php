@@ -374,8 +374,22 @@ function ensureNormalizationSchema($conn)
 
     @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS service_id INT NULL AFTER user_id");
     @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS provider_id INT NULL AFTER service_id");
+    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS start_time VARCHAR(32) NULL AFTER time_slot");
+    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS end_time VARCHAR(32) NULL AFTER start_time");
+    @$conn->query("ALTER TABLE bookings ADD COLUMN IF NOT EXISTS completed_at DATETIME NULL AFTER status");
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_service_id (service_id)");
     @$conn->query("ALTER TABLE bookings ADD INDEX IF NOT EXISTS idx_bookings_provider_id (provider_id)");
+
+    // Backfill completed_at for existing done/completed bookings if null
+    @$conn->query("UPDATE bookings b
+        JOIN (
+            SELECT booking_id, MIN(created_at) AS first_completed
+            FROM booking_status_logs
+            WHERE LOWER(new_status) IN ('done', 'completed')
+            GROUP BY booking_id
+        ) bsl ON bsl.booking_id = b.id
+        SET b.completed_at = bsl.first_completed
+        WHERE b.completed_at IS NULL AND LOWER(b.status) IN ('done', 'completed')");
 
     
     $res = $conn->query("SHOW COLUMNS FROM bookings LIKE 'customer_lng'");
@@ -609,9 +623,79 @@ function logBookingStatusChange($conn, $bookingId, $oldStatus, $newStatus, $chan
     $ok = $stmt->execute();
     $stmt->close();
     if ($ok && in_array(strtolower((string)$newStatus), ['done', 'completed', 'cancelled'])) {
+        if (in_array(strtolower((string)$newStatus), ['done', 'completed'])) {
+            @$conn->query("UPDATE bookings SET completed_at = '$nowStr' WHERE id = " . (int)$bookingId . " AND completed_at IS NULL");
+        }
         syncProviderJobsDone($conn);
     }
     return $ok;
+}
+
+if (!function_exists('calculateBookingTimes')) {
+    function calculateBookingTimes($date, $timeSlot = '', $hours = 1, $startTime = '', $endTime = '', $completedAt = null) {
+        $hours = max(1, (int)$hours);
+        $dateStr = trim((string)$date);
+        
+        $startStr = trim((string)$startTime);
+        $endStr = trim((string)$endTime);
+
+        if (!$startStr && $timeSlot) {
+            $slot = trim((string)$timeSlot);
+            if (strpos($slot, '-') !== false) {
+                $parts = explode('-', $slot, 2);
+                $startStr = trim($parts[0]);
+                $endStr = trim($parts[1]);
+            } else {
+                $startStr = $slot;
+            }
+        }
+
+        if (!$startStr) {
+            $startStr = '12:00 PM';
+        }
+
+        $startDt = null;
+        if ($dateStr && $dateStr !== '0000-00-00') {
+            $parsedStart = strtotime($dateStr . ' ' . $startStr);
+            if ($parsedStart !== false) {
+                $startDt = $parsedStart;
+            }
+        }
+        if (!$startDt && $dateStr && $dateStr !== '0000-00-00') {
+            $startDt = strtotime($dateStr);
+        }
+
+        $endDt = null;
+        if ($endStr && $dateStr && $dateStr !== '0000-00-00') {
+            $parsedEnd = strtotime($dateStr . ' ' . $endStr);
+            if ($parsedEnd !== false) {
+                $endDt = $parsedEnd;
+            }
+        }
+        if (!$endDt && $startDt) {
+            $endDt = strtotime("+$hours hours", $startDt);
+        }
+
+        $formattedStart = $startDt ? date('M j, Y - g:i A', $startDt) : ($dateStr ? $dateStr . ' ' . $startStr : $startStr);
+        $formattedEnd   = $endDt ? date('M j, Y - g:i A', $endDt) : '—';
+        
+        $formattedCompleted = null;
+        if ($completedAt && $completedAt !== '0000-00-00 00:00:00') {
+            $cTs = strtotime($completedAt);
+            if ($cTs !== false) {
+                $formattedCompleted = date('M j, Y - g:i A', $cTs);
+            }
+        }
+
+        return [
+            'start_time'           => $startStr,
+            'end_time'             => $endStr ?: ($endDt ? date('g:i A', $endDt) : ''),
+            'scheduled_start'      => $formattedStart,
+            'scheduled_end'        => $formattedEnd,
+            'completed_at'         => $completedAt,
+            'formatted_completed'  => $formattedCompleted,
+        ];
+    }
 }
 
 function resolveServiceIdByName($conn, $serviceName)

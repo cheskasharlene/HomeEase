@@ -606,8 +606,9 @@ if ($method === 'POST' && $action === 'complete') {
     try {
         $oldStatus = $bRow['status'] ?? null;
 
-        $upd = $conn->prepare("UPDATE bookings SET status = 'done', provider_id = COALESCE(NULLIF(provider_id, 0), ?) WHERE id = ?");
-        $upd->bind_param('ii', $providerId, $bookingId);
+        $nowStr = phNow();
+        $upd = $conn->prepare("UPDATE bookings SET status = 'done', completed_at = ?, provider_id = COALESCE(NULLIF(provider_id, 0), ?) WHERE id = ?");
+        $upd->bind_param('sii', $nowStr, $providerId, $bookingId);
         $upd->execute();
         $upd->close();
 
