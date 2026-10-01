@@ -34,6 +34,7 @@ if ($userId <= 0 && $providerId <= 0) {
     is_read      TINYINT(1) NOT NULL DEFAULT 0,
     INDEX idx_booking_chat (booking_id, id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+ensureTableAutoIncrement($conn, 'chat_messages');
 
 $method    = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action    = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));

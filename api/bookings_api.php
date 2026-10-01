@@ -582,7 +582,7 @@ if ($method === 'POST' && $action === '') {
         
         ensurePaymentsTable($conn);
         $paymentMethod = strtolower(trim($_POST['payment_method'] ?? 'cash'));
-        $paymentReference = null;
+        $paymentReference = isset($_POST['gcash_number']) && trim($_POST['gcash_number']) !== '' ? trim($_POST['gcash_number']) : (isset($_POST['account_number']) && trim($_POST['account_number']) !== '' ? trim($_POST['account_number']) : null);
         $proofPath = null;
         
         

@@ -154,17 +154,18 @@ if ($method === 'GET' && $action === 'live_feed') {
 
 if ($method === 'GET' && $action === 'payment') {
     $bookingId = (int)($_GET['booking_id'] ?? 0);
-    if ($bookingId <= 0) { echo json_encode(['success' => false, 'message' => 'Invalid booking id']); exit; }
+    if ($bookingId <= 0) { ob_end_clean(); echo json_encode(['success' => false, 'message' => 'Invalid booking id']); exit; }
 
-    $stmt = $conn->prepare("SELECT p.* FROM payments p WHERE p.booking_id = ? AND p.receiver_provider_id = ? LIMIT 1");
-    if (!$stmt) { echo json_encode(['success' => false, 'message' => 'DB error']); exit; }
+    $stmt = $conn->prepare("SELECT p.* FROM payments p WHERE p.booking_id = ? AND (p.receiver_provider_id = ? OR p.receiver_provider_id IS NULL OR p.receiver_provider_id = 0) LIMIT 1");
+    if (!$stmt) { ob_end_clean(); echo json_encode(['success' => false, 'message' => 'DB error']); exit; }
     $stmt->bind_param('ii', $bookingId, $providerId);
     $stmt->execute();
     $pay = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    if (!$pay) { echo json_encode(['success' => false, 'message' => 'No payment record found']); exit; }
+    if (!$pay) { ob_end_clean(); echo json_encode(['success' => false, 'message' => 'No payment record found']); exit; }
 
+    ob_end_clean();
     echo json_encode(['success' => true, 'payment' => $pay]);
     exit;
 }
@@ -357,7 +358,7 @@ if ($method === 'POST' && $action === 'accept_booking') {
         $nextStatus = in_array($payMethod, ['gcash', 'bank'], true) ? 'awaiting_payment' : 'progress';
         ensureBookingStatusEnum($conn);
 
-        $stmt = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ? AND status = 'pending'");
+        $stmt = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ? AND LOWER(COALESCE(status, '')) = 'pending'");
         $stmt->bind_param('si', $nextStatus, $bookingId);
         $stmt->execute();
         if ($stmt->affected_rows <= 0) {
@@ -383,9 +384,11 @@ if ($method === 'POST' && $action === 'accept_booking') {
             
         }
         $conn->commit();
+        ob_end_clean();
         echo json_encode(['success' => true, 'message' => 'Booking accepted!', 'booking_id' => $bookingId]);
     } catch (Throwable $e) {
         $conn->rollback();
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     exit;
@@ -450,7 +453,7 @@ if ($method === 'POST' && $action === 'accept') {
         $nextStatus = in_array($payMethod, ['gcash', 'bank'], true) ? 'awaiting_payment' : 'progress';
         ensureBookingStatusEnum($conn);
 
-        $stmt = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ? AND LOWER(status) = 'pending'");
+        $stmt = $conn->prepare("UPDATE bookings SET status = ? WHERE id = ? AND LOWER(COALESCE(status, '')) = 'pending'");
         $stmt->bind_param('si', $nextStatus, $bookingId);
         $stmt->execute();
         $bookingUpdated = $stmt->affected_rows > 0;
@@ -462,6 +465,7 @@ if ($method === 'POST' && $action === 'accept') {
             $stmt->execute();
             $stmt->close();
             $conn->commit();
+            ob_end_clean();
             echo json_encode(['success' => false, 'message' => 'Another provider already accepted this booking.']);
             exit;
         }
@@ -487,9 +491,11 @@ if ($method === 'POST' && $action === 'accept') {
             
         }
         $conn->commit();
+        ob_end_clean();
         echo json_encode(['success' => true, 'message' => 'Booking accepted successfully.', 'booking_id' => $bookingId]);
     } catch (Throwable $e) {
         $conn->rollback();
+        ob_end_clean();
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
     exit;
@@ -931,7 +937,8 @@ function createExpectedPayment(mysqli $conn, int $bookingId, int $providerId): v
 
     if ($existing) {
         
-        if (strtolower($existing['payment_method']) !== 'cash') {
+        $existingMethod = strtolower((string) ($existing['payment_method'] ?? ''));
+        if ($existingMethod !== 'cash') {
             $upd = $conn->prepare("UPDATE payments SET amount = ?, receiver_provider_id = ?, expected_until = ?, updated_at = NOW() WHERE id = ?");
             if ($upd) {
                 $pid = (int)$existing['id'];

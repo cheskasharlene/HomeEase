@@ -268,12 +268,14 @@ function savePayment($conn, $bookingId, $userId, $method, $reference, $amount, $
         return ['success' => false, 'message' => 'Database error: ' . $conn->error];
     }
 
+    $cleanReference = (is_string($reference) && trim($reference) !== '') ? trim($reference) : null;
+
     $stmt->bind_param(
         'iissdssss',
         $bookingId,
         $userId,
         $method,
-        $reference,
+        $cleanReference,
         $amount,
         $status,
         $transactionId,
@@ -332,8 +334,67 @@ function getPaymentByBooking($conn, $userId, $bookingId)
 
 
 
+if (!function_exists('ensureTableAutoIncrement')) {
+    function ensureTableAutoIncrement(?mysqli $conn, string $table): void
+    {
+        if (!$conn instanceof mysqli) return;
+
+        $chkTable = @$conn->query("SHOW TABLES LIKE '{$table}'");
+        if (!$chkTable || $chkTable->num_rows === 0) return;
+
+        $colRes = @$conn->query("SHOW COLUMNS FROM `{$table}` LIKE 'id'");
+        if (!$colRes || !($col = $colRes->fetch_assoc())) return;
+
+        $extra = strtolower((string)($col['Extra'] ?? ''));
+        $hasAutoIncrement = strpos($extra, 'auto_increment') !== false;
+
+        $iterations = 0;
+        while ($iterations < 1000) {
+            $zeroRes = @$conn->query("SELECT id FROM `{$table}` WHERE id = 0 LIMIT 1");
+            if (!$zeroRes || $zeroRes->num_rows === 0) {
+                break;
+            }
+            $maxRes = @$conn->query("SELECT MAX(id) AS max_id FROM `{$table}`");
+            $maxRow = $maxRes ? $maxRes->fetch_assoc() : null;
+            $nextId = max(1, (int)($maxRow['max_id'] ?? 0) + 1);
+            @$conn->query("UPDATE `{$table}` SET id = {$nextId} WHERE id = 0 LIMIT 1");
+            $iterations++;
+        }
+
+        if (!$hasAutoIncrement) {
+            $keyType = strtoupper((string)($col['Key'] ?? ''));
+            if ($keyType === 'PRI') {
+                @$conn->query("ALTER TABLE `{$table}` MODIFY COLUMN `id` INT AUTO_INCREMENT");
+            } else {
+                @$conn->query("ALTER TABLE `{$table}` MODIFY COLUMN `id` INT AUTO_INCREMENT PRIMARY KEY");
+            }
+        }
+    }
+}
+
 function ensureNormalizationSchema($conn)
 {
+    $tablesToRepair = [
+        'bookings',
+        'payments',
+        'booking_requests',
+        'booking_details',
+        'booking_status_logs',
+        'qr_change_requests',
+        'notifications',
+        'provider_documents',
+        'provider_reviews',
+        'users',
+        'service_providers',
+        'services',
+        'remittances',
+        'disputes',
+        'chat_messages'
+    ];
+    foreach ($tablesToRepair as $t) {
+        ensureTableAutoIncrement($conn, $t);
+    }
+
     $conn->query("CREATE TABLE IF NOT EXISTS payment_methods (
         id INT AUTO_INCREMENT PRIMARY KEY,
         code VARCHAR(32) NOT NULL UNIQUE,
