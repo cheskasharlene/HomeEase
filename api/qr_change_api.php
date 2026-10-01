@@ -29,15 +29,23 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 require_once __DIR__ . '/db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-$action = trim((string)($_GET['action'] ?? $_POST['action'] ?? ''));
+$action = trim((string)($_GET['action'] ?? $_POST['action'] ?? $_REQUEST['action'] ?? ''));
 
 
 ensureQrChangeRequestsTable($conn);
+ensureProviderColumns($conn);
 
 
-$isAdmin = !empty($_SESSION['admin_id']) || (
-    !empty($_SESSION['user_id']) && ($_SESSION['user_role'] ?? '') === 'admin'
-);
+$isAdmin = !empty($_SESSION['admin_id']) ||
+           (!empty($_SESSION['user_id']) && (
+               ($_SESSION['user_role'] ?? '') === 'admin' ||
+               ($_SESSION['role'] ?? '') === 'admin' ||
+               ($_SESSION['admin_role'] ?? '') === 'admin'
+           )) ||
+           (!empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') ||
+           (!empty($_SESSION['role']) && $_SESSION['role'] === 'admin') ||
+           (!empty($_SESSION['admin_role']) && $_SESSION['admin_role'] === 'admin') ||
+           !empty($_SESSION['admin_name']);
 
 if ($action === 'list' || $action === 'pending_count' || $action === 'approve' || $action === 'reject') {
     if (!$isAdmin) {
@@ -47,7 +55,7 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         exit;
     }
 
-    if ($method === 'GET' && $action === 'pending_count') {
+    if ($action === 'pending_count') {
         $r = $conn->query("SELECT COUNT(*) FROM qr_change_requests WHERE status='pending'");
         $count = $r ? (int)$r->fetch_row()[0] : 0;
         ob_end_clean();
@@ -55,10 +63,10 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         exit;
     }
 
-    if ($method === 'GET' && $action === 'list') {
-        $statusFilter = trim($_GET['status'] ?? 'all');
+    if ($action === 'list') {
+        $statusFilter = trim($_GET['status'] ?? $_POST['status'] ?? 'all');
         $where = $statusFilter !== 'all' ? "WHERE q.status = '" . $conn->real_escape_string($statusFilter) . "'" : '';
-        $sql = "SELECT q.id, q.provider_id, q.reason, q.current_qr_path, q.new_qr_path,
+        $sql = "SELECT q.id, q.provider_id, q.qr_type, q.reason, q.current_qr_path, q.new_qr_path,
                        q.status, q.admin_id, q.admin_remarks, q.submitted_at, q.reviewed_at,
                        sp.full_name AS provider_name, s.name AS service_category, sp.contact_number,
                        sp.qr_gcash, sp.qr_bank
@@ -75,17 +83,28 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         exit;
     }
 
-    if ($method === 'POST' && $action === 'approve') {
-        $id = (int)($_POST['id'] ?? 0);
-        if ($id <= 0) {
+    if ($action === 'approve') {
+        if (!isset($_POST['id']) && !isset($_GET['id']) && !isset($_REQUEST['id'])) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Invalid request ID.']);
+            exit;
+        }
+        $id = (int)($_POST['id'] ?? $_GET['id'] ?? $_REQUEST['id']);
+        if ($id < 0) {
             ob_end_clean();
             echo json_encode(['success' => false, 'message' => 'Invalid request ID.']);
             exit;
         }
         $adminId = (int)($_SESSION['admin_id'] ?? $_SESSION['user_id'] ?? 0);
 
-        
+        ensureProviderColumns($conn);
+
         $stmt = $conn->prepare("SELECT * FROM qr_change_requests WHERE id = ? LIMIT 1");
+        if (!$stmt) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Query error: ' . $conn->error]);
+            exit;
+        }
         $stmt->bind_param('i', $id);
         $stmt->execute();
         $req = $stmt->get_result()->fetch_assoc();
@@ -103,37 +122,47 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         }
 
         $providerId = (int)$req['provider_id'];
-        $newQrPath = $req['new_qr_path'];
+        $newQrPath  = $req['new_qr_path'];
+        $qrType     = strtolower(trim((string)($req['qr_type'] ?? 'gcash')));
+        if ($qrType !== 'bank') {
+            $qrType = 'gcash';
+        }
 
         $conn->begin_transaction();
         try {
-            
-            $upd = $conn->prepare(
-                "UPDATE qr_change_requests SET status='approved', admin_id=?, reviewed_at=NOW() WHERE id=?"
-            );
+            $upd = $conn->prepare("UPDATE qr_change_requests SET status='approved', admin_id=?, reviewed_at=NOW() WHERE id=?");
+            if (!$upd) {
+                throw new Exception("Update error: " . $conn->error);
+            }
             $upd->bind_param('ii', $adminId, $id);
-            $upd->execute();
+            if (!$upd->execute()) {
+                throw new Exception("Execution error: " . $upd->error);
+            }
             $upd->close();
 
-            
-            
-            
-            
-            
-            
-            $conn->query(
-                "UPDATE service_providers SET qr_gcash = '" . $conn->real_escape_string($newQrPath) . "' WHERE provider_id = $providerId"
-            );
+            $escapedPath = $conn->real_escape_string($newQrPath);
 
-            
-            $conn->query("INSERT INTO provider_documents (provider_id, document_type, file_path, verified_status, uploaded_at)
-                VALUES ($providerId, 'gcash_qr', '" . $conn->real_escape_string($newQrPath) . "', 'approved', NOW())
-                ON DUPLICATE KEY UPDATE file_path = VALUES(file_path), verified_status = 'approved', uploaded_at = NOW()");
+            if ($qrType === 'bank') {
+                @$conn->query("UPDATE service_providers SET qr_bank = '$escapedPath' WHERE provider_id = $providerId");
+                @$conn->query("UPDATE service_providers SET bank_qr = '$escapedPath' WHERE provider_id = $providerId");
 
+                @$conn->query("INSERT INTO provider_documents (provider_id, document_type, file_path, verified_status, uploaded_at)
+                    VALUES ($providerId, 'bank_qr', '$escapedPath', 'approved', NOW())
+                    ON DUPLICATE KEY UPDATE file_path = '$escapedPath', verified_status = 'approved', uploaded_at = NOW()");
 
+                $notifMsg = 'Your Bank Transfer QR code change request has been approved. Your new Bank QR code is now active.';
+            } else {
+                @$conn->query("UPDATE service_providers SET qr_gcash = '$escapedPath' WHERE provider_id = $providerId");
+                @$conn->query("UPDATE service_providers SET gcash_qr = '$escapedPath' WHERE provider_id = $providerId");
 
-            
-            $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
+                @$conn->query("INSERT INTO provider_documents (provider_id, document_type, file_path, verified_status, uploaded_at)
+                    VALUES ($providerId, 'gcash_qr', '$escapedPath', 'approved', NOW())
+                    ON DUPLICATE KEY UPDATE file_path = '$escapedPath', verified_status = 'approved', uploaded_at = NOW()");
+
+                $notifMsg = 'Your GCash QR code change request has been approved. Your new GCash QR code is now active.';
+            }
+
+            @$conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 type VARCHAR(50) NOT NULL DEFAULT 'general',
                 title VARCHAR(200) NOT NULL,
@@ -150,7 +179,11 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
             $conn->commit();
-            sendProviderNotification($conn, $providerId, 'qr_change_approved', 'QR Change Approved', 'Your GCash/Bank Transfer QR code change request has been approved. Your new QR code is now active.', 'bi-qr-code-scan', $id);
+
+            if (function_exists('sendProviderNotification')) {
+                sendProviderNotification($conn, $providerId, 'qr_change_approved', 'QR Change Approved', $notifMsg, 'bi-qr-code-scan', $id);
+            }
+
             ob_end_clean();
             echo json_encode(['success' => true, 'message' => 'Request approved. Provider QR updated.']);
         } catch (Throwable $e) {
@@ -161,10 +194,15 @@ if ($action === 'list' || $action === 'pending_count' || $action === 'approve' |
         exit;
     }
 
-    if ($method === 'POST' && $action === 'reject') {
-        $id = (int)($_POST['id'] ?? 0);
-        $remarks = trim($_POST['remarks'] ?? '');
-        if ($id <= 0) {
+    if ($action === 'reject') {
+        if (!isset($_POST['id']) && !isset($_GET['id']) && !isset($_REQUEST['id'])) {
+            ob_end_clean();
+            echo json_encode(['success' => false, 'message' => 'Invalid request ID.']);
+            exit;
+        }
+        $id = (int)($_POST['id'] ?? $_GET['id'] ?? $_REQUEST['id']);
+        $remarks = trim((string)($_POST['remarks'] ?? $_GET['remarks'] ?? $_REQUEST['remarks'] ?? ''));
+        if ($id < 0) {
             ob_end_clean();
             echo json_encode(['success' => false, 'message' => 'Invalid request ID.']);
             exit;
@@ -254,7 +292,7 @@ if ($method === 'GET' && $action === 'current_qr') {
 
 if ($method === 'GET' && $action === 'my_requests') {
     $stmt = $conn->prepare(
-        "SELECT id, reason, current_qr_path, new_qr_path, status, admin_remarks, submitted_at, reviewed_at
+        "SELECT id, qr_type, reason, current_qr_path, new_qr_path, status, admin_remarks, submitted_at, reviewed_at
          FROM qr_change_requests
          WHERE provider_id = ?
          ORDER BY submitted_at DESC
@@ -272,6 +310,11 @@ if ($method === 'GET' && $action === 'my_requests') {
 
 
 if ($method === 'POST' && $action === 'submit') {
+    $qrType = strtolower(trim((string)($_POST['qr_type'] ?? 'gcash')));
+    if (!in_array($qrType, ['gcash', 'bank'], true)) {
+        $qrType = 'gcash';
+    }
+
     $reason = trim($_POST['reason'] ?? '');
 
     if ($reason === '') {
@@ -281,15 +324,16 @@ if ($method === 'POST' && $action === 'submit') {
     }
 
     
-    $chk = $conn->prepare("SELECT id FROM qr_change_requests WHERE provider_id = ? AND status = 'pending' LIMIT 1");
-    $chk->bind_param('i', $providerId);
+    $chk = $conn->prepare("SELECT id FROM qr_change_requests WHERE provider_id = ? AND qr_type = ? AND status = 'pending' LIMIT 1");
+    $chk->bind_param('is', $providerId, $qrType);
     $chk->execute();
     $existing = $chk->get_result()->fetch_assoc();
     $chk->close();
 
     if ($existing) {
+        $qrTypeName = $qrType === 'bank' ? 'Bank Transfer' : 'GCash';
         ob_end_clean();
-        echo json_encode(['success' => false, 'message' => 'You already have a pending QR change request. Please wait for it to be reviewed before submitting another.']);
+        echo json_encode(['success' => false, 'message' => "You already have a pending $qrTypeName QR change request. Please wait for it to be reviewed before submitting another."]);
         exit;
     }
 
@@ -344,28 +388,28 @@ if ($method === 'POST' && $action === 'submit') {
     $newQrStorePath = 'uploads/qr_changes/' . $newFileName;
 
     
-    $r = $conn->query("SELECT qr_gcash FROM service_providers WHERE provider_id = $providerId LIMIT 1");
+    $docType = $qrType === 'bank' ? 'bank_qr' : 'gcash_qr';
+    $spCol   = $qrType === 'bank' ? 'qr_bank' : 'qr_gcash';
+
+    $r = $conn->query("SELECT $spCol FROM service_providers WHERE provider_id = $providerId LIMIT 1");
     $spRow = $r ? $r->fetch_assoc() : [];
     
-    $docRow = null;
-    $dstmt  = $conn->prepare("SELECT file_path FROM provider_documents WHERE provider_id=? AND document_type='gcash_qr' LIMIT 1");
-    $dstmt->bind_param('i', $providerId);
+    $dstmt  = $conn->prepare("SELECT file_path FROM provider_documents WHERE provider_id=? AND document_type=? LIMIT 1");
+    $dstmt->bind_param('is', $providerId, $docType);
     $dstmt->execute();
     $docRow = $dstmt->get_result()->fetch_assoc();
     $dstmt->close();
-    $currentQr = $docRow['file_path'] ?? $spRow['qr_gcash'] ?? null;
+    $currentQr = $docRow['file_path'] ?? $spRow[$spCol] ?? null;
 
     
     $ins = $conn->prepare(
-        "INSERT INTO qr_change_requests (provider_id, reason, current_qr_path, new_qr_path, status, submitted_at)
-         VALUES (?, ?, ?, ?, 'pending', NOW())"
+        "INSERT INTO qr_change_requests (provider_id, qr_type, reason, current_qr_path, new_qr_path, status, submitted_at)
+         VALUES (?, ?, ?, ?, ?, 'pending', NOW())"
     );
-    $ins->bind_param('isss', $providerId, $reason, $currentQr, $newQrStorePath);
+    $ins->bind_param('issss', $providerId, $qrType, $reason, $currentQr, $newQrStorePath);
     $ins->execute();
     $newId = $conn->insert_id;
     $ins->close();
-
-
 
     
     $conn->query("CREATE TABLE IF NOT EXISTS admin_notifications (
@@ -385,12 +429,13 @@ if ($method === 'POST' && $action === 'submit') {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     $provName = $conn->real_escape_string($_SESSION['provider_name'] ?? 'A provider');
+    $qrLabel  = $qrType === 'bank' ? 'Bank Transfer' : 'GCash';
     $conn->query("INSERT INTO admin_notifications (type, title, message, reference_id, qr_change_request_id, is_read, created_at)
         VALUES ('qr_change', 'New QR Change Request',
-        '$provName submitted a GCash/Bank Transfer QR code change request.',
+        '$provName submitted a $qrLabel QR code change request.',
         $newId, $newId, 0, NOW())");
 
-    sendProviderNotification($conn, $providerId, 'qr_change_submitted', 'QR Change Request Submitted', 'Your GCash/Bank Transfer QR code change request has been submitted and is pending admin review.', 'bi-qr-code-scan', $newId);
+    sendProviderNotification($conn, $providerId, 'qr_change_submitted', 'QR Change Request Submitted', "Your $qrLabel QR code change request has been submitted and is pending admin review.", 'bi-qr-code-scan', $newId);
 
     ob_end_clean();
     echo json_encode(['success' => true, 'message' => 'Your request has been submitted and is pending admin review.', 'request_id' => $newId]);
@@ -406,9 +451,12 @@ echo json_encode(['success' => false, 'message' => 'Invalid action.']);
 
 function ensureQrChangeRequestsTable($conn)
 {
-    $conn->query("CREATE TABLE IF NOT EXISTS qr_change_requests (
+    if (!$conn || !($conn instanceof mysqli)) return;
+
+    @$conn->query("CREATE TABLE IF NOT EXISTS qr_change_requests (
         id INT AUTO_INCREMENT PRIMARY KEY,
         provider_id INT NOT NULL,
+        qr_type VARCHAR(20) NOT NULL DEFAULT 'gcash',
         reason TEXT NOT NULL,
         current_qr_path VARCHAR(512) NULL,
         new_qr_path VARCHAR(512) NOT NULL,
@@ -420,6 +468,40 @@ function ensureQrChangeRequestsTable($conn)
         INDEX idx_qr_requests_provider (provider_id),
         INDEX idx_qr_requests_status (status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $check = $conn->query("SHOW COLUMNS FROM qr_change_requests LIKE 'qr_type'");
+    if ($check && $check->num_rows === 0) {
+        @$conn->query("ALTER TABLE qr_change_requests ADD COLUMN qr_type VARCHAR(20) NOT NULL DEFAULT 'gcash' AFTER provider_id");
+    }
+
+    
+    $zeroRes = @$conn->query("SELECT COUNT(*) FROM qr_change_requests WHERE id = 0");
+    if ($zeroRes) {
+        $zeroCount = (int)($zeroRes->fetch_row()[0] ?? 0);
+        if ($zeroCount > 0) {
+            $maxRes = $conn->query("SELECT COALESCE(MAX(id), 0) FROM qr_change_requests WHERE id > 0");
+            $maxId = $maxRes ? (int)($maxRes->fetch_row()[0] ?? 0) : 0;
+            $rowsRes = $conn->query("SELECT provider_id, submitted_at FROM qr_change_requests WHERE id = 0");
+            if ($rowsRes) {
+                while ($r = $rowsRes->fetch_assoc()) {
+                    $maxId++;
+                    $pid = (int)$r['provider_id'];
+                    $sub = $conn->real_escape_string($r['submitted_at'] ?? '');
+                    @$conn->query("UPDATE qr_change_requests SET id = $maxId WHERE id = 0 AND provider_id = $pid LIMIT 1");
+                }
+            }
+        }
+    }
+
+    
+    $pkCheck = @$conn->query("SHOW COLUMNS FROM qr_change_requests WHERE Field = 'id'");
+    if ($pkCheck && ($col = $pkCheck->fetch_assoc())) {
+        $extra = strtolower((string)($col['Extra'] ?? ''));
+        $key   = strtolower((string)($col['Key'] ?? ''));
+        if (strpos($extra, 'auto_increment') === false || strpos($key, 'pri') === false) {
+            @$conn->query("ALTER TABLE qr_change_requests MODIFY COLUMN id INT AUTO_INCREMENT PRIMARY KEY");
+        }
+    }
 }
 
 function ensureProviderNotificationsTable($conn)
@@ -435,4 +517,28 @@ function ensureProviderNotificationsTable($conn)
         INDEX idx_provider_read (provider_id, is_read),
         INDEX idx_provider_created (provider_id, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+function ensureProviderColumns($conn)
+{
+    if (!$conn || !($conn instanceof mysqli)) return;
+    $res = $conn->query("SHOW COLUMNS FROM service_providers");
+    $cols = [];
+    if ($res) {
+        while ($c = $res->fetch_assoc()) {
+            $cols[] = $c['Field'];
+        }
+    }
+    if (!in_array('qr_gcash', $cols, true)) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN qr_gcash VARCHAR(500)");
+    }
+    if (!in_array('qr_bank', $cols, true)) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN qr_bank VARCHAR(500)");
+    }
+    if (!in_array('gcash_qr', $cols, true)) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN gcash_qr VARCHAR(500)");
+    }
+    if (!in_array('bank_qr', $cols, true)) {
+        @$conn->query("ALTER TABLE service_providers ADD COLUMN bank_qr VARCHAR(500)");
+    }
 }

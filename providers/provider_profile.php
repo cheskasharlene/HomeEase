@@ -1431,6 +1431,27 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
 
         
         <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:12px;font-weight:700;color:var(--txt-primary,#0f172a);margin-bottom:8px;">Select QR Code to Change <span style="color:#ef4444;">*</span></label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div id="qrTypeOptGcash" onclick="selectQrType('gcash')" style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:2px solid #10b981;background:rgba(16,185,129,.06);cursor:pointer;transition:all .2s;">
+              <input type="radio" name="qr_type_choice" id="qrTypeChoiceGcash" value="gcash" checked style="accent-color:#059669;cursor:pointer;">
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#0f172a;">GCash QR</div>
+                <div style="font-size:10px;color:#64748b;">Update GCash QR</div>
+              </div>
+            </div>
+            <div id="qrTypeOptBank" onclick="selectQrType('bank')" style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:2px solid var(--border-col,#e5e7eb);background:var(--bg-screen,#f8fafc);cursor:pointer;transition:all .2s;">
+              <input type="radio" name="qr_type_choice" id="qrTypeChoiceBank" value="bank" style="accent-color:#059669;cursor:pointer;">
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#0f172a;">Bank Transfer QR</div>
+                <div style="font-size:10px;color:#64748b;">Update Bank QR</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+        <div style="margin-bottom:16px;">
           <label style="display:block;font-size:12px;font-weight:700;color:var(--txt-primary,#0f172a);margin-bottom:6px;">Reason for Change <span style="color:#ef4444;">*</span></label>
           <textarea id="qrChangeReason" rows="4" placeholder="Explain why you need to change your QR code (e.g., account blocked, limit reached, account migration)..." style="width:100%;border:1.5px solid var(--border-col,#e5e7eb);border-radius:12px;padding:11px 13px;font-family:'Nunito',sans-serif;font-size:13px;color:var(--txt-primary,#0f172a);background:var(--bg-screen,#f8fafc);resize:vertical;outline:none;box-sizing:border-box;line-height:1.55;transition:border-color .2s;"></textarea>
         </div>
@@ -1483,7 +1504,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         <i class="bi bi-qr-code" style="font-size:22px;color:#059669;"></i>
       </div>
       <div style="font-family:'Poppins',sans-serif;font-size:17px;font-weight:800;color:var(--txt-primary,#0f172a);text-align:center;margin-bottom:8px;">Submit QR Change Request?</div>
-      <div style="font-size:12px;color:var(--txt-muted,#64748b);text-align:center;line-height:1.6;margin-bottom:18px;">Are you sure you want to submit a request to change your GCash/Bank Transfer QR code? This request will be reviewed by an administrator before it takes effect.</div>
+      <div id="qrConfirmText" style="font-size:12px;color:var(--txt-muted,#64748b);text-align:center;line-height:1.6;margin-bottom:18px;">Are you sure you want to submit a request to change your GCash QR code? This request will be reviewed by an administrator before it takes effect.</div>
       <div style="display:flex;gap:10px;">
         <button onclick="closeQrConfirmModal()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--border-col,#e5e7eb);background:transparent;color:var(--txt-muted,#64748b);font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;cursor:pointer;">Cancel</button>
         <button id="qrConfirmOkBtn" onclick="submitQrChangeRequest()" style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 14px rgba(5,150,105,.28);">Yes, Submit</button>
@@ -1505,6 +1526,37 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
 
   <script>
     var qrSelectedFile = null;
+    var selectedQrType = 'gcash';
+
+    function selectQrType(type) {
+      selectedQrType = type === 'bank' ? 'bank' : 'gcash';
+      var gcashOpt = document.getElementById('qrTypeOptGcash');
+      var bankOpt = document.getElementById('qrTypeOptBank');
+      var gcashRadio = document.getElementById('qrTypeChoiceGcash');
+      var bankRadio = document.getElementById('qrTypeChoiceBank');
+
+      if (selectedQrType === 'bank') {
+        if (bankRadio) bankRadio.checked = true;
+        if (bankOpt) {
+          bankOpt.style.borderColor = '#10b981';
+          bankOpt.style.background = 'rgba(16,185,129,.06)';
+        }
+        if (gcashOpt) {
+          gcashOpt.style.borderColor = 'var(--border-col,#e5e7eb)';
+          gcashOpt.style.background = 'var(--bg-screen,#f8fafc)';
+        }
+      } else {
+        if (gcashRadio) gcashRadio.checked = true;
+        if (gcashOpt) {
+          gcashOpt.style.borderColor = '#10b981';
+          gcashOpt.style.background = 'rgba(16,185,129,.06)';
+        }
+        if (bankOpt) {
+          bankOpt.style.borderColor = 'var(--border-col,#e5e7eb)';
+          bankOpt.style.background = 'var(--bg-screen,#f8fafc)';
+        }
+      }
+    }
 
     
     (function() {
@@ -1519,6 +1571,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
       closeSettingsScreen();
       var scr = document.getElementById('qrChangeScreen');
       scr.style.display = 'flex';
+      selectQrType('gcash');
       loadCurrentQrInfo();
       loadMyQrRequests();
       updateQrSettingsSub();
@@ -1616,6 +1669,11 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
         showQrAlert('Please upload your new QR code image.', 'err');
         return;
       }
+      var qrTypeName = selectedQrType === 'bank' ? 'Bank Transfer' : 'GCash';
+      var confirmText = document.getElementById('qrConfirmText');
+      if (confirmText) {
+        confirmText.textContent = 'Are you sure you want to submit a request to change your ' + qrTypeName + ' QR code? This request will be reviewed by an administrator before it takes effect.';
+      }
       var modal = document.getElementById('qrConfirmModal');
       modal.style.display = 'flex';
     }
@@ -1631,6 +1689,7 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
 
       var fd = new FormData();
       fd.append('action', 'submit');
+      fd.append('qr_type', selectedQrType);
       fd.append('reason', document.getElementById('qrChangeReason').value.trim());
       fd.append('new_qr', qrSelectedFile);
 
@@ -1673,6 +1732,10 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
             var statusClass = req.status;
             var statusLabel = req.status === 'pending' ? 'Pending Review' : req.status.charAt(0).toUpperCase() + req.status.slice(1);
             var date = req.submitted_at ? req.submitted_at.substring(0,10) : '–';
+            var qrTypeBadge = req.qr_type === 'bank'
+              ? '<span style="font-size:10px;background:#f0f9ff;color:#0284c7;border:1px solid #bae6fd;padding:1px 7px;border-radius:10px;font-weight:800;">Bank QR</span>'
+              : '<span style="font-size:10px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;padding:1px 7px;border-radius:10px;font-weight:800;">GCash QR</span>';
+
             var reviewedInfo = '';
             if (req.status === 'rejected' && req.admin_remarks) {
               reviewedInfo = '<div style="font-size:11px;color:#b91c1c;margin-top:4px;font-weight:600;">Remarks: ' + escHtml(req.admin_remarks) + '</div>';
@@ -1687,7 +1750,8 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
               '<div style="flex:1;min-width:0;">' +
                 '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">' +
                   '<span class="qr-status-pill ' + statusClass + '">' + statusLabel + '</span>' +
-                  '<span style="font-size:10px;color:#94a3b8;font-weight:600;">' + escHtml(date) + '</span>' +
+                  qrTypeBadge +
+                  '<span style="font-size:10px;color:#94a3b8;font-weight:600;margin-left:auto;">' + escHtml(date) + '</span>' +
                 '</div>' +
                 '<div style="font-size:12px;color:var(--txt-primary,#0f172a);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escHtml(req.reason) + '</div>' +
                 reviewedInfo +

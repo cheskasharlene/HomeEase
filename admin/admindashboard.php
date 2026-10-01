@@ -3907,6 +3907,9 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     }
     const baseUrl = '../';
     list.innerHTML = rows.map(r => {
+      const isBank = ((r.qr_type || 'gcash').toLowerCase() === 'bank');
+      const qrTypeLabel = isBank ? 'Bank Transfer QR' : 'GCash QR';
+
       const statusPill = {
         pending:  '<span class="badge-amber" style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:800;">Pending Review</span>',
         approved: '<span class="badge-green" style="font-size:10px;padding:3px 9px;border-radius:20px;font-weight:800;">Approved</span>',
@@ -3914,11 +3917,11 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
       }[r.status] || '';
 
       const currentQrHtml = r.current_qr_path
-        ? `<img src="${baseUrl}${qrEsc(r.current_qr_path)}" class="qr-qr-img" alt="Current QR" onclick="openImagePreview('${baseUrl}${qrEsc(r.current_qr_path)}', 'Current QR — ${qrEsc(r.provider_name)}')"> `
+        ? `<img src="${baseUrl}${qrEsc(r.current_qr_path)}" class="qr-qr-img" alt="Current QR" onclick="openImagePreview('${baseUrl}${qrEsc(r.current_qr_path)}', 'Current ${qrTypeLabel} — ${qrEsc(r.provider_name)}')"> `
         : '<div class="qr-qr-none"><i class="bi bi-qr-code"></i></div>';
 
       const newQrHtml = r.new_qr_path
-        ? `<img src="${baseUrl}${qrEsc(r.new_qr_path)}" class="qr-qr-img" alt="New QR" onclick="openImagePreview('${baseUrl}${qrEsc(r.new_qr_path)}', 'New QR — ${qrEsc(r.provider_name)}')">`
+        ? `<img src="${baseUrl}${qrEsc(r.new_qr_path)}" class="qr-qr-img" alt="New QR" onclick="openImagePreview('${baseUrl}${qrEsc(r.new_qr_path)}', 'New ${qrTypeLabel} — ${qrEsc(r.provider_name)}')">`
         : '<div class="qr-qr-none"><i class="bi bi-qr-code"></i></div>';
 
       const date = r.submitted_at ? r.submitted_at.substring(0,10) : '–';
@@ -3938,14 +3941,18 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
         <div class="qr-req-hdr">
           <div>
             <div class="qr-req-name">${qrEsc(r.provider_name || 'Unknown')}</div>
-            <div style="font-size:11px;color:var(--txt-muted);margin-top:1px;">${qrEsc(r.service_category || '')} · ${qrEsc(r.contact_number || '')}</div>
+            <div style="font-size:11px;font-weight:700;color:${isBank ? '#0284c7' : '#059669'};margin-top:2px;display:flex;align-items:center;gap:4px;">
+              <i class="bi ${isBank ? 'bi-bank' : 'bi-qr-code'}"></i> Change ${qrTypeLabel}
+            </div>
+            <div style="font-size:11px;color:var(--txt-muted);margin-top:2px;">${qrEsc(r.service_category || '')} · ${qrEsc(r.contact_number || '')}</div>
           </div>
           <div style="text-align:right;">
             ${statusPill}
             <div class="qr-req-date" style="margin-top:4px;">Submitted: ${qrEsc(date)}</div>
           </div>
         </div>
-        <div style="font-size:11px;font-weight:700;color:var(--txt-muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px;">Reason for Change</div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--txt-muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px;margin-top:10px;">Reason for Change</div>
         <div class="qr-req-reason">${qrEsc(r.reason)}</div>
         <div class="qr-qrs-row">
           <div class="qr-qr-box">
@@ -3973,11 +3980,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
     _qrPendingId = null;
   }
   function submitQrApprove() {
-    if (!_qrPendingId) return;
+    if (_qrPendingId === null || _qrPendingId === undefined || _qrPendingId === '') return;
     const btn = document.getElementById('qrApproveOkBtn');
     btn.disabled = true; btn.textContent = 'Approving...';
     const fd = new FormData();
-    fd.append('id', _qrPendingId);
+    fd.append('action', 'approve');
+    fd.append('id', String(_qrPendingId));
     fetch('../api/qr_change_api.php?action=approve', { method: 'POST', body: fd })
       .then(r => r.json())
       .then(data => {
@@ -3991,7 +3999,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           toast(data.message || 'Approval failed.', 'e');
         }
       })
-      .catch(() => { btn.disabled = false; btn.textContent = 'Approve'; toast('Network error.', 'e'); });
+      .catch((err) => { btn.disabled = false; btn.textContent = 'Approve'; toast('Network error: ' + (err.message || 'Failed'), 'e'); });
   }
 
   
@@ -4007,11 +4015,12 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
   function submitQrReject() {
     const remarks = document.getElementById('qrRejectRemarks').value.trim();
     if (!remarks) { toast('Rejection remarks are required.', 'e'); return; }
-    if (!_qrPendingId) return;
+    if (_qrPendingId === null || _qrPendingId === undefined || _qrPendingId === '') return;
     const btn = document.getElementById('qrRejectOkBtn');
     btn.disabled = true; btn.textContent = 'Rejecting...';
     const fd = new FormData();
-    fd.append('id', _qrPendingId);
+    fd.append('action', 'reject');
+    fd.append('id', String(_qrPendingId));
     fd.append('remarks', remarks);
     fetch('../api/qr_change_api.php?action=reject', { method: 'POST', body: fd })
       .then(r => r.json())
@@ -4026,7 +4035,7 @@ $adminName = htmlspecialchars($_SESSION['user_name'] ?? $_SESSION['admin_name'] 
           toast(data.message || 'Rejection failed.', 'e');
         }
       })
-      .catch(() => { btn.disabled = false; btn.textContent = 'Reject'; toast('Network error.', 'e'); });
+      .catch((err) => { btn.disabled = false; btn.textContent = 'Reject'; toast('Network error: ' + (err.message || 'Failed'), 'e'); });
   }
 
   
