@@ -54,15 +54,20 @@ if ($method === 'GET') {
         exit;
     }
 
+    $restriction = isProviderRestrictedFromOnline($conn, $providerId);
+    $isRestricted = ($restriction !== false);
+
     $isVerified = ((int) ($row['is_verified'] ?? 0)) === 1;
     $rawAvailability = strtolower(trim((string) ($row['availability_status'] ?? 'offline')));
-    $normalized = in_array($rawAvailability, ['available', 'online'], true) ? 'online' : 'offline';
+    $normalized = ($isVerified && !$isRestricted && in_array($rawAvailability, ['available', 'online'], true)) ? 'online' : 'offline';
 
     echo json_encode([
         'success' => true,
         'availability' => $normalized,
         'availability_raw' => $rawAvailability,
         'is_verified' => $isVerified,
+        'is_restricted' => $isRestricted,
+        'restriction_reason' => $isRestricted ? 'Your account is restricted from going Online due to an overdue remittance past the 24-hour grace period. Please submit your remittance payment and await admin confirmation.' : null,
     ]);
     exit;
 }
@@ -99,6 +104,26 @@ if ($method === 'POST') {
         $requested = 'offline';
     }
 
+    $restriction = isProviderRestrictedFromOnline($conn, $providerId);
+    $isRestricted = ($restriction !== false);
+
+    if ($requested === 'online' && $isRestricted) {
+        $nowStr = phNow();
+        $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = "offline", last_active = ? WHERE provider_id = ?');
+        if ($updateStmt) {
+            $updateStmt->bind_param('si', $nowStr, $providerId);
+            $updateStmt->execute();
+            $updateStmt->close();
+        }
+        echo json_encode([
+            'success' => false,
+            'message' => 'Your account is restricted from going Online due to an overdue remittance past the 24-hour grace period. Please submit your remittance payment and wait for admin confirmation.',
+            'availability' => 'offline',
+            'is_restricted' => true,
+        ]);
+        exit;
+    }
+
     $dbValue = $requested === 'online' ? 'online' : 'offline';
     $nowStr = phNow();
     $updateStmt = $conn->prepare('UPDATE service_providers SET availability_status = ?, last_active = ? WHERE provider_id = ?');
@@ -115,6 +140,7 @@ if ($method === 'POST') {
         'availability' => $requested,
         'availability_raw' => $dbValue,
         'is_verified' => $isVerified,
+        'is_restricted' => $isRestricted,
     ]);
     exit;
 }

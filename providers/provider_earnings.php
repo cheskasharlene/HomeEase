@@ -217,6 +217,7 @@ if ($providerId > 0 && $conn instanceof mysqli) {
 
           
           <div id="remitDetailsView">
+            <div id="remitGraceNotice" style="display:none; margin-bottom:12px; padding:10px 12px; border-radius:8px; font-size:12px; font-weight:600; line-height:1.4;"></div>
             <div class="remit-amount-card">
               <div class="remit-amount-lbl">Amount Due</div>
               <div class="remit-amount-val" id="remitDtlAmount">₱850.00</div>
@@ -428,6 +429,43 @@ if ($providerId > 0 && $conn instanceof mysqli) {
         const badge = document.getElementById('remitDtlStatus');
         badge.className = 'remit-badge ' + activeRemittance.status;
         badge.textContent = activeRemittance.status.charAt(0).toUpperCase() + activeRemittance.status.slice(1);
+
+        const noticeEl = document.getElementById('remitGraceNotice');
+        if (activeRemittance.status === 'overdue' || activeRemittance.status === 'pending') {
+          if (activeRemittance.is_grace_expired) {
+            badge.className = 'remit-badge overdue';
+            badge.textContent = 'Overdue (Restricted)';
+            if (noticeEl) {
+              noticeEl.style.display = 'block';
+              noticeEl.style.background = '#fee2e2';
+              noticeEl.style.color = '#991b1b';
+              noticeEl.style.border = '1px solid #fca5a5';
+              noticeEl.innerHTML = '<i class="bi bi-exclamation-triangle-fill" style="margin-right:6px;"></i> <strong>Grace Period Expired:</strong> Your account is restricted from going Online until you submit payment and an admin confirms it.';
+            }
+          } else if (activeRemittance.grace_period_expires_at) {
+            badge.className = 'remit-badge overdue';
+            badge.textContent = 'Overdue (24h Grace)';
+            if (noticeEl) {
+              noticeEl.style.display = 'block';
+              noticeEl.style.background = '#fff7ed';
+              noticeEl.style.color = '#c2410c';
+              noticeEl.style.border = '1px solid #ffedd5';
+              noticeEl.innerHTML = '<i class="bi bi-clock-history" style="margin-right:6px;"></i> <strong>24-Hour Grace Period Active:</strong> Submit your remittance payment before grace period ends to avoid Online status restriction.';
+            }
+          } else {
+            if (noticeEl) noticeEl.style.display = 'none';
+          }
+        } else if (activeRemittance.status === 'submitted') {
+          if (noticeEl) {
+            noticeEl.style.display = 'block';
+            noticeEl.style.background = '#e0f2fe';
+            noticeEl.style.color = '#075985';
+            noticeEl.style.border = '1px solid #bae6fd';
+            noticeEl.innerHTML = '<i class="bi bi-hourglass-split" style="margin-right:6px;"></i> <strong>Payment Submitted:</strong> Your payment receipt is pending admin confirmation. Online status will remain disabled until confirmed by admin.';
+          }
+        } else {
+          if (noticeEl) noticeEl.style.display = 'none';
+        }
         
         document.getElementById('remitDtlDueDate').textContent = formatDateString(activeRemittance.due_date);
         document.getElementById('remitDtlRef').textContent = activeRemittance.reference_no;
@@ -445,7 +483,10 @@ if ($providerId > 0 && $conn instanceof mysqli) {
           payBtn.innerHTML = '<i class="bi bi-wallet2"></i> Pay Now';
         }
       } else {
-        document.getElementById('remitDtlAmount').textContent = '\u20b10.00';
+        const noticeEl = document.getElementById('remitGraceNotice');
+        if (noticeEl) noticeEl.style.display = 'none';
+
+        document.getElementById('remitDtlAmount').textContent = '₱0.00';
         const badge = document.getElementById('remitDtlStatus');
         badge.className = 'remit-badge paid';
         badge.textContent = 'Paid';

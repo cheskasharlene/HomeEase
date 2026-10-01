@@ -21,8 +21,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 ensureRemittancesForProvider($conn, $providerId);
 
 if ($method === 'GET' && $action === 'list') {
-    
-    $stmt = $conn->prepare("SELECT id, reference_no, amount_due, amount_paid, status, due_date, date_remitted, submitted_at, payment_method, receipt_path 
+    $stmt = $conn->prepare("SELECT id, reference_no, amount_due, amount_paid, status, due_date, date_remitted, submitted_at, payment_method, receipt_path, overdue_notified_at, grace_period_expires_at 
                             FROM remittances 
                             WHERE provider_id = ? 
                             ORDER BY due_date DESC, id DESC");
@@ -34,9 +33,11 @@ if ($method === 'GET' && $action === 'list') {
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
 
-    
+    $nowTime = time();
     $remittances = [];
     foreach ($rows as $r) {
+        $graceExpires = !empty($r['grace_period_expires_at']) ? strtotime($r['grace_period_expires_at']) : null;
+        $isGraceExpired = ($graceExpires !== null && $nowTime > $graceExpires);
         $remittances[] = [
             'id' => (int)$r['id'],
             'reference_no' => $r['reference_no'],
@@ -47,11 +48,19 @@ if ($method === 'GET' && $action === 'list') {
             'date_remitted' => $r['date_remitted'],
             'submitted_at' => $r['submitted_at'],
             'payment_method' => $r['payment_method'] ?? '-',
-            'receipt_path' => $r['receipt_path']
+            'receipt_path' => $r['receipt_path'],
+            'overdue_notified_at' => $r['overdue_notified_at'],
+            'grace_period_expires_at' => $r['grace_period_expires_at'],
+            'is_grace_expired' => $isGraceExpired,
         ];
     }
 
-    respond(true, 'Remittances retrieved.', ['remittances' => $remittances]);
+    $restriction = isProviderRestrictedFromOnline($conn, $providerId);
+
+    respond(true, 'Remittances retrieved.', [
+        'remittances' => $remittances,
+        'is_restricted' => ($restriction !== false),
+    ]);
 }
 
 if ($method === 'POST' && $action === 'submit_payment') {

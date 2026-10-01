@@ -1228,7 +1228,10 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           const res = await fetch('../api/provider_availability_api.php', { method: 'POST', body: fd });
           const data = await res.json();
           if (!data.success) {
-            applyAvailability(previous);
+            applyAvailability(data.availability || previous);
+            if (data.message) {
+              alert(data.message);
+            }
             return;
           }
           applyAvailability(data.availability || desired);

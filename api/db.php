@@ -532,7 +532,21 @@ function ensureNormalizationSchema($conn)
         CONSTRAINT fk_remittances_provider FOREIGN KEY (provider_id) REFERENCES service_providers(provider_id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 
-    
+    $remitCols = [];
+    $remitColRes = $conn->query("SHOW COLUMNS FROM remittances");
+    if ($remitColRes) {
+        while ($rc = $remitColRes->fetch_assoc()) {
+            $remitCols[] = $rc['Field'];
+        }
+    }
+    if (!in_array('overdue_notified_at', $remitCols)) {
+        @$conn->query("ALTER TABLE remittances ADD COLUMN overdue_notified_at DATETIME NULL AFTER receipt_path");
+    }
+    if (!in_array('grace_period_expires_at', $remitCols)) {
+        @$conn->query("ALTER TABLE remittances ADD COLUMN grace_period_expires_at DATETIME NULL AFTER overdue_notified_at");
+        @$conn->query("ALTER TABLE remittances ADD INDEX idx_remittances_grace (grace_period_expires_at)");
+    }
+
     $columns = [];
     $result = $conn->query("SHOW COLUMNS FROM admin_notifications");
     if ($result) {
@@ -774,7 +788,6 @@ function ensureRemittancesForProvider($conn, $providerId)
 {
     ensureNormalizationSchema($conn);
 
-    
     $query = "SELECT 
                 DATE(COALESCE(STR_TO_DATE(date, '%Y-%m-%d'), STR_TO_DATE(date, '%b %d, %Y'), STR_TO_DATE(date, '%M %d, %Y'), created_at)) AS DayDate,
                 SUM(price) AS daily_earnings
@@ -796,13 +809,13 @@ function ensureRemittancesForProvider($conn, $providerId)
     $stmt->close();
 
     $today = date('Y-m-d');
+    $nowStr = phNow();
 
     foreach ($days as $day => $earnings) {
-        
         $amountDue = round($earnings * 0.04, 2);
         if ($amountDue <= 0) continue;
 
-        $checkQuery = "SELECT id, status, amount_due FROM remittances WHERE provider_id = ? AND due_date = ?";
+        $checkQuery = "SELECT id, status, amount_due, overdue_notified_at, grace_period_expires_at FROM remittances WHERE provider_id = ? AND due_date = ?";
         $checkStmt = $conn->prepare($checkQuery);
         $checkStmt->bind_param("is", $providerId, $day);
         $checkStmt->execute();
@@ -820,33 +833,87 @@ function ensureRemittancesForProvider($conn, $providerId)
             }
 
             $status = 'pending';
-            if ($day < $today) {
+            $notifiedAt = null;
+            $graceExpiresAt = null;
+            $isOverdueNow = ($day < $today);
+
+            if ($isOverdueNow) {
                 $status = 'overdue';
+                $notifiedAt = $nowStr;
+                $graceExpiresAt = date('Y-m-d H:i:s', strtotime('+24 hours', strtotime($nowStr)));
             }
 
-            $insertQuery = "INSERT INTO remittances (provider_id, reference_no, amount_due, status, due_date) VALUES (?, ?, ?, ?, ?)";
+            $insertQuery = "INSERT INTO remittances (provider_id, reference_no, amount_due, status, due_date, overdue_notified_at, grace_period_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $insStmt = $conn->prepare($insertQuery);
-            $insStmt->bind_param("isdss", $providerId, $refNo, $amountDue, $status, $day);
+            $insStmt->bind_param("isdssss", $providerId, $refNo, $amountDue, $status, $day, $notifiedAt, $graceExpiresAt);
             $insStmt->execute();
+            $newRemitId = $conn->insert_id;
             $insStmt->close();
+
+            if ($isOverdueNow && $newRemitId > 0) {
+                $dueDateFormatted = date('M d, Y', strtotime($day));
+                $notifMsg = "You have an overdue remittance of ₱" . number_format($amountDue, 2) . " for due date " . $dueDateFormatted . ". You have a 24-hour grace period to submit your payment. Failure to submit within 24 hours will restrict your account from toggling Online.";
+                sendProviderNotification($conn, $providerId, 'remittance_overdue', 'Overdue Remittance - 24-Hour Grace Period', $notifMsg, 'exclamation-triangle', $newRemitId);
+            }
         } else {
             $remitId = $existing['id'];
             $status = $existing['status'];
-            
+            $notifiedAt = $existing['overdue_notified_at'];
+            $graceExpiresAt = $existing['grace_period_expires_at'];
+
             if ($status === 'pending' || $status === 'overdue') {
                 $newStatus = $status;
-                if ($day < $today && $status === 'pending') {
+                $shouldNotify = false;
+
+                if ($day < $today) {
                     $newStatus = 'overdue';
+                    if (empty($notifiedAt)) {
+                        $notifiedAt = $nowStr;
+                        $graceExpiresAt = date('Y-m-d H:i:s', strtotime('+24 hours', strtotime($nowStr)));
+                        $shouldNotify = true;
+                    }
                 }
-                
-                $updateQuery = "UPDATE remittances SET amount_due = ?, status = ? WHERE id = ?";
+
+                $updateQuery = "UPDATE remittances SET amount_due = ?, status = ?, overdue_notified_at = ?, grace_period_expires_at = ? WHERE id = ?";
                 $upStmt = $conn->prepare($updateQuery);
-                $upStmt->bind_param("dsi", $amountDue, $newStatus, $remitId);
+                $upStmt->bind_param("dsssi", $amountDue, $newStatus, $notifiedAt, $graceExpiresAt, $remitId);
                 $upStmt->execute();
                 $upStmt->close();
+
+                if ($shouldNotify) {
+                    $dueDateFormatted = date('M d, Y', strtotime($day));
+                    $notifMsg = "You have an overdue remittance of ₱" . number_format($amountDue, 2) . " for due date " . $dueDateFormatted . ". You have a 24-hour grace period to submit your payment. Failure to submit within 24 hours will restrict your account from toggling Online.";
+                    sendProviderNotification($conn, $providerId, 'remittance_overdue', 'Overdue Remittance - 24-Hour Grace Period', $notifMsg, 'exclamation-triangle', $remitId);
+                }
             }
         }
     }
+}
+
+function isProviderRestrictedFromOnline($conn, $providerId)
+{
+    $providerId = (int)$providerId;
+    if ($providerId <= 0 || !($conn instanceof mysqli)) return false;
+
+    ensureRemittancesForProvider($conn, $providerId);
+
+    $nowStr = phNow();
+    $stmt = $conn->prepare("SELECT id, amount_due, due_date, status, grace_period_expires_at 
+                            FROM remittances 
+                            WHERE provider_id = ? 
+                              AND status IN ('pending', 'overdue', 'submitted')
+                              AND grace_period_expires_at IS NOT NULL 
+                              AND grace_period_expires_at < ?
+                            ORDER BY grace_period_expires_at ASC
+                            LIMIT 1");
+    if (!$stmt) return false;
+    $stmt->bind_param("is", $providerId, $nowStr);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    $row = $res->fetch_assoc();
+    $stmt->close();
+
+    return $row ? $row : false;
 }
 
 function sendProviderNotification($conn, $providerId, $type, $title, $message, $icon = null, $referenceId = null)
@@ -967,6 +1034,21 @@ function syncProviderOnlineStatuses($conn)
         $stmt2->bind_param('s', $tenMinsAgo);
         $stmt2->execute();
         $stmt2->close();
+    }
+
+    $stmt3 = $conn->prepare("
+        UPDATE service_providers sp
+        JOIN remittances r ON r.provider_id = sp.provider_id
+        SET sp.availability_status = 'offline'
+        WHERE sp.availability_status IN ('online', 'available')
+          AND r.status IN ('pending', 'overdue', 'submitted')
+          AND r.grace_period_expires_at IS NOT NULL
+          AND r.grace_period_expires_at < ?
+    ");
+    if ($stmt3) {
+        $stmt3->bind_param('s', $nowStr);
+        $stmt3->execute();
+        $stmt3->close();
     }
 }
 
