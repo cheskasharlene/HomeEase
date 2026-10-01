@@ -417,7 +417,8 @@ if ($providerId > 0 && $conn instanceof mysqli) {
     }
 
     function renderRemittances() {
-      activeRemittance = remittancesList.find(r => r.status === 'overdue') ||
+      activeRemittance = remittancesList.find(r => r.status === 'rejected') ||
+                         remittancesList.find(r => r.status === 'overdue') ||
                          remittancesList.find(r => r.status === 'pending') ||
                          remittancesList.find(r => r.status === 'submitted');
 
@@ -615,7 +616,13 @@ if ($providerId > 0 && $conn instanceof mysqli) {
       if (area) area.classList.remove('has-file');
     }
 
-    document.addEventListener('DOMContentLoaded', loadRemittances);
+    document.addEventListener('DOMContentLoaded', async function() {
+      await loadRemittances();
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('open') === 'remit' || urlParams.get('remit') === '1' || urlParams.get('pay') === '1') {
+        openRemittanceModal();
+      }
+    });
   </script>
 </body>
 

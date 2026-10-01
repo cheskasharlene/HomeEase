@@ -422,6 +422,49 @@ if ($stmt) {
     }
 
     function notifCard(n) {
+      /* Special: QR change request rejection card */
+      const isQrRejection = n.type === 'qr_change_rejected' || 
+                            (n.title && /qr/i.test(n.title) && /reject|decline/i.test(n.title)) || 
+                            (n.msg && /qr/i.test(n.msg) && /reject|decline/i.test(n.msg));
+
+      if (isQrRejection) {
+        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead('${String(n.id)}'); goPage('provider_profile.php?open=qr');">
+          <div class="n-read-ripple"></div>
+          <div class="n-card-ic danger"><i class="bi bi-x-circle-fill"></i></div>
+          <div class="n-card-body">
+            <div class="n-card-ttl">${escHtml(n.title)}</div>
+            <div class="n-card-msg">${escHtml(n.msg)}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px;">
+              <span class="n-tag danger"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+              <button onclick="event.stopPropagation(); markRead('${String(n.id)}'); goPage('provider_profile.php?open=qr');" style="border:none;border-radius:9px;padding:6px 12px;font-size:11px;font-weight:700;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(220,38,38,0.25);">Update Requirements</button>
+            </div>
+            <div class="n-card-time"><i class="bi bi-clock"></i> ${escHtml(n.time || 'Now')}</div>
+          </div>
+        </div>`;
+      }
+
+      /* Special: Remittance rejection card */
+      const isRemitRejection = n.type === 'remittance_rejected' || 
+                               (n.type === 'remittance' && /reject/i.test((n.title || '') + (n.msg || ''))) || 
+                               (n.title && /remit/i.test(n.title) && /reject|decline/i.test(n.title)) || 
+                               (n.msg && /remit/i.test(n.msg) && /reject|decline/i.test(n.msg));
+
+      if (isRemitRejection) {
+        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead('${String(n.id)}'); goPage('provider_earnings.php?open=remit');">
+          <div class="n-read-ripple"></div>
+          <div class="n-card-ic danger"><i class="bi bi-x-circle-fill"></i></div>
+          <div class="n-card-body">
+            <div class="n-card-ttl">${escHtml(n.title)}</div>
+            <div class="n-card-msg">${escHtml(n.msg)}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px;">
+              <span class="n-tag danger"><i class="bi bi-x-circle-fill"></i> Rejected</span>
+              <button onclick="event.stopPropagation(); markRead('${String(n.id)}'); goPage('provider_earnings.php?open=remit');" style="border:none;border-radius:9px;padding:6px 12px;font-size:11px;font-weight:700;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(220,38,38,0.25);">Update Requirements</button>
+            </div>
+            <div class="n-card-time"><i class="bi bi-clock"></i> ${escHtml(n.time || 'Now')}</div>
+          </div>
+        </div>`;
+      }
+
       /* Special: rejected worker application card (Red-themed) */
       const isRejection = n.type === 'verification_rejected' || 
                           n.type === 'rejected' || 
@@ -429,7 +472,7 @@ if ($stmt) {
                           (n.msg && /rejected|declined/i.test(n.msg) && /verification|application|document|requirement/i.test(n.msg));
 
       if (isRejection) {
-        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead('${String(n.id)}')">
+        return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead('${String(n.id)}'); goPage('provider_home.php');">
           <div class="n-read-ripple"></div>
           <div class="n-card-ic danger"><i class="bi bi-x-circle-fill"></i></div>
           <div class="n-card-body">
@@ -461,8 +504,25 @@ if ($stmt) {
         </div>`;
       }
 
+      let cardTarget = '';
+      const titleLower = (n.title || '').toLowerCase();
+      const msgLower = (n.msg || '').toLowerCase();
+      const typeLower = (n.type || '').toLowerCase();
+
+      if (typeLower.includes('qr') || titleLower.includes('qr') || msgLower.includes('qr')) {
+        cardTarget = 'provider_profile.php?open=qr';
+      } else if (typeLower.includes('remittance') || titleLower.includes('remit') || msgLower.includes('remit') || typeLower === 'remittance') {
+        cardTarget = 'provider_earnings.php?open=remit';
+      } else if (typeLower.includes('booking') || titleLower.includes('booking') || msgLower.includes('booking') || typeLower.includes('payment') || titleLower.includes('payment')) {
+        cardTarget = 'provider_requests.php';
+      }
+
+      const clickHandler = cardTarget 
+        ? `markRead('${String(n.id)}'); goPage('${cardTarget}');`
+        : `markRead('${String(n.id)}');`;
+
       const ic = resolveNotifIcon(n);
-      return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="markRead('${String(n.id)}')">
+      return `<div class="n-card${n.read ? '' : ' unread'}" id="nc-${n.id}" onclick="${clickHandler}">
         <div class="n-read-ripple"></div>
         <div class="n-card-ic ${ic.cls}"><i class="bi ${ic.icon}"></i></div>
         <div class="n-card-body">

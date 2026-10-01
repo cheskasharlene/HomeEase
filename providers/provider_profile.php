@@ -1726,6 +1726,17 @@ $availabilityStatus = $isVerified ? 'online' : 'offline';
 
     // Initialise sub-label on page load
     updateQrSettingsSub();
+
+    (function() {
+      var urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('open') === 'qr' || urlParams.get('open') === 'qr_change' || urlParams.get('qr') === '1') {
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', openQrChangeScreen);
+        } else {
+          openQrChangeScreen();
+        }
+      }
+    })();
   </script>
 
 </body>
