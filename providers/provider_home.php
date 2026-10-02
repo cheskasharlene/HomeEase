@@ -1,7 +1,10 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+  @session_set_cookie_params(['path' => '/']);
+  session_start();
+}
 if (empty($_SESSION['provider_id'])) {
-  header('Location: provider_index.php');
+  header('Location: ../index.php');
   exit;
 }
 

@@ -81,9 +81,12 @@ if (!function_exists('providerGetVerificationState')) {
 
         if ($hasStatus) {
             $accountStatus = strtolower(trim((string) ($row['status'] ?? 'active')));
-            if (in_array($accountStatus, ['suspended', 'inactive', 'paused'], true)) {
+            if ($accountStatus === 'suspended') {
                 $_SESSION['provider_verification_state'] = 'suspended';
                 return 'suspended';
+            }
+            if ($accountStatus === 'inactive' || $accountStatus === '') {
+                @$conn->query("UPDATE service_providers SET status='active' WHERE provider_id=$providerId LIMIT 1");
             }
         }
 

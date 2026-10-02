@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (empty($_SESSION['provider_id'])) {
-  header('Location: provider_index.php');
+  header('Location: ../index.php');
   exit;
 }
 require_once __DIR__ . '/../api/db.php';

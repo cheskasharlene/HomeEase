@@ -1,5 +1,6 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
+    @session_set_cookie_params(['path' => '/']);
     session_start();
 }
 header('Content-Type: application/json; charset=utf-8');
@@ -150,26 +151,57 @@ $standard_specialty = $row['name'];
 
 if ($service_id > 0) {
     $stmt = $conn->prepare(
-        "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
-         VALUES (?, ?, ?, ?, ?, ?, 'offline')"
+        "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status, status)
+         VALUES (?, ?, ?, ?, ?, ?, 'offline', 'active')"
     );
     if (!$stmt) {
-        respond(false, 'DB prepare error: ' . $conn->error);
+        $stmt = $conn->prepare(
+            "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
+             VALUES (?, ?, ?, ?, ?, ?, 'offline')"
+        );
+        $stmt->bind_param("sssiss", $name, $email, $phone, $service_id, $address, $hashed);
+    } else {
+        $stmt->bind_param("sssiss", $name, $email, $phone, $service_id, $address, $hashed);
     }
-    $stmt->bind_param("sssiss", $name, $email, $phone, $service_id, $address, $hashed);
 } else {
     $stmt = $conn->prepare(
-        "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
-         VALUES (?, ?, ?, NULL, ?, ?, 'offline')"
+        "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status, status)
+         VALUES (?, ?, ?, NULL, ?, ?, 'offline', 'active')"
     );
     if (!$stmt) {
-        respond(false, 'DB prepare error: ' . $conn->error);
+        $stmt = $conn->prepare(
+            "INSERT INTO service_providers (full_name, email, contact_number, service_id, address, password, availability_status)
+             VALUES (?, ?, ?, NULL, ?, ?, 'offline')"
+        );
+        $stmt->bind_param("sssss", $name, $email, $phone, $address, $hashed);
+    } else {
+        $stmt->bind_param("sssss", $name, $email, $phone, $address, $hashed);
     }
-    $stmt->bind_param("sssss", $name, $email, $phone, $address, $hashed);
 }
 
 if ($stmt->execute()) {
-    $pid = $conn->insert_id;
+    $pid = (int)$conn->insert_id;
+    if ($pid <= 0 && !empty($email)) {
+        $findStmt = $conn->prepare("SELECT provider_id FROM service_providers WHERE LOWER(email) = LOWER(?) LIMIT 1");
+        if ($findStmt) {
+            $findStmt->bind_param("s", $email);
+            $findStmt->execute();
+            $fRow = $findStmt->get_result()->fetch_assoc();
+            $findStmt->close();
+            $pid = (int)($fRow['provider_id'] ?? 0);
+        }
+    }
+    if ($pid <= 0 && !empty($email)) {
+        $mRes = $conn->query("SELECT MAX(provider_id) AS max_id FROM service_providers WHERE provider_id > 0");
+        $mRow = $mRes ? $mRes->fetch_assoc() : null;
+        $newId = (int)($mRow['max_id'] ?? 0) + 1;
+        if ($newId < 1) $newId = 1;
+        $safeEmail = $conn->real_escape_string($email);
+        @$conn->query("UPDATE service_providers SET provider_id = $newId WHERE LOWER(email) = LOWER('$safeEmail') LIMIT 1");
+        $pid = $newId;
+    }
+    @$conn->query("UPDATE service_providers SET status='active' WHERE provider_id=$pid AND (status IS NULL OR status='inactive' OR status='')");
+    unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_email'], $_SESSION['user_phone'], $_SESSION['user_address'], $_SESSION['user_role']);
     $_SESSION['provider_id'] = $pid;
     $_SESSION['provider_name'] = $name;
     $_SESSION['provider_email'] = $email;

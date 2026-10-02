@@ -1,5 +1,8 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    @session_set_cookie_params(['path' => '/']);
+    session_start();
+}
 header('Content-Type: application/json; charset=utf-8');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -43,6 +46,9 @@ if ($user) {
             $upd->bind_param("si", $hashed, $user['id']);
             $upd->execute(); $upd->close();
         }
+        // Clear provider session if present
+        unset($_SESSION['provider_id'], $_SESSION['provider_name'], $_SESSION['provider_email'], $_SESSION['provider_phone'], $_SESSION['provider_address'], $_SESSION['provider_specialty']);
+
         $_SESSION['user_id']            = $user['id'];
         $_SESSION['user_name']          = $user['name'];
         $_SESSION['user_email']         = $user['email'];
@@ -89,18 +95,36 @@ $stmt2->close();
 if ($provider) {
     $pwOk = password_verify($pass, $provider['password']) || $pass === $provider['password'];
     if ($pwOk) {
+        $pid = (int) ($provider['provider_id'] ?? 0);
+        if ($pid <= 0) {
+            $mRes = $conn->query("SELECT MAX(provider_id) AS max_id FROM service_providers WHERE provider_id > 0");
+            $mRow = $mRes ? $mRes->fetch_assoc() : null;
+            $newId = (int)($mRow['max_id'] ?? 0) + 1;
+            if ($newId < 1) $newId = 1;
+            $safeEmail = $conn->real_escape_string($provider['email']);
+            @$conn->query("UPDATE service_providers SET provider_id = $newId WHERE LOWER(email) = LOWER('$safeEmail') LIMIT 1");
+            $provider['provider_id'] = $newId;
+            $pid = $newId;
+        }
+
         $pStatus = strtolower(trim((string)($provider['status'] ?? 'active')));
-        if (in_array($pStatus, ['suspended', 'inactive', 'paused'], true)) {
+        if ($pStatus === 'suspended') {
             respond(false, 'Your worker account has been suspended by the administrator. Please contact support.');
+        }
+        if ($pStatus === 'inactive' || $pStatus === '') {
+            @$conn->query("UPDATE service_providers SET status='active' WHERE provider_id=" . $pid);
         }
 
         if ($pass === $provider['password'] && strpos($provider['password'], '$2y$') !== 0) {
             $hashed = password_hash($pass, PASSWORD_BCRYPT);
             $upd = $conn->prepare("UPDATE service_providers SET password=? WHERE provider_id=?");
-            $upd->bind_param("si", $hashed, $provider['provider_id']);
+            $upd->bind_param("si", $hashed, $pid);
             $upd->execute(); $upd->close();
         }
-        $_SESSION['provider_id']       = $provider['provider_id'];
+        // Clear customer/user session if present
+        unset($_SESSION['user_id'], $_SESSION['user_name'], $_SESSION['user_email'], $_SESSION['user_phone'], $_SESSION['user_address'], $_SESSION['user_role']);
+
+        $_SESSION['provider_id']       = $pid;
         $_SESSION['provider_name']     = $provider['full_name'];
         $_SESSION['provider_email']    = $provider['email'];
         $_SESSION['provider_phone']    = $provider['contact_number'];

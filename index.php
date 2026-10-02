@@ -1,13 +1,15 @@
 <?php
-if (session_status() === PHP_SESSION_NONE)
+if (session_status() === PHP_SESSION_NONE) {
+  @session_set_cookie_params(['path' => '/']);
   session_start();
-if (!empty($_SESSION['user_id'])) {
-  $dest = $_SESSION['user_role'] === 'admin' ? 'admin/admindashboard.php' : 'home.php';
-  header("Location: $dest");
-  exit;
 }
 if (!empty($_SESSION['provider_id'])) {
   header("Location: providers/provider_home.php");
+  exit;
+}
+if (!empty($_SESSION['user_id'])) {
+  $dest = ($_SESSION['user_role'] ?? '') === 'admin' ? 'admin/admindashboard.php' : 'home.php';
+  header("Location: $dest");
   exit;
 }
 ?>
@@ -493,6 +495,7 @@ if (!empty($_SESSION['provider_id'])) {
       setLoading('btnLogin', true);
       fetch('api/login.php', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: pwd })
       })
@@ -543,9 +546,10 @@ if (!empty($_SESSION['provider_id'])) {
       if (!/[0-9]/.test(pwd)) { showAlert('regErr', 'regErrTxt', 'Password must contain at least one number.', 'error'); return; }
 
       setLoading('btnReg', true);
-      const endpoint = currentAccountType === 'provider' ? 'providers/provider_register.php' : 'api/register.php';
+      const endpoint = 'api/register.php';
       fetch(endpoint, {
         method: 'POST',
+        credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ first, last, email, phone, address, specialty, password: pwd, account_type: currentAccountType })
       })

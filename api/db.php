@@ -53,6 +53,34 @@ function ensurePolicyAcceptedColumns($conn)
 }
 ensurePolicyAcceptedColumns($conn);
 
+function ensureServiceProviderAutoIncrement($conn)
+{
+    if (!$conn || !($conn instanceof mysqli)) return;
+
+    $chkZero = $conn->query("SELECT email FROM service_providers WHERE provider_id = 0");
+    if ($chkZero && $chkZero->num_rows > 0) {
+        $maxRes = $conn->query("SELECT MAX(provider_id) AS max_id FROM service_providers WHERE provider_id > 0");
+        $maxRow = $maxRes ? $maxRes->fetch_assoc() : null;
+        $nextId = (int)($maxRow['max_id'] ?? 0) + 1;
+        if ($nextId < 1) $nextId = 1;
+
+        while ($zRow = $chkZero->fetch_assoc()) {
+            $zEmail = $conn->real_escape_string($zRow['email']);
+            @$conn->query("UPDATE service_providers SET provider_id = $nextId WHERE email = '$zEmail' AND provider_id = 0 LIMIT 1");
+            $nextId++;
+        }
+    }
+
+    $colChk = $conn->query("SHOW COLUMNS FROM service_providers LIKE 'provider_id'");
+    if ($colChk && ($colInfo = $colChk->fetch_assoc())) {
+        $extra = strtolower((string)($colInfo['Extra'] ?? ''));
+        if (strpos($extra, 'auto_increment') === false) {
+            @$conn->query("ALTER TABLE service_providers MODIFY COLUMN provider_id INT AUTO_INCREMENT");
+        }
+    }
+}
+ensureServiceProviderAutoIncrement($conn);
+
 
 
 
