@@ -1279,3 +1279,148 @@ window.addEventListener("DOMContentLoaded", injectGlobalModals);
     setInterval(sendUserHeartbeat, 30000);
   }
 })();
+
+// Overdue Remittance Restriction Modal Handler (No buttons UI)
+(function () {
+  let remitErrorTimer = null;
+  let remitProgressAnim = null;
+
+  function ensureRemittanceModalDom() {
+    let modal = document.getElementById('remitOverdueModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.className = 'remit-error-modal-overlay';
+      modal.id = 'remitOverdueModal';
+      modal.setAttribute('aria-hidden', 'true');
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.setAttribute('aria-labelledby', 'remitErrorTitle');
+      modal.onclick = function (e) {
+        if (e.target === this) {
+          window.closeRemittanceOverdueModal();
+        }
+      };
+
+      modal.innerHTML = `
+        <div class="remit-error-modal-card" onclick="event.stopPropagation()">
+          <div class="remit-error-icon-box">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <div class="remit-error-badge" id="remitErrorBadge">
+            <i class="bi bi-shield-lock-fill"></i> Access Restricted
+          </div>
+          <h3 class="remit-error-title" id="remitErrorTitle">Unable to Go Online</h3>
+          <p class="remit-error-message" id="remitErrorMessage">
+            Your account is restricted from going Online due to an overdue remittance past the 24-hour grace period. Please submit your remittance payment and wait for admin confirmation.
+          </p>
+          <div class="remit-error-detail-box" id="remitErrorDetailBox">
+            <div class="remit-error-detail-row" id="remitErrorAmountRow" style="display:none;">
+              <span class="remit-error-detail-label"><i class="bi bi-cash-stack"></i> Overdue Balance</span>
+              <span class="remit-error-detail-val" id="remitErrorAmountVal">₱0.00</span>
+            </div>
+            <div class="remit-error-detail-sub">
+              <i class="bi bi-info-circle-fill"></i>
+              <span id="remitErrorInstruction">Please settle your overdue balance in <strong>Earnings &rarr; Remittance</strong> to restore your online availability.</span>
+            </div>
+          </div>
+          <div class="remit-error-timer-track">
+            <div class="remit-error-timer-bar" id="remitErrorTimerBar"></div>
+          </div>
+          <div class="remit-error-hint">
+            <i class="bi bi-hand-index-thumb"></i> Tap anywhere outside to dismiss
+          </div>
+        </div>
+      `;
+
+      const targetContainer = document.getElementById('app') || document.body;
+      targetContainer.appendChild(modal);
+    }
+    return modal;
+  }
+
+  window.showRemittanceOverdueModal = function (message, remittance, customTitle) {
+    const modal = ensureRemittanceModalDom();
+    if (!modal) return;
+
+    const titleEl = document.getElementById('remitErrorTitle');
+    const msgEl = document.getElementById('remitErrorMessage');
+    const amountRow = document.getElementById('remitErrorAmountRow');
+    const amountVal = document.getElementById('remitErrorAmountVal');
+    const timerBar = document.getElementById('remitErrorTimerBar');
+
+    if (customTitle && titleEl) {
+      titleEl.textContent = customTitle;
+    } else if (titleEl) {
+      titleEl.textContent = 'Unable to Go Online';
+    }
+
+    if (message && msgEl) {
+      msgEl.textContent = message;
+    }
+
+    if (remittance && remittance.amount_due && parseFloat(remittance.amount_due) > 0) {
+      if (amountRow) amountRow.style.display = 'flex';
+      if (amountVal) {
+        amountVal.textContent = '₱' + parseFloat(remittance.amount_due).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+    } else if (amountRow) {
+      amountRow.style.display = 'none';
+    }
+
+    if (remitErrorTimer) {
+      clearTimeout(remitErrorTimer);
+      remitErrorTimer = null;
+    }
+    if (remitProgressAnim) {
+      cancelAnimationFrame(remitProgressAnim);
+      remitProgressAnim = null;
+    }
+
+    modal.classList.add('on');
+    modal.setAttribute('aria-hidden', 'false');
+
+    const duration = 6500;
+    const startTime = Date.now();
+    if (timerBar) {
+      timerBar.style.width = '100%';
+      function animateBar() {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, 1 - (elapsed / duration));
+        timerBar.style.width = (remaining * 100) + '%';
+        if (remaining > 0 && modal.classList.contains('on')) {
+          remitProgressAnim = requestAnimationFrame(animateBar);
+        }
+      }
+      remitProgressAnim = requestAnimationFrame(animateBar);
+    }
+
+    remitErrorTimer = setTimeout(function () {
+      window.closeRemittanceOverdueModal();
+    }, duration);
+  };
+
+  window.closeRemittanceOverdueModal = function () {
+    const modal = document.getElementById('remitOverdueModal');
+    if (!modal) return;
+    modal.classList.remove('on');
+    modal.setAttribute('aria-hidden', 'true');
+    if (remitErrorTimer) {
+      clearTimeout(remitErrorTimer);
+      remitErrorTimer = null;
+    }
+    if (remitProgressAnim) {
+      cancelAnimationFrame(remitProgressAnim);
+      remitProgressAnim = null;
+    }
+  };
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === 'Esc') {
+      const modal = document.getElementById('remitOverdueModal');
+      if (modal && modal.classList.contains('on')) {
+        window.closeRemittanceOverdueModal();
+      }
+    }
+  });
+})();
+

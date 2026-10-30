@@ -956,10 +956,14 @@ function ensureRemittancesForProvider($conn, $providerId)
 
                 if ($day < $today) {
                     $newStatus = 'overdue';
-                    if (empty($notifiedAt)) {
-                        $notifiedAt = $nowStr;
-                        $graceExpiresAt = date('Y-m-d H:i:s', strtotime('+24 hours', strtotime($nowStr)));
-                        $shouldNotify = true;
+                    if (empty($notifiedAt) || empty($graceExpiresAt)) {
+                        if (empty($notifiedAt)) {
+                            $notifiedAt = $nowStr;
+                            $shouldNotify = true;
+                        }
+                        if (empty($graceExpiresAt)) {
+                            $graceExpiresAt = date('Y-m-d H:i:s', strtotime('+24 hours', strtotime($nowStr)));
+                        }
                     }
                 }
 

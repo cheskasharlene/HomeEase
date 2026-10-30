@@ -577,6 +577,38 @@ $reviewPreview = $dashboardReviews[0] ?? null;
         </div>
       </div>
     </div>
+
+    <!-- Dedicated Overdue Remittance Error Modal (No Buttons) -->
+    <div class="remit-error-modal-overlay" id="remitOverdueModal" onclick="if(event.target===this)closeRemittanceOverdueModal()" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="remitErrorTitle">
+      <div class="remit-error-modal-card" onclick="event.stopPropagation()">
+        <div class="remit-error-icon-box">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <div class="remit-error-badge" id="remitErrorBadge">
+          <i class="bi bi-shield-lock-fill"></i> Access Restricted
+        </div>
+        <h3 class="remit-error-title" id="remitErrorTitle">Unable to Go Online</h3>
+        <p class="remit-error-message" id="remitErrorMessage">
+          Your account is restricted from going Online due to an overdue remittance past the 24-hour grace period. Please submit your remittance payment and wait for admin confirmation.
+        </p>
+        <div class="remit-error-detail-box" id="remitErrorDetailBox">
+          <div class="remit-error-detail-row" id="remitErrorAmountRow" style="display:none;">
+            <span class="remit-error-detail-label"><i class="bi bi-cash-stack"></i> Overdue Balance</span>
+            <span class="remit-error-detail-val" id="remitErrorAmountVal">₱0.00</span>
+          </div>
+          <div class="remit-error-detail-sub">
+            <i class="bi bi-info-circle-fill"></i>
+            <span id="remitErrorInstruction">Please settle your overdue balance in <strong>Earnings &rarr; Remittance</strong> to restore your online availability.</span>
+          </div>
+        </div>
+        <div class="remit-error-timer-track">
+          <div class="remit-error-timer-bar" id="remitErrorTimerBar"></div>
+        </div>
+        <div class="remit-error-hint">
+          <i class="bi bi-hand-index-thumb"></i> Tap anywhere outside to dismiss
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="../assets/js/app.js"></script>
@@ -1232,8 +1264,10 @@ $reviewPreview = $dashboardReviews[0] ?? null;
           const data = await res.json();
           if (!data.success) {
             applyAvailability(data.availability || previous);
-            if (data.message) {
-              alert(data.message);
+            if (data.is_restricted || data.error_type === 'remittance_overdue' || (data.message && /remittance|overdue|restricted|grace period/i.test(data.message))) {
+              showRemittanceOverdueModal(data.message, data.remittance || null);
+            } else if (data.message) {
+              showRemittanceOverdueModal(data.message, null, 'Account Notice');
             }
             return;
           }

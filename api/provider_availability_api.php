@@ -68,6 +68,13 @@ if ($method === 'GET') {
         'is_verified' => $isVerified,
         'is_restricted' => $isRestricted,
         'restriction_reason' => $isRestricted ? 'Your account is restricted from going Online due to an overdue remittance past the 24-hour grace period. Please submit your remittance payment and await admin confirmation.' : null,
+        'remittance' => ($isRestricted && is_array($restriction)) ? [
+            'id' => (int)($restriction['id'] ?? 0),
+            'amount_due' => (float)($restriction['amount_due'] ?? 0),
+            'due_date' => $restriction['due_date'] ?? null,
+            'status' => $restriction['status'] ?? 'overdue',
+            'grace_period_expires_at' => $restriction['grace_period_expires_at'] ?? null,
+        ] : null,
     ]);
     exit;
 }
@@ -120,6 +127,14 @@ if ($method === 'POST') {
             'message' => 'Your account is restricted from going Online due to an overdue remittance past the 24-hour grace period. Please submit your remittance payment and wait for admin confirmation.',
             'availability' => 'offline',
             'is_restricted' => true,
+            'error_type' => 'remittance_overdue',
+            'remittance' => ($isRestricted && is_array($restriction)) ? [
+                'id' => (int)($restriction['id'] ?? 0),
+                'amount_due' => (float)($restriction['amount_due'] ?? 0),
+                'due_date' => $restriction['due_date'] ?? null,
+                'status' => $restriction['status'] ?? 'overdue',
+                'grace_period_expires_at' => $restriction['grace_period_expires_at'] ?? null,
+            ] : null,
         ]);
         exit;
     }
