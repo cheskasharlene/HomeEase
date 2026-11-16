@@ -319,9 +319,6 @@ $providerName = htmlspecialchars($_SESSION['provider_name'] ?? 'Provider');
             </div>
             <div class="p-hdr-sub" id="feedSubtitle">Looking for bookings…</div>
           </div>
-          <div style="background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.3);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;z-index:1;" onclick="goPage('provider_home.php')">
-            <i class="bi bi-arrow-left" style="color:#1A1A2E;font-size:18px;"></i>
-          </div>
         </div>
 
 

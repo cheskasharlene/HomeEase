@@ -120,9 +120,6 @@ if ($providerId > 0 && $conn instanceof mysqli) {
         
         <div class="earn-hdr">
           <div class="earn-hdr-top">
-            <div class="earn-back" onclick="goPage('provider_profile.php')">
-              <i class="bi bi-arrow-left"></i>
-            </div>
             <div class="earn-hdr-title">My Earnings</div>
             <button class="earn-remit-btn" onclick="openRemittanceModal()">
               <i class="bi bi-cash"></i> Remittance
