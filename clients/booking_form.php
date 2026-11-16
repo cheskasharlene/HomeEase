@@ -74,7 +74,7 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
           <div class="hdr-sub">Hi, <?= $userName ?> 👋</div>
           <div class="hdr-title">Booking Details</div>
         </div>
-        <a href="service_selection.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="javascript:void(0)" class="hdr-btn" onclick="handleBack();" aria-label="Go Back"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 
@@ -361,6 +361,64 @@ $initialServiceNote = $serviceNotesMap[$resolvedInitialSvc] ?? ($serviceNotesMap
   <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
+  </script>
+  <script>
+    (function () {
+      try {
+        const ref = document.referrer;
+        if (ref && ref.indexOf(window.location.host) !== -1) {
+          const cleanRef = ref.split('?')[0].split('#')[0];
+          const isSelf = cleanRef.endsWith('booking_form.php');
+          const isPicker = cleanRef.endsWith('location_picker.php');
+          if (!isSelf && !isPicker) {
+            sessionStorage.setItem('booking_form_entry', ref);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+
+    function handleBack() {
+      const ref = document.referrer;
+      const isInternal = ref && ref.indexOf(window.location.host) !== -1;
+      const cleanRef = isInternal ? ref.split('?')[0].split('#')[0] : '';
+      const isSelf = cleanRef.endsWith('booking_form.php');
+      const isPicker = cleanRef.endsWith('location_picker.php');
+
+      let saved = null;
+      try {
+        saved = sessionStorage.getItem('booking_form_entry');
+      } catch (e) {}
+
+      const targetUrl = (isInternal && !isSelf && !isPicker) ? ref : (saved || 'service_selection.php');
+
+      if (isInternal && !isSelf && !isPicker && window.history.length > 1) {
+        window.history.back();
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 300);
+        return;
+      }
+
+      if (saved && saved.indexOf(window.location.host) !== -1) {
+        try {
+          sessionStorage.removeItem('booking_form_entry');
+        } catch (e) {}
+        window.location.href = saved;
+        return;
+      }
+
+      if (window.history.length > 1) {
+        window.history.back();
+        setTimeout(() => {
+          window.location.href = 'service_selection.php';
+        }, 300);
+        return;
+      }
+
+      window.location.href = 'service_selection.php';
+    }
   </script>
   <script>
     window.HE = window.HE || {};

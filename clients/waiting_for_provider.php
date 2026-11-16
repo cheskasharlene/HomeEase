@@ -291,9 +291,7 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
 
     
     <div class="wfp-topbar">
-      <button class="wfp-topbar-btn" onclick="goBack()" aria-label="Back">
-        <i class="bi bi-arrow-left"></i>
-      </button>
+      <div class="wfp-topbar-btn" style="visibility:hidden;pointer-events:none;"></div>
       <div class="wfp-topbar-center" id="topBarCenter">
         <div class="wfp-topbar-title" id="topBarTitle">HomeEase</div>
       </div>

@@ -495,9 +495,6 @@ if ($appBase === '') {
 
 
         <div class="p-hdr">
-          <div class="p-hdr-back" onclick="goPage(APP_BASE + '/home.php')">
-            <i class="bi bi-arrow-left"></i>
-          </div>
 
           <div class="p-hdr-settings" onclick="openSettingsScreen()">
             <i class="bi bi-gear-fill"></i>

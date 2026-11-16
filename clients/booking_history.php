@@ -33,7 +33,6 @@ $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User');
           <div class="hdr-sub">Hi, <?= $userName ?> 👋</div>
           <div class="hdr-title">Booking History</div>
         </div>
-        <a href="../home.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 

@@ -29,7 +29,7 @@ if (empty($_SESSION['user_id'])) {
           <div class="hdr-sub">What do you need?</div>
           <div class="hdr-title">Select a Service</div>
         </div>
-        <a href="../home.php" class="hdr-btn"><i class="bi bi-arrow-left"></i></a>
+        <a href="javascript:void(0)" class="hdr-btn" onclick="handleBack();" aria-label="Go Back"><i class="bi bi-arrow-left"></i></a>
       </div>
     </div>
 
@@ -41,6 +41,64 @@ if (empty($_SESSION['user_id'])) {
   <script src="../assets/js/app.js"></script>
   <script>
     initTheme();
+  </script>
+  <script>
+    (function () {
+      try {
+        const ref = document.referrer;
+        if (ref && ref.indexOf(window.location.host) !== -1) {
+          const cleanRef = ref.split('?')[0].split('#')[0];
+          const isSelf = cleanRef.endsWith('service_selection.php');
+          const isForm = cleanRef.endsWith('booking_form.php');
+          if (!isSelf && !isForm) {
+            sessionStorage.setItem('service_selection_entry', ref);
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+
+    function handleBack() {
+      const ref = document.referrer;
+      const isInternal = ref && ref.indexOf(window.location.host) !== -1;
+      const cleanRef = isInternal ? ref.split('?')[0].split('#')[0] : '';
+      const isSelf = cleanRef.endsWith('service_selection.php');
+      const isForm = cleanRef.endsWith('booking_form.php');
+
+      let saved = null;
+      try {
+        saved = sessionStorage.getItem('service_selection_entry');
+      } catch (e) {}
+
+      const targetUrl = (isInternal && !isSelf && !isForm) ? ref : (saved || '../home.php');
+
+      if (isInternal && !isSelf && !isForm && window.history.length > 1) {
+        window.history.back();
+        setTimeout(() => {
+          window.location.href = targetUrl;
+        }, 300);
+        return;
+      }
+
+      if (saved && saved.indexOf(window.location.host) !== -1) {
+        try {
+          sessionStorage.removeItem('service_selection_entry');
+        } catch (e) {}
+        window.location.href = saved;
+        return;
+      }
+
+      if (window.history.length > 1) {
+        window.history.back();
+        setTimeout(() => {
+          window.location.href = '../home.php';
+        }, 300);
+        return;
+      }
+
+      window.location.href = '../home.php';
+    }
   </script>
   <script>
     let services = [];
